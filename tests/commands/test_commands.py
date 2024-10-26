@@ -11,6 +11,7 @@ import pytest
 from freqtrade.commands import (
     start_backtesting_show,
     start_convert_data,
+    start_convert_db,
     start_convert_trades,
     start_create_userdir,
     start_download_data,
@@ -19,6 +20,8 @@ from freqtrade.commands import (
     start_install_ui,
     start_list_data,
     start_list_exchanges,
+    start_list_freqAI_models,
+    start_list_hyperopt_loss_functions,
     start_list_markets,
     start_list_strategies,
     start_list_timeframes,
@@ -30,14 +33,12 @@ from freqtrade.commands import (
     start_trading,
     start_webserver,
 )
-from freqtrade.commands.db_commands import start_convert_db
 from freqtrade.commands.deploy_ui import (
     clean_ui_subdir,
     download_and_install_ui,
     get_ui_download_url,
     read_ui_version,
 )
-from freqtrade.commands.list_commands import start_list_freqAI_models
 from freqtrade.configuration import setup_utils_configuration
 from freqtrade.enums import RunMode
 from freqtrade.exceptions import OperationalException
@@ -1053,6 +1054,28 @@ def test_start_list_strategies(capsys):
     assert "StrategyTestV2" in captured.out
     assert "TestStrategyNoImplements" in captured.out
     assert str(Path("broken_strats/broken_futures_strategies.py")) in captured.out
+
+
+def test_start_list_hyperopt_loss_functions(capsys):
+    args = ["list-hyperoptloss", "-1"]
+    pargs = get_args(args)
+    pargs["config"] = None
+    start_list_hyperopt_loss_functions(pargs)
+    captured = capsys.readouterr()
+    assert "CalmarHyperOptLoss" in captured.out
+    assert "MaxDrawDownHyperOptLoss" in captured.out
+    assert "SortinoHyperOptLossDaily" in captured.out
+    assert "<builtin>/hyperopt_loss_sortino_daily.py" not in captured.out
+
+    args = ["list-hyperoptloss"]
+    pargs = get_args(args)
+    pargs["config"] = None
+    start_list_hyperopt_loss_functions(pargs)
+    captured = capsys.readouterr()
+    assert "CalmarHyperOptLoss" in captured.out
+    assert "MaxDrawDownHyperOptLoss" in captured.out
+    assert "SortinoHyperOptLossDaily" in captured.out
+    assert "<builtin>/hyperopt_loss_sortino_daily.py" in captured.out
 
 
 def test_start_list_freqAI_models(capsys):
