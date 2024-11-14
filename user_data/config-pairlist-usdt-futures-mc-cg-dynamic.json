@@ -12,5 +12,6 @@
             "number_assets": 20,
             "sort_key": "quoteVolume",
         },
+        {"method": "FullTradesFilter"},
     ],
 }
