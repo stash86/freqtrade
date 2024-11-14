@@ -1,3 +1,4 @@
+git pull
 cd freqtrade_strategies
 git pull
 cd ..
