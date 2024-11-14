@@ -1,7 +1,6 @@
 import re
 from datetime import datetime, timezone
 from time import time
-from typing import Optional, Union
 
 import humanize
 
@@ -26,7 +25,7 @@ def dt_utc(
     return datetime(year, month, day, hour, minute, second, microsecond, tzinfo=timezone.utc)
 
 
-def dt_ts(dt: Optional[datetime] = None) -> int:
+def dt_ts(dt: datetime | None = None) -> int:
     """
     Return dt in ms as a timestamp in UTC.
     If dt is None, return the current datetime in UTC.
@@ -36,7 +35,7 @@ def dt_ts(dt: Optional[datetime] = None) -> int:
     return int(time() * 1000)
 
 
-def dt_ts_def(dt: Optional[datetime], default: int = 0) -> int:
+def dt_ts_def(dt: datetime | None, default: int = 0) -> int:
     """
     Return dt in ms as a timestamp in UTC.
     If dt is None, return the given default.
@@ -46,7 +45,7 @@ def dt_ts_def(dt: Optional[datetime], default: int = 0) -> int:
     return default
 
 
-def dt_ts_none(dt: Optional[datetime]) -> Optional[int]:
+def dt_ts_none(dt: datetime | None) -> int | None:
     """
     Return dt in ms as a timestamp in UTC.
     If dt is None, return the given default.
@@ -91,7 +90,7 @@ def dt_humanize_delta(dt: datetime):
     return humanize.naturaltime(dt)
 
 
-def format_date(date: Optional[datetime]) -> str:
+def format_date(date: datetime | None) -> str:
     """
     Return a formatted date string.
     Returns an empty string if date is None.
@@ -102,7 +101,7 @@ def format_date(date: Optional[datetime]) -> str:
     return ""
 
 
-def format_ms_time(date: Union[int, float]) -> str:
+def format_ms_time(date: int | float) -> str:
     """
     convert MS date to readable format.
     : epoch-string in ms

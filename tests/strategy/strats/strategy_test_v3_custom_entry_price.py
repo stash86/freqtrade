@@ -1,7 +1,6 @@
 # pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
 
 from datetime import datetime
-from typing import Optional
 
 from pandas import DataFrame
 from strategy_test_v3 import StrategyTestV3
@@ -34,10 +33,10 @@ class StrategyTestV3CustomEntryPrice(StrategyTestV3):
     def custom_entry_price(
         self,
         pair: str,
-        trade: Optional[Trade],
+        trade: Trade | None,
         current_time: datetime,
         proposed_rate: float,
-        entry_tag: Optional[str],
+        entry_tag: str | None,
         side: str,
         **kwargs,
     ) -> float:

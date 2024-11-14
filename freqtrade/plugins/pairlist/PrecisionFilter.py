@@ -3,7 +3,6 @@ Precision pair list filter
 """
 
 import logging
-from typing import Optional
 
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange import ROUND_UP
@@ -50,7 +49,7 @@ class PrecisionFilter(IPairList):
     def description() -> str:
         return "Filters low-value coins which would not allow setting stoplosses."
 
-    def _validate_pair(self, pair: str, ticker: Optional[Ticker]) -> bool:
+    def _validate_pair(self, pair: str, ticker: Ticker | None) -> bool:
         """
         Check if pair has enough room to add a stoploss to avoid "unsellable" buys of very
         low value pairs.

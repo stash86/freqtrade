@@ -1,6 +1,6 @@
 import sys
 from collections.abc import Sequence
-from typing import Any, Optional, Union
+from typing import Any, TypeAlias
 
 from pandas import DataFrame
 from rich.console import Console
@@ -8,16 +8,16 @@ from rich.table import Column, Table
 from rich.text import Text
 
 
-TextOrString = Union[str, Text]
+TextOrString: TypeAlias = str | Text
 
 
 def print_rich_table(
-    tabular_data: Sequence[Union[dict[str, Any], Sequence[TextOrString]]],
+    tabular_data: Sequence[dict[str, Any] | Sequence[TextOrString]],
     headers: Sequence[str],
-    summary: Optional[str] = None,
+    summary: str | None = None,
     *,
     justify="right",
-    table_kwargs: Optional[dict[str, Any]] = None,
+    table_kwargs: dict[str, Any] | None = None,
 ) -> None:
     table = Table(
         *[c if isinstance(c, Column) else Column(c, justify=justify) for c in headers],
@@ -35,7 +35,7 @@ def print_rich_table(
             )
 
         else:
-            row_to_add: list[Union[str, Text]] = [r if isinstance(r, Text) else str(r) for r in row]
+            row_to_add: list[str | Text] = [r if isinstance(r, Text) else str(r) for r in row]
             table.add_row(*row_to_add)
 
     width = None
@@ -55,11 +55,11 @@ def _format_value(value: Any, *, floatfmt: str) -> str:
 def print_df_rich_table(
     tabular_data: DataFrame,
     headers: Sequence[str],
-    summary: Optional[str] = None,
+    summary: str | None = None,
     *,
     show_index=False,
-    index_name: Optional[str] = None,
-    table_kwargs: Optional[dict[str, Any]] = None,
+    index_name: str | None = None,
+    table_kwargs: dict[str, Any] | None = None,
 ) -> None:
     table = Table(title=summary, **(table_kwargs or {}))
 

@@ -6,7 +6,7 @@ This module defines the interface to apply for hyperopt
 import logging
 import math
 from abc import ABC
-from typing import Union
+from typing import TypeAlias
 
 from sklearn.base import RegressorMixin
 from skopt.space import Categorical, Dimension, Integer
@@ -20,7 +20,7 @@ from freqtrade.strategy import IStrategy
 
 logger = logging.getLogger(__name__)
 
-EstimatorType = Union[RegressorMixin, str]
+EstimatorType: TypeAlias = RegressorMixin | str
 
 
 class IHyperOpt(ABC):

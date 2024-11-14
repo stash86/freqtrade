@@ -503,7 +503,7 @@ def test_calculate_max_drawdown2():
     ]
 
     dates = [dt_utc(2020, 1, 1) + timedelta(days=i) for i in range(len(values))]
-    df = DataFrame(zip(values, dates), columns=["profit", "open_date"])
+    df = DataFrame(zip(values, dates, strict=False), columns=["profit", "open_date"])
     # sort by profit and reset index
     df = df.sort_values("profit").reset_index(drop=True)
     df1 = df.copy()
@@ -522,11 +522,11 @@ def test_calculate_max_drawdown2():
     assert drawdown.drawdown_abs == 0.091755
     assert pytest.approx(drawdown.relative_account_drawdown) == 0.32129575
 
-    df = DataFrame(zip(values[:5], dates[:5]), columns=["profit", "open_date"])
+    df = DataFrame(zip(values[:5], dates[:5], strict=False), columns=["profit", "open_date"])
     with pytest.raises(ValueError, match="No losing trade, therefore no drawdown."):
         calculate_max_drawdown(df, date_col="open_date", value_col="profit")
 
-    df1 = DataFrame(zip(values[:5], dates[:5]), columns=["profit", "open_date"])
+    df1 = DataFrame(zip(values[:5], dates[:5], strict=False), columns=["profit", "open_date"])
     df1.loc[:, "profit"] = df1["profit"] * -1
     # No winning trade ...
     drawdown = calculate_max_drawdown(df1, date_col="open_date", value_col="profit")
@@ -548,7 +548,7 @@ def test_calculate_max_drawdown_abs(profits, relative, highd, lowdays, result, r
     """
     init_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
     dates = [init_date + timedelta(days=i) for i in range(len(profits))]
-    df = DataFrame(zip(profits, dates), columns=["profit_abs", "open_date"])
+    df = DataFrame(zip(profits, dates, strict=False), columns=["profit_abs", "open_date"])
     # sort by profit and reset index
     df = df.sort_values("profit_abs").reset_index(drop=True)
     df1 = df.copy()

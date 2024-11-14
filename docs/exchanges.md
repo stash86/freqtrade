@@ -252,6 +252,14 @@ OKX requires a passphrase for each api key, you will therefore need to add this 
 Gate.io allows the use of `POINT` to pay for fees. As this is not a tradable currency (no regular market available), automatic fee calculations will fail (and default to a fee of 0).
 The configuration parameter `exchange.unknown_fee_rate` can be used to specify the exchange rate between Point and the stake currency. Obviously, changing the stake-currency will also require changes to this value.
 
+Gate API keys require the following permissions on top of the market type you want to trade:
+
+* "Spot Trade" _or_ "Perpetual Futures" (Read and Write) (either select both, or the one matching the market you want to trade)
+* "Wallet" (read only)
+* "Account" (read only)
+
+Without these permissions, the bot will not start correctly and show errors like "permission missing".
+
 ## Bybit
 
 Futures trading on bybit is currently supported for USDT markets, and will use isolated futures mode.

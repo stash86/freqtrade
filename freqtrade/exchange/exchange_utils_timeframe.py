@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 import ccxt
 from ccxt import ROUND_DOWN, ROUND_UP
@@ -51,7 +50,7 @@ def timeframe_to_resample_freq(timeframe: str) -> str:
     return resample_interval
 
 
-def timeframe_to_prev_date(timeframe: str, date: Optional[datetime] = None) -> datetime:
+def timeframe_to_prev_date(timeframe: str, date: datetime | None = None) -> datetime:
     """
     Use Timeframe and determine the candle start date for this date.
     Does not round when given a candle start date.
@@ -66,7 +65,7 @@ def timeframe_to_prev_date(timeframe: str, date: Optional[datetime] = None) -> d
     return dt_from_ts(new_timestamp)
 
 
-def timeframe_to_next_date(timeframe: str, date: Optional[datetime] = None) -> datetime:
+def timeframe_to_next_date(timeframe: str, date: datetime | None = None) -> datetime:
     """
     Use Timeframe and determine next candle.
     :param timeframe: timeframe in string format (e.g. "5m")

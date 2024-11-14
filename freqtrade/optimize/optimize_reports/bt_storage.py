@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Optional
 
 from pandas import DataFrame
 
@@ -35,7 +34,7 @@ def store_backtest_stats(
     stats: BacktestResultType,
     dtappendix: str,
     *,
-    market_change_data: Optional[DataFrame] = None,
+    market_change_data: DataFrame | None = None,
 ) -> Path:
     """
     Stores backtest results

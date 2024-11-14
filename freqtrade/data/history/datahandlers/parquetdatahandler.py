@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from pandas import DataFrame, read_parquet, to_datetime
 
@@ -35,7 +34,7 @@ class ParquetDataHandler(IDataHandler):
         data.reset_index(drop=True).loc[:, self._columns].to_parquet(filename)
 
     def _ohlcv_load(
-        self, pair: str, timeframe: str, timerange: Optional[TimeRange], candle_type: CandleType
+        self, pair: str, timeframe: str, timerange: TimeRange | None, candle_type: CandleType
     ) -> DataFrame:
         """
         Internal method used to load data for one pair from disk.
@@ -106,7 +105,7 @@ class ParquetDataHandler(IDataHandler):
         raise NotImplementedError()
 
     def _trades_load(
-        self, pair: str, trading_mode: TradingMode, timerange: Optional[TimeRange] = None
+        self, pair: str, trading_mode: TradingMode, timerange: TimeRange | None = None
     ) -> DataFrame:
         """
         Load a pair from file, either .json.gz or .json

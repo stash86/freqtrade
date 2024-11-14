@@ -1,7 +1,6 @@
 import logging
 from copy import deepcopy
 from datetime import date, datetime, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.exceptions import HTTPException
@@ -124,17 +123,17 @@ def count(rpc: RPC = Depends(get_rpc)):
 
 
 @router.get("/entries", response_model=list[Entry], tags=["info"])
-def entries(pair: Optional[str] = None, rpc: RPC = Depends(get_rpc)):
+def entries(pair: str | None = None, rpc: RPC = Depends(get_rpc)):
     return rpc._rpc_enter_tag_performance(pair)
 
 
 @router.get("/exits", response_model=list[Exit], tags=["info"])
-def exits(pair: Optional[str] = None, rpc: RPC = Depends(get_rpc)):
+def exits(pair: str | None = None, rpc: RPC = Depends(get_rpc)):
     return rpc._rpc_exit_reason_performance(pair)
 
 
 @router.get("/mix_tags", response_model=list[MixTag], tags=["info"])
-def mix_tags(pair: Optional[str] = None, rpc: RPC = Depends(get_rpc)):
+def mix_tags(pair: str | None = None, rpc: RPC = Depends(get_rpc)):
     return rpc._rpc_mix_tag_performance(pair)
 
 
@@ -255,7 +254,7 @@ def edge(rpc: RPC = Depends(get_rpc)):
 
 
 @router.get("/show_config", response_model=ShowConfig, tags=["info"])
-def show_config(rpc: Optional[RPC] = Depends(get_rpc_optional), config=Depends(get_config)):
+def show_config(rpc: RPC | None = Depends(get_rpc_optional), config=Depends(get_config)):
     state = ""
     strategy_version = None
     if rpc:
@@ -343,7 +342,7 @@ def add_locks(payload: list[LocksPayload], rpc: RPC = Depends(get_rpc)):
 
 
 @router.get("/logs", response_model=Logs, tags=["info"])
-def logs(limit: Optional[int] = None):
+def logs(limit: int | None = None):
     return RPC._rpc_get_logs(limit)
 
 
@@ -369,9 +368,7 @@ def reload_config(rpc: RPC = Depends(get_rpc)):
 
 
 @router.get("/pair_candles", response_model=PairHistory, tags=["candle data"])
-def pair_candles(
-    pair: str, timeframe: str, limit: Optional[int] = None, rpc: RPC = Depends(get_rpc)
-):
+def pair_candles(pair: str, timeframe: str, limit: int | None = None, rpc: RPC = Depends(get_rpc)):
     return rpc._rpc_analysed_dataframe(pair, timeframe, limit, None)
 
 
@@ -389,7 +386,7 @@ def pair_history(
     timeframe: str,
     timerange: str,
     strategy: str,
-    freqaimodel: Optional[str] = None,
+    freqaimodel: str | None = None,
     config=Depends(get_config),
     exchange=Depends(get_exchange),
 ):
@@ -435,9 +432,9 @@ def pair_history_filtered(
 
 @router.get("/plot_config", response_model=PlotConfig, tags=["candle data"])
 def plot_config(
-    strategy: Optional[str] = None,
+    strategy: str | None = None,
     config=Depends(get_config),
-    rpc: Optional[RPC] = Depends(get_rpc_optional),
+    rpc: RPC | None = Depends(get_rpc_optional),
 ):
     if not strategy:
         if not rpc:
@@ -533,9 +530,9 @@ def list_freqaimodels(config=Depends(get_config)):
 
 @router.get("/available_pairs", response_model=AvailablePairs, tags=["candle data"])
 def list_available_pairs(
-    timeframe: Optional[str] = None,
-    stake_currency: Optional[str] = None,
-    candletype: Optional[CandleType] = None,
+    timeframe: str | None = None,
+    stake_currency: str | None = None,
+    candletype: CandleType | None = None,
     config=Depends(get_config),
 ):
     dh = get_datahandler(config["datadir"], config.get("dataformat_ohlcv"))

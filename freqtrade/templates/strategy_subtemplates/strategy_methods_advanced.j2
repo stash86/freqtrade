@@ -13,9 +13,16 @@ def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
     """
     pass
 
-def custom_entry_price(self, pair: str, trade: Optional[Trade],
-                       current_time: datetime, proposed_rate: float,
-                       entry_tag: Optional[str], side: str, **kwargs) -> float:
+def custom_entry_price(
+    self,
+    pair: str,
+    trade: Trade | None,
+    current_time: datetime,
+    proposed_rate: float,
+    entry_tag: str | None,
+    side: str,
+    **kwargs,
+) -> float:
     """
     Custom entry price logic, returning the new entry price.
 
@@ -33,9 +40,18 @@ def custom_entry_price(self, pair: str, trade: Optional[Trade],
     """
     return proposed_rate
 
-def adjust_entry_price(self, trade: Trade, order: Optional[Order], pair: str,
-                        current_time: datetime, proposed_rate: float, current_order_rate: float,
-                        entry_tag: Optional[str], side: str, **kwargs) -> float:
+def adjust_entry_price(
+    self,
+    trade: Trade,
+    order: Order | None,
+    pair: str,
+    current_time: datetime,
+    proposed_rate: float,
+    current_order_rate: float,
+    entry_tag: str | None,
+    side: str,
+    **kwargs,
+) -> float:
     """
     Entry price re-adjustment logic, returning the user desired limit price.
     This only executes when a order was already placed, still open (unfilled fully or partially)
@@ -61,9 +77,16 @@ def adjust_entry_price(self, trade: Trade, order: Optional[Order], pair: str,
     """
     return current_order_rate
 
-def custom_exit_price(self, pair: str, trade: Trade,
-                      current_time: datetime, proposed_rate: float,
-                      current_profit: float, exit_tag: Optional[str], **kwargs) -> float:
+def custom_exit_price(
+    self,
+    pair: str,
+    trade: Trade,
+    current_time: datetime,
+    proposed_rate: float,
+    current_profit: float,
+    exit_tag: str | None,
+    **kwargs,
+) -> float:
     """
     Custom exit price logic, returning the new exit price.
 
@@ -82,10 +105,19 @@ def custom_exit_price(self, pair: str, trade: Trade,
     """
     return proposed_rate
 
-def custom_stake_amount(self, pair: str, current_time: datetime, current_rate: float,
-                        proposed_stake: float, min_stake: Optional[float], max_stake: float,
-                        leverage: float, entry_tag: Optional[str], side: str,
-                        **kwargs) -> float:
+def custom_stake_amount(
+    self,
+    pair: str,
+    current_time: datetime,
+    current_rate: float,
+    proposed_stake: float,
+    min_stake: float | None,
+    max_stake: float,
+    leverage: float,
+    entry_tag: str | None,
+    side: str,
+    **kwargs,
+) -> float:
     """
     Customize stake size for each new trade.
 
@@ -104,8 +136,16 @@ def custom_stake_amount(self, pair: str, current_time: datetime, current_rate: f
 
 use_custom_stoploss = True
 
-def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
-                    current_profit: float, after_fill: bool, **kwargs) -> float:
+def custom_stoploss(
+    self,
+    pair: str,
+    trade: Trade,
+    current_time: datetime,
+    current_rate: float,
+    current_profit: float,
+    after_fill: bool,
+    **kwargs,
+) -> float | None:
     """
     Custom stoploss logic, returning the new distance relative to current_rate (as ratio).
     e.g. returning -0.05 would create a stoploss 5% below current_rate.
@@ -126,8 +166,15 @@ def custom_stoploss(self, pair: str, trade: Trade, current_time: datetime, curre
     :return float: New stoploss value, relative to the current_rate
     """
 
-def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float,
-                current_profit: float, **kwargs) -> Optional[Union[str, bool]]:
+def custom_exit(
+    self,
+    pair: str,
+    trade: Trade,
+    current_time: datetime,
+    current_rate: float,
+    current_profit: float,
+    **kwargs,
+) -> str | bool | None:
     """
     Custom exit signal logic indicating that specified position should be sold. Returning a
     string or True from this method is equal to setting sell signal on a candle at specified
@@ -150,9 +197,18 @@ def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_r
     """
     return None
 
-def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
-                        time_in_force: str, current_time: datetime, entry_tag: Optional[str],
-                        side: str, **kwargs) -> bool:
+def confirm_trade_entry(
+    self,
+    pair: str,
+    order_type: str,
+    amount: float,
+    rate: float,
+    time_in_force: str,
+    current_time: datetime,
+    entry_tag: str | None,
+    side: str,
+    **kwargs,
+) -> bool:
     """
     Called right before placing a entry order.
     Timing for this function is critical, so avoid doing heavy computations or
@@ -177,9 +233,18 @@ def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: f
     """
     return True
 
-def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: float,
-                       rate: float, time_in_force: str, exit_reason: str,
-                       current_time: datetime, **kwargs) -> bool:
+def confirm_trade_exit(
+    self,
+    pair: str,
+    trade: Trade,
+    order_type: str,
+    amount: float,
+    rate: float,
+    time_in_force: str,
+    exit_reason: str,
+    current_time: datetime,
+    **kwargs,
+) -> bool:
     """
     Called right before placing a regular exit order.
     Timing for this function is critical, so avoid doing heavy computations or
@@ -206,8 +271,9 @@ def confirm_trade_exit(self, pair: str, trade: Trade, order_type: str, amount: f
     """
     return True
 
-def check_entry_timeout(self, pair: str, trade: Trade, order: Order,
-                        current_time: datetime, **kwargs) -> bool:
+def check_entry_timeout(
+    self, pair: str, trade: Trade, order: Order, current_time: datetime, **kwargs
+) -> bool:
     """
     Check entry timeout function callback.
     This method can be used to override the entry-timeout.
@@ -228,8 +294,9 @@ def check_entry_timeout(self, pair: str, trade: Trade, order: Order,
     """
     return False
 
-def check_exit_timeout(self, pair: str, trade: Trade, order: Order,
-                       current_time: datetime, **kwargs) -> bool:
+def check_exit_timeout(
+    self, pair: str, trade: Trade, order: Order, current_time: datetime, **kwargs
+) -> bool:
     """
     Check exit timeout function callback.
     This method can be used to override the exit-timeout.
@@ -250,12 +317,20 @@ def check_exit_timeout(self, pair: str, trade: Trade, order: Order,
     """
     return False
 
-def adjust_trade_position(self, trade: Trade, current_time: datetime,
-                          current_rate: float, current_profit: float,
-                          min_stake: Optional[float], max_stake: float,
-                          current_entry_rate: float, current_exit_rate: float,
-                          current_entry_profit: float, current_exit_profit: float,
-                          **kwargs) -> Optional[float]:
+def adjust_trade_position(
+    self,
+    trade: Trade,
+    current_time: datetime,
+    current_rate: float,
+    current_profit: float,
+    min_stake: float | None,
+    max_stake: float,
+    current_entry_rate: float,
+    current_exit_rate: float,
+    current_entry_profit: float,
+    current_exit_profit: float,
+    **kwargs,
+) -> float | None | tuple[float | None, str | None]:
     """
     Custom trade adjustment logic, returning the stake amount that a trade should be
     increased or decreased.
@@ -284,9 +359,17 @@ def adjust_trade_position(self, trade: Trade, current_time: datetime,
     """
     return None
 
-def leverage(self, pair: str, current_time: datetime, current_rate: float,
-             proposed_leverage: float, max_leverage: float, entry_tag: Optional[str],
-             side: str, **kwargs) -> float:
+def leverage(
+    self,
+    pair: str,
+    current_time: datetime,
+    current_rate: float,
+    proposed_leverage: float,
+    max_leverage: float,
+    entry_tag: str | None,
+    side: str,
+    **kwargs,
+) -> float:
     """
     Customize leverage for each new trade. This method is only called in futures mode.
 
@@ -302,8 +385,9 @@ def leverage(self, pair: str, current_time: datetime, current_rate: float,
     return 1.0
 
 
-def order_filled(self, pair: str, trade: Trade, order: Order,
-                 current_time: datetime, **kwargs) -> None:
+def order_filled(
+    self, pair: str, trade: Trade, order: Order, current_time: datetime, **kwargs
+) -> None:
     """
     Called right after an order fills.
     Will be called for all order types (entry, exit, stoploss, position adjustment).

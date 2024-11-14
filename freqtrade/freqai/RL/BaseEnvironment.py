@@ -2,7 +2,6 @@ import logging
 import random
 from abc import abstractmethod
 from enum import Enum
-from typing import Optional, Union
 
 import gymnasium as gym
 import numpy as np
@@ -140,7 +139,7 @@ class BaseEnvironment(gym.Env):
         self._end_tick: int = len(self.prices) - 1
         self._done: bool = False
         self._current_tick: int = self._start_tick
-        self._last_trade_tick: Optional[int] = None
+        self._last_trade_tick: int | None = None
         self._position = Positions.Neutral
         self._position_history: list = [None]
         self.total_reward: float = 0
@@ -173,8 +172,8 @@ class BaseEnvironment(gym.Env):
     def tensorboard_log(
         self,
         metric: str,
-        value: Optional[Union[int, float]] = None,
-        inc: Optional[bool] = None,
+        value: int | float | None = None,
+        inc: bool | None = None,
         category: str = "custom",
     ):
         """

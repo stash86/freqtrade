@@ -352,7 +352,7 @@ The optional `bearer_token` will be included in the requests Authorization Heade
 
 #### MarketCapPairList
 
-`MarketCapPairList` employs sorting/filtering of pairs by their marketcap rank based of CoinGecko. It will only recognize coins up to the coin placed at rank 250. The returned pairlist will be sorted based of their marketcap ranks.
+`MarketCapPairList` employs sorting/filtering of pairs by their marketcap rank based of CoinGecko. The returned pairlist will be sorted based of their marketcap ranks.
 
 ```json
 "pairlists": [
@@ -366,7 +366,8 @@ The optional `bearer_token` will be included in the requests Authorization Heade
 ]
 ```
 
-`number_assets` defines the maximum number of pairs returned by the pairlist. `max_rank` will determine the maximum rank used in creating/filtering the pairlist. It's expected that some coins within the top `max_rank` marketcap will not be included in the resulting pairlist since not all pairs will have active trading pairs in your preferred market/stake/exchange combination.
+`number_assets` defines the maximum number of pairs returned by the pairlist. `max_rank` will determine the maximum rank used in creating/filtering the pairlist. It's expected that some coins within the top `max_rank` marketcap will not be included in the resulting pairlist since not all pairs will have active trading pairs in your preferred market/stake/exchange combination.  
+While using a `max_rank` bigger than 250 is supported, it's not recommended, as it'll cause multiple API calls to CoinGecko, which can lead to rate limit issues.
 
 The `refresh_period` setting defines the interval (in seconds) at which the marketcap rank data will be refreshed. The default is 86,400 seconds (1 day). The pairlist cache (`refresh_period`) applies to both generating pairlists (when in the first position in the list) and filtering instances (when not in the first position in the list).
 

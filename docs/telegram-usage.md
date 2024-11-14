@@ -58,6 +58,7 @@ For the Freqtrade configuration, you can then use the full value (including `-` 
 ```json
    "chat_id": "-1001332619709"
 ```
+
 !!! Warning "Using telegram groups"
     When using telegram groups, you're giving every member of the telegram group access to your freqtrade bot and to all commands possible via telegram. Please make sure that you can trust everyone in the telegram group to avoid unpleasant surprises.
 
@@ -93,9 +94,12 @@ Example configuration showing the different settings:
             "trailing_stop_loss": "on",
             "stop_loss": "on",
             "stoploss_on_exchange": "on",
-            "custom_exit": "silent",
-            "partial_exit": "on"
+            "custom_exit": "silent",  // custom_exit without specifying an exit reason
+            "partial_exit": "on",
+            // "custom_exit_message": "silent",  // Disable individual custom exit reasons
+            "*": "off"  // Disable all other exit reasons
         },
+        // "exit": "off",  // Simplistic configuration to disable all exit messages
         "exit_cancel": "on",
         "exit_fill": "off",
         "protection_trigger": "off",
@@ -108,16 +112,16 @@ Example configuration showing the different settings:
 },
 ```
 
-`entry` notifications are sent when the order is placed, while `entry_fill` notifications are sent when the order is filled on the exchange.
-`exit` notifications are sent when the order is placed, while `exit_fill` notifications are sent when the order is filled on the exchange.
-`*_fill` notifications are off by default and must be explicitly enabled.
-`protection_trigger` notifications are sent when a protection triggers and `protection_trigger_global` notifications trigger when global protections are triggered.
-`strategy_msg` - Receive notifications from the strategy, sent via `self.dp.send_msg()` from the strategy [more details](strategy-customization.md#send-notification).
-`show_candle` - show candle values as part of entry/exit messages. Only possible values are `"ohlc"` or `"off"`.
-
-`balance_dust_level` will define what the `/balance` command takes as "dust" - Currencies with a balance below this will be shown.
-`allow_custom_messages` completely disable strategy messages.
-`reload` allows you to disable reload-buttons on selected messages.
+* `entry` notifications are sent when the order is placed, while `entry_fill` notifications are sent when the order is filled on the exchange.  
+* `exit` notifications are sent when the order is placed, while `exit_fill` notifications are sent when the order is filled on the exchange.  
+    Exit messages (`exit` and `exit_fill`) can be further controlled at individual exit reasons level, with the specific exit reason as the key. the default for all exit reasons is `on` - but can be configured via special `*` key - which will act as a wildcard for all exit reasons that are not explicitly defined.
+* `*_fill` notifications are off by default and must be explicitly enabled.  
+* `protection_trigger` notifications are sent when a protection triggers and `protection_trigger_global` notifications trigger when global protections are triggered.  
+* `strategy_msg` - Receive notifications from the strategy, sent via `self.dp.send_msg()` from the strategy [more details](strategy-customization.md#send-notification).  
+* `show_candle` - show candle values as part of entry/exit messages. Only possible values are `"ohlc"` or `"off"`.  
+* `balance_dust_level` will define what the `/balance` command takes as "dust" - Currencies with a balance below this will be shown.  
+* `allow_custom_messages` completely disable strategy messages.  
+* `reload` allows you to disable reload-buttons on selected messages.  
 
 ## Create a custom keyboard (command shortcut buttons)
 
@@ -238,16 +242,16 @@ Once all positions are sold, run `/stop` to completely stop the bot.
 For each open trade, the bot will send you the following message.
 Enter Tag is configurable via Strategy.
 
-> **Trade ID:** `123` `(since 1 days ago)`
-> **Current Pair:** CVC/BTC
-> **Direction:** Long
-> **Leverage:** 1.0
-> **Amount:** `26.64180098`
-> **Enter Tag:** Awesome Long Signal
-> **Open Rate:** `0.00007489`
-> **Current Rate:** `0.00007489`
-> **Unrealized Profit:** `12.95%`
-> **Stoploss:** `0.00007389 (-0.02%)`
+> **Trade ID:** `123` `(since 1 days ago)`  
+> **Current Pair:** CVC/BTC  
+> **Direction:** Long  
+> **Leverage:** 1.0  
+> **Amount:** `26.64180098`  
+> **Enter Tag:** Awesome Long Signal  
+> **Open Rate:** `0.00007489`  
+> **Current Rate:** `0.00007489`  
+> **Unrealized Profit:** `12.95%`  
+> **Stoploss:** `0.00007389 (-0.02%)`  
 
 ### /status table
 
@@ -274,34 +278,34 @@ current    max
 
 Return a summary of your profit/loss and performance.
 
-> **ROI:** Close trades
->   ∙ `0.00485701 BTC (2.2%) (15.2 Σ%)`
->   ∙ `62.968 USD`
-> **ROI:** All trades
->   ∙ `0.00255280 BTC (1.5%) (6.43 Σ%)`
->   ∙ `33.095 EUR`
->
-> **Total Trade Count:** `138`
-> **Bot started:** `2022-07-11 18:40:44`
-> **First Trade opened:** `3 days ago`
-> **Latest Trade opened:** `2 minutes ago`
-> **Avg. Duration:** `2:33:45`
-> **Best Performing:** `PAY/BTC: 50.23%`
-> **Trading volume:** `0.5 BTC`
-> **Profit factor:** `1.04`
-> **Win / Loss:** `102 / 36`
-> **Winrate:** `73.91%`
-> **Expectancy (Ratio):** `4.87 (1.66)`
-> **Max Drawdown:** `9.23% (0.01255 BTC)`
+> **ROI:** Close trades  
+>   ∙ `0.00485701 BTC (2.2%) (15.2 Σ%)`  
+>   ∙ `62.968 USD`  
+> **ROI:** All trades  
+>   ∙ `0.00255280 BTC (1.5%) (6.43 Σ%)`  
+>   ∙ `33.095 EUR`  
+>  
+> **Total Trade Count:** `138`  
+> **Bot started:** `2022-07-11 18:40:44`  
+> **First Trade opened:** `3 days ago`  
+> **Latest Trade opened:** `2 minutes ago`  
+> **Avg. Duration:** `2:33:45`  
+> **Best Performing:** `PAY/BTC: 50.23%`  
+> **Trading volume:** `0.5 BTC`  
+> **Profit factor:** `1.04`  
+> **Win / Loss:** `102 / 36`  
+> **Winrate:** `73.91%`  
+> **Expectancy (Ratio):** `4.87 (1.66)`  
+> **Max Drawdown:** `9.23% (0.01255 BTC)`  
 
-The relative profit of `1.2%` is the average profit per trade.
-The relative profit of `15.2 Σ%` is be based on the starting capital - so in this case, the starting capital was `0.00485701 * 1.152 = 0.00738 BTC`.
-Starting capital is either taken from the `available_capital` setting, or calculated by using current wallet size - profits.
-Profit Factor is calculated as gross profits / gross losses - and should serve as an overall metric for the strategy.
-Expectancy corresponds to the average return per currency unit at risk, i.e. the winrate and the risk-reward ratio (the average gain of winning trades compared to the average loss of losing trades).
-Expectancy Ratio is expected profit or loss of a subsequent trade based on the performance of all past trades.
-Max drawdown corresponds to the backtesting metric `Absolute Drawdown (Account)` - calculated as `(Absolute Drawdown) / (DrawdownHigh + startingBalance)`.
-Bot started date will refer to the date the bot was first started. For older bots, this will default to the first trade's open date.
+The relative profit of `1.2%` is the average profit per trade.  
+The relative profit of `15.2 Σ%` is be based on the starting capital - so in this case, the starting capital was `0.00485701 * 1.152 = 0.00738 BTC`.  
+**Starting capital(**) is either taken from the `available_capital` setting, or calculated by using current wallet size - profits.  
+**Profit Factor** is calculated as gross profits / gross losses - and should serve as an overall metric for the strategy.  
+**Expectancy** corresponds to the average return per currency unit at risk, i.e. the winrate and the risk-reward ratio (the average gain of winning trades compared to the average loss of losing trades).  
+**Expectancy Ratio** is expected profit or loss of a subsequent trade based on the performance of all past trades.  
+**Max drawdown** corresponds to the backtesting metric `Absolute Drawdown (Account)` - calculated as `(Absolute Drawdown) / (DrawdownHigh + startingBalance)`.  
+**Bot started date** will refer to the date the bot was first started. For older bots, this will default to the first trade's open date.  
 
 ### /forceexit <trade_id>
 
@@ -329,33 +333,34 @@ Note that for this to work, `force_entry_enable` needs to be set to true.
 ### /performance
 
 Return the performance of each crypto-currency the bot has sold.
-> Performance:
-> 1. `RCN/BTC 0.003 BTC (57.77%) (1)`
-> 2. `PAY/BTC 0.0012 BTC (56.91%) (1)`
-> 3. `VIB/BTC 0.0011 BTC (47.07%) (1)`
-> 4. `SALT/BTC 0.0010 BTC (30.24%) (1)`
-> 5. `STORJ/BTC 0.0009 BTC (27.24%) (1)`
-> ...
+> Performance:  
+> 1. `RCN/BTC 0.003 BTC (57.77%) (1)`  
+> 2. `PAY/BTC 0.0012 BTC (56.91%) (1)`  
+> 3. `VIB/BTC 0.0011 BTC (47.07%) (1)`  
+> 4. `SALT/BTC 0.0010 BTC (30.24%) (1)`  
+> 5. `STORJ/BTC 0.0009 BTC (27.24%) (1)`  
+> ...  
 
 ### /balance
 
 Return the balance of all crypto-currency your have on the exchange.
 
-> **Currency:** BTC
-> **Available:** 3.05890234
-> **Balance:** 3.05890234
-> **Pending:** 0.0
-
-> **Currency:** CVC
-> **Available:** 86.64180098
-> **Balance:** 86.64180098
-> **Pending:** 0.0
+> **Currency:** BTC  
+> **Available:** 3.05890234  
+> **Balance:** 3.05890234  
+> **Pending:** 0.0  
+>
+> **Currency:** CVC  
+> **Available:** 86.64180098  
+> **Balance:** 86.64180098  
+> **Pending:** 0.0  
 
 ### /daily <n>
 
 Per default `/daily` will return the 7 last days. The example below if for `/daily 3`:
 
 > **Daily Profit over the last 3 days:**
+
 ```
 Day (count)     USDT          USD         Profit %
 --------------  ------------  ----------  ----------
@@ -370,6 +375,7 @@ Per default `/weekly` will return the 8 last weeks, including the current week. 
 from Monday. The example below if for `/weekly 3`:
 
 > **Weekly Profit over the last 3 weeks (starting from Monday):**
+
 ```
 Monday (count)  Profit BTC      Profit USD   Profit %
 -------------  --------------  ------------    ----------
@@ -396,18 +402,18 @@ Month (count)  Profit BTC      Profit USD    Profit %
 
 Shows the current whitelist
 
-> Using whitelist `StaticPairList` with 22 pairs
+> Using whitelist `StaticPairList` with 22 pairs  
 > `IOTA/BTC, NEO/BTC, TRX/BTC, VET/BTC, ADA/BTC, ETC/BTC, NCASH/BTC, DASH/BTC, XRP/BTC, XVG/BTC, EOS/BTC, LTC/BTC, OMG/BTC, BTG/BTC, LSK/BTC, ZEC/BTC, HOT/BTC, IOTX/BTC, XMR/BTC, AST/BTC, XLM/BTC, NANO/BTC`
 
 ### /blacklist [pair]
 
 Shows the current blacklist.
 If Pair is set, then this pair will be added to the pairlist.
-Also supports multiple pairs, separated by a space.
+Also supports multiple pairs, separated by a space.  
 Use `/reload_config` to reset the blacklist.
 
-> Using blacklist `StaticPairList` with 2 pairs
->`DODGE/BTC`, `HOT/BTC`.
+> Using blacklist `StaticPairList` with 2 pairs  
+>`DODGE/BTC`, `HOT/BTC`.  
 
 ### /edge
 

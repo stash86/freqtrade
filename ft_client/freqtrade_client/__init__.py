@@ -1,7 +1,7 @@
 from freqtrade_client.ft_rest_client import FtRestClient
 
 
-__version__ = "2024.10-dev"
+__version__ = "2024.11-dev"
 
 if "dev" in __version__:
     from pathlib import Path

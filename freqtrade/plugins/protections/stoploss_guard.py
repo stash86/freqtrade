@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from freqtrade.constants import Config, LongShort
 from freqtrade.enums import ExitType
@@ -42,8 +42,8 @@ class StoplossGuard(IProtection):
         )
 
     def _stoploss_guard(
-        self, date_now: datetime, pair: Optional[str], side: LongShort
-    ) -> Optional[ProtectionReturn]:
+        self, date_now: datetime, pair: str | None, side: LongShort
+    ) -> ProtectionReturn | None:
         """
         Evaluate recent trades
         """
@@ -86,7 +86,7 @@ class StoplossGuard(IProtection):
             lock_side=(side if self._only_per_side else "*"),
         )
 
-    def global_stop(self, date_now: datetime, side: LongShort) -> Optional[ProtectionReturn]:
+    def global_stop(self, date_now: datetime, side: LongShort) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for all pairs
         This must evaluate to true for the whole period of the "cooldown period".
@@ -99,7 +99,7 @@ class StoplossGuard(IProtection):
 
     def stop_per_pair(
         self, pair: str, date_now: datetime, side: LongShort
-    ) -> Optional[ProtectionReturn]:
+    ) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for this pair
         This must evaluate to true for the whole period of the "cooldown period".

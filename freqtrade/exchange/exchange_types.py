@@ -1,4 +1,4 @@
-from typing import Optional, TypedDict
+from typing import Any, Literal, TypedDict
 
 from freqtrade.enums import CandleType
 
@@ -11,7 +11,7 @@ class FtHas(TypedDict, total=False):
     # Stoploss on exchange
     stoploss_on_exchange: bool
     stop_price_param: str
-    stop_price_prop: str
+    stop_price_prop: Literal["stopPrice", "stopLossPrice"]
     stop_price_type_field: str
     stop_price_type_value_mapping: dict
     stoploss_order_types: dict[str, str]
@@ -35,7 +35,7 @@ class FtHas(TypedDict, total=False):
     trades_has_history: bool
     trades_pagination_overlap: bool
     # Orderbook
-    l2_limit_range: Optional[list[int]]
+    l2_limit_range: list[int] | None
     l2_limit_range_required: bool
     # Futures
     ccxt_futures_name: str  # usually swap
@@ -44,7 +44,7 @@ class FtHas(TypedDict, total=False):
     funding_fee_timeframe: str
     floor_leverage: bool
     needs_trading_fees: bool
-    order_props_in_contracts: list[str]
+    order_props_in_contracts: list[Literal["amount", "cost", "filled", "remaining"]]
 
     # Websocket control
     ws_enabled: bool
@@ -52,14 +52,14 @@ class FtHas(TypedDict, total=False):
 
 class Ticker(TypedDict):
     symbol: str
-    ask: Optional[float]
-    askVolume: Optional[float]
-    bid: Optional[float]
-    bidVolume: Optional[float]
-    last: Optional[float]
-    quoteVolume: Optional[float]
-    baseVolume: Optional[float]
-    percentage: Optional[float]
+    ask: float | None
+    askVolume: float | None
+    bid: float | None
+    bidVolume: float | None
+    last: float | None
+    quoteVolume: float | None
+    baseVolume: float | None
+    percentage: float | None
     # Several more - only listing required.
 
 
@@ -70,9 +70,9 @@ class OrderBook(TypedDict):
     symbol: str
     bids: list[tuple[float, float]]
     asks: list[tuple[float, float]]
-    timestamp: Optional[int]
-    datetime: Optional[str]
-    nonce: Optional[int]
+    timestamp: int | None
+    datetime: str | None
+    nonce: int | None
 
 
 class CcxtBalance(TypedDict):
@@ -89,10 +89,12 @@ class CcxtPosition(TypedDict):
     side: str
     contracts: float
     leverage: float
-    collateral: Optional[float]
-    initialMargin: Optional[float]
-    liquidationPrice: Optional[float]
+    collateral: float | None
+    initialMargin: float | None
+    liquidationPrice: float | None
 
+
+CcxtOrder = dict[str, Any]
 
 # pair, timeframe, candleType, OHLCV, drop last?,
 OHLCVResponse = tuple[str, str, CandleType, list, bool]

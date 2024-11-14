@@ -22,6 +22,7 @@ Mandatory parameters are marked as **Required** and have to be set in one of the
 | `write_metrics_to_disk` | Collect train timings, inference timings and cpu usage in json file. <br> **Datatype:** Boolean. <br> Default: `False`
 | `data_kitchen_thread_count` | <br> Designate the number of threads you want to use for data processing (outlier methods, normalization, etc.). This has no impact on the number of threads used for training. If user does not set it (default), FreqAI will use max number of threads - 2 (leaving 1 physical core available for Freqtrade bot and FreqUI) <br> **Datatype:** Positive integer.
 | `activate_tensorboard` | <br> Indicate whether or not to activate tensorboard for the tensorboard enabled modules (currently Reinforcment Learning, XGBoost, Catboost, and PyTorch). Tensorboard needs Torch installed, which means you will need the torch/RL docker image or you need to answer "yes" to the install question about whether or not you wish to install Torch. <br> **Datatype:** Boolean. <br> Default: `True`.
+| `wait_for_training_iteration_on_reload` | <br> When using /reload or ctrl-c, wait for the current training iteration to finish before completing graceful shutdown. If set to `False`, FreqAI will break the current training iteration, allowing you to shutdown gracefully more quickly, but you will lose your current training iteration. <br> **Datatype:** Boolean. <br> Default: `True`.
 
 ### Feature parameters
 

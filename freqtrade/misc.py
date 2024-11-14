@@ -7,7 +7,7 @@ import logging
 from collections.abc import Iterator, Mapping
 from io import StringIO
 from pathlib import Path
-from typing import Any, Optional, TextIO, Union
+from typing import Any, TextIO
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -129,10 +129,10 @@ def round_dict(d, n):
     return {k: (round(v, n) if isinstance(v, float) else v) for k, v in d.items()}
 
 
-DictMap = Union[dict[str, Any], Mapping[str, Any]]
+DictMap = dict[str, Any] | Mapping[str, Any]
 
 
-def safe_value_fallback(obj: DictMap, key1: str, key2: Optional[str] = None, default_value=None):
+def safe_value_fallback(obj: DictMap, key1: str, key2: str | None = None, default_value=None):
     """
     Search a value in obj, return this if it's not None.
     Then search key2 in obj - return that if it's not none - then use default_value.
@@ -161,7 +161,7 @@ def safe_value_fallback2(dict1: DictMap, dict2: DictMap, key1: str, key2: str, d
     return default_value
 
 
-def plural(num: float, singular: str, plural: Optional[str] = None) -> str:
+def plural(num: float, singular: str, plural: str | None = None) -> str:
     return singular if (num == 1 or num == -1) else plural or singular + "s"
 
 

@@ -2144,6 +2144,7 @@ def test_Trade_object_idem():
         "bt_trades_open",
         "bt_trades_open_pp",
         "bt_open_open_trade_count",
+        "bt_open_open_trade_count_candle",
         "bt_total_profit",
         "from_json",
     )
@@ -2680,6 +2681,36 @@ def test_select_filled_orders(fee):
     orders = trades[4].select_filled_orders("sell")
     assert isinstance(orders, list)
     assert len(orders) == 0
+
+
+@pytest.mark.usefixtures("init_persistence")
+def test_select_filled_orders_usdt(fee):
+    create_mock_trades_usdt(fee)
+
+    trades = Trade.get_trades().all()
+
+    # Closed buy order, no sell order
+    orders = trades[0].select_filled_orders("buy")
+    assert isinstance(orders, list)
+    assert len(orders) == 1
+    assert orders[0].amount == 2.0
+    assert orders[0].filled == 2.0
+    assert orders[0].side == "buy"
+    assert orders[0].price == 10.0
+    assert orders[0].stake_amount == 20
+    assert orders[0].stake_amount_filled == 20
+
+    orders = trades[3].select_filled_orders("buy")
+    assert isinstance(orders, list)
+    assert len(orders) == 0
+    orders = trades[3].select_filled_or_open_orders()
+    assert isinstance(orders, list)
+    assert len(orders) == 1
+    assert orders[0].price == 2.0
+    assert orders[0].amount == 10
+    assert orders[0].filled == 0
+    assert orders[0].stake_amount == 20
+    assert orders[0].stake_amount_filled == 0
 
 
 @pytest.mark.usefixtures("init_persistence")

@@ -5,9 +5,10 @@ This module contains the configuration class
 import ast
 import logging
 import warnings
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 from freqtrade import constants
 from freqtrade.configuration.deprecated_settings import process_temporary_deprecated_settings
@@ -37,9 +38,9 @@ class Configuration:
     Reuse this class for the bot, backtesting, hyperopt and every script that required configuration
     """
 
-    def __init__(self, args: dict[str, Any], runmode: Optional[RunMode] = None) -> None:
+    def __init__(self, args: dict[str, Any], runmode: RunMode | None = None) -> None:
         self.args = args
-        self.config: Optional[Config] = None
+        self.config: Config | None = None
         self.runmode = runmode
 
     def get_config(self) -> Config:
@@ -241,11 +242,7 @@ class Configuration:
             logstring="Parameter --enable-protections detected, enabling Protections. ...",
         )
 
-        if "use_max_market_positions" in self.args and not self.args["use_max_market_positions"]:
-            config.update({"use_max_market_positions": False})
-            logger.info("Parameter --disable-max-market-positions detected ...")
-            logger.info("max_open_trades set to unlimited ...")
-        elif "max_open_trades" in self.args and self.args["max_open_trades"]:
+        if "max_open_trades" in self.args and self.args["max_open_trades"]:
             config.update({"max_open_trades": self.args["max_open_trades"]})
             logger.info(
                 "Parameter --max-open-trades detected, overriding max_open_trades to: %s ...",
@@ -455,8 +452,8 @@ class Configuration:
         config: Config,
         argname: str,
         logstring: str,
-        logfun: Optional[Callable] = None,
-        deprecated_msg: Optional[str] = None,
+        logfun: Callable | None = None,
+        deprecated_msg: str | None = None,
     ) -> None:
         """
         :param config: Configuration dictionary

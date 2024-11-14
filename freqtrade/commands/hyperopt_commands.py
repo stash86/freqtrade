@@ -15,7 +15,7 @@ def start_hyperopt_list(args: dict[str, Any]) -> None:
     """
     from freqtrade.configuration import setup_utils_configuration
     from freqtrade.data.btanalysis import get_latest_hyperopt_file
-    from freqtrade.optimize.hyperopt_output import HyperoptOutput
+    from freqtrade.optimize.hyperopt.hyperopt_output import HyperoptOutput
     from freqtrade.optimize.hyperopt_tools import HyperoptTools
 
     config = setup_utils_configuration(args, RunMode.UTIL_NO_EXCHANGE)

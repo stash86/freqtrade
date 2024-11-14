@@ -2,7 +2,7 @@ import json
 import logging
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -42,7 +42,7 @@ class _CustomData(ModelBase):
     cd_type: Mapped[str] = mapped_column(String(25), nullable=False)
     cd_value: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=dt_now)
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     # Empty container value - not persisted, but filled with cd_value on query
     value: Any = None
@@ -62,7 +62,7 @@ class _CustomData(ModelBase):
 
     @classmethod
     def query_cd(
-        cls, key: Optional[str] = None, trade_id: Optional[int] = None
+        cls, key: str | None = None, trade_id: int | None = None
     ) -> Sequence["_CustomData"]:
         """
         Get all CustomData, if trade_id is not specified
@@ -117,7 +117,7 @@ class CustomDataWrapper:
         _CustomData.session.commit()
 
     @staticmethod
-    def get_custom_data(*, trade_id: int, key: Optional[str] = None) -> list[_CustomData]:
+    def get_custom_data(*, trade_id: int, key: str | None = None) -> list[_CustomData]:
         if CustomDataWrapper.use_db:
             filters = [
                 _CustomData.ft_trade_id == trade_id,

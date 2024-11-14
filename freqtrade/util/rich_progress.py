@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 from rich.console import ConsoleRenderable, Group, RichCast
 from rich.progress import Progress
@@ -8,8 +8,8 @@ class CustomProgress(Progress):
     def __init__(
         self,
         *args,
-        cust_objs: Optional[list[ConsoleRenderable]] = None,
-        cust_callables: Optional[list[Callable[[], ConsoleRenderable]]] = None,
+        cust_objs: list[ConsoleRenderable] | None = None,
+        cust_callables: list[Callable[[], ConsoleRenderable]] | None = None,
         **kwargs,
     ) -> None:
         self._cust_objs = cust_objs or []
@@ -17,7 +17,7 @@ class CustomProgress(Progress):
 
         super().__init__(*args, **kwargs)
 
-    def get_renderable(self) -> Union[ConsoleRenderable, RichCast, str]:
+    def get_renderable(self) -> ConsoleRenderable | RichCast | str:
         objs = [obj for obj in self._cust_objs]
         for cust_call in self._cust_callables:
             objs.append(cust_call())

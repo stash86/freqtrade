@@ -10,7 +10,7 @@ from base64 import urlsafe_b64decode
 from inspect import getfullargspec
 from os import walk
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from freqtrade.configuration.config_validation import validate_migrated_strategy_settings
 from freqtrade.constants import REQUIRED_ORDERTIF, REQUIRED_ORDERTYPES, USERPATH_STRATEGIES, Config
@@ -35,7 +35,7 @@ class StrategyResolver(IResolver):
     extra_path = "strategy_path"
 
     @staticmethod
-    def load_strategy(config: Optional[Config] = None) -> IStrategy:
+    def load_strategy(config: Config | None = None) -> IStrategy:
         """
         Load the custom class from config parameter
         :param config: configuration dictionary or None
@@ -246,7 +246,7 @@ class StrategyResolver(IResolver):
 
     @staticmethod
     def _load_strategy(
-        strategy_name: str, config: Config, extra_dir: Optional[str] = None
+        strategy_name: str, config: Config, extra_dir: str | None = None
     ) -> IStrategy:
         """
         Search and loads the specified strategy.

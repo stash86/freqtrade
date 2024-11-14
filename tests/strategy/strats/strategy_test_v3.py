@@ -1,7 +1,6 @@
 # pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
 
 from datetime import datetime
-from typing import Optional
 
 import talib.abstract as ta
 from pandas import DataFrame
@@ -175,7 +174,7 @@ class StrategyTestV3(IStrategy):
         current_rate: float,
         proposed_leverage: float,
         max_leverage: float,
-        entry_tag: Optional[str],
+        entry_tag: str | None,
         side: str,
         **kwargs,
     ) -> float:
@@ -190,14 +189,14 @@ class StrategyTestV3(IStrategy):
         current_time: datetime,
         current_rate: float,
         current_profit: float,
-        min_stake: Optional[float],
+        min_stake: float | None,
         max_stake: float,
         current_entry_rate: float,
         current_exit_rate: float,
         current_entry_profit: float,
         current_exit_profit: float,
         **kwargs,
-    ) -> Optional[float]:
+    ) -> float | None:
         if current_profit < -0.0075:
             orders = trade.select_filled_orders(trade.entry_side)
             return round(orders[0].stake_amount, 0)

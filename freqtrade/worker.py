@@ -5,8 +5,9 @@ Main Freqtrade worker class.
 import logging
 import time
 import traceback
+from collections.abc import Callable
 from os import getpid
-from typing import Any, Callable, Optional
+from typing import Any
 
 import sdnotify
 
@@ -27,7 +28,7 @@ class Worker:
     Freqtradebot worker class
     """
 
-    def __init__(self, args: dict[str, Any], config: Optional[Config] = None) -> None:
+    def __init__(self, args: dict[str, Any], config: Config | None = None) -> None:
         """
         Init all variables and objects the bot needs to work
         """
@@ -79,7 +80,7 @@ class Worker:
             if state == State.RELOAD_CONFIG:
                 self._reconfigure()
 
-    def _worker(self, old_state: Optional[State]) -> State:
+    def _worker(self, old_state: State | None) -> State:
         """
         The main routine that runs each throttling iteration and handles the states.
         :param old_state: the previous service state from the previous call
@@ -143,7 +144,7 @@ class Worker:
         self,
         func: Callable[..., Any],
         throttle_secs: float,
-        timeframe: Optional[str] = None,
+        timeframe: str | None = None,
         timeframe_offset: float = 1.0,
         *args,
         **kwargs,

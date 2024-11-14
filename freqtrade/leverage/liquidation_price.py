@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from freqtrade.enums import MarginMode
 from freqtrade.exceptions import DependencyException
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def update_liquidation_prices(
-    trade: Optional[LocalTrade] = None,
+    trade: LocalTrade | None = None,
     *,
     exchange: Exchange,
     wallets: Wallets,

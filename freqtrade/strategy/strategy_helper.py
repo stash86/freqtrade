@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 
 from freqtrade.exchange import timeframe_to_minutes
@@ -13,7 +11,7 @@ def merge_informative_pair(
     ffill: bool = True,
     append_timeframe: bool = True,
     date_column: str = "date",
-    suffix: Optional[str] = None,
+    suffix: str | None = None,
 ) -> pd.DataFrame:
     """
     Correctly merge informative samples to the original dataframe, avoiding lookahead bias.

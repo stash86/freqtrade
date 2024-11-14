@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import datasieve.transforms as ds
 import numpy as np
@@ -106,7 +106,7 @@ class IFreqaiModel(ABC):
         self._threads: list[threading.Thread] = []
         self._stop_event = threading.Event()
         self.metadata: dict[str, Any] = self.dd.load_global_metadata_from_disk()
-        self.data_provider: Optional[DataProvider] = None
+        self.data_provider: DataProvider | None = None
         self.max_system_threads = max(int(psutil.cpu_count() * 2 - 2), 1)
         self.can_short = True  # overridden in start() with strategy.can_short
         self.model: Any = None
@@ -185,6 +185,7 @@ class IFreqaiModel(ABC):
         Callback for Subclasses to override to include logic for shutting down resources
         when SIGINT is sent.
         """
+        self.dd.save_historic_predictions_to_disk()
         return
 
     def shutdown(self):
@@ -198,9 +199,16 @@ class IFreqaiModel(ABC):
         self.data_provider = None
         self._on_stop()
 
-        logger.info("Waiting on Training iteration")
-        for _thread in self._threads:
-            _thread.join()
+        if self.freqai_info.get("wait_for_training_iteration_on_reload", True):
+            logger.info("Waiting on Training iteration")
+            for _thread in self._threads:
+                _thread.join()
+        else:
+            logger.warning(
+                "Breaking current training iteration because "
+                "you set wait_for_training_iteration_on_reload to "
+                " False."
+            )
 
     def start_scanning(self, *args, **kwargs) -> None:
         """
@@ -286,7 +294,9 @@ class IFreqaiModel(ABC):
         # tr_backtest is the backtesting time range e.g. the week directly
         # following tr_train. Both of these windows slide through the
         # entire backtest
-        for tr_train, tr_backtest in zip(dk.training_timeranges, dk.backtesting_timeranges):
+        for tr_train, tr_backtest in zip(
+            dk.training_timeranges, dk.backtesting_timeranges, strict=False
+        ):
             (_, _) = self.dd.get_pair_dict_info(pair)
             train_it += 1
             total_trains = len(dk.backtesting_timeranges)

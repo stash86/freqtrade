@@ -8,8 +8,9 @@ from it
 import asyncio
 import logging
 import socket
+from collections.abc import Callable
 from threading import Thread
-from typing import Any, Callable, TypedDict, Union
+from typing import Any, TypedDict
 
 import websockets
 from pydantic import ValidationError
@@ -42,7 +43,7 @@ class Producer(TypedDict):
 logger = logging.getLogger(__name__)
 
 
-def schema_to_dict(schema: Union[WSMessageSchema, WSRequestSchema]):
+def schema_to_dict(schema: WSMessageSchema | WSRequestSchema):
     return schema.model_dump(exclude_none=True)
 
 
@@ -212,8 +213,7 @@ class ExternalMessageConsumer:
             except (
                 socket.gaierror,
                 ConnectionRefusedError,
-                websockets.exceptions.InvalidStatusCode,
-                websockets.exceptions.InvalidMessage,
+                websockets.exceptions.InvalidHandshake,
             ) as e:
                 logger.error(f"Connection Refused - {e} retrying in {self.sleep_time}s")
                 await asyncio.sleep(self.sleep_time)
@@ -282,9 +282,7 @@ class ExternalMessageConsumer:
                     logger.debug(e, exc_info=e)
                     raise
 
-    def send_producer_request(
-        self, producer_name: str, request: Union[WSRequestSchema, dict[str, Any]]
-    ):
+    def send_producer_request(self, producer_name: str, request: WSRequestSchema | dict[str, Any]):
         """
         Publish a message to the producer's message stream to be
         sent by the channel task.

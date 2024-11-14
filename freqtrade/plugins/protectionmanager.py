@@ -4,7 +4,7 @@ Protection manager class
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from freqtrade.constants import Config, LongShort
 from freqtrade.exceptions import ConfigurationError
@@ -47,9 +47,7 @@ class ProtectionManager:
         """
         return [{p.name: p.short_desc()} for p in self._protection_handlers]
 
-    def global_stop(
-        self, now: Optional[datetime] = None, side: LongShort = "long"
-    ) -> Optional[PairLock]:
+    def global_stop(self, now: datetime | None = None, side: LongShort = "long") -> PairLock | None:
         if not now:
             now = datetime.now(timezone.utc)
         result = None
@@ -64,8 +62,8 @@ class ProtectionManager:
         return result
 
     def stop_per_pair(
-        self, pair, now: Optional[datetime] = None, side: LongShort = "long"
-    ) -> Optional[PairLock]:
+        self, pair, now: datetime | None = None, side: LongShort = "long"
+    ) -> PairLock | None:
         if not now:
             now = datetime.now(timezone.utc)
         result = None

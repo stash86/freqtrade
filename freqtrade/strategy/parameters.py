@@ -7,7 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from contextlib import suppress
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from freqtrade.enums import HyperoptState
 from freqtrade.optimize.hyperopt_tools import HyperoptStateContainer
@@ -29,7 +29,7 @@ class BaseParameter(ABC):
     Defines a parameter that can be optimized by hyperopt.
     """
 
-    category: Optional[str]
+    category: str | None
     default: Any
     value: Any
     in_space: bool = False
@@ -39,7 +39,7 @@ class BaseParameter(ABC):
         self,
         *,
         default: Any,
-        space: Optional[str] = None,
+        space: str | None = None,
         optimize: bool = True,
         load: bool = True,
         **kwargs,
@@ -83,17 +83,17 @@ class BaseParameter(ABC):
 class NumericParameter(BaseParameter):
     """Internal parameter used for Numeric purposes"""
 
-    float_or_int = Union[int, float]
+    float_or_int = int | float
     default: float_or_int
     value: float_or_int
 
     def __init__(
         self,
-        low: Union[float_or_int, Sequence[float_or_int]],
-        high: Optional[float_or_int] = None,
+        low: float_or_int | Sequence[float_or_int],
+        high: float_or_int | None = None,
         *,
         default: float_or_int,
-        space: Optional[str] = None,
+        space: str | None = None,
         optimize: bool = True,
         load: bool = True,
         **kwargs,
@@ -132,11 +132,11 @@ class IntParameter(NumericParameter):
 
     def __init__(
         self,
-        low: Union[int, Sequence[int]],
-        high: Optional[int] = None,
+        low: int | Sequence[int],
+        high: int | None = None,
         *,
         default: int,
-        space: Optional[str] = None,
+        space: str | None = None,
         optimize: bool = True,
         load: bool = True,
         **kwargs,
@@ -186,11 +186,11 @@ class RealParameter(NumericParameter):
 
     def __init__(
         self,
-        low: Union[float, Sequence[float]],
-        high: Optional[float] = None,
+        low: float | Sequence[float],
+        high: float | None = None,
         *,
         default: float,
-        space: Optional[str] = None,
+        space: str | None = None,
         optimize: bool = True,
         load: bool = True,
         **kwargs,
@@ -225,12 +225,12 @@ class DecimalParameter(NumericParameter):
 
     def __init__(
         self,
-        low: Union[float, Sequence[float]],
-        high: Optional[float] = None,
+        low: float | Sequence[float],
+        high: float | None = None,
         *,
         default: float,
         decimals: int = 3,
-        space: Optional[str] = None,
+        space: str | None = None,
         optimize: bool = True,
         load: bool = True,
         **kwargs,
@@ -289,8 +289,8 @@ class CategoricalParameter(BaseParameter):
         self,
         categories: Sequence[Any],
         *,
-        default: Optional[Any] = None,
-        space: Optional[str] = None,
+        default: Any | None = None,
+        space: str | None = None,
         optimize: bool = True,
         load: bool = True,
         **kwargs,
@@ -339,8 +339,8 @@ class BooleanParameter(CategoricalParameter):
     def __init__(
         self,
         *,
-        default: Optional[Any] = None,
-        space: Optional[str] = None,
+        default: Any | None = None,
+        space: str | None = None,
         optimize: bool = True,
         load: bool = True,
         **kwargs,

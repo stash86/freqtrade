@@ -3,7 +3,6 @@ Price pair list filter
 """
 
 import logging
-from typing import Optional
 
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange.exchange_types import Ticker
@@ -101,7 +100,7 @@ class PriceFilter(IPairList):
             },
         }
 
-    def _validate_pair(self, pair: str, ticker: Optional[Ticker]) -> bool:
+    def _validate_pair(self, pair: str, ticker: Ticker | None) -> bool:
         """
         Check if one price-step (pip) is > than a certain barrier.
         :param pair: Pair that's currently validated

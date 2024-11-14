@@ -5,7 +5,7 @@ Exchange support utils
 import inspect
 from datetime import datetime, timedelta, timezone
 from math import ceil, floor
-from typing import Any, Optional
+from typing import Any
 
 import ccxt
 from ccxt import (
@@ -33,20 +33,18 @@ from freqtrade.util import FtPrecise
 CcxtModuleType = Any
 
 
-def is_exchange_known_ccxt(
-    exchange_name: str, ccxt_module: Optional[CcxtModuleType] = None
-) -> bool:
+def is_exchange_known_ccxt(exchange_name: str, ccxt_module: CcxtModuleType | None = None) -> bool:
     return exchange_name in ccxt_exchanges(ccxt_module)
 
 
-def ccxt_exchanges(ccxt_module: Optional[CcxtModuleType] = None) -> list[str]:
+def ccxt_exchanges(ccxt_module: CcxtModuleType | None = None) -> list[str]:
     """
     Return the list of all exchanges known to ccxt
     """
     return ccxt_module.exchanges if ccxt_module is not None else ccxt.exchanges
 
 
-def available_exchanges(ccxt_module: Optional[CcxtModuleType] = None) -> list[str]:
+def available_exchanges(ccxt_module: CcxtModuleType | None = None) -> list[str]:
     """
     Return exchanges available to the bot, i.e. non-bad exchanges in the ccxt list
     """
@@ -54,7 +52,7 @@ def available_exchanges(ccxt_module: Optional[CcxtModuleType] = None) -> list[st
     return [x for x in exchanges if validate_exchange(x)[0]]
 
 
-def validate_exchange(exchange: str) -> tuple[bool, str, Optional[ccxt.Exchange]]:
+def validate_exchange(exchange: str) -> tuple[bool, str, ccxt.Exchange | None]:
     """
     returns: can_use, reason, exchange_object
         with Reason including both missing and missing_opt
@@ -137,9 +135,7 @@ def list_available_exchanges(all_exchanges: bool) -> list[ValidExchangesType]:
     return exchanges_valid
 
 
-def date_minus_candles(
-    timeframe: str, candle_count: int, date: Optional[datetime] = None
-) -> datetime:
+def date_minus_candles(timeframe: str, candle_count: int, date: datetime | None = None) -> datetime:
     """
     subtract X candles from a date.
     :param timeframe: timeframe in string format (e.g. "5m")
@@ -166,7 +162,7 @@ def market_is_active(market: dict) -> bool:
     return market.get("active", True) is not False
 
 
-def amount_to_contracts(amount: float, contract_size: Optional[float]) -> float:
+def amount_to_contracts(amount: float, contract_size: float | None) -> float:
     """
     Convert amount to contracts.
     :param amount: amount to convert
@@ -179,7 +175,7 @@ def amount_to_contracts(amount: float, contract_size: Optional[float]) -> float:
         return amount
 
 
-def contracts_to_amount(num_contracts: float, contract_size: Optional[float]) -> float:
+def contracts_to_amount(num_contracts: float, contract_size: float | None) -> float:
     """
     Takes num-contracts and converts it to contract size
     :param num_contracts: number of contracts
@@ -194,7 +190,7 @@ def contracts_to_amount(num_contracts: float, contract_size: Optional[float]) ->
 
 
 def amount_to_precision(
-    amount: float, amount_precision: Optional[float], precisionMode: Optional[int]
+    amount: float, amount_precision: float | None, precisionMode: int | None
 ) -> float:
     """
     Returns the amount to buy or sell to a precision the Exchange accepts
@@ -224,9 +220,9 @@ def amount_to_precision(
 
 def amount_to_contract_precision(
     amount,
-    amount_precision: Optional[float],
-    precisionMode: Optional[int],
-    contract_size: Optional[float],
+    amount_precision: float | None,
+    precisionMode: int | None,
+    contract_size: float | None,
 ) -> float:
     """
     Returns the amount to buy or sell to a precision the Exchange accepts
@@ -285,8 +281,8 @@ def __price_to_precision_significant_digits(
 
 def price_to_precision(
     price: float,
-    price_precision: Optional[float],
-    precisionMode: Optional[int],
+    price_precision: float | None,
+    precisionMode: int | None,
     *,
     rounding_mode: int = ROUND,
 ) -> float:

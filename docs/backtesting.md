@@ -10,12 +10,14 @@ To learn how to get data for the pairs and exchange you're interested in, head o
 ```
 usage: freqtrade backtesting [-h] [-v] [--logfile FILE] [-V] [-c PATH]
                              [-d PATH] [--userdir PATH] [-s NAME]
-                             [--strategy-path PATH] [-i TIMEFRAME]
-                             [--timerange TIMERANGE]
-                             [--data-format-ohlcv {json,jsongz,hdf5}]
+                             [--strategy-path PATH]
+                             [--recursive-strategy-search]
+                             [--freqaimodel NAME] [--freqaimodel-path PATH]
+                             [-i TIMEFRAME] [--timerange TIMERANGE]
+                             [--data-format-ohlcv {json,jsongz,hdf5,feather,parquet}]
                              [--max-open-trades INT]
                              [--stake-amount STAKE_AMOUNT] [--fee FLOAT]
-                             [-p PAIRS [PAIRS ...]] [--eps] [--dmmp]
+                             [-p PAIRS [PAIRS ...]] [--eps]
                              [--enable-protections]
                              [--dry-run-wallet DRY_RUN_WALLET]
                              [--timeframe-detail TIMEFRAME_DETAIL]
@@ -24,8 +26,9 @@ usage: freqtrade backtesting [-h] [-v] [--logfile FILE] [-V] [-c PATH]
                              [--export-filename PATH]
                              [--breakdown {day,week,month} [{day,week,month} ...]]
                              [--cache {none,day,week,month}]
+                             [--freqai-backtest-live-models]
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -i TIMEFRAME, --timeframe TIMEFRAME
                         Specify timeframe (`1m`, `5m`, `30m`, `1h`, `1d`).
@@ -48,10 +51,6 @@ optional arguments:
   --eps, --enable-position-stacking
                         Allow buying the same pair multiple times (position
                         stacking).
-  --dmmp, --disable-max-market-positions
-                        Disable applying `max_open_trades` during backtest
-                        (same as setting `max_open_trades` to a very high
-                        number).
   --enable-protections, --enableprotections
                         Enable protections for backtesting.Will slow
                         backtesting down by a considerable amount, but will
@@ -80,10 +79,13 @@ optional arguments:
   --cache {none,day,week,month}
                         Load a cached backtest result no older than specified
                         age (default: day).
+  --freqai-backtest-live-models
+                        Run backtest with ready models.
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
-  --logfile FILE        Log to the file specified. Special values are:
+  --logfile FILE, --log-file FILE
+                        Log to the file specified. Special values are:
                         'syslog', 'journald'. See the documentation for more
                         details.
   -V, --version         show program's version number and exit
@@ -92,7 +94,7 @@ Common arguments:
                         `userdir/config.json` or `config.json` whichever
                         exists). Multiple --config options may be used. Can be
                         set to `-` to read config from stdin.
-  -d PATH, --datadir PATH
+  -d PATH, --datadir PATH, --data-dir PATH
                         Path to directory with historical backtesting data.
   --userdir PATH, --user-data-dir PATH
                         Path to userdata directory.
@@ -102,6 +104,12 @@ Strategy arguments:
                         Specify strategy class name which will be used by the
                         bot.
   --strategy-path PATH  Specify additional strategy lookup path.
+  --recursive-strategy-search
+                        Recursively search for a strategy in the strategies
+                        folder.
+  --freqaimodel NAME    Specify a custom freqaimodels.
+  --freqaimodel-path PATH
+                        Specify additional lookup path for freqaimodels.
 
 ```
 
@@ -558,6 +566,7 @@ Since backtesting lacks some detailed information about what happens within a ca
   - Stoploss
   - ROI
   - Trailing stoploss
+- Position reversals (futures only) happen if an entry signal in the other direction than the closing trade triggers at the candle the existing trade closes.
 
 Taking these assumptions, backtesting tries to mirror real trading as closely as possible. However, backtesting will **never** replace running a strategy in dry-run mode.
 Also, keep in mind that past results don't guarantee future success.

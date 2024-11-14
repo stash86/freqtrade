@@ -9,7 +9,7 @@ from pathlib import Path
 
 from freqtrade.constants import HYPEROPT_LOSS_BUILTIN, USERPATH_HYPEROPTS, Config
 from freqtrade.exceptions import OperationalException
-from freqtrade.optimize.hyperopt_loss_interface import IHyperOptLoss
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
 from freqtrade.resolvers import IResolver
 
 

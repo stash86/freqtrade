@@ -6,7 +6,7 @@ This module defines a base class for auto-hyperoptable strategies.
 import logging
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from freqtrade.constants import Config
 from freqtrade.exceptions import OperationalException
@@ -39,7 +39,7 @@ class HyperStrategyMixin:
         # Init/loading of parameters is done as part of ft_bot_start().
 
     def enumerate_parameters(
-        self, category: Optional[str] = None
+        self, category: str | None = None
     ) -> Iterator[tuple[str, BaseParameter]]:
         """
         Find all optimizable parameters and return (name, attr) iterator.
@@ -190,7 +190,7 @@ class HyperStrategyMixin:
 
 
 def detect_parameters(
-    obj: Union[HyperStrategyMixin, type[HyperStrategyMixin]], category: str
+    obj: HyperStrategyMixin | type[HyperStrategyMixin], category: str
 ) -> Iterator[tuple[str, BaseParameter]]:
     """
     Detect all parameters for 'category' for "obj"

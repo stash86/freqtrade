@@ -2450,7 +2450,7 @@ def test_MarketCapPairList_filter_special_no_pair_from_coingecko(
     assert pm.whitelist == []
 
 
-def test_MarketCapPairList_exceptions(mocker, default_conf_usdt):
+def test_MarketCapPairList_exceptions(mocker, default_conf_usdt, caplog):
     exchange = get_patched_exchange(mocker, default_conf_usdt)
     default_conf_usdt["pairlists"] = [{"method": "MarketCapPairList"}]
     with pytest.raises(OperationalException, match=r"`number_assets` not specified.*"):
@@ -2458,13 +2458,11 @@ def test_MarketCapPairList_exceptions(mocker, default_conf_usdt):
         PairListManager(exchange, default_conf_usdt)
 
     default_conf_usdt["pairlists"] = [
-        {"method": "MarketCapPairList", "number_assets": 20, "max_rank": 260}
+        {"method": "MarketCapPairList", "number_assets": 20, "max_rank": 500}
     ]
-    with pytest.raises(
-        OperationalException, match="This filter only support marketcap rank up to 250."
-    ):
+    with caplog.at_level(logging.WARNING):
         PairListManager(exchange, default_conf_usdt)
-
+    assert log_has_re("The max rank you have set \\(500\\) is quite high", caplog)
     # Test invalid coinmarkets list
     mocker.patch(
         "freqtrade.plugins.pairlist.MarketCapPairList.FtCoinGeckoApi.get_coins_categories_list",

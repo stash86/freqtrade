@@ -4,7 +4,7 @@ This module loads custom exchanges
 
 import logging
 from inspect import isclass
-from typing import Any, Optional
+from typing import Any
 
 import freqtrade.exchange as exchanges
 from freqtrade.constants import Config, ExchangeConfig
@@ -26,7 +26,7 @@ class ExchangeResolver(IResolver):
     def load_exchange(
         config: Config,
         *,
-        exchange_config: Optional[ExchangeConfig] = None,
+        exchange_config: ExchangeConfig | None = None,
         validate: bool = True,
         load_leverage_tiers: bool = False,
     ) -> Exchange:

@@ -5,7 +5,6 @@ Volatility pairlist filter
 import logging
 import sys
 from datetime import timedelta
-from typing import Optional
 
 import numpy as np
 from cachetools import TTLCache
@@ -37,7 +36,7 @@ class VolatilityFilter(IPairList):
         self._max_volatility = self._pairlistconfig.get("max_volatility", sys.maxsize)
         self._refresh_period = self._pairlistconfig.get("refresh_period", 1440)
         self._def_candletype = self._config["candle_type_def"]
-        self._sort_direction: Optional[str] = self._pairlistconfig.get("sort_direction", None)
+        self._sort_direction: str | None = self._pairlistconfig.get("sort_direction", None)
 
         self._pair_cache: TTLCache = TTLCache(maxsize=1000, ttl=self._refresh_period)
 
@@ -147,7 +146,7 @@ class VolatilityFilter(IPairList):
             )
         return resulting_pairlist
 
-    def _calculate_volatility(self, pair: str, daily_candles: DataFrame) -> Optional[float]:
+    def _calculate_volatility(self, pair: str, daily_candles: DataFrame) -> float | None:
         # Check symbol in cache
         if (volatility_avg := self._pair_cache.get(pair, None)) is not None:
             return volatility_avg

@@ -1,7 +1,7 @@
 import logging
 from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from pandas import DataFrame
 
@@ -28,7 +28,7 @@ class BaseAnalysis:
     def __init__(self, config: dict[str, Any], strategy_obj: dict):
         self.failed_bias_check = True
         self.full_varHolder = VarHolder()
-        self.exchange: Optional[Any] = None
+        self.exchange: Any | None = None
         self._fee = None
 
         # pull variables the scope of the lookahead_analysis-instance

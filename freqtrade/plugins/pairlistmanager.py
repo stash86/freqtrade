@@ -4,7 +4,6 @@ PairList manager class
 
 import logging
 from functools import partial
-from typing import Optional
 
 from cachetools import TTLCache, cached
 
@@ -24,16 +23,14 @@ logger = logging.getLogger(__name__)
 
 
 class PairListManager(LoggingMixin):
-    def __init__(
-        self, exchange, config: Config, dataprovider: Optional[DataProvider] = None
-    ) -> None:
+    def __init__(self, exchange, config: Config, dataprovider: DataProvider | None = None) -> None:
         self._exchange = exchange
         self._config = config
         self._whitelist = self._config["exchange"].get("pair_whitelist")
         self._blacklist = self._config["exchange"].get("pair_blacklist", [])
         self._pairlist_handlers: list[IPairList] = []
         self._tickers_needed = False
-        self._dataprovider: Optional[DataProvider] = dataprovider
+        self._dataprovider: DataProvider | None = dataprovider
         for pairlist_handler_config in self._config.get("pairlists", []):
             pairlist_handler = PairListResolver.load_pairlist(
                 pairlist_handler_config["method"],
@@ -193,7 +190,7 @@ class PairListManager(LoggingMixin):
         return whitelist
 
     def create_pair_list(
-        self, pairs: list[str], timeframe: Optional[str] = None
+        self, pairs: list[str], timeframe: str | None = None
     ) -> ListPairsWithTimeframes:
         """
         Create list of pair tuples with (pair, timeframe)

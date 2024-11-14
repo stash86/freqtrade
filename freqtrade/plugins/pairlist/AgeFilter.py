@@ -5,7 +5,6 @@ Minimum age (days listed) pair list filter
 import logging
 from copy import deepcopy
 from datetime import timedelta
-from typing import Optional
 
 from pandas import DataFrame
 
@@ -126,7 +125,7 @@ class AgeFilter(IPairList):
         self.log_once(f"Validated {len(pairlist)} pairs.", logger.info)
         return pairlist
 
-    def _validate_pair_loc(self, pair: str, daily_candles: Optional[DataFrame]) -> bool:
+    def _validate_pair_loc(self, pair: str, daily_candles: DataFrame | None) -> bool:
         """
         Validate age for the ticker
         :param pair: Pair that's currently validated

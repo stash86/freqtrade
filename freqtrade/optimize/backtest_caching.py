@@ -1,7 +1,6 @@
 import hashlib
 from copy import deepcopy
 from pathlib import Path
-from typing import Union
 
 import rapidjson
 
@@ -38,7 +37,7 @@ def get_strategy_run_id(strategy) -> str:
     return digest.hexdigest().lower()
 
 
-def get_backtest_metadata_filename(filename: Union[Path, str]) -> Path:
+def get_backtest_metadata_filename(filename: Path | str) -> Path:
     """Return metadata filename for specified backtest results file."""
     filename = Path(filename)
     return filename.parent / Path(f"{filename.stem}.meta{filename.suffix}")

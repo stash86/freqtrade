@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 from pandas import DataFrame, to_datetime
 
@@ -126,7 +125,7 @@ class IDataHandler(ABC):
 
     @abstractmethod
     def _ohlcv_load(
-        self, pair: str, timeframe: str, timerange: Optional[TimeRange], candle_type: CandleType
+        self, pair: str, timeframe: str, timerange: TimeRange | None, candle_type: CandleType
     ) -> DataFrame:
         """
         Internal method used to load data for one pair from disk.
@@ -247,7 +246,7 @@ class IDataHandler(ABC):
 
     @abstractmethod
     def _trades_load(
-        self, pair: str, trading_mode: TradingMode, timerange: Optional[TimeRange] = None
+        self, pair: str, trading_mode: TradingMode, timerange: TimeRange | None = None
     ) -> DataFrame:
         """
         Load a pair from file, either .json.gz or .json
@@ -282,7 +281,7 @@ class IDataHandler(ABC):
         return False
 
     def trades_load(
-        self, pair: str, trading_mode: TradingMode, timerange: Optional[TimeRange] = None
+        self, pair: str, trading_mode: TradingMode, timerange: TimeRange | None = None
     ) -> DataFrame:
         """
         Load a pair from file, either .json.gz or .json
@@ -370,7 +369,7 @@ class IDataHandler(ABC):
         timeframe: str,
         candle_type: CandleType,
         *,
-        timerange: Optional[TimeRange] = None,
+        timerange: TimeRange | None = None,
         fill_missing: bool = True,
         drop_incomplete: bool = False,
         startup_candles: int = 0,
@@ -566,7 +565,7 @@ def get_datahandlerclass(datatype: str) -> type[IDataHandler]:
 
 
 def get_datahandler(
-    datadir: Path, data_format: Optional[str] = None, data_handler: Optional[IDataHandler] = None
+    datadir: Path, data_format: str | None = None, data_handler: IDataHandler | None = None
 ) -> IDataHandler:
     """
     :param datadir: Folder to save data

@@ -2,12 +2,11 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
 
 from freqtrade.constants import BuySell
 from freqtrade.enums import MarginMode, PriceType, TradingMode
 from freqtrade.exchange import Exchange
-from freqtrade.exchange.exchange_types import FtHas
+from freqtrade.exchange.exchange_types import CcxtOrder, FtHas
 from freqtrade.misc import safe_value_fallback2
 
 
@@ -74,7 +73,7 @@ class Gate(Exchange):
         return params
 
     def get_trades_for_order(
-        self, order_id: str, pair: str, since: datetime, params: Optional[dict] = None
+        self, order_id: str, pair: str, since: datetime, params: dict | None = None
     ) -> list:
         trades = super().get_trades_for_order(order_id, pair, since, params)
 
@@ -99,10 +98,12 @@ class Gate(Exchange):
                             }
         return trades
 
-    def get_order_id_conditional(self, order: dict[str, Any]) -> str:
+    def get_order_id_conditional(self, order: CcxtOrder) -> str:
         return safe_value_fallback2(order, order, "id_stop", "id")
 
-    def fetch_stoploss_order(self, order_id: str, pair: str, params: Optional[dict] = None) -> dict:
+    def fetch_stoploss_order(
+        self, order_id: str, pair: str, params: dict | None = None
+    ) -> CcxtOrder:
         order = self.fetch_order(order_id=order_id, pair=pair, params={"stop": True})
         if order.get("status", "open") == "closed":
             # Places a real order - which we need to fetch explicitly.
@@ -119,7 +120,5 @@ class Gate(Exchange):
                 return order1
         return order
 
-    def cancel_stoploss_order(
-        self, order_id: str, pair: str, params: Optional[dict] = None
-    ) -> dict:
+    def cancel_stoploss_order(self, order_id: str, pair: str, params: dict | None = None) -> dict:
         return self.cancel_order(order_id=order_id, pair=pair, params={"stop": True})
