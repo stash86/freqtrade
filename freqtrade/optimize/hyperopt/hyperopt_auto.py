@@ -5,8 +5,8 @@ This module implements a convenience auto-hyperopt class, which can be used toge
 """
 
 import logging
+from collections.abc import Callable
 from contextlib import suppress
-from typing import Callable
 
 from freqtrade.exceptions import OperationalException
 
@@ -14,7 +14,7 @@ from freqtrade.exceptions import OperationalException
 with suppress(ImportError):
     from skopt.space import Dimension
 
-from freqtrade.optimize.hyperopt_interface import EstimatorType, IHyperOpt
+from freqtrade.optimize.hyperopt.hyperopt_interface import EstimatorType, IHyperOpt
 
 
 logger = logging.getLogger(__name__)

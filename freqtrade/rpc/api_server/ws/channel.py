@@ -4,7 +4,7 @@ import time
 from collections import deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import uuid4
 
 from fastapi import WebSocketDisconnect
@@ -30,7 +30,7 @@ class WebSocketChannel:
     def __init__(
         self,
         websocket: WebSocketType,
-        channel_id: Optional[str] = None,
+        channel_id: str | None = None,
         serializer_cls: type[WebSocketSerializer] = HybridJSONWebSocketSerializer,
         send_throttle: float = 0.01,
     ):
@@ -80,9 +80,7 @@ class WebSocketChannel:
             # maximum of 3 seconds per message
             self._send_high_limit = min(max(self.avg_send_time * 2, 1), 3)
 
-    async def send(
-        self, message: Union[WSMessageSchemaType, dict[str, Any]], use_timeout: bool = False
-    ):
+    async def send(self, message: WSMessageSchemaType | dict[str, Any], use_timeout: bool = False):
         """
         Send a message on the wrapped websocket. If the sending
         takes too long, it will raise a TimeoutError and

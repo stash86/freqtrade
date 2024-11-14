@@ -1,7 +1,8 @@
 import logging
+from collections.abc import Callable
 from copy import deepcopy
 from functools import wraps
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from freqtrade.exceptions import StrategyError
 from freqtrade.persistence import Trade

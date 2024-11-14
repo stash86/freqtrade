@@ -1,4 +1,5 @@
 from freqtrade.util import decimals_per_coin, fmt_coin, round_value
+from freqtrade.util.formatters import fmt_coin2
 
 
 def test_decimals_per_coin():
@@ -23,6 +24,16 @@ def test_fmt_coin():
     assert fmt_coin(0.1274512123, "BTC", False) == "0.12745121"
     assert fmt_coin(0.1274512123, "ETH", False) == "0.12745"
     assert fmt_coin(222.2, "USDT", False, True) == "222.200"
+
+
+def test_fmt_coin2():
+    assert fmt_coin2(222.222222, "USDT") == "222.222222 USDT"
+    assert fmt_coin2(222.2, "XRP", 3, keep_trailing_zeros=True) == "222.200 XRP"
+    assert fmt_coin2(222.2, "USDT") == "222.2 USDT"
+    assert fmt_coin2(222.12745, "EUR") == "222.12745 EUR"
+    assert fmt_coin2(0.1274512123, "BTC") == "0.12745121 BTC"
+    assert fmt_coin2(0.1274512123, "ETH") == "0.12745121 ETH"
+    assert fmt_coin2(0.00001245, "PEPE") == "0.00001245 PEPE"
 
 
 def test_round_value():

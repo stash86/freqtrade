@@ -246,7 +246,6 @@ reportTypedDictNotRequiredAccess = false  # 27
 [tool.ruff]
 line-length = 100
 extend-exclude = [".env", ".venv"]
-target-version = "py39"
 
 [tool.ruff.lint]
 extend-select = [

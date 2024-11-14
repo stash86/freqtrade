@@ -8,7 +8,7 @@ Common Interface for bot and strategy to access data.
 import logging
 from collections import deque
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from pandas import DataFrame, Timedelta, Timestamp, to_timedelta
 
@@ -40,17 +40,17 @@ class DataProvider:
     def __init__(
         self,
         config: Config,
-        exchange: Optional[Exchange],
+        exchange: Exchange | None,
         pairlists=None,
-        rpc: Optional[RPCManager] = None,
+        rpc: RPCManager | None = None,
     ) -> None:
         self._config = config
         self._exchange = exchange
         self._pairlists = pairlists
         self.__rpc = rpc
         self.__cached_pairs: dict[PairWithTimeframe, tuple[DataFrame, datetime]] = {}
-        self.__slice_index: Optional[int] = None
-        self.__slice_date: Optional[datetime] = None
+        self.__slice_index: int | None = None
+        self.__slice_date: datetime | None = None
 
         self.__cached_pairs_backtesting: dict[PairWithTimeframe, DataFrame] = {}
         self.__producer_pairs_df: dict[
@@ -255,8 +255,8 @@ class DataProvider:
     def get_producer_df(
         self,
         pair: str,
-        timeframe: Optional[str] = None,
-        candle_type: Optional[CandleType] = None,
+        timeframe: str | None = None,
+        candle_type: CandleType | None = None,
         producer_name: str = "default",
     ) -> tuple[DataFrame, datetime]:
         """
@@ -349,7 +349,7 @@ class DataProvider:
         return total_candles
 
     def get_pair_dataframe(
-        self, pair: str, timeframe: Optional[str] = None, candle_type: str = ""
+        self, pair: str, timeframe: str | None = None, candle_type: str = ""
     ) -> DataFrame:
         """
         Return pair candle (OHLCV) data, either live or cached historical -- depending
@@ -437,7 +437,7 @@ class DataProvider:
     def refresh(
         self,
         pairlist: ListPairsWithTimeframes,
-        helping_pairs: Optional[ListPairsWithTimeframes] = None,
+        helping_pairs: ListPairsWithTimeframes | None = None,
     ) -> None:
         """
         Refresh data, called with each cycle
@@ -471,7 +471,7 @@ class DataProvider:
         return list(self._exchange._klines.keys())
 
     def ohlcv(
-        self, pair: str, timeframe: Optional[str] = None, copy: bool = True, candle_type: str = ""
+        self, pair: str, timeframe: str | None = None, copy: bool = True, candle_type: str = ""
     ) -> DataFrame:
         """
         Get candle (OHLCV) data for the given pair as DataFrame
@@ -497,7 +497,7 @@ class DataProvider:
             return DataFrame()
 
     def trades(
-        self, pair: str, timeframe: Optional[str] = None, copy: bool = True, candle_type: str = ""
+        self, pair: str, timeframe: str | None = None, copy: bool = True, candle_type: str = ""
     ) -> DataFrame:
         """
         Get candle (TRADES) data for the given pair as DataFrame
@@ -529,7 +529,7 @@ class DataProvider:
             )
             return trades_df
 
-    def market(self, pair: str) -> Optional[dict[str, Any]]:
+    def market(self, pair: str) -> dict[str, Any] | None:
         """
         Return market data for the pair
         :param pair: Pair to get the data for

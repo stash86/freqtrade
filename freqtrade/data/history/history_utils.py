@@ -2,7 +2,6 @@ import logging
 import operator
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 from pandas import DataFrame, concat
 
@@ -37,12 +36,12 @@ def load_pair_history(
     timeframe: str,
     datadir: Path,
     *,
-    timerange: Optional[TimeRange] = None,
+    timerange: TimeRange | None = None,
     fill_up_missing: bool = True,
     drop_incomplete: bool = False,
     startup_candles: int = 0,
-    data_format: Optional[str] = None,
-    data_handler: Optional[IDataHandler] = None,
+    data_format: str | None = None,
+    data_handler: IDataHandler | None = None,
     candle_type: CandleType = CandleType.SPOT,
 ) -> DataFrame:
     """
@@ -79,13 +78,13 @@ def load_data(
     timeframe: str,
     pairs: list[str],
     *,
-    timerange: Optional[TimeRange] = None,
+    timerange: TimeRange | None = None,
     fill_up_missing: bool = True,
     startup_candles: int = 0,
     fail_without_data: bool = False,
     data_format: str = "feather",
     candle_type: CandleType = CandleType.SPOT,
-    user_futures_funding_rate: Optional[int] = None,
+    user_futures_funding_rate: int | None = None,
 ) -> dict[str, DataFrame]:
     """
     Load ohlcv history data for a list of pairs.
@@ -137,8 +136,8 @@ def refresh_data(
     timeframe: str,
     pairs: list[str],
     exchange: Exchange,
-    data_format: Optional[str] = None,
-    timerange: Optional[TimeRange] = None,
+    data_format: str | None = None,
+    timerange: TimeRange | None = None,
     candle_type: CandleType,
 ) -> None:
     """
@@ -168,11 +167,11 @@ def refresh_data(
 def _load_cached_data_for_updating(
     pair: str,
     timeframe: str,
-    timerange: Optional[TimeRange],
+    timerange: TimeRange | None,
     data_handler: IDataHandler,
     candle_type: CandleType,
     prepend: bool = False,
-) -> tuple[DataFrame, Optional[int], Optional[int]]:
+) -> tuple[DataFrame, int | None, int | None]:
     """
     Load cached data to download more data.
     If timerange is passed in, checks whether data from an before the stored data will be
@@ -220,8 +219,8 @@ def _download_pair_history(
     exchange: Exchange,
     timeframe: str = "5m",
     new_pairs_days: int = 30,
-    data_handler: Optional[IDataHandler] = None,
-    timerange: Optional[TimeRange] = None,
+    data_handler: IDataHandler | None = None,
+    timerange: TimeRange | None = None,
     candle_type: CandleType,
     erase: bool = False,
     prepend: bool = False,
@@ -322,10 +321,10 @@ def refresh_backtest_ohlcv_data(
     timeframes: list[str],
     datadir: Path,
     trading_mode: str,
-    timerange: Optional[TimeRange] = None,
+    timerange: TimeRange | None = None,
     new_pairs_days: int = 30,
     erase: bool = False,
-    data_format: Optional[str] = None,
+    data_format: str | None = None,
     prepend: bool = False,
 ) -> list[str]:
     """
@@ -404,7 +403,7 @@ def _download_trades_history(
     pair: str,
     *,
     new_pairs_days: int = 30,
-    timerange: Optional[TimeRange] = None,
+    timerange: TimeRange | None = None,
     data_handler: IDataHandler,
     trading_mode: TradingMode,
 ) -> bool:

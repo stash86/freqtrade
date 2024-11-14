@@ -4,7 +4,7 @@ This page explains how to customize your strategies, add new indicators and set 
 
 If you haven't already, please familiarize yourself with:
 
-- the [Freqtrade strategy 101](freqtrade-101.md), which provides a quick start to strategy development
+- the [Freqtrade strategy 101](strategy-101.md), which provides a quick start to strategy development
 - the [Freqtrade bot basics](bot-basics.md), which provides overall info on how the bot operates
 
 ## Develop your own strategy

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Union
+from typing import Any
 
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import HParam
@@ -27,7 +27,7 @@ class TensorboardCallback(BaseCallback):
             # "batch_size": self.model.batch_size,
             # "n_steps": self.model.n_steps,
         }
-        metric_dict: dict[str, Union[float, int]] = {
+        metric_dict: dict[str, float | int] = {
             "eval/mean_reward": 0,
             "rollout/ep_rew_mean": 0,
             "rollout/ep_len_mean": 0,

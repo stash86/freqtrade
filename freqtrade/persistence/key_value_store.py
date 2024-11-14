@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
-from typing import ClassVar, Optional, Union
+from typing import ClassVar
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from freqtrade.persistence.base import ModelBase, SessionType
 
 
-ValueTypes = Union[str, datetime, float, int]
+ValueTypes = str | datetime | float | int
 
 
 class ValueTypesEnum(str, Enum):
@@ -37,10 +37,10 @@ class _KeyValueStoreModel(ModelBase):
 
     value_type: Mapped[ValueTypesEnum] = mapped_column(String(20), nullable=False)
 
-    string_value: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    datetime_value: Mapped[Optional[datetime]]
-    float_value: Mapped[Optional[float]]
-    int_value: Mapped[Optional[int]]
+    string_value: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    datetime_value: Mapped[datetime | None]
+    float_value: Mapped[float | None]
+    int_value: Mapped[int | None]
 
 
 class KeyValueStore:
@@ -97,7 +97,7 @@ class KeyValueStore:
             _KeyValueStoreModel.session.commit()
 
     @staticmethod
-    def get_value(key: KeyStoreKeys) -> Optional[ValueTypes]:
+    def get_value(key: KeyStoreKeys) -> ValueTypes | None:
         """
         Get the value for the given key.
         :param key: Key to get the value for
@@ -121,7 +121,7 @@ class KeyValueStore:
         raise ValueError(f"Unknown value type {kv.value_type}")  # pragma: no cover
 
     @staticmethod
-    def get_string_value(key: KeyStoreKeys) -> Optional[str]:
+    def get_string_value(key: KeyStoreKeys) -> str | None:
         """
         Get the value for the given key.
         :param key: Key to get the value for
@@ -139,7 +139,7 @@ class KeyValueStore:
         return kv.string_value
 
     @staticmethod
-    def get_datetime_value(key: KeyStoreKeys) -> Optional[datetime]:
+    def get_datetime_value(key: KeyStoreKeys) -> datetime | None:
         """
         Get the value for the given key.
         :param key: Key to get the value for
@@ -157,7 +157,7 @@ class KeyValueStore:
         return kv.datetime_value.replace(tzinfo=timezone.utc)
 
     @staticmethod
-    def get_float_value(key: KeyStoreKeys) -> Optional[float]:
+    def get_float_value(key: KeyStoreKeys) -> float | None:
         """
         Get the value for the given key.
         :param key: Key to get the value for
@@ -175,7 +175,7 @@ class KeyValueStore:
         return kv.float_value
 
     @staticmethod
-    def get_int_value(key: KeyStoreKeys) -> Optional[int]:
+    def get_int_value(key: KeyStoreKeys) -> int | None:
         """
         Get the value for the given key.
         :param key: Key to get the value for

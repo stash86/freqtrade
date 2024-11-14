@@ -253,8 +253,7 @@ async def create_client(
         except (
             socket.gaierror,
             ConnectionRefusedError,
-            websockets.exceptions.InvalidStatusCode,
-            websockets.exceptions.InvalidMessage,
+            websockets.exceptions.InvalidHandshake,
         ) as e:
             logger.error(f"Connection Refused - {e} retrying in {sleep_time}s")
             await asyncio.sleep(sleep_time)

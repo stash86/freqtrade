@@ -1069,7 +1069,6 @@ def test_create_dry_run_order(default_conf, mocker, side, exchange_name, leverag
     assert order["type"] == "limit"
     assert order["symbol"] == "ETH/BTC"
     assert order["amount"] == 1
-    assert order["leverage"] == leverage
     assert order["cost"] == 1 * 200
 
 
@@ -1274,6 +1273,9 @@ def test_create_order(default_conf, mocker, side, ordertype, rate, marketprice, 
     exchange._set_leverage = MagicMock()
     exchange.set_margin_mode = MagicMock()
 
+    # Only applies to gate
+    price_req = exchange._ft_has.get("marketOrderRequiresPrice", False)
+
     order = exchange.create_order(
         pair="XLTCUSDT", ordertype=ordertype, side=side, amount=1, rate=rate, leverage=1.0
     )
@@ -1286,7 +1288,9 @@ def test_create_order(default_conf, mocker, side, ordertype, rate, marketprice, 
     assert api_mock.create_order.call_args[0][1] == ordertype
     assert api_mock.create_order.call_args[0][2] == side
     assert api_mock.create_order.call_args[0][3] == 1
-    assert api_mock.create_order.call_args[0][4] is rate
+    assert api_mock.create_order.call_args[0][4] == (
+        rate if price_req or not (bool(marketprice) and side == "sell") else None
+    )
     assert exchange._set_leverage.call_count == 0
     assert exchange.set_margin_mode.call_count == 0
 
@@ -1364,7 +1368,7 @@ def test_buy_prod(default_conf, mocker, exchange_name):
     assert api_mock.create_order.call_args[0][1] == order_type
     assert api_mock.create_order.call_args[0][2] == "buy"
     assert api_mock.create_order.call_args[0][3] == 1
-    if exchange._order_needs_price(order_type):
+    if exchange._order_needs_price("buy", order_type):
         assert api_mock.create_order.call_args[0][4] == 200
     else:
         assert api_mock.create_order.call_args[0][4] is None
@@ -1511,7 +1515,7 @@ def test_buy_considers_time_in_force(default_conf, mocker, exchange_name):
     assert api_mock.create_order.call_args[0][1] == order_type
     assert api_mock.create_order.call_args[0][2] == "buy"
     assert api_mock.create_order.call_args[0][3] == 1
-    if exchange._order_needs_price(order_type):
+    if exchange._order_needs_price("buy", order_type):
         assert api_mock.create_order.call_args[0][4] == 200
     else:
         assert api_mock.create_order.call_args[0][4] is None
@@ -1556,7 +1560,7 @@ def test_sell_prod(default_conf, mocker, exchange_name):
     assert api_mock.create_order.call_args[0][1] == order_type
     assert api_mock.create_order.call_args[0][2] == "sell"
     assert api_mock.create_order.call_args[0][3] == 1
-    if exchange._order_needs_price(order_type):
+    if exchange._order_needs_price("sell", order_type):
         assert api_mock.create_order.call_args[0][4] == 200
     else:
         assert api_mock.create_order.call_args[0][4] is None
@@ -1666,7 +1670,7 @@ def test_sell_considers_time_in_force(default_conf, mocker, exchange_name):
     assert api_mock.create_order.call_args[0][1] == order_type
     assert api_mock.create_order.call_args[0][2] == "sell"
     assert api_mock.create_order.call_args[0][3] == 1
-    if exchange._order_needs_price(order_type):
+    if exchange._order_needs_price("sell", order_type):
         assert api_mock.create_order.call_args[0][4] == 200
     else:
         assert api_mock.create_order.call_args[0][4] is None

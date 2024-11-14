@@ -5,7 +5,6 @@ This module contains the argument manager class
 import logging
 import re
 from datetime import datetime, timezone
-from typing import Optional
 
 from typing_extensions import Self
 
@@ -25,24 +24,24 @@ class TimeRange:
 
     def __init__(
         self,
-        starttype: Optional[str] = None,
-        stoptype: Optional[str] = None,
+        starttype: str | None = None,
+        stoptype: str | None = None,
         startts: int = 0,
         stopts: int = 0,
     ):
-        self.starttype: Optional[str] = starttype
-        self.stoptype: Optional[str] = stoptype
+        self.starttype: str | None = starttype
+        self.stoptype: str | None = stoptype
         self.startts: int = startts
         self.stopts: int = stopts
 
     @property
-    def startdt(self) -> Optional[datetime]:
+    def startdt(self) -> datetime | None:
         if self.startts:
             return datetime.fromtimestamp(self.startts, tz=timezone.utc)
         return None
 
     @property
-    def stopdt(self) -> Optional[datetime]:
+    def stopdt(self) -> datetime | None:
         if self.stopts:
             return datetime.fromtimestamp(self.stopts, tz=timezone.utc)
         return None
@@ -120,7 +119,7 @@ class TimeRange:
             self.starttype = "date"
 
     @classmethod
-    def parse_timerange(cls, text: Optional[str]) -> Self:
+    def parse_timerange(cls, text: str | None) -> Self:
         """
         Parse the value of the argument --timerange to determine what is the range desired
         :param text: value from --timerange

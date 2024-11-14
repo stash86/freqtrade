@@ -143,6 +143,7 @@ Most properties here can be None as they are dependent on the exchange response.
 | `remaining` | float | Remaining amount |
 | `cost` | float | Cost of the order - usually average * filled (*Exchange dependent on futures, may contain the cost with or without leverage and may be in contracts.*) |
 | `stake_amount` | float | Stake amount used for this order. *Added in 2023.7.* |
+| `stake_amount_filled` | float | Filled Stake amount used for this order. *Added in 2024.11.* |
 | `order_date` | datetime | Order creation date **use `order_date_utc` instead** |
 | `order_date_utc` | datetime | Order creation date (in UTC) |
 | `order_fill_date` | datetime |  Order fill date **use `order_fill_utc` instead** |

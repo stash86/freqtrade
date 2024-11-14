@@ -1,5 +1,6 @@
 import json
 import re
+import shutil
 from datetime import datetime, timedelta
 from io import BytesIO
 from pathlib import Path
@@ -44,7 +45,7 @@ from freqtrade.enums import RunMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.persistence.models import init_db
 from freqtrade.persistence.pairlock_middleware import PairLocks
-from freqtrade.util import dt_floor_day, dt_now, dt_utc
+from freqtrade.util import dt_utc
 from tests.conftest import (
     CURRENT_TEST_STRATEGY,
     EXMS,
@@ -571,7 +572,7 @@ def test_create_datadir_failed(caplog):
     assert log_has("`create-userdir` requires --userdir to be set.", caplog)
 
 
-def test_create_datadir(caplog, mocker):
+def test_create_datadir(mocker):
     cud = mocker.patch(
         "freqtrade.configuration.directory_operations.create_userdata_dir", MagicMock()
     )
@@ -585,26 +586,46 @@ def test_create_datadir(caplog, mocker):
     assert csf.call_count == 1
 
 
-def test_start_new_strategy(mocker, caplog):
-    wt_mock = mocker.patch.object(Path, "write_text", MagicMock())
-    mocker.patch.object(Path, "exists", MagicMock(return_value=False))
+def test_start_new_strategy(caplog, user_dir):
+    strategy_dir = user_dir / "strategies"
+    strategy_dir.mkdir(parents=True, exist_ok=True)
 
+    assert strategy_dir.is_dir()
     args = ["new-strategy", "--strategy", "CoolNewStrategy"]
     start_new_strategy(get_args(args))
+    assert strategy_dir.exists()
+    assert (strategy_dir / "CoolNewStrategy.py").exists()
 
-    assert wt_mock.call_count == 1
-    assert "CoolNewStrategy" in wt_mock.call_args_list[0][0][0]
     assert log_has_re("Writing strategy to .*", caplog)
 
-    mocker.patch("freqtrade.configuration.setup_utils_configuration")
-    mocker.patch.object(Path, "exists", MagicMock(return_value=True))
     with pytest.raises(
         OperationalException, match=r".* already exists. Please choose another Strategy Name\."
     ):
         start_new_strategy(get_args(args))
 
+    args = ["new-strategy", "--strategy", "CoolNewStrategy", "--strategy-path", str(user_dir)]
+    start_new_strategy(get_args(args))
+    assert (user_dir / "CoolNewStrategy.py").exists()
 
-def test_start_new_strategy_no_arg(mocker, caplog):
+    # strategy-path that doesn't exist
+    args = [
+        "new-strategy",
+        "--strategy",
+        "CoolNewStrategy",
+        "--strategy-path",
+        str(user_dir / "nonexistent"),
+    ]
+    start_new_strategy(get_args(args))
+    assert (user_dir / "CoolNewStrategy.py").exists()
+
+    assert log_has_re("Creating strategy directory .*", caplog)
+    assert (user_dir / "nonexistent").is_dir()
+    assert (user_dir / "nonexistent" / "CoolNewStrategy.py").exists()
+
+    shutil.rmtree(str(user_dir))
+
+
+def test_start_new_strategy_no_arg():
     args = [
         "new-strategy",
     ]
@@ -757,7 +778,13 @@ def test_download_data_keyboardInterrupt(mocker, markets):
     assert dl_mock.call_count == 1
 
 
-def test_download_data_timerange(mocker, markets):
+@pytest.mark.parametrize("time", ["00:00", "00:03", "00:30", "23:56"])
+@pytest.mark.parametrize(
+    "tzoffset",
+    ["00:00", "+01:00", "-01:00", "+05:00", "-05:00"],
+)
+def test_download_data_timerange(mocker, markets, time_machine, time, tzoffset):
+    time_machine.move_to(f"2024-11-01 {time}:00 {tzoffset}")
     dl_mock = mocker.patch(
         "freqtrade.data.history.history_utils.refresh_backtest_ohlcv_data",
         MagicMock(return_value=["ETH/BTC", "XRP/BTC"]),
@@ -797,8 +824,9 @@ def test_download_data_timerange(mocker, markets):
     start_download_data(pargs)
     assert dl_mock.call_count == 1
     # 20days ago
-    days_ago = dt_floor_day(dt_now() - timedelta(days=20)).timestamp()
-    assert dl_mock.call_args_list[0][1]["timerange"].startts == days_ago
+    days_ago = datetime.now() - timedelta(days=20)
+    days_ago = dt_utc(days_ago.year, days_ago.month, days_ago.day)
+    assert dl_mock.call_args_list[0][1]["timerange"].startts == days_ago.timestamp()
 
     dl_mock.reset_mock()
     args = [

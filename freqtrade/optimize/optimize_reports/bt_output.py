@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from freqtrade.constants import UNLIMITED_STAKE_AMOUNT, Config
 from freqtrade.ft_types import BacktestResultType
@@ -18,7 +18,7 @@ def _get_line_floatfmt(stake_currency: str) -> list[str]:
 
 
 def _get_line_header(
-    first_column: Union[str, list[str]], stake_currency: str, direction: str = "Trades"
+    first_column: str | list[str], stake_currency: str, direction: str = "Trades"
 ) -> list[str]:
     """
     Generate header lines (goes in line with _generate_result_line())
@@ -173,7 +173,7 @@ def text_table_strategy(strategy_results, stake_currency: str, title: str):
     dd_pad_per = max([len(dd) for dd in drawdown])
     drawdown = [
         f'{t["max_drawdown_abs"]:>{dd_pad_abs}} {stake_currency}  {dd:>{dd_pad_per}}%'
-        for t, dd in zip(strategy_results, drawdown)
+        for t, dd in zip(strategy_results, drawdown, strict=False)
     ]
 
     output = [
@@ -188,7 +188,7 @@ def text_table_strategy(strategy_results, stake_currency: str, title: str):
             drawdown,
             f'{t.get("expectancy", 0):.3f} ({t.get("expectancy_ratio", 100):.3f})',
         ]
-        for t, drawdown in zip(strategy_results, drawdown)
+        for t, drawdown in zip(strategy_results, drawdown, strict=False)
     ]
     print_rich_table(output, headers, summary=title)
 

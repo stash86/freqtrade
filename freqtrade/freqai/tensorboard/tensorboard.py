@@ -45,7 +45,7 @@ class TensorBoardCallback(BaseTensorBoardCallback):
             return False
 
         evals = ["validation", "train"]
-        for metric, eval_ in zip(evals_log.items(), evals):
+        for metric, eval_ in zip(evals_log.items(), evals, strict=False):
             for metric_name, log in metric[1].items():
                 score = log[-1][0] if isinstance(log[-1], tuple) else log[-1]
                 self.writer.add_scalar(f"{eval_}-{metric_name}", score, epoch)

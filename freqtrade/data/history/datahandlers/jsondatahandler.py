@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import numpy as np
 from pandas import DataFrame, read_json, to_datetime
@@ -45,7 +44,7 @@ class JsonDataHandler(IDataHandler):
         )
 
     def _ohlcv_load(
-        self, pair: str, timeframe: str, timerange: Optional[TimeRange], candle_type: CandleType
+        self, pair: str, timeframe: str, timerange: TimeRange | None, candle_type: CandleType
     ) -> DataFrame:
         """
         Internal method used to load data for one pair from disk.
@@ -119,7 +118,7 @@ class JsonDataHandler(IDataHandler):
         raise NotImplementedError()
 
     def _trades_load(
-        self, pair: str, trading_mode: TradingMode, timerange: Optional[TimeRange] = None
+        self, pair: str, trading_mode: TradingMode, timerange: TimeRange | None = None
     ) -> DataFrame:
         """
         Load a pair from file, either .json.gz or .json

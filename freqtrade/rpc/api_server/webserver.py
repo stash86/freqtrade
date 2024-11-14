@@ -1,6 +1,6 @@
 import logging
 from ipaddress import ip_address
-from typing import Any, Optional
+from typing import Any
 
 import orjson
 import uvicorn
@@ -39,7 +39,7 @@ class ApiServer(RPCHandler):
     _has_rpc: bool = False
     _config: Config = {}
     # websocket message stuff
-    _message_stream: Optional[MessageStream] = None
+    _message_stream: MessageStream | None = None
 
     def __new__(cls, *args, **kwargs):
         """

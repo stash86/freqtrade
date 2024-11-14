@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, TypedDict
 from uuid import uuid4
 
 from freqtrade.exchange.exchange import Exchange
@@ -8,9 +8,9 @@ class JobsContainer(TypedDict):
     category: Literal["pairlist"]
     is_running: bool
     status: str
-    progress: Optional[float]
+    progress: float | None
     result: Any
-    error: Optional[str]
+    error: str | None
 
 
 class ApiBG:

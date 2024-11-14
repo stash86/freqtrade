@@ -6,7 +6,7 @@ import logging
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from enum import Enum
-from typing import Any, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, TypedDict
 
 from freqtrade.constants import Config
 from freqtrade.exceptions import OperationalException
@@ -25,37 +25,37 @@ class __PairlistParameterBase(TypedDict):
 
 class __NumberPairlistParameter(__PairlistParameterBase):
     type: Literal["number"]
-    default: Union[int, float, None]
+    default: int | float | None
 
 
 class __StringPairlistParameter(__PairlistParameterBase):
     type: Literal["string"]
-    default: Union[str, None]
+    default: str | None
 
 
 class __OptionPairlistParameter(__PairlistParameterBase):
     type: Literal["option"]
-    default: Union[str, None]
+    default: str | None
     options: list[str]
 
 
 class __ListPairListParamenter(__PairlistParameterBase):
     type: Literal["list"]
-    default: Union[list[str], None]
+    default: list[str] | None
 
 
 class __BoolPairlistParameter(__PairlistParameterBase):
     type: Literal["boolean"]
-    default: Union[bool, None]
+    default: bool | None
 
 
-PairlistParameter = Union[
-    __NumberPairlistParameter,
-    __StringPairlistParameter,
-    __OptionPairlistParameter,
-    __BoolPairlistParameter,
-    __ListPairListParamenter,
-]
+PairlistParameter = (
+    __NumberPairlistParameter
+    | __StringPairlistParameter
+    | __OptionPairlistParameter
+    | __BoolPairlistParameter
+    | __ListPairListParamenter
+)
 
 
 class SupportsBacktesting(str, Enum):
@@ -153,7 +153,7 @@ class IPairList(LoggingMixin, ABC):
         -> Please overwrite in subclasses
         """
 
-    def _validate_pair(self, pair: str, ticker: Optional[Ticker]) -> bool:
+    def _validate_pair(self, pair: str, ticker: Ticker | None) -> bool:
         """
         Check one pair against Pairlist Handler's specific conditions.
 

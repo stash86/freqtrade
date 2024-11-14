@@ -1,6 +1,6 @@
 import sys
 from os import get_terminal_size
-from typing import Any, Optional
+from typing import Any
 
 from rich.align import Align
 from rich.console import Console
@@ -38,7 +38,7 @@ class HyperoptOutput:
         self.table.add_column("Expectancy (Ratio)", justify="right")
         self.table.add_column("Max Drawdown (Acct)", justify="right")
 
-    def print(self, console: Optional[Console] = None, *, print_colorized=True):
+    def print(self, console: Console | None = None, *, print_colorized=True):
         if not console:
             console = Console(
                 color_system="auto" if print_colorized else None,
@@ -58,7 +58,7 @@ class HyperoptOutput:
         stake_currency = config["stake_currency"]
         self._results.extend(results)
 
-        max_rows: Optional[int] = None
+        max_rows: int | None = None
 
         if self._streaming:
             try:

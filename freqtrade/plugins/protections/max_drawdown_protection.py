@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -42,7 +42,7 @@ class MaxDrawdown(IProtection):
             f"locking {self.unlock_reason_time_element}."
         )
 
-    def _max_drawdown(self, date_now: datetime) -> Optional[ProtectionReturn]:
+    def _max_drawdown(self, date_now: datetime) -> ProtectionReturn | None:
         """
         Evaluate recent trades for drawdown ...
         """
@@ -81,7 +81,7 @@ class MaxDrawdown(IProtection):
 
         return None
 
-    def global_stop(self, date_now: datetime, side: LongShort) -> Optional[ProtectionReturn]:
+    def global_stop(self, date_now: datetime, side: LongShort) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for all pairs
         This must evaluate to true for the whole period of the "cooldown period".
@@ -92,7 +92,7 @@ class MaxDrawdown(IProtection):
 
     def stop_per_pair(
         self, pair: str, date_now: datetime, side: LongShort
-    ) -> Optional[ProtectionReturn]:
+    ) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for this pair
         This must evaluate to true for the whole period of the "cooldown period".

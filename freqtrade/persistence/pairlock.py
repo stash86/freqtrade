@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from sqlalchemy import ScalarResult, String, or_, select
 from sqlalchemy.orm import Mapped, mapped_column
@@ -21,7 +21,7 @@ class PairLock(ModelBase):
     pair: Mapped[str] = mapped_column(String(25), nullable=False, index=True)
     # lock direction - long, short or * (for both)
     side: Mapped[str] = mapped_column(String(25), nullable=False, default="*")
-    reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    reason: Mapped[str | None] = mapped_column(String(255), nullable=True)
     # Time the pair was locked (start time)
     lock_time: Mapped[datetime] = mapped_column(nullable=False)
     # Time until the pair is locked (end time)
@@ -39,7 +39,7 @@ class PairLock(ModelBase):
 
     @staticmethod
     def query_pair_locks(
-        pair: Optional[str], now: datetime, side: str = "*"
+        pair: str | None, now: datetime, side: str = "*"
     ) -> ScalarResult["PairLock"]:
         """
         Get all currently active locks for this pair

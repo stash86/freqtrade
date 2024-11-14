@@ -2,9 +2,10 @@ import copy
 import importlib
 import logging
 from abc import abstractmethod
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any
 
 import gymnasium as gym
 import numpy as np
@@ -49,9 +50,9 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         )
         th.set_num_threads(self.max_threads)
         self.reward_params = self.freqai_info["rl_config"]["model_reward_parameters"]
-        self.train_env: Union[VecMonitor, SubprocVecEnv, gym.Env] = gym.Env()
-        self.eval_env: Union[VecMonitor, SubprocVecEnv, gym.Env] = gym.Env()
-        self.eval_callback: Optional[MaskableEvalCallback] = None
+        self.train_env: VecMonitor | SubprocVecEnv | gym.Env = gym.Env()
+        self.eval_env: VecMonitor | SubprocVecEnv | gym.Env = gym.Env()
+        self.eval_callback: MaskableEvalCallback | None = None
         self.model_type = self.freqai_info["rl_config"]["model_type"]
         self.rl_config = self.freqai_info["rl_config"]
         self.df_raw: DataFrame = DataFrame()

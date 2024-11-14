@@ -3,7 +3,6 @@
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 import ccxt
 
@@ -58,7 +57,7 @@ class Binance(Exchange):
         (TradingMode.FUTURES, MarginMode.ISOLATED)
     ]
 
-    def get_tickers(self, symbols: Optional[list[str]] = None, cached: bool = False) -> Tickers:
+    def get_tickers(self, symbols: list[str] | None = None, cached: bool = False) -> Tickers:
         tickers = super().get_tickers(symbols=symbols, cached=cached)
         if self.trading_mode == TradingMode.FUTURES:
             # Binance's future result has no bid/ask values.
@@ -111,7 +110,7 @@ class Binance(Exchange):
         candle_type: CandleType,
         is_new_pair: bool = False,
         raise_: bool = False,
-        until_ms: Optional[int] = None,
+        until_ms: int | None = None,
     ) -> OHLCVResponse:
         """
         Overwrite to introduce "fast new pair" functionality by detecting the pair's listing date
@@ -149,9 +148,7 @@ class Binance(Exchange):
         """
         return open_date.minute == 0 and open_date.second < 15
 
-    def fetch_funding_rates(
-        self, symbols: Optional[list[str]] = None
-    ) -> dict[str, dict[str, float]]:
+    def fetch_funding_rates(self, symbols: list[str] | None = None) -> dict[str, dict[str, float]]:
         """
         Fetch funding rates for the given symbols.
         :param symbols: List of symbols to fetch funding rates for
@@ -182,7 +179,7 @@ class Binance(Exchange):
         leverage: float,
         wallet_balance: float,  # Or margin balance
         open_trades: list,
-    ) -> Optional[float]:
+    ) -> float | None:
         """
         Important: Must be fetching data from cached values as this is used by backtesting!
         MARGIN: https://www.binance.com/en/support/faq/f6b010588e55413aa58b7d63ee0125ed

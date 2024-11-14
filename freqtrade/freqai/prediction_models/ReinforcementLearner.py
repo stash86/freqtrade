@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import torch as th
 from stable_baselines3.common.callbacks import ProgressBarCallback
@@ -78,7 +78,7 @@ class ReinforcementLearner(BaseReinforcementLearningModel):
             model = self.dd.model_dictionary[dk.pair]
             model.set_env(self.train_env)
         callbacks: list[Any] = [self.eval_callback, self.tensorboard_callback]
-        progressbar_callback: Optional[ProgressBarCallback] = None
+        progressbar_callback: ProgressBarCallback | None = None
         if self.rl_config.get("progress_bar", False):
             progressbar_callback = ProgressBarCallback()
             callbacks.insert(0, progressbar_callback)

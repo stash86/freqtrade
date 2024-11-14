@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 from pandas import DataFrame
 from pydantic import BaseModel, ConfigDict
@@ -14,18 +14,18 @@ class BaseArbitraryModel(BaseModel):
 
 class WSRequestSchema(BaseArbitraryModel):
     type: RPCRequestType
-    data: Optional[Any] = None
+    data: Any | None = None
 
 
 class WSMessageSchemaType(TypedDict):
     # Type for typing to avoid doing pydantic typechecks.
     type: RPCMessageType
-    data: Optional[dict[str, Any]]
+    data: dict[str, Any] | None
 
 
 class WSMessageSchema(BaseArbitraryModel):
     type: RPCMessageType
-    data: Optional[Any] = None
+    data: Any | None = None
     model_config = ConfigDict(extra="allow")
 
 

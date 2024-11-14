@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 import torch
@@ -50,8 +50,8 @@ class PyTorchModelTrainer(PyTorchTrainerInterface):
         self.criterion = criterion
         self.model_meta_data = model_meta_data
         self.device = device
-        self.n_epochs: Optional[int] = kwargs.get("n_epochs", 10)
-        self.n_steps: Optional[int] = kwargs.get("n_steps", None)
+        self.n_epochs: int | None = kwargs.get("n_epochs", 10)
+        self.n_steps: int | None = kwargs.get("n_steps", None)
         if self.n_steps is None and not self.n_epochs:
             raise Exception("Either `n_steps` or `n_epochs` should be set.")
 

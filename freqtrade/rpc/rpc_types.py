@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Literal, Optional, TypedDict, Union
+from typing import Any, Literal, TypedDict
 
 from freqtrade.constants import PairWithTimeframe
 from freqtrade.enums import RPCMessageType
@@ -31,7 +31,7 @@ class RPCProtectionMsg(RPCSendMsgBase):
     type: Literal[RPCMessageType.PROTECTION_TRIGGER, RPCMessageType.PROTECTION_TRIGGER_GLOBAL]
     id: int
     pair: str
-    base_currency: Optional[str]
+    base_currency: str | None
     lock_time: str
     lock_timestamp: int
     lock_end_time: str
@@ -48,23 +48,23 @@ class RPCWhitelistMsg(RPCSendMsgBase):
 
 class __RPCEntryExitMsgBase(RPCSendMsgBase):
     trade_id: int
-    buy_tag: Optional[str]
-    enter_tag: Optional[str]
+    buy_tag: str | None
+    enter_tag: str | None
     exchange: str
     pair: str
     base_currency: str
     quote_currency: str
-    leverage: Optional[float]
+    leverage: float | None
     direction: str
     limit: float
     open_rate: float
     order_type: str
     stake_amount: float
     stake_currency: str
-    fiat_currency: Optional[str]
+    fiat_currency: str | None
     amount: float
     open_date: datetime
-    current_rate: Optional[float]
+    current_rate: float | None
     sub_trade: bool
 
 
@@ -84,11 +84,11 @@ class RPCExitMsg(__RPCEntryExitMsgBase):
     close_rate: float
     profit_amount: float
     profit_ratio: float
-    exit_reason: Optional[str]
+    exit_reason: str | None
     close_date: datetime
-    # current_rate: Optional[float]
-    order_rate: Optional[float]
-    final_profit_ratio: Optional[float]
+    # current_rate: float | None
+    order_rate: float | None
+    final_profit_ratio: float | None
     is_final_exit: bool
 
 
@@ -98,7 +98,7 @@ class RPCExitCancelMsg(__RPCEntryExitMsgBase):
     gain: ProfitLossStr
     profit_amount: float
     profit_ratio: float
-    exit_reason: Optional[str]
+    exit_reason: str | None
     close_date: datetime
 
 
@@ -122,18 +122,18 @@ class RPCNewCandleMsg(RPCSendMsgBase):
     data: PairWithTimeframe
 
 
-RPCOrderMsg = Union[RPCEntryMsg, RPCExitMsg, RPCExitCancelMsg, RPCCancelMsg]
+RPCOrderMsg = RPCEntryMsg | RPCExitMsg | RPCExitCancelMsg | RPCCancelMsg
 
 
-RPCSendMsg = Union[
-    RPCStatusMsg,
-    RPCStrategyMsg,
-    RPCProtectionMsg,
-    RPCWhitelistMsg,
-    RPCEntryMsg,
-    RPCCancelMsg,
-    RPCExitMsg,
-    RPCExitCancelMsg,
-    RPCAnalyzedDFMsg,
-    RPCNewCandleMsg,
-]
+RPCSendMsg = (
+    RPCStatusMsg
+    | RPCStrategyMsg
+    | RPCProtectionMsg
+    | RPCWhitelistMsg
+    | RPCEntryMsg
+    | RPCCancelMsg
+    | RPCExitMsg
+    | RPCExitCancelMsg
+    | RPCAnalyzedDFMsg
+    | RPCNewCandleMsg
+)

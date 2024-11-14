@@ -107,7 +107,7 @@ def plot_feature_importance(
     # Extract feature importance from model
     models = {}
     if "FreqaiMultiOutputRegressor" in str(model.__class__):
-        for estimator, label in zip(model.estimators_, dk.label_list):
+        for estimator, label in zip(model.estimators_, dk.label_list, strict=False):
             models[label] = estimator
     else:
         models[dk.label_list[0]] = model

@@ -1,7 +1,7 @@
 import csv
 import logging
 import sys
-from typing import Any, Union
+from typing import Any
 
 from freqtrade.enums import RunMode
 from freqtrade.exceptions import ConfigurationError, OperationalException
@@ -87,7 +87,7 @@ def _print_objs_tabular(objs: list, print_colorized: bool) -> None:
     from rich.text import Text
 
     names = [s["name"] for s in objs]
-    objs_to_print: list[dict[str, Union[Text, str]]] = [
+    objs_to_print: list[dict[str, Text | str]] = [
         {
             "name": Text(s["name"] if s["name"] else "--"),
             "location": s["location_rel"],

@@ -3,7 +3,6 @@ Spread pair list filter
 """
 
 import logging
-from typing import Optional
 
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange.exchange_types import Ticker
@@ -61,7 +60,7 @@ class SpreadFilter(IPairList):
             },
         }
 
-    def _validate_pair(self, pair: str, ticker: Optional[Ticker]) -> bool:
+    def _validate_pair(self, pair: str, ticker: Ticker | None) -> bool:
         """
         Validate spread for the ticker
         :param pair: Pair that's currently validated

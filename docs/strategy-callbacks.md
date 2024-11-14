@@ -165,7 +165,8 @@ Called for open trade every iteration (roughly every 5 seconds) until a trade is
 
 The usage of the custom stoploss method must be enabled by setting `use_custom_stoploss=True` on the strategy object.
 
-The stoploss price can only ever move upwards - if the stoploss value returned from `custom_stoploss` would result in a lower stoploss price than was previously set, it will be ignored. The traditional `stoploss` value serves as an absolute lower level and will be instated as the initial stoploss (before this method is called for the first time for a trade), and is still mandatory.
+The stoploss price can only ever move upwards - if the stoploss value returned from `custom_stoploss` would result in a lower stoploss price than was previously set, it will be ignored. The traditional `stoploss` value serves as an absolute lower level and will be instated as the initial stoploss (before this method is called for the first time for a trade), and is still mandatory.  
+As custom stoploss acts as regular, changing stoploss, it will behave similar to `trailing_stop` - and trades exiting due to this will have the exit_reason of `"trailing_stop_loss"`.
 
 The method must return a stoploss value (float / number) as a percentage of the current price.
 E.g. If the `current_rate` is 200 USD, then returning `0.02` will set the stoploss price 2% lower, at 196 USD.
@@ -834,7 +835,7 @@ class DigDeeperStrategy(IStrategy):
                               current_entry_rate: float, current_exit_rate: float,
                               current_entry_profit: float, current_exit_profit: float,
                               **kwargs
-                              ) -> Union[Optional[float], Tuple[Optional[float], Optional[str]]]:
+                              ) -> Union[Optional[float], tuple[Optional[float], Optional[str]]]:
         """
         Custom trade adjustment logic, returning the stake amount that a trade should be
         increased or decreased.
@@ -890,7 +891,7 @@ class DigDeeperStrategy(IStrategy):
         # Hope you have a deep wallet!
         try:
             # This returns first order stake size
-            stake_amount = filled_entries[0].stake_amount
+            stake_amount = filled_entries[0].stake_amount_filled
             # This then calculates current safety order size
             stake_amount = stake_amount * (1 + (count_of_entries * 0.25))
             return stake_amount, "1/3rd_increase"
@@ -975,7 +976,7 @@ class AwesomeStrategy(IStrategy):
             pair == "BTC/USDT" 
             and entry_tag == "long_sma200" 
             and side == "long" 
-            and (current_time - timedelta(minutes=10)) > trade.open_date_utc
+            and (current_time - timedelta(minutes=10)) <= trade.open_date_utc
         ):
             # just cancel the order if it has been filled more than half of the amount
             if order.filled > order.remaining:

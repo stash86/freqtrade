@@ -1,7 +1,7 @@
 import logging
 import time
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import pandas as pd
 from rich.text import Text
@@ -21,7 +21,7 @@ class LookaheadAnalysisSubFunctions:
     def text_table_lookahead_analysis_instances(
         config: dict[str, Any],
         lookahead_instances: list[LookaheadAnalysis],
-        caption: Union[str, None] = None,
+        caption: str | None = None,
     ):
         headers = [
             "filename",
@@ -243,7 +243,7 @@ class LookaheadAnalysisSubFunctions:
 
         # report the results
         if lookaheadAnalysis_instances:
-            caption: Union[str, None] = None
+            caption: str | None = None
             if any(
                 [
                     any(

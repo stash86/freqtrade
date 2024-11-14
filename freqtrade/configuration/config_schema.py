@@ -517,8 +517,11 @@ CONF_SCHEMA = {
                         },
                         "exit_fill": {
                             "description": "Telegram setting for exit fill signals.",
-                            "type": "string",
-                            "enum": TELEGRAM_SETTING_OPTIONS,
+                            "type": ["string", "object"],
+                            "additionalProperties": {
+                                "type": "string",
+                                "enum": TELEGRAM_SETTING_OPTIONS,
+                            },
                             "default": "on",
                         },
                         "exit_cancel": {
@@ -1096,6 +1099,13 @@ CONF_SCHEMA = {
                     ),
                     "type": "string",
                     "default": "example",
+                },
+                "wait_for_training_iteration_on_reload": {
+                    "description": (
+                        "Wait for the next training iteration to complete after /reload or ctrl+c."
+                    ),
+                    "type": "boolean",
+                    "default": True,
                 },
                 "feature_parameters": {
                     "description": "The parameters used to engineer the feature set",

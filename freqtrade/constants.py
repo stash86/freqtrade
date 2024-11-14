@@ -4,7 +4,7 @@
 bot constants
 """
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from freqtrade.enums import CandleType, PriceType
 
@@ -38,6 +38,7 @@ HYPEROPT_LOSS_BUILTIN = [
     "MaxDrawDownHyperOptLoss",
     "MaxDrawDownRelativeHyperOptLoss",
     "ProfitDrawDownHyperOptLoss",
+    "MultiMetricHyperOptLoss",
 ]
 AVAILABLE_PAIRLISTS = [
     "StaticPairList",
@@ -193,7 +194,7 @@ ListPairsWithTimeframes = list[PairWithTimeframe]
 # Type for trades list
 TradeList = list[list]
 # ticks, pair, timeframe, CandleType
-TickWithTimeframe = tuple[str, str, CandleType, Optional[int], Optional[int]]
+TickWithTimeframe = tuple[str, str, CandleType, int | None, int | None]
 ListTicksWithTimeframes = list[TickWithTimeframe]
 
 LongShort = Literal["long", "short"]

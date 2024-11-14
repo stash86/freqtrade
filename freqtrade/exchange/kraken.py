@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import ccxt
 from pandas import DataFrame
@@ -50,7 +50,7 @@ class Kraken(Exchange):
 
         return parent_check and market.get("darkpool", False) is False
 
-    def get_tickers(self, symbols: Optional[list[str]] = None, cached: bool = False) -> Tickers:
+    def get_tickers(self, symbols: list[str] | None = None, cached: bool = False) -> Tickers:
         # Only fetch tickers for current stake currency
         # Otherwise the request for kraken becomes too large.
         symbols = list(self.get_markets(quote_currencies=[self._config["stake_currency"]]))
@@ -99,7 +99,7 @@ class Kraken(Exchange):
     def _set_leverage(
         self,
         leverage: float,
-        pair: Optional[str] = None,
+        pair: str | None = None,
         accept_fail: bool = False,
     ):
         """
@@ -137,7 +137,7 @@ class Kraken(Exchange):
         is_short: bool,
         open_date: datetime,
         close_date: datetime,
-        time_in_ratio: Optional[float] = None,
+        time_in_ratio: float | None = None,
     ) -> float:
         """
         # ! This method will always error when run by Freqtrade because time_in_ratio is never

@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -45,7 +44,7 @@ class HDF5DataHandler(IDataHandler):
         )
 
     def _ohlcv_load(
-        self, pair: str, timeframe: str, timerange: Optional[TimeRange], candle_type: CandleType
+        self, pair: str, timeframe: str, timerange: TimeRange | None, candle_type: CandleType
     ) -> pd.DataFrame:
         """
         Internal method used to load data for one pair from disk.
@@ -134,7 +133,7 @@ class HDF5DataHandler(IDataHandler):
         raise NotImplementedError()
 
     def _trades_load(
-        self, pair: str, trading_mode: TradingMode, timerange: Optional[TimeRange] = None
+        self, pair: str, trading_mode: TradingMode, timerange: TimeRange | None = None
     ) -> pd.DataFrame:
         """
         Load a pair from h5 file.

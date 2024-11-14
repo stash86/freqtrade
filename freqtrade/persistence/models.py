@@ -5,7 +5,7 @@ This module contains the class to persist trades into SQLite
 import logging
 import threading
 from contextvars import ContextVar
-from typing import Any, Final, Optional
+from typing import Any, Final
 
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.exc import NoSuchModuleError
@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 REQUEST_ID_CTX_KEY: Final[str] = "request_id"
-_request_id_ctx_var: ContextVar[Optional[str]] = ContextVar(REQUEST_ID_CTX_KEY, default=None)
+_request_id_ctx_var: ContextVar[str | None] = ContextVar(REQUEST_ID_CTX_KEY, default=None)
 
 
-def get_request_or_thread_id() -> Optional[str]:
+def get_request_or_thread_id() -> str | None:
     """
     Helper method to get either async context (for fastapi requests), or thread id
     """

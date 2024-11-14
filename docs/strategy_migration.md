@@ -780,7 +780,7 @@ class MyCoolFreqaiModel(BaseRegressionModel):
 
     def predict(
         self, unfiltered_df: DataFrame, dk: FreqaiDataKitchen, **kwargs
-    ) -> Tuple[DataFrame, npt.NDArray[np.int_]]:
+    ) -> tuple[DataFrame, npt.NDArray[np.int_]]:
 
         # ... your custom stuff
 

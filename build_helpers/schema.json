@@ -682,12 +682,18 @@
             },
             "exit_fill": {
               "description": "Telegram setting for exit fill signals.",
-              "type": "string",
-              "enum": [
-                "on",
-                "off",
-                "silent"
+              "type": [
+                "string",
+                "object"
               ],
+              "additionalProperties": {
+                "type": "string",
+                "enum": [
+                  "on",
+                  "off",
+                  "silent"
+                ]
+              },
               "default": "on"
             },
             "exit_cancel": {
@@ -1382,6 +1388,11 @@
           "description": "A unique ID for the current model. Must be changed when modifying features.",
           "type": "string",
           "default": "example"
+        },
+        "wait_for_training_iteration_on_reload": {
+          "description": "Wait for the next training iteration to complete after /reload or ctrl+c.",
+          "type": "boolean",
+          "default": true
         },
         "feature_parameters": {
           "description": "The parameters used to engineer the feature set",

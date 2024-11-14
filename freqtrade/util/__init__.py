@@ -11,7 +11,7 @@ from freqtrade.util.datetime_helpers import (
     format_ms_time,
     shorten_date,
 )
-from freqtrade.util.formatters import decimals_per_coin, fmt_coin, round_value
+from freqtrade.util.formatters import decimals_per_coin, fmt_coin, fmt_coin2, round_value
 from freqtrade.util.ft_precise import FtPrecise
 from freqtrade.util.measure_time import MeasureTime
 from freqtrade.util.periodic_cache import PeriodicCache
@@ -38,6 +38,7 @@ __all__ = [
     "decimals_per_coin",
     "round_value",
     "fmt_coin",
+    "fmt_coin2",
     "MeasureTime",
     "print_rich_table",
     "print_df_rich_table",

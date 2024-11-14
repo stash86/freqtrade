@@ -3,7 +3,7 @@ from collections.abc import Iterator
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import rapidjson
@@ -44,7 +44,7 @@ class HyperoptStateContainer:
 
 class HyperoptTools:
     @staticmethod
-    def get_strategy_filename(config: Config, strategy_name: str) -> Optional[Path]:
+    def get_strategy_filename(config: Config, strategy_name: str) -> Path | None:
         """
         Get Strategy-location (filename) from strategy_name
         """
@@ -188,7 +188,7 @@ class HyperoptTools:
         total_epochs: int,
         print_json: bool,
         no_header: bool = False,
-        header_str: Optional[str] = None,
+        header_str: str | None = None,
     ) -> None:
         """
         Display details of the hyperopt result
@@ -257,7 +257,7 @@ class HyperoptTools:
 
     @staticmethod
     def _params_pretty_print(
-        params, space: str, header: str, non_optimized: Optional[dict] = None
+        params, space: str, header: str, non_optimized: dict | None = None
     ) -> None:
         if space in params or (non_optimized and space in non_optimized):
             space_params = HyperoptTools._space_params(params, space, 5)
@@ -299,7 +299,7 @@ class HyperoptTools:
             print(result)
 
     @staticmethod
-    def _space_params(params, space: str, r: Optional[int] = None) -> dict:
+    def _space_params(params, space: str, r: int | None = None) -> dict:
         d = params.get(space)
         if d:
             # Round floats to `r` digits after the decimal point if requested

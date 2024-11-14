@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from typing import Any, Optional
 
 import ccxt
 
@@ -14,7 +13,7 @@ from freqtrade.exceptions import (
 )
 from freqtrade.exchange import Exchange, date_minus_candles
 from freqtrade.exchange.common import API_RETRY_COUNT, retrier
-from freqtrade.exchange.exchange_types import FtHas
+from freqtrade.exchange.exchange_types import CcxtOrder, FtHas
 from freqtrade.misc import safe_value_fallback2
 from freqtrade.util import dt_now, dt_ts
 
@@ -60,7 +59,7 @@ class Okx(Exchange):
     _ccxt_params: dict = {"options": {"brokerId": "ffb5405ad327SUDE"}}
 
     def ohlcv_candle_limit(
-        self, timeframe: str, candle_type: CandleType, since_ms: Optional[int] = None
+        self, timeframe: str, candle_type: CandleType, since_ms: int | None = None
     ) -> int:
         """
         Exchange ohlcv candle limit
@@ -191,7 +190,7 @@ class Okx(Exchange):
             params["posSide"] = self._get_posSide(side, True)
         return params
 
-    def _convert_stop_order(self, pair: str, order_id: str, order: dict) -> dict:
+    def _convert_stop_order(self, pair: str, order_id: str, order: CcxtOrder) -> CcxtOrder:
         if (
             order.get("status", "open") == "closed"
             and (real_order_id := order.get("info", {}).get("ordId")) is not None
@@ -209,7 +208,9 @@ class Okx(Exchange):
         return order
 
     @retrier(retries=API_RETRY_COUNT)
-    def fetch_stoploss_order(self, order_id: str, pair: str, params: Optional[dict] = None) -> dict:
+    def fetch_stoploss_order(
+        self, order_id: str, pair: str, params: dict | None = None
+    ) -> CcxtOrder:
         if self._config["dry_run"]:
             return self.fetch_dry_run_order(order_id)
 
@@ -231,7 +232,7 @@ class Okx(Exchange):
 
         return self._fetch_stop_order_fallback(order_id, pair)
 
-    def _fetch_stop_order_fallback(self, order_id: str, pair: str) -> dict:
+    def _fetch_stop_order_fallback(self, order_id: str, pair: str) -> CcxtOrder:
         params2 = {"stop": True, "ordType": "conditional"}
         for method in (
             self._api.fetch_open_orders,
@@ -256,14 +257,12 @@ class Okx(Exchange):
                 raise OperationalException(e) from e
         raise RetryableOrderError(f"StoplossOrder not found (pair: {pair} id: {order_id}).")
 
-    def get_order_id_conditional(self, order: dict[str, Any]) -> str:
+    def get_order_id_conditional(self, order: CcxtOrder) -> str:
         if order.get("type", "") == "stop":
             return safe_value_fallback2(order, order, "id_stop", "id")
         return order["id"]
 
-    def cancel_stoploss_order(
-        self, order_id: str, pair: str, params: Optional[dict] = None
-    ) -> dict:
+    def cancel_stoploss_order(self, order_id: str, pair: str, params: dict | None = None) -> dict:
         params1 = {"stop": True}
         # 'ordType': 'conditional'
         #
@@ -273,7 +272,7 @@ class Okx(Exchange):
             params=params1,
         )
 
-    def _fetch_orders_emulate(self, pair: str, since_ms: int) -> list[dict]:
+    def _fetch_orders_emulate(self, pair: str, since_ms: int) -> list[CcxtOrder]:
         orders = []
 
         orders = self._api.fetch_closed_orders(pair, since=since_ms)

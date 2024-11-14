@@ -4,7 +4,6 @@ Rate of change pairlist filter
 
 import logging
 from datetime import timedelta
-from typing import Optional
 
 from cachetools import TTLCache
 from pandas import DataFrame
@@ -31,7 +30,7 @@ class RangeStabilityFilter(IPairList):
         self._max_rate_of_change = self._pairlistconfig.get("max_rate_of_change")
         self._refresh_period = self._pairlistconfig.get("refresh_period", 86400)
         self._def_candletype = self._config["candle_type_def"]
-        self._sort_direction: Optional[str] = self._pairlistconfig.get("sort_direction", None)
+        self._sort_direction: str | None = self._pairlistconfig.get("sort_direction", None)
 
         self._pair_cache: TTLCache = TTLCache(maxsize=1000, ttl=self._refresh_period)
 
@@ -143,7 +142,7 @@ class RangeStabilityFilter(IPairList):
             )
         return resulting_pairlist
 
-    def _calculate_rate_of_change(self, pair: str, daily_candles: DataFrame) -> Optional[float]:
+    def _calculate_rate_of_change(self, pair: str, daily_candles: DataFrame) -> float | None:
         # Check symbol in cache
         if (pct_change := self._pair_cache.get(pair, None)) is not None:
             return pct_change

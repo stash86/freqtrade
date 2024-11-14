@@ -1,8 +1,9 @@
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar, cast, overload
+from typing import Any, TypeVar, cast, overload
 
 from freqtrade.constants import ExchangeConfig
 from freqtrade.exceptions import DDosProtection, RetryableOrderError, TemporaryError
@@ -172,7 +173,7 @@ def retrier(_func: F, *, retries=API_RETRY_COUNT) -> F: ...
 def retrier(*, retries=API_RETRY_COUNT) -> Callable[[F], F]: ...
 
 
-def retrier(_func: Optional[F] = None, *, retries=API_RETRY_COUNT):
+def retrier(_func: F | None = None, *, retries=API_RETRY_COUNT):
     def decorator(f: F) -> F:
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -185,7 +186,7 @@ def retrier(_func: Optional[F] = None, *, retries=API_RETRY_COUNT):
                     logger.warning(msg + f"Retrying still for {count} times.")
                     count -= 1
                     kwargs.update({"count": count})
-                    if isinstance(ex, (DDosProtection, RetryableOrderError)):
+                    if isinstance(ex, DDosProtection | RetryableOrderError):
                         # increasing backoff
                         backoff_delay = calculate_backoff(count + 1, retries)
                         logger.info(f"Applying DDosProtection backoff delay: {backoff_delay}")

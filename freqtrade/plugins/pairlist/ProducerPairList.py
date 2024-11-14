@@ -5,7 +5,6 @@ Provides pair list from Leader data
 """
 
 import logging
-from typing import Optional
 
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange.exchange_types import Tickers
@@ -83,7 +82,7 @@ class ProducerPairList(IPairList):
             },
         }
 
-    def _filter_pairlist(self, pairlist: Optional[list[str]]):
+    def _filter_pairlist(self, pairlist: list[str] | None):
         upstream_pairlist = self._pairlistmanager._dataprovider.get_producer_pairs(
             self._producer_name
         )

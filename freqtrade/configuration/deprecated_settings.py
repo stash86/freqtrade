@@ -3,7 +3,6 @@ Functions to handle deprecated settings
 """
 
 import logging
-from typing import Optional
 
 from freqtrade.constants import Config
 from freqtrade.exceptions import ConfigurationError, OperationalException
@@ -14,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 def check_conflicting_settings(
     config: Config,
-    section_old: Optional[str],
+    section_old: str | None,
     name_old: str,
-    section_new: Optional[str],
+    section_new: str | None,
     name_new: str,
 ) -> None:
     section_new_config = config.get(section_new, {}) if section_new else config
@@ -34,7 +33,7 @@ def check_conflicting_settings(
 
 
 def process_removed_setting(
-    config: Config, section1: str, name1: str, section2: Optional[str], name2: str
+    config: Config, section1: str, name1: str, section2: str | None, name2: str
 ) -> None:
     """
     :param section1: Removed section
@@ -54,9 +53,9 @@ def process_removed_setting(
 
 def process_deprecated_setting(
     config: Config,
-    section_old: Optional[str],
+    section_old: str | None,
     name_old: str,
-    section_new: Optional[str],
+    section_new: str | None,
     name_new: str,
 ) -> None:
     check_conflicting_settings(config, section_old, name_old, section_new, name_new)

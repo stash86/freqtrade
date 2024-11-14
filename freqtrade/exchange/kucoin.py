@@ -4,7 +4,7 @@ import logging
 
 from freqtrade.constants import BuySell
 from freqtrade.exchange import Exchange
-from freqtrade.exchange.exchange_types import FtHas
+from freqtrade.exchange.exchange_types import CcxtOrder, FtHas
 
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class Kucoin(Exchange):
         leverage: float,
         reduceOnly: bool = False,
         time_in_force: str = "GTC",
-    ) -> dict:
+    ) -> CcxtOrder:
         res = super().create_order(
             pair=pair,
             ordertype=ordertype,
