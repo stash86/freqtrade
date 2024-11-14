@@ -1,0 +1,16 @@
+{
+    "pairlists": [
+        {
+            "method": "MarketCapPairList",
+            "number_assets": 30,
+            "max_rank": 50,
+            "refresh_period": 86400
+        },
+        {"method": "AgeFilter", "min_days_listed": 30},
+        {
+            "method": "VolumePairList",
+            "number_assets": 20,
+            "sort_key": "quoteVolume",
+        },
+    ],
+}
