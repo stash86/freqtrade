@@ -376,7 +376,6 @@ class RPC:
             # weekly
             start_date = start_date - timedelta(days=start_date.weekday())  # Monday
         if timeunit == "months":
-            logger.info("Months called")
             start_date = start_date.replace(day=1)
 
         def time_offset(step: int):
