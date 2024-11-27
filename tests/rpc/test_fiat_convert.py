@@ -206,14 +206,16 @@ def test_convert_amount(mocker):
 
 def test_FtCoinGeckoApi():
     ftc = FtCoinGeckoApi()
-    assert ftc._api_key == ""
+    assert ftc.extra_params is None
     assert ftc.api_base_url == "https://api.coingecko.com/api/v3/"
 
     # defaults to demo
     ftc = FtCoinGeckoApi(api_key="123456")
-    assert ftc._api_key == "123456"
+    assert ftc.extra_params is not None
+    assert ftc.extra_params["x_cg_demo_api_key"] == "123456"
     assert ftc.api_base_url == "https://api.coingecko.com/api/v3/"
 
     ftc = FtCoinGeckoApi(api_key="123456", is_demo=False)
-    assert ftc._api_key == "123456"
+    assert ftc.extra_params is not None
+    assert ftc.extra_params["x_cg_pro_api_key"] == "123456"
     assert ftc.api_base_url == "https://pro-api.coingecko.com/api/v3/"

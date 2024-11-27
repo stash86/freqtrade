@@ -56,20 +56,25 @@ class ParquetDataHandler(IDataHandler):
             )
             if not filename.exists():
                 return DataFrame(columns=self._columns)
-
-        pairdata = read_parquet(filename)
-        pairdata.columns = self._columns
-        pairdata = pairdata.astype(
-            dtype={
-                "open": "float",
-                "high": "float",
-                "low": "float",
-                "close": "float",
-                "volume": "float",
-            }
-        )
-        pairdata["date"] = to_datetime(pairdata["date"], unit="ms", utc=True)
-        return pairdata
+        try:
+            pairdata = read_parquet(filename)
+            pairdata.columns = self._columns
+            pairdata = pairdata.astype(
+                dtype={
+                    "open": "float",
+                    "high": "float",
+                    "low": "float",
+                    "close": "float",
+                    "volume": "float",
+                }
+            )
+            pairdata["date"] = to_datetime(pairdata["date"], unit="ms", utc=True)
+            return pairdata
+        except Exception as e:
+            logger.exception(
+                f"Error loading data from {filename}. Exception: {e}. Returning empty dataframe."
+            )
+            return DataFrame(columns=self._columns)
 
     def ohlcv_append(
         self, pair: str, timeframe: str, data: DataFrame, candle_type: CandleType

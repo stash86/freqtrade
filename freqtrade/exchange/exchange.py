@@ -199,8 +199,8 @@ class Exchange:
         # Timestamp of last markets refresh
         self._last_markets_refresh: int = 0
 
-        # Cache for 10 minutes ...
         self._cache_lock = Lock()
+        # Cache for 10 minutes ...
         self._fetch_tickers_cache: TTLCache = TTLCache(maxsize=2, ttl=60 * 10)
         # Cache values for 300 to avoid frequent polling of the exchange for prices
         # Caching only applies to RPC methods, so prices for open trades are still
@@ -459,15 +459,18 @@ class Exchange:
         Exchange ohlcv candle limit
         Uses ohlcv_candle_limit_per_timeframe if the exchange has different limits
         per timeframe (e.g. bittrex), otherwise falls back to ohlcv_candle_limit
-        TODO: this is most likely no longer needed since only bittrex needed this.
         :param timeframe: Timeframe to check
         :param candle_type: Candle-type
         :param since_ms: Starting timestamp
         :return: Candle limit as integer
         """
+
+        fallback_val = self._ft_has.get("ohlcv_candle_limit")
+        if candle_type == CandleType.FUNDING_RATE:
+            fallback_val = self._ft_has.get("funding_fee_candle_limit", fallback_val)
         return int(
             self._ft_has.get("ohlcv_candle_limit_per_timeframe", {}).get(
-                timeframe, str(self._ft_has.get("ohlcv_candle_limit"))
+                timeframe, str(fallback_val)
             )
         )
 
@@ -523,6 +526,7 @@ class Exchange:
     def market_is_future(self, market: dict[str, Any]) -> bool:
         return (
             market.get(self._ft_has["ccxt_futures_name"], False) is True
+            and market.get("type", False) == "swap"
             and market.get("linear", False) is True
         )
 
@@ -1653,6 +1657,7 @@ class Exchange:
             balances.pop("total", None)
             balances.pop("used", None)
 
+            self._log_exchange_response("fetch_balances", balances)
             return balances
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
@@ -1763,7 +1768,7 @@ class Exchange:
             raise OperationalException(e) from e
 
     @retrier
-    def fetch_bids_asks(self, symbols: list[str] | None = None, cached: bool = False) -> dict:
+    def fetch_bids_asks(self, symbols: list[str] | None = None, *, cached: bool = False) -> dict:
         """
         :param symbols: List of symbols to fetch
         :param cached: Allow cached result
@@ -1796,8 +1801,9 @@ class Exchange:
             raise OperationalException(e) from e
 
     @retrier
-    def get_tickers(self, symbols: list[str] | None = None, cached: bool = False) -> Tickers:
+    def get_tickers(self, symbols: list[str] | None = None, *, cached: bool = False) -> Tickers:
         """
+        :param symbols: List of symbols to fetch
         :param cached: Allow cached result
         :return: fetch_tickers result
         """
@@ -2886,6 +2892,14 @@ class Exchange:
         else:
             return trades[-1].get("timestamp")
 
+    async def _async_get_trade_history_id_startup(
+        self, pair: str, since: int | None
+    ) -> tuple[list[list], str]:
+        """
+        override for initial trade_history_id call
+        """
+        return await self._async_fetch_trades(pair, since=since)
+
     async def _async_get_trade_history_id(
         self, pair: str, until: int, since: int | None = None, from_id: str | None = None
     ) -> tuple[str, list[list]]:
@@ -2912,7 +2926,7 @@ class Exchange:
             # of up to an hour.
             # e.g. Binance returns the "last 1000" candles within a 1h time interval
             # - so we will miss the first trades.
-            t, from_id = await self._async_fetch_trades(pair, since=since)
+            t, from_id = await self._async_get_trade_history_id_startup(pair, since=since)
             trades.extend(t[x])
         while True:
             try:

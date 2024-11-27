@@ -118,9 +118,10 @@ class TestCCXTExchange:
         tickers = exch.get_tickers()
         assert pair in tickers
         assert "ask" in tickers[pair]
-        assert tickers[pair]["ask"] is not None
         assert "bid" in tickers[pair]
-        assert tickers[pair]["bid"] is not None
+        if EXCHANGES[exchangename].get("tickers_have_bid_ask"):
+            assert tickers[pair]["bid"] is not None
+            assert tickers[pair]["ask"] is not None
         assert "quoteVolume" in tickers[pair]
         if EXCHANGES[exchangename].get("hasQuoteVolume"):
             assert tickers[pair]["quoteVolume"] is not None
@@ -150,9 +151,10 @@ class TestCCXTExchange:
 
         ticker = exch.fetch_ticker(pair)
         assert "ask" in ticker
-        assert ticker["ask"] is not None
         assert "bid" in ticker
-        assert ticker["bid"] is not None
+        if EXCHANGES[exchangename].get("tickers_have_bid_ask"):
+            assert ticker["ask"] is not None
+            assert ticker["bid"] is not None
         assert "quoteVolume" in ticker
         if EXCHANGES[exchangename].get("hasQuoteVolume"):
             assert ticker["quoteVolume"] is not None

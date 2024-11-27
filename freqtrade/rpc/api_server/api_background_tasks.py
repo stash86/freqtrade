@@ -22,6 +22,7 @@ def background_job_list():
             "status": job["status"],
             "running": job["is_running"],
             "progress": job.get("progress"),
+            "progress_tasks": job.get("progress_tasks"),
             "error": job.get("error", None),
         }
         for jobid, job in ApiBG.jobs.items()
@@ -39,5 +40,6 @@ def background_job(jobid: str):
         "status": job["status"],
         "running": job["is_running"],
         "progress": job.get("progress"),
+        "progress_tasks": job.get("progress_tasks"),
         "error": job.get("error", None),
     }

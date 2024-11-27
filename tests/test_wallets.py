@@ -168,7 +168,7 @@ def test_get_trade_stake_amount_unlimited_amount(
     assert result == 0
 
     freqtrade.config["dry_run_wallet"] = 200
-    freqtrade.wallets.start_cap = 200
+    freqtrade.wallets._start_cap = 200
     result = freqtrade.wallets.get_trade_stake_amount("XRP/USDT", 3)
     assert round(result, 4) == round(result2, 4)
 

@@ -12,6 +12,7 @@ from freqtrade.configuration import running_in_docker
 from freqtrade.constants import Config
 from freqtrade.exceptions import OperationalException
 from freqtrade.rpc.api_server.uvicorn_threaded import UvicornServer
+from freqtrade.rpc.api_server.webserver_bgwork import ApiBG
 from freqtrade.rpc.api_server.ws.message_stream import MessageStream
 from freqtrade.rpc.rpc import RPC, RPCException, RPCHandler
 from freqtrade.rpc.rpc_types import RPCSendMsg
@@ -86,6 +87,8 @@ class ApiServer(RPCHandler):
         """Cleanup pending module resources"""
         ApiServer._has_rpc = False
         del ApiServer._rpc
+        ApiBG.exchanges = {}
+        ApiBG.jobs = {}
         if self._server and not self._standalone:
             logger.info("Stopping API Server")
             # self._server.force_exit, self._server.should_exit = True, True
@@ -116,6 +119,7 @@ class ApiServer(RPCHandler):
         from freqtrade.rpc.api_server.api_auth import http_basic_or_jwt_token, router_login
         from freqtrade.rpc.api_server.api_background_tasks import router as api_bg_tasks
         from freqtrade.rpc.api_server.api_backtest import router as api_backtest
+        from freqtrade.rpc.api_server.api_download_data import router as api_download_data
         from freqtrade.rpc.api_server.api_pairlists import router as api_pairlists
         from freqtrade.rpc.api_server.api_v1 import router as api_v1
         from freqtrade.rpc.api_server.api_v1 import router_public as api_v1_public
@@ -143,6 +147,11 @@ class ApiServer(RPCHandler):
         )
         app.include_router(
             api_pairlists,
+            prefix="/api/v1",
+            dependencies=[Depends(http_basic_or_jwt_token), Depends(is_webserver_mode)],
+        )
+        app.include_router(
+            api_download_data,
             prefix="/api/v1",
             dependencies=[Depends(http_basic_or_jwt_token), Depends(is_webserver_mode)],
         )

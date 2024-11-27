@@ -3845,7 +3845,7 @@ def test_get_real_amount_no_trade(default_conf_usdt, buy_order_fee, caplog, mock
     assert log_has(
         "Applying fee on amount for Trade(id=None, pair=LTC/ETH, amount=8.00000000, "
         "is_short=False, leverage=1.0, open_rate=0.24544100, open_since=closed) failed: "
-        "myTrade-Dict empty found",
+        "myTrade-dict empty found",
         caplog,
     )
 

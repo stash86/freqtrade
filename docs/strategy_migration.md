@@ -214,8 +214,8 @@ class AwesomeStrategy(IStrategy):
 ``` python hl_lines="4"
 class AwesomeStrategy(IStrategy):
     def custom_stake_amount(self, pair: str, current_time: datetime, current_rate: float,
-                            proposed_stake: float, min_stake: Optional[float], max_stake: float,
-                            entry_tag: Optional[str], side: str, **kwargs) -> float:
+                            proposed_stake: float, min_stake: float | None, max_stake: float,
+                            entry_tag: str | None, side: str, **kwargs) -> float:
         # ... 
         return proposed_stake
 ```
@@ -237,7 +237,7 @@ After:
 ``` python hl_lines="4"
 class AwesomeStrategy(IStrategy):
     def confirm_trade_entry(self, pair: str, order_type: str, amount: float, rate: float,
-                            time_in_force: str, current_time: datetime, entry_tag: Optional[str], 
+                            time_in_force: str, current_time: datetime, entry_tag: str | None, 
                             side: str, **kwargs) -> bool:
       return True
 ```
@@ -280,8 +280,8 @@ After:
 
 ``` python hl_lines="3"
 class AwesomeStrategy(IStrategy):
-    def custom_entry_price(self, pair: str, trade: Optional[Trade], current_time: datetime, proposed_rate: float,
-                           entry_tag: Optional[str], side: str, **kwargs) -> float:
+    def custom_entry_price(self, pair: str, trade: Trade | None, current_time: datetime, proposed_rate: float,
+                           entry_tag: str | None, side: str, **kwargs) -> float:
       return proposed_rate
 ```
 
@@ -312,7 +312,7 @@ After:
 ``` python hl_lines="5 7"
     def custom_stoploss(self, pair: str, trade: 'Trade', current_time: datetime,
                         current_rate: float, current_profit: float, after_fill: bool, 
-                        **kwargs) -> Optional[float]:
+                        **kwargs) -> float | None:
         # once the profit has risen above 10%, keep the stoploss at 7% above the open price
         if current_profit > 0.10:
             return stoploss_from_open(0.07, current_profit, is_short=trade.is_short)
@@ -329,7 +329,7 @@ After:
 `order_time_in_force` attributes changed from `"buy"` to `"entry"` and `"sell"` to `"exit"`.
 
 ``` python
-    order_time_in_force: Dict = {
+    order_time_in_force: dict = {
         "buy": "gtc",
         "sell": "gtc",
     }
@@ -338,7 +338,7 @@ After:
 After:
 
 ``` python hl_lines="2 3"
-    order_time_in_force: Dict = {
+    order_time_in_force: dict = {
         "entry": "GTC",
         "exit": "GTC",
     }

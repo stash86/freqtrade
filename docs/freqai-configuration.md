@@ -393,7 +393,7 @@ Here we create a `PyTorchMLPRegressor` class that implements the `fit` method. T
     
     For example, if you are using a binary classifier to predict price movements as up or down, you can set the class names as follows:
     ```python
-    def set_freqai_targets(self, dataframe: DataFrame, metadata: Dict, **kwargs) -> DataFrame:
+    def set_freqai_targets(self, dataframe: DataFrame, metadata: dict, **kwargs) -> DataFrame:
         self.freqai.class_names = ["down", "up"]
         dataframe['&s-up_or_down'] = np.where(dataframe["close"].shift(-100) >
                                                   dataframe["close"], 'up', 'down')

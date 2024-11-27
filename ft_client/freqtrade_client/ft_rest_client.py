@@ -12,7 +12,7 @@ from urllib.parse import urlencode, urlparse, urlunparse
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError as RequestConnectionError
 
 
 logger = logging.getLogger("ft_rest_client")
@@ -53,7 +53,7 @@ class FtRestClient:
             resp = self._session.request(method, url, headers=hd, data=json.dumps(data))
             # return resp.text
             return resp.json()
-        except ConnectionError:
+        except RequestConnectionError:
             logger.warning(f"Connection error - could not connect to {netloc}.")
 
     def _get(self, apipath, params: ParamsT = None):

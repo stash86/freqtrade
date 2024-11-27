@@ -794,3 +794,57 @@ def test_get_maintenance_ratio_and_amt_binance(
     exchange._leverage_tiers = leverage_tiers
     (result_ratio, result_amt) = exchange.get_maintenance_ratio_and_amt(pair, notional_value)
     assert (round(result_ratio, 8), round(result_amt, 8)) == (mm_ratio, amt)
+
+
+async def test__async_get_trade_history_id_binance(default_conf_usdt, mocker, fetch_trades_result):
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="binance")
+
+    async def mock_get_trade_hist(pair, *args, **kwargs):
+        if "since" in kwargs:
+            # older than initial call
+            if kwargs["since"] < 1565798399752:
+                return []
+            else:
+                # Don't expect to get here
+                raise ValueError("Unexpected call")
+                # return fetch_trades_result[:-2]
+        elif kwargs.get("params", {}).get(exchange._trades_pagination_arg) == "0":
+            # Return first 3
+            return fetch_trades_result[:-2]
+        elif kwargs.get("params", {}).get(exchange._trades_pagination_arg) in (
+            fetch_trades_result[-3]["id"],
+            1565798399752,
+        ):
+            # Return 2
+            return fetch_trades_result[-3:-1]
+        else:
+            # Return last 2
+            return fetch_trades_result[-2:]
+
+    exchange._api_async.fetch_trades = MagicMock(side_effect=mock_get_trade_hist)
+
+    pair = "ETH/BTC"
+    ret = await exchange._async_get_trade_history_id(
+        pair,
+        since=fetch_trades_result[0]["timestamp"],
+        until=fetch_trades_result[-1]["timestamp"] - 1,
+    )
+    assert ret[0] == pair
+    assert isinstance(ret[1], list)
+    assert exchange._api_async.fetch_trades.call_count == 4
+
+    fetch_trades_cal = exchange._api_async.fetch_trades.call_args_list
+    # first call (using since, not fromId)
+    assert fetch_trades_cal[0][0][0] == pair
+    assert fetch_trades_cal[0][1]["since"] == fetch_trades_result[0]["timestamp"]
+
+    # 2nd call
+    assert fetch_trades_cal[1][0][0] == pair
+    assert "params" in fetch_trades_cal[1][1]
+    pagination_arg = exchange._ft_has["trades_pagination_arg"]
+    assert pagination_arg in fetch_trades_cal[1][1]["params"]
+    # Initial call was with from_id = "0"
+    assert fetch_trades_cal[1][1]["params"][pagination_arg] == "0"
+
+    assert fetch_trades_cal[2][1]["params"][pagination_arg] != "0"
+    assert fetch_trades_cal[3][1]["params"][pagination_arg] != "0"

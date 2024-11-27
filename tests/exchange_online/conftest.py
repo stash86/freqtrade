@@ -339,6 +339,18 @@ EXCHANGES = {
             },
         ],
     },
+    "hyperliquid": {
+        "pair": "PURR/USDC",
+        "stake_currency": "USDC",
+        "hasQuoteVolume": False,
+        "timeframe": "1h",
+        "futures": True,
+        "orderbook_max_entries": 20,
+        "futures_pair": "BTC/USDC:USDC",
+        "hasQuoteVolumeFutures": True,
+        "leverage_tiers_public": False,
+        "leverage_in_spot_market": False,
+    },
 }
 
 
@@ -398,6 +410,7 @@ def get_futures_exchange(exchange_name, exchange_conf, class_mocker):
         class_mocker.patch("freqtrade.exchange.okx.Okx.additional_exchange_init")
         class_mocker.patch("freqtrade.exchange.binance.Binance.additional_exchange_init")
         class_mocker.patch("freqtrade.exchange.bybit.Bybit.additional_exchange_init")
+        class_mocker.patch("freqtrade.exchange.gate.Gate.additional_exchange_init")
         class_mocker.patch(f"{EXMS}.load_cached_leverage_tiers", return_value=None)
         class_mocker.patch(f"{EXMS}.cache_leverage_tiers")
 

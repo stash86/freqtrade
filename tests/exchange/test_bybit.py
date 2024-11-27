@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
+import pytest
+
 from freqtrade.enums.marginmode import MarginMode
 from freqtrade.enums.tradingmode import TradingMode
 from tests.conftest import EXMS, get_mock_coro, get_patched_exchange, log_has
@@ -172,3 +174,26 @@ def test_bybit_fetch_order_canceled_empty(default_conf_usdt, mocker):
     assert res2["filled"] == 0.0
     assert res2["amount"] == 20.0
     assert res2["status"] == "open"
+
+
+@pytest.mark.parametrize(
+    "side,order_type,uta,tradingmode,expected",
+    [
+        ("buy", "limit", False, "spot", True),
+        ("buy", "limit", False, "futures", True),
+        ("sell", "limit", False, "spot", True),
+        ("sell", "limit", False, "futures", True),
+        ("buy", "market", False, "spot", True),
+        ("buy", "market", False, "futures", False),
+        ("buy", "market", True, "spot", False),
+        ("buy", "market", True, "futures", False),
+    ],
+)
+def test_bybit__order_needs_price(
+    default_conf, mocker, side, order_type, uta, tradingmode, expected
+):
+    exchange = get_patched_exchange(mocker, default_conf, exchange="bybit")
+    exchange.trading_mode = tradingmode
+    exchange.unified_account = uta
+
+    assert exchange._order_needs_price(side, order_type) == expected

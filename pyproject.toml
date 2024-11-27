@@ -44,7 +44,7 @@ dependencies = [
   "pandas-ta",
   "technical",
   "tabulate",
-  "pycoingecko",
+  "pycoingecko>=3.2.0",
   "py_find_1st",
   "python-rapidjson",
   "orjson",

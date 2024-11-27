@@ -7,7 +7,7 @@ from abc import abstractmethod
 from collections.abc import Generator, Sequence
 from datetime import date, datetime, timedelta, timezone
 from math import isnan
-from typing import Any
+from typing import Any, cast
 
 import psutil
 from dateutil.relativedelta import relativedelta
@@ -39,7 +39,7 @@ from freqtrade.enums import (
 )
 from freqtrade.exceptions import ExchangeError, PricingError
 from freqtrade.exchange import timeframe_to_minutes, timeframe_to_msecs
-from freqtrade.exchange.exchange_types import Tickers
+from freqtrade.exchange.exchange_types import Ticker, Tickers
 from freqtrade.loggers import bufferHandler
 from freqtrade.persistence import KeyStoreKeys, KeyValueStore, PairLocks, Trade
 from freqtrade.persistence.models import PairLock
@@ -690,7 +690,7 @@ class RPC:
         }
 
     def __balance_get_est_stake(
-        self, coin: str, stake_currency: str, amount: float, balance: Wallet, tickers
+        self, coin: str, stake_currency: str, amount: float, balance: Wallet, tickers: Tickers
     ) -> tuple[float, float]:
         est_stake = 0.0
         est_bot_stake = 0.0
@@ -702,7 +702,7 @@ class RPC:
             est_bot_stake = amount
         else:
             pair = self._freqtrade.exchange.get_valid_pair_combination(coin, stake_currency)
-            rate: float | None = tickers.get(pair, {}).get("last", None)
+            rate: float | None = cast(Ticker, tickers.get(pair, {})).get("last", None)
             if rate:
                 if pair.startswith(stake_currency) and not pair.endswith(stake_currency):
                     rate = 1.0 / rate

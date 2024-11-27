@@ -3,9 +3,13 @@
 import logging
 from datetime import datetime
 
+import ccxt
+
 from freqtrade.constants import BuySell
 from freqtrade.enums import MarginMode, PriceType, TradingMode
+from freqtrade.exceptions import DDosProtection, OperationalException, TemporaryError
 from freqtrade.exchange import Exchange
+from freqtrade.exchange.common import retrier
 from freqtrade.exchange.exchange_types import CcxtOrder, FtHas
 from freqtrade.misc import safe_value_fallback2
 
@@ -23,6 +27,8 @@ class Gate(Exchange):
     may still not work as expected.
     """
 
+    unified_account = False
+
     _ft_has: FtHas = {
         "ohlcv_candle_limit": 1000,
         "order_time_in_force": ["GTC", "IOC"],
@@ -37,6 +43,7 @@ class Gate(Exchange):
     _ft_has_futures: FtHas = {
         "needs_trading_fees": True,
         "marketOrderRequiresPrice": False,
+        "funding_fee_candle_limit": 90,
         "stop_price_type_field": "price_type",
         "stop_price_type_value_mapping": {
             PriceType.LAST: 0,
@@ -51,6 +58,35 @@ class Gate(Exchange):
         # (TradingMode.FUTURES, MarginMode.CROSS),
         (TradingMode.FUTURES, MarginMode.ISOLATED)
     ]
+
+    @retrier
+    def additional_exchange_init(self) -> None:
+        """
+        Additional exchange initialization logic.
+        .api will be available at this point.
+        Must be overridden in child methods if required.
+        """
+        try:
+            if not self._config["dry_run"]:
+                # TODO: This should work with 4.4.34 and later.
+                self._api.load_unified_status()
+                is_unified = self._api.options.get("unifiedAccount")
+
+                # Returns a tuple of bools, first for margin, second for Account
+                if is_unified:
+                    self.unified_account = True
+                    logger.info("Gate: Unified account.")
+                else:
+                    self.unified_account = False
+                    logger.info("Gate: Classic account.")
+        except ccxt.DDoSProtection as e:
+            raise DDosProtection(e) from e
+        except (ccxt.OperationFailed, ccxt.ExchangeError) as e:
+            raise TemporaryError(
+                f"Error in additional_exchange_init due to {e.__class__.__name__}. Message: {e}"
+            ) from e
+        except ccxt.BaseError as e:
+            raise OperationalException(e) from e
 
     def _get_params(
         self,

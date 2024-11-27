@@ -581,7 +581,7 @@ These limits are usually listed in the exchange documentation as "trading rules"
 Backtesting (as well as live and dry-run) does honor these limits, and will ensure that a stoploss can be placed below this value - so the value will be slightly higher than what the exchange specifies.
 Freqtrade has however no information about historic limits.
 
-This can lead to situations where trading-limits are inflated by using a historic price, resulting in minimum amounts > 50$.
+This can lead to situations where trading-limits are inflated by using a historic price, resulting in minimum amounts > 50\$.
 
 For example:
 

@@ -10,7 +10,13 @@ from rich.progress import (
 from freqtrade.util.rich_progress import CustomProgress
 
 
-def get_progress_tracker(**kwargs):
+def retrieve_progress_tracker(pt: CustomProgress | None) -> CustomProgress:
+    if pt is None:
+        return get_progress_tracker()
+    return pt
+
+
+def get_progress_tracker(**kwargs) -> CustomProgress:
     """
     Get progress Bar with custom columns.
     """

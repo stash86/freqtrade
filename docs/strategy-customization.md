@@ -582,11 +582,14 @@ When hyperopting, use of the hyperoptable parameter `.value` attribute is not su
 
 ??? info "Full documentation"
     ``` python
-    def informative(timeframe: str, asset: str = '',
-                    fmt: Optional[Union[str, Callable[[KwArg(str)], str]]] = None,
-                    *,
-                    candle_type: Optional[CandleType] = None,
-                    ffill: bool = True) -> Callable[[PopulateIndicators], PopulateIndicators]:
+    def informative(
+        timeframe: str,
+        asset: str = "",
+        fmt: str | Callable[[Any], str] | None = None,
+        *,
+        candle_type: CandleType | str | None = None,
+        ffill: bool = True,
+    ) -> Callable[[PopulateIndicators], PopulateIndicators]:
         """
         A decorator for populate_indicators_Nn(self, dataframe, metadata), allowing these functions to
         define informative indicators.

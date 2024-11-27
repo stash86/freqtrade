@@ -42,6 +42,7 @@ class FtHas(TypedDict, total=False):
     mark_ohlcv_price: str
     mark_ohlcv_timeframe: str
     funding_fee_timeframe: str
+    funding_fee_candle_limit: int
     floor_leverage: bool
     needs_trading_fees: bool
     order_props_in_contracts: list[Literal["amount", "cost", "filled", "remaining"]]

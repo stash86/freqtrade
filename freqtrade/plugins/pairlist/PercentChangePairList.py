@@ -293,7 +293,9 @@ class PercentChangePairList(IPairList):
                 current_close = pair_candles["close"].iloc[-1]
                 previous_close = pair_candles["close"].shift(self._lookback_period).iloc[-1]
                 pct_change = (
-                    ((current_close - previous_close) / previous_close) if previous_close > 0 else 0
+                    ((current_close - previous_close) / previous_close) * 100
+                    if previous_close > 0
+                    else 0
                 )
 
                 # replace change with a range change sum calculated above

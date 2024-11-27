@@ -2485,7 +2485,7 @@ class FreqtradeBot(LoggingMixin):
             )
 
         if len(trades) == 0:
-            logger.info("Applying fee on amount for %s failed: myTrade-Dict empty found", trade)
+            logger.info("Applying fee on amount for %s failed: myTrade-dict empty found", trade)
             return None
         fee_currency = None
         amount = 0

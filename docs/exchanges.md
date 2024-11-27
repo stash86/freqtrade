@@ -303,6 +303,42 @@ It's therefore required to pass the UID as well.
 !!! Warning "Necessary Verification"
     Bitmart requires Verification Lvl2 to successfully trade on the spot market through the API - even though trading via UI works just fine with just Lvl1 verification.
 
+## Hyperliquid
+
+!!! Tip "Stoploss on Exchange"
+    Hyperliquid supports `stoploss_on_exchange` and uses `stop-loss-limit` orders. It provides great advantages, so we recommend to benefit from it.
+
+Hyperliquid is a Decentralized Exchange (DEX). Decentralized exchanges work a bit different compared to normal exchanges. Instead of authenticating private API calls using an API key, private API calls need to be signed with the private key of your wallet.
+This needs to be configured like this:
+
+```json
+"exchange": {
+    "name": "hyperliquid",
+    "walletAddress": "your_eth_wallet_address",
+    "privateKey": "your_private_key",
+    // ...
+}
+```
+
+* walletAddress must be in hex format: `0x<40 hex characters>`, and can be easily copied from your wallet.
+* privateKey also must be in hex format: `0x<64 hex characters>`, and can either be exported from your wallet or regenerated using your mnemonic phrase.
+
+Hyperliquid handles deposits and withdrawals on the Arbitrum One chain, a Layer 2 scaling solution built on top of Ethereum. Hyperliquid uses USDC as quote / collateral. The process of depositing USDC on Hyperliquid requires a couple of steps, see [how to start trading](https://hyperliquid.gitbook.io/hyperliquid-docs/onboarding/how-to-start-trading) for details on what steps are needed.
+
+!!! Note "Hyperliquid general usage Notes"
+    Hyperliquid does not support market orders, however ccxt will simulate market orders by placing limit orders with a maximum slippage of 5%.  
+    Unfortunately, hyperliquid only offers 5000 historic candles, so backtesting will either need to build candles historically (by waiting and downloading the data incrementally over time) - or will be limited to the last 5000 candles.
+
+!!! Info "Some general best practices (non exhaustive)"
+    * Beware of supply chain attacks, like pip package poisoning etcetera. However you export or (re-)generate your private key, make sure your environment is safe.
+    * Interact as little with the private key as possible. Store it in a separate file from the config.json (secrets.json for example) that you never have to touch, and secure it.
+    * Always keep your mnemonic phrase and private key private.
+    * Don't use the same mnemonic as the one you had to backup when initializing a hardware wallet, using the same mnemonic basically deletes the security of your hardware wallet.
+    * Create a different software wallet, only transfer the funds you want to trade with to that wallet, and use that wallet / private key to trade on Hyperliquid.
+    * Remember that if someone hacks the host you use for trading, or any other host you stored your private key / mnemonic on, you will lose the funds protected by that private key. That means the funds on that wallet and the funds deposited on Hyperliquid.
+    * If you have funds you don't want to use for trading (after making a profit for example), transfer them back to your hardware wallet.
+
+
 ## All exchanges
 
 Should you experience constant errors with Nonce (like `InvalidNonce`), it is best to regenerate the API keys. Resetting Nonce is difficult and it's usually easier to regenerate the API keys.

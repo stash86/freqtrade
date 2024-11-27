@@ -4450,6 +4450,7 @@ def test_market_is_tradable(
     ex = get_patched_exchange(mocker, default_conf, exchange=exchange)
     market = {
         "symbol": market_symbol,
+        "type": "swap",
         "base": base,
         "quote": quote,
         "spot": spot,

@@ -38,9 +38,9 @@ class AwesomeStrategy(IStrategy):
                 trade.set_custom_data(key='entry_type', value=trade_entry_type)
         return super().bot_loop_start(**kwargs)
 
-    def adjust_entry_price(self, trade: Trade, order: Optional[Order], pair: str,
+    def adjust_entry_price(self, trade: Trade, order: Order | None, pair: str,
                            current_time: datetime, proposed_rate: float, current_order_rate: float,
-                           entry_tag: Optional[str], side: str, **kwargs) -> float:
+                           entry_tag: str | None, side: str, **kwargs) -> float:
         # Limit orders to use and follow SMA200 as price target for the first 10 minutes since entry trigger for BTC/USDT pair.
         if (
             pair == 'BTC/USDT' 

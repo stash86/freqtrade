@@ -100,6 +100,19 @@ You can use the `/stopentry` command in Telegram to prevent future trade entry, 
 
 Please look at the [advanced setup documentation Page](advanced-setup.md#running-multiple-instances-of-freqtrade).
 
+### I'm getting "Impossible to load Strategy" when starting the bot
+
+This error message is shown when the bot cannot load the strategy.
+Usually, you can use `freqtrade list-strategies` to list all available strategies. 
+The output of this command will also include a status column, showing if the strategy can be loaded.
+
+Please check the following:
+
+* Are you using the correct strategy name? The strategy name is case-sensitive and must correspond to the Strategy class name (not the filename!).
+* Is the strategy in the `user_data/strategies` directory, and has the file-ending `.py`?
+* Does the bot show other warnings before this error? Maybe you're missing some dependencies for the strategy - which would be highlighted in the log.
+* In case of docker - is the strategy directory mounted correctly (check the volumes part of the docker-compose file)?
+
 ### I'm getting "Missing data fillup" messages in the log
 
 This message is just a warning that the latest candles had missing candles in them.
@@ -146,9 +159,9 @@ The same fix should be applied in the configuration file, if order types are def
 
 ### I'm trying to start the bot live, but get an API permission error
 
-Errors like `Invalid API-key, IP, or permissions for action` mean exactly what they actually say.
-Your API key is either invalid (copy/paste error? check for leading/trailing spaces in the config), expired, or the IP you're running the bot from is not enabled in the Exchange's API console.
-Usually, the permission "Spot Trading" (or the equivalent in the exchange you use) will be necessary.
+Errors like `Invalid API-key, IP, or permissions for action` mean exactly what they actually say.  
+Your API key is either invalid (copy/paste error? check for leading/trailing spaces in the config), expired, or the IP you're running the bot from is not enabled in the Exchange's API console.  
+Usually, the permission "Spot Trading" (or the equivalent in the exchange you use) will be necessary.  
 Futures will usually have to be enabled specifically.
 
 ### How do I search the bot logs for something?

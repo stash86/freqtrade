@@ -2,7 +2,7 @@ import re
 from unittest.mock import ANY, MagicMock
 
 import pytest
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from freqtrade_client import FtRestClient
 from freqtrade_client.ft_client import add_arguments, main_exec
@@ -45,7 +45,7 @@ def test_FtRestClient_call_invalid(caplog):
     with pytest.raises(ValueError):
         client._call("PUTTY", "/dummytest")
 
-    client._session.request = MagicMock(side_effect=ConnectionError())
+    client._session.request = MagicMock(side_effect=RequestsConnectionError())
     client._call("GET", "/dummytest")
 
     assert log_has_re("Connection error", caplog)

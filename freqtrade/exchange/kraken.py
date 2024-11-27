@@ -50,7 +50,7 @@ class Kraken(Exchange):
 
         return parent_check and market.get("darkpool", False) is False
 
-    def get_tickers(self, symbols: list[str] | None = None, cached: bool = False) -> Tickers:
+    def get_tickers(self, symbols: list[str] | None = None, *, cached: bool = False) -> Tickers:
         # Only fetch tickers for current stake currency
         # Otherwise the request for kraken becomes too large.
         symbols = list(self.get_markets(quote_currencies=[self._config["stake_currency"]]))
@@ -68,7 +68,7 @@ class Kraken(Exchange):
             balances.pop("free", None)
             balances.pop("total", None)
             balances.pop("used", None)
-
+            self._log_exchange_response("fetch_balances", balances)
             orders = self._api.fetch_open_orders()
             order_list = [
                 (
@@ -86,6 +86,7 @@ class Kraken(Exchange):
                 balances[bal]["used"] = sum(order[1] for order in order_list if order[0] == bal)
                 balances[bal]["free"] = balances[bal]["total"] - balances[bal]["used"]
 
+            self._log_exchange_response("fetch_balances2", balances)
             return balances
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e

@@ -847,28 +847,6 @@ def test_download_data_timerange(mocker, markets, time_machine, time, tzoffset):
     assert dl_mock.call_args_list[0][1]["timerange"].startts == int(dt_utc(2020, 1, 1).timestamp())
 
 
-def test_download_data_no_markets(mocker, caplog):
-    dl_mock = mocker.patch(
-        "freqtrade.data.history.history_utils.refresh_backtest_ohlcv_data",
-        MagicMock(return_value=["ETH/BTC", "XRP/BTC"]),
-    )
-    patch_exchange(mocker, exchange="binance")
-    mocker.patch(f"{EXMS}.get_markets", return_value={})
-    args = [
-        "download-data",
-        "--exchange",
-        "binance",
-        "--pairs",
-        "ETH/BTC",
-        "XRP/BTC",
-        "--days",
-        "20",
-    ]
-    start_download_data(get_args(args))
-    assert dl_mock.call_args[1]["timerange"].starttype == "date"
-    assert log_has("Pairs [ETH/BTC,XRP/BTC] not available on exchange Binance.", caplog)
-
-
 def test_download_data_no_exchange(mocker):
     mocker.patch(
         "freqtrade.data.history.history_utils.refresh_backtest_ohlcv_data",
@@ -947,7 +925,7 @@ def test_download_data_trades(mocker):
         "freqtrade.data.history.history_utils.convert_trades_to_ohlcv", MagicMock(return_value=[])
     )
     patch_exchange(mocker)
-    mocker.patch(f"{EXMS}.get_markets", return_value={})
+    mocker.patch(f"{EXMS}.get_markets", return_value={"ETH/BTC": {}, "XRP/BTC": {}})
     args = [
         "download-data",
         "--exchange",
@@ -982,7 +960,7 @@ def test_download_data_trades(mocker):
 
 def test_download_data_data_invalid(mocker):
     patch_exchange(mocker, exchange="kraken")
-    mocker.patch(f"{EXMS}.get_markets", return_value={})
+    mocker.patch(f"{EXMS}.get_markets", return_value={"ETH/BTC": {}, "XRP/BTC": {}})
     args = [
         "download-data",
         "--exchange",

@@ -36,6 +36,7 @@ The Order-type will be ignored if only one mode is available.
 | Gate     | limit |
 | Okx      | limit |
 | Kucoin   | stop-limit, stop-market|
+| Hyperliquid (futures only)   | limit |
 
 !!! Note "Tight stoploss"
     <ins>Do not set too low/tight stoploss value when using stop loss on exchange!</ins>  

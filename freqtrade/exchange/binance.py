@@ -57,12 +57,12 @@ class Binance(Exchange):
         (TradingMode.FUTURES, MarginMode.ISOLATED)
     ]
 
-    def get_tickers(self, symbols: list[str] | None = None, cached: bool = False) -> Tickers:
+    def get_tickers(self, symbols: list[str] | None = None, *, cached: bool = False) -> Tickers:
         tickers = super().get_tickers(symbols=symbols, cached=cached)
         if self.trading_mode == TradingMode.FUTURES:
             # Binance's future result has no bid/ask values.
             # Therefore we must fetch that from fetch_bids_asks and combine the two results.
-            bidsasks = self.fetch_bids_asks(symbols, cached)
+            bidsasks = self.fetch_bids_asks(symbols, cached=cached)
             tickers = deep_merge_dicts(bidsasks, tickers, allow_null_overrides=False)
         return tickers
 
@@ -265,3 +265,19 @@ class Binance(Exchange):
                 return self.get_leverage_tiers()
         else:
             return {}
+
+    async def _async_get_trade_history_id_startup(
+        self, pair: str, since: int | None
+    ) -> tuple[list[list], str]:
+        """
+        override for initial call
+
+        Binance only provides a limited set of historic trades data.
+        Using from_id=0, we can get the earliest available trades.
+        So if we don't get any data with the provided "since", we can assume to
+        download all available data.
+        """
+        t, from_id = await self._async_fetch_trades(pair, since=since)
+        if not t:
+            return [], "0"
+        return t, from_id
