@@ -61,28 +61,31 @@ class TestCCXTExchange:
     def test_ccxt_order_parse(self, exchange: EXCHANGE_FIXTURE_TYPE):
         exch, exchange_name = exchange
         if orders := EXCHANGES[exchange_name].get("sample_order"):
-            pair = "SOL/USDT"
             for order in orders:
+                pair = order["pair"]
+                exchange_response: dict = order["exchange_response"]
+
                 market = exch._api.markets[pair]
-                po = exch._api.parse_order(order, market)
+                po = exch._api.parse_order(exchange_response, market)
+                expected = order["expected"]
                 assert isinstance(po["id"], str)
                 assert po["id"] is not None
-                if len(order.keys()) < 5:
+                if len(exchange_response.keys()) < 5:
                     # Kucoin case
                     assert po["status"] is None
                     continue
-                assert po["timestamp"] == 1674493798550
+                assert po["timestamp"] == expected["timestamp"]
                 assert isinstance(po["datetime"], str)
                 assert isinstance(po["timestamp"], int)
                 assert isinstance(po["price"], float)
-                assert po["price"] == 15.5
+                assert po["price"] == expected["price"]
                 if po["status"] == "closed":
                     # Filled orders should have average assigned.
                     assert isinstance(po["average"], float)
                     assert po["average"] == 15.5
                 assert po["symbol"] == pair
                 assert isinstance(po["amount"], float)
-                assert po["amount"] == 1.1
+                assert po["amount"] == expected["amount"]
                 assert isinstance(po["status"], str)
         else:
             pytest.skip(f"No sample order available for exchange {exchange_name}")

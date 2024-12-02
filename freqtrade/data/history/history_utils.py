@@ -285,6 +285,7 @@ def _download_pair_history(
             candle_type=candle_type,
             until_ms=until_ms if until_ms else None,
         )
+        logger.info(f"Downloaded data for {pair} with length {len(new_dataframe)}.")
         if data.empty:
             data = new_dataframe
         else:

@@ -56,13 +56,14 @@ def test_kraken_trading_agreement(default_conf, mocker, order_type, time_in_forc
     assert api_mock.create_order.call_args[0][5] == expected_params
 
 
-def test_get_balances_prod(default_conf, mocker):
-    balance_item = {"free": None, "total": 10.0, "used": 0.0}
+def test_get_balances_prod_kraken(default_conf, mocker):
+    balance_item = {"free": 0.0, "total": 10.0, "used": 0.0}
 
     api_mock = MagicMock()
     api_mock.fetch_balance = MagicMock(
         return_value={
-            "1ST": balance_item.copy(),
+            "1ST": {"free": 0.0, "total": 0.0, "used": 0.0},
+            "1ST.F": balance_item.copy(),  # When "rewards" is enabled, the balance is in ".F"
             "2ND": balance_item.copy(),
             "3RD": balance_item.copy(),
             "4TH": balance_item.copy(),

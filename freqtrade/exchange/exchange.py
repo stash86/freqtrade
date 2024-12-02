@@ -2244,8 +2244,9 @@ class Exchange:
         :param pair: Pair to download
         :param timeframe: Timeframe to get data for
         :param since_ms: Timestamp in milliseconds to get history from
-        :param until_ms: Timestamp in milliseconds to get history up to
         :param candle_type: '', mark, index, premiumIndex, or funding_rate
+        :param is_new_pair: used by binance subclass to allow "fast" new pair downloading
+        :param until_ms: Timestamp in milliseconds to get history up to
         :return: Dataframe with candle (OHLCV) data
         """
         pair, _, _, data, _ = self.loop.run_until_complete(
@@ -2254,11 +2255,10 @@ class Exchange:
                 timeframe=timeframe,
                 since_ms=since_ms,
                 until_ms=until_ms,
-                is_new_pair=is_new_pair,
                 candle_type=candle_type,
             )
         )
-        logger.info(f"Downloaded data for {pair} with length {len(data)}.")
+        logger.debug(f"Downloaded data for {pair} from ccxt with length {len(data)}.")
         return ohlcv_to_dataframe(data, timeframe, pair, fill_missing=False, drop_incomplete=True)
 
     async def _async_get_historic_ohlcv(
@@ -2267,13 +2267,11 @@ class Exchange:
         timeframe: str,
         since_ms: int,
         candle_type: CandleType,
-        is_new_pair: bool = False,
         raise_: bool = False,
         until_ms: int | None = None,
     ) -> OHLCVResponse:
         """
         Download historic ohlcv
-        :param is_new_pair: used by binance subclass to allow "fast" new pair downloading
         :param candle_type: Any of the enum CandleType (must match trading mode!)
         """
 
