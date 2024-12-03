@@ -141,7 +141,7 @@ class Binance(Exchange):
 
         if (
             self._config["exchange"].get("only_from_ccxt", False)
-            and
+            or
             # only download timeframes with significant improvements,
             # otherwise fall back to rest API
             not (

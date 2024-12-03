@@ -89,7 +89,7 @@ async def download_archive_ohlcv(
         )
     except Exception as e:
         logger.warning(
-            "An exception occurred during fast download from Binance, falling back to"
+            "An exception occurred during fast download from Binance, falling back to "
             "the slower REST API, this can take more time.",
             exc_info=e,
         )
