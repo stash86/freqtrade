@@ -72,17 +72,23 @@ class LamboLoss(IHyperOptLoss):
             # Return 0 because this is unwanted scenario
             return 0
 
-        # if (nb_loss_trades == 0):
-        #     return -total_profit * 100
-
-        loss_value = (
-            total_profit
-            * min(average_profit, max_avg_profit)
-            * profit_factor
-            * min(expectancy_ratio, max_expectancy)
-            * total_trades
-            / (max_drawdown[0] * 1000)
-        )
+        if (max_drawdown.drawdown_abs == 0):
+            loss_value = (
+                total_profit
+                * min(average_profit, max_avg_profit)
+                * profit_factor
+                * min(expectancy_ratio, max_expectancy)
+                * total_trades
+            )
+        else:
+            loss_value = (
+                total_profit
+                * min(average_profit, max_avg_profit)
+                * profit_factor
+                * min(expectancy_ratio, max_expectancy)
+                * total_trades
+                / (max_drawdown.drawdown_abs * 1000)
+            )
 
         if (total_profit < 0) and (loss_value > 0):
             return loss_value
