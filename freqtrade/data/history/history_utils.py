@@ -285,6 +285,7 @@ def _download_pair_history(
             candle_type=candle_type,
             until_ms=until_ms if until_ms else None,
         )
+        logger.info(f"Downloaded data for {pair} with length {len(new_dataframe)}.")
         if data.empty:
             data = new_dataframe
         else:
@@ -603,7 +604,7 @@ def download_data(
     Download data function. Used from both cli and API.
     """
     timerange = TimeRange()
-    if "days" in config:
+    if "days" in config and config["days"] is not None:
         time_since = (datetime.now() - timedelta(days=config["days"])).strftime("%Y%m%d")
         timerange = TimeRange.parse_timerange(f"{time_since}-")
 

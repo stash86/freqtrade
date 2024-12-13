@@ -56,6 +56,22 @@ class Kraken(Exchange):
         symbols = list(self.get_markets(quote_currencies=[self._config["stake_currency"]]))
         return super().get_tickers(symbols=symbols, cached=cached)
 
+    def consolidate_balances(self, balances: CcxtBalances) -> CcxtBalances:
+        """
+        Consolidate balances for the same currency.
+        Kraken returns ".F" balances if rewards is enabled.
+        """
+        consolidated: CcxtBalances = {}
+        for currency, balance in balances.items():
+            base_currency = currency[:-2] if currency.endswith(".F") else currency
+            if base_currency in consolidated:
+                consolidated[base_currency]["free"] += balance["free"]
+                consolidated[base_currency]["used"] += balance["used"]
+                consolidated[base_currency]["total"] += balance["total"]
+            else:
+                consolidated[base_currency] = balance
+        return consolidated
+
     @retrier
     def get_balances(self) -> CcxtBalances:
         if self._config["dry_run"]:
@@ -69,6 +85,10 @@ class Kraken(Exchange):
             balances.pop("total", None)
             balances.pop("used", None)
             self._log_exchange_response("fetch_balances", balances)
+
+            # Consolidate balances
+            balances = self.consolidate_balances(balances)
+
             orders = self._api.fetch_open_orders()
             order_list = [
                 (

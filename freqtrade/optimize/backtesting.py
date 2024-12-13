@@ -1139,7 +1139,7 @@ class Backtesting:
                 amount=amount,
                 filled=0,
                 remaining=amount,
-                cost=amount * propose_rate + trade.fee_open,
+                cost=amount * propose_rate * (1 + self.fee),
                 ft_order_tag=entry_tag,
             )
             order._trade_bt = trade

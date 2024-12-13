@@ -128,8 +128,8 @@ def test_load_data_with_new_pair_1min(
     """
     Test load_pair_history() with 1 min timeframe
     """
-    mocker.patch(f"{EXMS}.get_historic_ohlcv", return_value=ohlcv_history)
     exchange = get_patched_exchange(mocker, default_conf)
+    mocker.patch.object(exchange, "get_historic_ohlcv", return_value=ohlcv_history)
     file = tmp_path / "MEME_BTC-1m.feather"
 
     # do not download a new pair if refresh_pairs isn't set
@@ -306,8 +306,8 @@ def test_load_cached_data_for_updating(testdatadir) -> None:
 def test_download_pair_history(
     ohlcv_history, mocker, default_conf, tmp_path, candle_type, subdir, file_tail
 ) -> None:
-    mocker.patch(f"{EXMS}.get_historic_ohlcv", return_value=ohlcv_history)
     exchange = get_patched_exchange(mocker, default_conf)
+    mocker.patch.object(exchange, "get_historic_ohlcv", return_value=ohlcv_history)
     file1_1 = tmp_path / f"{subdir}MEME_BTC-1m{file_tail}.feather"
     file1_5 = tmp_path / f"{subdir}MEME_BTC-5m{file_tail}.feather"
     file2_1 = tmp_path / f"{subdir}CFI_BTC-1m{file_tail}.feather"
@@ -357,8 +357,8 @@ def test_download_pair_history2(mocker, default_conf, testdatadir, ohlcv_history
         "freqtrade.data.history.datahandlers.featherdatahandler.FeatherDataHandler.ohlcv_store",
         return_value=None,
     )
-    mocker.patch(f"{EXMS}.get_historic_ohlcv", return_value=ohlcv_history)
     exchange = get_patched_exchange(mocker, default_conf)
+    mocker.patch.object(exchange, "get_historic_ohlcv", return_value=ohlcv_history)
     _download_pair_history(
         datadir=testdatadir,
         exchange=exchange,

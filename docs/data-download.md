@@ -89,7 +89,7 @@ Common arguments:
 
 !!! Tip "Downloading all data for one quote currency"
     Often, you'll want to download data for all pairs of a specific quote-currency. In such cases, you can use the following shorthand:
-    `freqtrade download-data --exchange binance --pairs .*/USDT <...>`. The provided "pairs" string will be expanded to contain all active pairs on the exchange.
+    `freqtrade download-data --exchange binance --pairs ".*/USDT" <...>`. The provided "pairs" string will be expanded to contain all active pairs on the exchange.
     To also download data for inactive (delisted) pairs, add `--include-inactive-pairs` to the command.
 
 !!! Note "Startup period"
@@ -116,7 +116,7 @@ freqtrade download-data --exchange binance --pairs ETH/USDT XRP/USDT BTC/USDT
 or as regex (in this case, to download all active USDT pairs)
 
 ```bash
-freqtrade download-data --exchange binance --pairs .*/USDT
+freqtrade download-data --exchange binance --pairs ".*/USDT"
 ```
 
 ### Other Notes

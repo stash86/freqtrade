@@ -517,14 +517,14 @@ jobs:
           ft_client/dist
         retention-days: 10
 
-  deploy-pypi:
-    name: "Deploy to PyPI"
+  deploy-test-pypi:
+    name: "Publish Python 🐍 distribution 📦 to TestPyPI"
     needs: [ build ]
     runs-on: ubuntu-22.04
     if: (github.event_name == 'release')
     environment:
-      name: release
-      url: https://pypi.org/p/freqtrade
+      name: testpypi
+      url: https://test.pypi.org/p/freqtrade
     permissions:
       id-token: write
 
@@ -538,11 +538,32 @@ jobs:
         path: dist
         merge-multiple: true
 
-
     - name: Publish to PyPI (Test)
       uses: pypa/gh-action-pypi-publish@v1.12.2
       with:
         repository-url: https://test.pypi.org/legacy/
+
+
+  deploy-pypi:
+    name: "Publish Python 🐍 distribution 📦 to PyPI"
+    needs: [ build ]
+    runs-on: ubuntu-22.04
+    if: (github.event_name == 'release')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/freqtrade
+    permissions:
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download artifact  📦
+      uses: actions/download-artifact@v4
+      with:
+        pattern: freqtrade*-build
+        path: dist
+        merge-multiple: true
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@v1.12.2
