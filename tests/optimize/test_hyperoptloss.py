@@ -39,13 +39,34 @@ def test_loss_calculation_prefer_correct_trade_count(hyperopt_conf, hyperopt_res
     hyperopt_conf.update({"hyperopt_loss": "ShortTradeDurHyperOptLoss"})
     hl = HyperOptLossResolver.load_hyperoptloss(hyperopt_conf)
     correct = hl.hyperopt_loss_function(
-        hyperopt_results, 600, datetime(2019, 1, 1), datetime(2019, 5, 1)
+        results=hyperopt_results,
+        trade_count=600,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": hyperopt_results["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
     )
     over = hl.hyperopt_loss_function(
-        hyperopt_results, 600 + 100, datetime(2019, 1, 1), datetime(2019, 5, 1)
+        results=hyperopt_results,
+        trade_count=600 + 100,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": hyperopt_results["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
     )
     under = hl.hyperopt_loss_function(
-        hyperopt_results, 600 - 100, datetime(2019, 1, 1), datetime(2019, 5, 1)
+        results=hyperopt_results,
+        trade_count=600 - 100,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": hyperopt_results["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
     )
     assert over > correct
     assert under > correct
@@ -58,9 +79,25 @@ def test_loss_calculation_prefer_shorter_trades(hyperopt_conf, hyperopt_results)
     hyperopt_conf.update({"hyperopt_loss": "ShortTradeDurHyperOptLoss"})
     hl = HyperOptLossResolver.load_hyperoptloss(hyperopt_conf)
     longer = hl.hyperopt_loss_function(
-        hyperopt_results, 100, datetime(2019, 1, 1), datetime(2019, 5, 1)
+        results=hyperopt_results,
+        trade_count=100,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": hyperopt_results["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
     )
-    shorter = hl.hyperopt_loss_function(resultsb, 100, datetime(2019, 1, 1), datetime(2019, 5, 1))
+    shorter = hl.hyperopt_loss_function(
+        results=resultsb,
+        trade_count=100,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": resultsb["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
+    )
     assert shorter < longer
 
 
@@ -73,11 +110,34 @@ def test_loss_calculation_has_limited_profit(hyperopt_conf, hyperopt_results) ->
     hyperopt_conf.update({"hyperopt_loss": "ShortTradeDurHyperOptLoss"})
     hl = HyperOptLossResolver.load_hyperoptloss(hyperopt_conf)
     correct = hl.hyperopt_loss_function(
-        hyperopt_results, 600, datetime(2019, 1, 1), datetime(2019, 5, 1)
+        results=hyperopt_results,
+        trade_count=600,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": hyperopt_results["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
     )
-    over = hl.hyperopt_loss_function(results_over, 600, datetime(2019, 1, 1), datetime(2019, 5, 1))
+    over = hl.hyperopt_loss_function(
+        results=results_over,
+        trade_count=600,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": results_over["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
+    )
     under = hl.hyperopt_loss_function(
-        results_under, 600, datetime(2019, 1, 1), datetime(2019, 5, 1)
+        results=results_under,
+        trade_count=600,
+        min_date=datetime(2019, 1, 1),
+        max_date=datetime(2019, 5, 1),
+        config=hyperopt_conf,
+        processed=None,
+        backtest_stats={"profit_total": results_under["profit_abs"].sum()},
+        starting_balance=hyperopt_conf["dry_run_wallet"],
     )
     assert over < correct
     assert under > correct
@@ -109,31 +169,34 @@ def test_loss_functions_better_profits(default_conf, hyperopt_results, lossfunct
     default_conf.update({"hyperopt_loss": lossfunction})
     hl = HyperOptLossResolver.load_hyperoptloss(default_conf)
     correct = hl.hyperopt_loss_function(
-        hyperopt_results,
+        results=hyperopt_results,
         trade_count=len(hyperopt_results),
         min_date=datetime(2019, 1, 1),
         max_date=datetime(2019, 5, 1),
         config=default_conf,
         processed=None,
         backtest_stats={"profit_total": hyperopt_results["profit_abs"].sum()},
+        starting_balance=default_conf["dry_run_wallet"],
     )
     over = hl.hyperopt_loss_function(
-        results_over,
+        results=results_over,
         trade_count=len(results_over),
         min_date=datetime(2019, 1, 1),
         max_date=datetime(2019, 5, 1),
         config=default_conf,
         processed=None,
         backtest_stats={"profit_total": results_over["profit_abs"].sum()},
+        starting_balance=default_conf["dry_run_wallet"],
     )
     under = hl.hyperopt_loss_function(
-        results_under,
+        results=results_under,
         trade_count=len(results_under),
         min_date=datetime(2019, 1, 1),
         max_date=datetime(2019, 5, 1),
         config=default_conf,
         processed=None,
         backtest_stats={"profit_total": results_under["profit_abs"].sum()},
+        starting_balance=default_conf["dry_run_wallet"],
     )
     assert over < correct
     assert under > correct

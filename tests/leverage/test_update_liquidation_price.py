@@ -29,7 +29,7 @@ def test_update_liquidation_prices(mocker, margin_mode, dry_run):
 
     assert trade_mock.set_liquidation_price.call_count == 1
 
-    assert wallets.get_total.call_count == (
+    assert wallets.get_collateral.call_count == (
         0 if margin_mode == MarginMode.ISOLATED or not dry_run else 1
     )
 

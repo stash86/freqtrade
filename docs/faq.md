@@ -40,6 +40,10 @@ This could be caused by the following reasons:
 * The installation did not complete successfully.
   * Please check the [Installation documentation](installation.md).
 
+### The bot starts, but in STOPPED mode
+
+Make sure you set the `initial_state` config option to `"running"` in your config.json
+
 ### I have waited 5 minutes, why hasn't the bot made any trades yet?
 
 * Depending on the buy strategy, the amount of whitelisted coins, the

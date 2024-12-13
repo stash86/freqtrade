@@ -27,9 +27,12 @@ def update_liquidation_prices(
             total_wallet_stake = 0.0
             if dry_run:
                 # Parameters only needed for cross margin
-                total_wallet_stake = wallets.get_total(stake_currency)
+                total_wallet_stake = wallets.get_collateral()
 
-            logger.info("Updating liquidation price for all open trades.")
+            logger.info(
+                "Updating liquidation price for all open trades. "
+                f"Collateral {total_wallet_stake} {stake_currency}."
+            )
             open_trades = Trade.get_open_trades()
             for t in open_trades:
                 # TODO: This should be done in a batch update

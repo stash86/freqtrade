@@ -568,6 +568,7 @@ def test_backtest__enter_trade_futures(default_conf_usdt, fee, mocker) -> None:
     mocker.patch(f"{EXMS}.get_fee", fee)
     mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.00001)
     mocker.patch(f"{EXMS}.get_max_pair_stake_amount", return_value=float("inf"))
+    mocker.patch(f"{EXMS}.price_to_precision", lambda s, x, y, **kwargs: y)
     mocker.patch(f"{EXMS}.get_max_leverage", return_value=100)
     mocker.patch("freqtrade.optimize.backtesting.price_to_precision", lambda p, *args: p)
     patch_exchange(mocker)
@@ -1842,6 +1843,7 @@ def test_backtest_multi_pair_long_short_switch(
     if use_detail:
         default_conf_usdt["timeframe_detail"] = "1m"
 
+    mocker.patch(f"{EXMS}.price_to_precision", lambda s, x, y, **kwargs: y)
     mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.00001)
     mocker.patch(f"{EXMS}.get_max_pair_stake_amount", return_value=float("inf"))
     mocker.patch(f"{EXMS}.get_fee", fee)

@@ -45,7 +45,14 @@ class Wallets:
         self.__rpc = rpc
         self._wallets: dict[str, Wallet] = {}
         self._positions: dict[str, PositionWallet] = {}
-        self._start_cap = config["dry_run_wallet"]
+        self._start_cap: dict[str, float] = {}
+        self._stake_currency = config["stake_currency"]
+
+        if isinstance(_start_cap := config["dry_run_wallet"], float | int):
+            self._start_cap[self._stake_currency] = _start_cap
+        else:
+            self._start_cap = _start_cap
+
         self._last_wallet_refresh: datetime | None = None
 
         self._default_timeframe = self._config.get("timeframe", "1h")
@@ -75,6 +82,18 @@ class Wallets:
             return balance.total
         else:
             return 0
+
+    def get_collateral(self) -> float:
+        """
+        Get total collateral for liquidation price calculation.
+        """
+        if self._config.get("margin_mode") == "cross":
+            # free includes all balances and, combined with position collateral,
+            # is used as "wallet balance".
+            return self.get_free(self._stake_currency) + sum(
+                pos.collateral for pos in self._positions.values()
+            )
+        return self.get_total(self._stake_currency)
 
     def get_owned(self, pair: str, base_currency: str) -> float:
         """
@@ -119,36 +138,51 @@ class Wallets:
                     for o in trade.open_orders
                     if o.amount and o.ft_order_side == trade.exit_side
                 )
+                curr_wallet_bal = self._start_cap.get(curr, 0)
 
-                _wallets[curr] = Wallet(curr, trade.amount - pending, pending, trade.amount)
-
-            current_stake = self._start_cap + tot_profit - tot_in_trades
-            total_stake = current_stake + used_stake
+                _wallets[curr] = Wallet(
+                    curr,
+                    curr_wallet_bal + trade.amount - pending,
+                    pending,
+                    trade.amount + curr_wallet_bal,
+                )
         else:
-            tot_in_trades = 0
             for position in open_trades:
-                # size = self._exchange._contracts_to_amount(position.pair, position['contracts'])
-                size = position.amount
-                collateral = position.stake_amount
-                leverage = position.leverage
-                tot_in_trades += collateral
                 _positions[position.pair] = PositionWallet(
                     position.pair,
-                    position=size,
-                    leverage=leverage,
-                    collateral=collateral,
+                    position=position.amount,
+                    leverage=position.leverage,
+                    collateral=position.stake_amount,
                     side=position.trade_direction,
                 )
-            current_stake = self._start_cap + tot_profit - tot_in_trades
-            used_stake = tot_in_trades
-            total_stake = current_stake + tot_in_trades
 
-        _wallets[self._config["stake_currency"]] = Wallet(
-            currency=self._config["stake_currency"],
-            free=current_stake,
+            used_stake = tot_in_trades
+
+        cross_margin = 0.0
+        if self._config.get("margin_mode") == "cross":
+            # In cross-margin mode, the total balance is used as collateral.
+            # This is moved as "free" into the stake currency balance.
+            # strongly tied to the get_collateral() implementation.
+            for curr, bal in self._start_cap.items():
+                if curr == self._stake_currency:
+                    continue
+                rate = self._exchange.get_conversion_rate(curr, self._stake_currency)
+                if rate:
+                    cross_margin += bal * rate
+
+        current_stake = self._start_cap.get(self._stake_currency, 0) + tot_profit - tot_in_trades
+        total_stake = current_stake + used_stake
+
+        _wallets[self._stake_currency] = Wallet(
+            currency=self._stake_currency,
+            free=current_stake + cross_margin,
             used=used_stake,
             total=total_stake,
         )
+        for currency, bal in self._start_cap.items():
+            if currency not in _wallets:
+                _wallets[currency] = Wallet(currency, bal, 0, bal)
+
         self._wallets = _wallets
         self._positions = _positions
 
@@ -254,7 +288,7 @@ class Wallets:
         else:
             tot_profit = Trade.get_total_closed_profit()
             open_stakes = Trade.total_open_trades_stakes()
-            available_balance = self.get_free(self._config["stake_currency"])
+            available_balance = self.get_free(self._stake_currency)
             return available_balance - tot_profit + open_stakes
 
     def get_total_stake_amount(self):
@@ -274,9 +308,9 @@ class Wallets:
             # Ensure <tradable_balance_ratio>% is used from the overall balance
             # Otherwise we'd risk lowering stakes with each open trade.
             # (tied up + current free) * ratio) - tied up
-            available_amount = (
-                val_tied_up + self.get_free(self._config["stake_currency"])
-            ) * self._config["tradable_balance_ratio"]
+            available_amount = (val_tied_up + self.get_free(self._stake_currency)) * self._config[
+                "tradable_balance_ratio"
+            ]
         return available_amount
 
     def get_available_stake_amount(self) -> float:
@@ -287,7 +321,7 @@ class Wallets:
         (<open_trade stakes> + free amount) * tradable_balance_ratio - <open_trade stakes>
         """
 
-        free = self.get_free(self._config["stake_currency"])
+        free = self.get_free(self._stake_currency)
         return min(self.get_total_stake_amount() - Trade.total_open_trades_stakes(), free)
 
     def _calculate_unlimited_stake_amount(
@@ -326,7 +360,7 @@ class Wallets:
                 f"lower than stake amount ({stake_amount} {self._config['stake_currency']})"
             )
 
-        return stake_amount
+        return max(stake_amount, 0)
 
     def get_trade_stake_amount(
         self, pair: str, max_open_trades: IntOrInf, edge=None, update: bool = True
@@ -346,8 +380,8 @@ class Wallets:
         if edge:
             stake_amount = edge.stake_amount(
                 pair,
-                self.get_free(self._config["stake_currency"]),
-                self.get_total(self._config["stake_currency"]),
+                self.get_free(self._stake_currency),
+                self.get_total(self._stake_currency),
                 val_tied_up,
             )
         else:

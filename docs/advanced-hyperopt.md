@@ -39,6 +39,7 @@ class SuperDuperHyperOptLoss(IHyperOptLoss):
         config: Config,
         processed: dict[str, DataFrame],
         backtest_stats: dict[str, Any],
+        starting_balance: float,
         **kwargs,
     ) -> float:
         """
@@ -70,6 +71,7 @@ Currently, the arguments are:
 * `config`: Config object used (Note: Not all strategy-related parameters will be updated here if they are part of a hyperopt space).
 * `processed`: Dict of Dataframes with the pair as keys containing the data used for backtesting.
 * `backtest_stats`: Backtesting statistics using the same format as the backtesting file "strategy" substructure. Available fields can be seen in `generate_strategy_stats()` in `optimize_reports.py`.
+* `starting_balance`: Starting balance used for backtesting.
 
 This function needs to return a floating point number (`float`). Smaller numbers will be interpreted as better results. The parameters and balancing for this is up to you.
 

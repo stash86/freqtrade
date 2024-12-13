@@ -17,7 +17,7 @@ def setup_optimize_configuration(args: dict[str, Any], method: RunMode) -> dict[
     :return: Configuration
     """
     from freqtrade.configuration import setup_utils_configuration
-    from freqtrade.util import fmt_coin
+    from freqtrade.util import fmt_coin, get_dry_run_wallet
 
     config = setup_utils_configuration(args, method)
 
@@ -26,7 +26,7 @@ def setup_optimize_configuration(args: dict[str, Any], method: RunMode) -> dict[
         RunMode.HYPEROPT: "hyperoptimization",
     }
     if method in no_unlimited_runmodes.keys():
-        wallet_size = config["dry_run_wallet"] * config["tradable_balance_ratio"]
+        wallet_size = get_dry_run_wallet(config) * config["tradable_balance_ratio"]
         # tradable_balance_ratio
         if (
             config["stake_amount"] != constants.UNLIMITED_STAKE_AMOUNT

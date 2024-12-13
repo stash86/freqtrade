@@ -28,6 +28,7 @@ from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
 from freqtrade.resolvers import ExchangeResolver, StrategyResolver
 from freqtrade.strategy import IStrategy
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
+from freqtrade.util import get_dry_run_wallet
 
 
 logger = logging.getLogger(__name__)
@@ -706,7 +707,7 @@ def plot_profit(config: Config) -> None:
         trades,
         config["timeframe"],
         config.get("stake_currency", ""),
-        config.get("available_capital", config["dry_run_wallet"]),
+        config.get("available_capital", get_dry_run_wallet(config)),
     )
     store_plot_file(
         fig,

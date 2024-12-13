@@ -62,8 +62,14 @@ class Binance(Exchange):
         (TradingMode.FUTURES, MarginMode.ISOLATED)
     ]
 
-    def get_tickers(self, symbols: list[str] | None = None, *, cached: bool = False) -> Tickers:
-        tickers = super().get_tickers(symbols=symbols, cached=cached)
+    def get_tickers(
+        self,
+        symbols: list[str] | None = None,
+        *,
+        cached: bool = False,
+        market_type: TradingMode | None = None,
+    ) -> Tickers:
+        tickers = super().get_tickers(symbols=symbols, cached=cached, market_type=market_type)
         if self.trading_mode == TradingMode.FUTURES:
             # Binance's future result has no bid/ask values.
             # Therefore we must fetch that from fetch_bids_asks and combine the two results.
@@ -90,7 +96,10 @@ class Binance(Exchange):
                         "\nHedge Mode is not supported by freqtrade. "
                         "Please change 'Position Mode' on your binance futures account."
                     )
-                if assets_margin.get("multiAssetsMargin") is True:
+                if (
+                    assets_margin.get("multiAssetsMargin") is True
+                    and self.margin_mode != MarginMode.CROSS
+                ):
                     msg += (
                         "\nMulti-Asset Mode is not supported by freqtrade. "
                         "Please change 'Asset Mode' on your binance futures account."

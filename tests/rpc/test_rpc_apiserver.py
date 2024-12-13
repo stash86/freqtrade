@@ -556,7 +556,7 @@ def test_api_balance(botclient, mocker, rpc_balance, tickers):
     ftbot.config["dry_run"] = False
     mocker.patch(f"{EXMS}.get_balances", return_value=rpc_balance)
     mocker.patch(f"{EXMS}.get_tickers", tickers)
-    mocker.patch(f"{EXMS}.get_valid_pair_combination", side_effect=lambda a, b: f"{a}/{b}")
+    mocker.patch(f"{EXMS}.get_valid_pair_combination", side_effect=lambda a, b: [f"{a}/{b}"])
     ftbot.wallets.update()
 
     rc = client_get(client, f"{BASE_URI}/balance")

@@ -1,6 +1,7 @@
 # pragma pylint: disable=missing-docstring
 import json
 import logging
+import platform
 import re
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -515,6 +516,30 @@ def create_mock_trades_usdt(fee, is_short: bool | None = False, use_db: bool = T
 @pytest.fixture(autouse=True)
 def patch_gc(mocker) -> None:
     mocker.patch("freqtrade.main.gc_set_threshold")
+
+
+def is_arm() -> bool:
+    machine = platform.machine()
+    return "arm" in machine or "aarch64" in machine
+
+
+def is_mac() -> bool:
+    machine = platform.system()
+    return "Darwin" in machine
+
+
+@pytest.fixture(autouse=True)
+def patch_torch_initlogs(mocker) -> None:
+    if is_mac():
+        # Mock torch import completely
+        import sys
+        import types
+
+        module_name = "torch"
+        mocked_module = types.ModuleType(module_name)
+        sys.modules[module_name] = mocked_module
+    else:
+        mocker.patch("torch._logging._init_logs")
 
 
 @pytest.fixture(autouse=True)
@@ -2212,7 +2237,7 @@ def tickers():
                 "first": None,
                 "last": 8603.67,
                 "change": -0.879,
-                "percentage": None,
+                "percentage": -8.95,
                 "average": None,
                 "baseVolume": 30414.604298,
                 "quoteVolume": 259629896.48584127,
@@ -2256,7 +2281,7 @@ def tickers():
                 "first": None,
                 "last": 129.28,
                 "change": 1.795,
-                "percentage": None,
+                "percentage": -2.5,
                 "average": None,
                 "baseVolume": 59698.79897,
                 "quoteVolume": 29132399.743954,

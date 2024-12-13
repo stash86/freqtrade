@@ -4021,7 +4021,7 @@ def test_get_real_amount_fees_order(
     default_conf_usdt, market_buy_order_usdt_doublefee, fee, mocker
 ):
     tfo_mock = mocker.patch(f"{EXMS}.get_trades_for_order", return_value=[])
-    mocker.patch(f"{EXMS}.get_valid_pair_combination", return_value="BNB/USDT")
+    mocker.patch(f"{EXMS}.get_valid_pair_combination", return_value=["BNB/USDT"])
     mocker.patch(f"{EXMS}.fetch_ticker", return_value={"last": 200})
     trade = Trade(
         pair="LTC/USDT",

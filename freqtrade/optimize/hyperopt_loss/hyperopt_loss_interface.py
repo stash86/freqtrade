@@ -31,6 +31,7 @@ class IHyperOptLoss(ABC):
         config: Config,
         processed: dict[str, DataFrame],
         backtest_stats: dict[str, Any],
+        starting_balance: float,
         **kwargs,
     ) -> float:
         """

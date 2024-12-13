@@ -9,7 +9,6 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from freqtrade.constants import Config
 from freqtrade.data.metrics import calculate_sortino
 from freqtrade.optimize.hyperopt import IHyperOptLoss
 
@@ -24,10 +23,9 @@ class SortinoHyperOptLoss(IHyperOptLoss):
     @staticmethod
     def hyperopt_loss_function(
         results: DataFrame,
-        trade_count: int,
         min_date: datetime,
         max_date: datetime,
-        config: Config,
+        starting_balance: float,
         *args,
         **kwargs,
     ) -> float:
@@ -36,7 +34,6 @@ class SortinoHyperOptLoss(IHyperOptLoss):
 
         Uses Sortino Ratio calculation.
         """
-        starting_balance = config["dry_run_wallet"]
         sortino_ratio = calculate_sortino(results, min_date, max_date, starting_balance)
         # print(expected_returns_mean, down_stdev, sortino_ratio)
         return -sortino_ratio

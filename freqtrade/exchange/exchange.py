@@ -7,7 +7,7 @@ import asyncio
 import inspect
 import logging
 import signal
-from collections.abc import Coroutine
+from collections.abc import Coroutine, Generator
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from math import floor, isnan
@@ -201,7 +201,7 @@ class Exchange:
 
         self._cache_lock = Lock()
         # Cache for 10 minutes ...
-        self._fetch_tickers_cache: TTLCache = TTLCache(maxsize=2, ttl=60 * 10)
+        self._fetch_tickers_cache: TTLCache = TTLCache(maxsize=4, ttl=60 * 10)
         # Cache values for 300 to avoid frequent polling of the exchange for prices
         # Caching only applies to RPC methods, so prices for open trades are still
         # refreshed once every iteration.
@@ -705,14 +705,22 @@ class Exchange:
                 f"Available currencies are: {', '.join(quote_currencies)}"
             )
 
-    def get_valid_pair_combination(self, curr_1: str, curr_2: str) -> str:
+    def get_valid_pair_combination(self, curr_1: str, curr_2: str) -> Generator[str, None, None]:
         """
         Get valid pair combination of curr_1 and curr_2 by trying both combinations.
         """
-        for pair in [f"{curr_1}/{curr_2}", f"{curr_2}/{curr_1}"]:
+        yielded = False
+        for pair in (
+            f"{curr_1}/{curr_2}",
+            f"{curr_2}/{curr_1}",
+            f"{curr_1}/{curr_2}:{curr_2}",
+            f"{curr_2}/{curr_1}:{curr_1}",
+        ):
             if pair in self.markets and self.markets[pair].get("active"):
-                return pair
-        raise ValueError(f"Could not combine {curr_1} and {curr_2} to get a valid pair.")
+                yielded = True
+                yield pair
+        if not yielded:
+            raise ValueError(f"Could not combine {curr_1} and {curr_2} to get a valid pair.")
 
     def validate_timeframes(self, timeframe: str | None) -> None:
         """
@@ -1801,24 +1809,37 @@ class Exchange:
             raise OperationalException(e) from e
 
     @retrier
-    def get_tickers(self, symbols: list[str] | None = None, *, cached: bool = False) -> Tickers:
+    def get_tickers(
+        self,
+        symbols: list[str] | None = None,
+        *,
+        cached: bool = False,
+        market_type: TradingMode | None = None,
+    ) -> Tickers:
         """
         :param symbols: List of symbols to fetch
         :param cached: Allow cached result
+        :param market_type: Market type to fetch - either spot or futures.
         :return: fetch_tickers result
         """
         tickers: Tickers
         if not self.exchange_has("fetchTickers"):
             return {}
+        cache_key = f"fetch_tickers_{market_type}" if market_type else "fetch_tickers"
         if cached:
             with self._cache_lock:
-                tickers = self._fetch_tickers_cache.get("fetch_tickers")  # type: ignore
+                tickers = self._fetch_tickers_cache.get(cache_key)  # type: ignore
             if tickers:
                 return tickers
         try:
-            tickers = self._api.fetch_tickers(symbols)
+            # Re-map futures to swap
+            market_types = {
+                TradingMode.FUTURES: "swap",
+            }
+            params = {"type": market_types.get(market_type, market_type)} if market_type else {}
+            tickers = self._api.fetch_tickers(symbols, params)
             with self._cache_lock:
-                self._fetch_tickers_cache["fetch_tickers"] = tickers
+                self._fetch_tickers_cache[cache_key] = tickers
             return tickers
         except ccxt.NotSupported as e:
             raise OperationalException(
@@ -1842,7 +1863,39 @@ class Exchange:
         except ccxt.BaseError as e:
             raise OperationalException(e) from e
 
-    # Pricing info
+    def get_conversion_rate(self, coin: str, currency: str) -> float | None:
+        """
+        Quick and cached way to get conversion rate one currency to the other.
+        Can then be used as "rate * amount" to convert between currencies.
+        :param coin: Coin to convert
+        :param currency: Currency to convert to
+        :returns: Conversion rate from coin to currency
+        :raises: ExchangeErrors
+        """
+        if coin == currency:
+            return 1.0
+        tickers = self.get_tickers(cached=True)
+        try:
+            for pair in self.get_valid_pair_combination(coin, currency):
+                ticker: Ticker | None = tickers.get(pair, None)
+                if not ticker:
+                    tickers_other: Tickers = self.get_tickers(
+                        cached=True,
+                        market_type=(
+                            TradingMode.SPOT
+                            if self.trading_mode != TradingMode.SPOT
+                            else TradingMode.FUTURES
+                        ),
+                    )
+                    ticker = tickers_other.get(pair, None)
+                if ticker:
+                    rate: float | None = ticker.get("last", None)
+                    if rate and pair.startswith(currency) and not pair.endswith(currency):
+                        rate = 1.0 / rate
+                    return rate
+        except ValueError:
+            return None
+        return None
 
     @retrier
     def fetch_ticker(self, pair: str) -> Ticker:
@@ -2198,10 +2251,13 @@ class Exchange:
                 # If cost is None or 0.0 -> falsy, return None
                 return None
             try:
-                comb = self.get_valid_pair_combination(fee_curr, self._config["stake_currency"])
-                tick = self.fetch_ticker(comb)
-
-                fee_to_quote_rate = safe_value_fallback2(tick, tick, "last", "ask")
+                for comb in self.get_valid_pair_combination(
+                    fee_curr, self._config["stake_currency"]
+                ):
+                    tick = self.fetch_ticker(comb)
+                    fee_to_quote_rate = safe_value_fallback2(tick, tick, "last", "ask")
+                    if tick:
+                        break
             except (ValueError, ExchangeError):
                 fee_to_quote_rate = self._config["exchange"].get("unknown_fee_rate", None)
                 if not fee_to_quote_rate:
@@ -3586,7 +3642,7 @@ class Exchange:
             liquidation_price_buffer = (
                 liquidation_price - buffer_amount if is_short else liquidation_price + buffer_amount
             )
-            return max(liquidation_price_buffer, 0.0)
+            return self.price_to_precision(pair, max(liquidation_price_buffer, 0.0))
         else:
             return None
 

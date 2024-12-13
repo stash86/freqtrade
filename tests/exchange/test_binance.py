@@ -293,6 +293,7 @@ def test_liquidation_price_binance(
     default_conf["trading_mode"] = trading_mode
     default_conf["margin_mode"] = margin_mode
     default_conf["liquidation_buffer"] = 0.0
+    mocker.patch(f"{EXMS}.price_to_precision", lambda s, x, y, **kwargs: y)
     exchange = get_patched_exchange(mocker, default_conf, exchange="binance")
 
     def get_maint_ratio(pair_, stake_amount):

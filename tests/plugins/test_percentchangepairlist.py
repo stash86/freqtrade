@@ -360,9 +360,16 @@ def test_gen_pairlist_from_tickers(mocker, rpl_config, tickers):
     exchange = get_patched_exchange(mocker, rpl_config, exchange="binance")
     pairlistmanager = PairListManager(exchange, rpl_config)
 
-    remote_pairlist = PercentChangePairList(
-        exchange, pairlistmanager, rpl_config, rpl_config["pairlists"][0], 0
-    )
+    remote_pairlist = pairlistmanager._pairlist_handlers[0]
+
+    # The generator returns BTC ETH and TKN - filtering the first ensures removing pairs
+    # in this step ain't problematic.
+    def _validate_pair(pair, ticker):
+        if pair == "BTC/USDT":
+            return False
+        return True
+
+    remote_pairlist._validate_pair = _validate_pair
 
     result = remote_pairlist.gen_pairlist(tickers.return_value)
 

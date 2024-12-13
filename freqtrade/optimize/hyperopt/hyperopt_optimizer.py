@@ -28,6 +28,7 @@ from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLo
 from freqtrade.optimize.hyperopt_tools import HyperoptStateContainer, HyperoptTools
 from freqtrade.optimize.optimize_reports import generate_strategy_stats
 from freqtrade.resolvers.hyperopt_resolver import HyperOptLossResolver
+from freqtrade.util.dry_run_wallet import get_dry_run_wallet
 
 
 # Suppress scikit-learn FutureWarnings from skopt
@@ -363,6 +364,7 @@ class HyperOptimizer:
                 config=self.config,
                 processed=processed,
                 backtest_stats=strat_stats,
+                starting_balance=get_dry_run_wallet(self.config),
             )
         return {
             "loss": loss,

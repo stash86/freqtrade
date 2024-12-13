@@ -10,11 +10,10 @@ from freqtrade.configuration import TimeRange
 from freqtrade.data.dataprovider import DataProvider
 from freqtrade.exceptions import OperationalException
 from freqtrade.freqai.data_kitchen import FreqaiDataKitchen
-from tests.conftest import get_patched_exchange
+from tests.conftest import get_patched_exchange, is_mac
 from tests.freqai.conftest import (
     get_patched_data_kitchen,
     get_patched_freqai_strategy,
-    is_mac,
     make_unfiltered_dataframe,
 )
 

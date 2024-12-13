@@ -102,8 +102,17 @@
     },
     "dry_run_wallet": {
       "description": "Initial wallet balance for dry run mode.",
-      "type": "number",
-      "default": 1000
+      "type": [
+        "number",
+        "object"
+      ],
+      "default": 1000,
+      "patternProperties": {
+        "^[a-zA-Z0-9]+$": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
     },
     "cancel_open_orders_on_exit": {
       "description": "Cancel open orders when exiting.",

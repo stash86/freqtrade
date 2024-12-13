@@ -9,7 +9,6 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from freqtrade.constants import Config
 from freqtrade.data.metrics import calculate_sharpe
 from freqtrade.optimize.hyperopt import IHyperOptLoss
 
@@ -24,10 +23,9 @@ class SharpeHyperOptLoss(IHyperOptLoss):
     @staticmethod
     def hyperopt_loss_function(
         results: DataFrame,
-        trade_count: int,
         min_date: datetime,
         max_date: datetime,
-        config: Config,
+        starting_balance: float,
         *args,
         **kwargs,
     ) -> float:
@@ -36,7 +34,6 @@ class SharpeHyperOptLoss(IHyperOptLoss):
 
         Uses Sharpe Ratio calculation.
         """
-        starting_balance = config["dry_run_wallet"]
         sharp_ratio = calculate_sharpe(results, min_date, max_date, starting_balance)
         # print(expected_returns_mean, up_stdev, sharp_ratio)
         return -sharp_ratio

@@ -514,8 +514,13 @@ def test_rpc_balance_handle_error(default_conf, mocker):
     patch_get_signal(freqtradebot)
     rpc = RPC(freqtradebot)
     rpc._fiat_converter = CryptoToFiatConverter({})
-    with pytest.raises(RPCException, match="Error getting current tickers."):
-        rpc._rpc_balance(default_conf["stake_currency"], default_conf["fiat_display_currency"])
+    res = rpc._rpc_balance(default_conf["stake_currency"], default_conf["fiat_display_currency"])
+    assert res["stake"] == "BTC"
+
+    assert len(res["currencies"]) == 1
+    assert res["currencies"][0]["currency"] == "BTC"
+    # ETH has not been converted.
+    assert all(currency["currency"] != "ETH" for currency in res["currencies"])
 
 
 def test_rpc_balance_handle(default_conf_usdt, mocker, tickers):
@@ -529,6 +534,13 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers):
             "free": 1.0,
             "total": 5.0,
             "used": 4.0,
+        },
+        # Invalid coin not in tickers list.
+        # This triggers a 2nd call to get_tickers
+        "NotACoin": {
+            "free": 0.0,
+            "total": 2.0,
+            "used": 0.0,
         },
         "USDT": {
             "free": 50.0,
@@ -574,7 +586,7 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers):
         fetch_positions=MagicMock(return_value=mock_pos),
         get_tickers=tickers,
         get_valid_pair_combination=MagicMock(
-            side_effect=lambda a, b: f"{b}/{a}" if a == "USDT" else f"{a}/{b}"
+            side_effect=lambda a, b: [f"{b}/{a}" if a == "USDT" else f"{a}/{b}"]
         ),
     )
     default_conf_usdt["dry_run"] = False
@@ -590,8 +602,10 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers):
 
     assert pytest.approx(result["total"]) == 2824.83464
     assert pytest.approx(result["value"]) == 2824.83464 * 1.2
-    assert tickers.call_count == 1
+    assert tickers.call_count == 4
     assert tickers.call_args_list[0][1]["cached"] is True
+    # Testing futures - so we should get spot tickers
+    assert tickers.call_args_list[-1][1]["market_type"] == "spot"
     assert "USD" == result["symbol"]
     assert result["currencies"] == [
         {
@@ -621,6 +635,20 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers):
             "position": 0,
             "is_bot_managed": False,
             "is_position": False,
+        },
+        {
+            "currency": "NotACoin",
+            "balance": 2.0,
+            "bot_owned": 0,
+            "est_stake": 0,
+            "est_stake_bot": 0,
+            "free": 0.0,
+            "is_bot_managed": False,
+            "is_position": False,
+            "position": 0,
+            "side": "long",
+            "stake": "USDT",
+            "used": 0.0,
         },
         {
             "currency": "USDT",

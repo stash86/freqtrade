@@ -10,7 +10,7 @@ from freqtrade.constants import Config
 from freqtrade.exceptions import OperationalException
 from freqtrade.optimize.analysis.lookahead import LookaheadAnalysis
 from freqtrade.resolvers import StrategyResolver
-from freqtrade.util import print_rich_table
+from freqtrade.util import get_dry_run_wallet, print_rich_table
 
 
 logger = logging.getLogger(__name__)
@@ -163,7 +163,7 @@ class LookaheadAnalysisSubFunctions:
             config["max_open_trades"] = len(config["pairs"])
 
         min_dry_run_wallet = 1000000000
-        if config["dry_run_wallet"] < min_dry_run_wallet:
+        if get_dry_run_wallet(config) < min_dry_run_wallet:
             logger.info(
                 "Dry run wallet was not set to 1 billion, pushing it up there "
                 "just to avoid false positives"

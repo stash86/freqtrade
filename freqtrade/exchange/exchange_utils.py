@@ -308,7 +308,9 @@ def price_to_precision(
                 decimal_to_precision(
                     price,
                     rounding_mode=rounding_mode,
-                    precision=price_precision,
+                    precision=int(price_precision)
+                    if precisionMode != TICK_SIZE
+                    else price_precision,
                     counting_mode=precisionMode,
                 )
             )

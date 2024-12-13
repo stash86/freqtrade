@@ -2,6 +2,8 @@ import logging
 import os
 from typing import Any
 
+import rapidjson
+
 from freqtrade.constants import ENV_VAR_PREFIX
 from freqtrade.misc import deep_merge_dicts
 
@@ -20,6 +22,14 @@ def _get_var_typed(val):
                 return True
             elif val.lower() in ("f", "false"):
                 return False
+            # try to convert from json
+            try:
+                value = rapidjson.loads(val)
+                # Limited to lists for now
+                if isinstance(value, list):
+                    return value
+            except rapidjson.JSONDecodeError:
+                pass
     # keep as string
     return val
 

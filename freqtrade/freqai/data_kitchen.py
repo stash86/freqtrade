@@ -849,7 +849,7 @@ class FreqaiDataKitchen:
             dataframe = strategy.set_freqai_targets(dataframe.copy(), metadata=metadata)
             dataframe = self.remove_special_chars_from_feature_names(dataframe)
 
-        self.get_unique_classes_from_labels(dataframe)
+            self.get_unique_classes_from_labels(dataframe)
 
         if self.config.get("reduce_df_footprint", False):
             dataframe = reduce_dataframe_footprint(dataframe)
