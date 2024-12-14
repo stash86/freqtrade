@@ -111,6 +111,8 @@ develop = [
   "pytest-cov",
   "pytest-mock",
   "pytest-random-order",
+  "pytest-timeout",
+  "pytest-xdist",
   "pytest",
   "ruff",
   "time-machine",

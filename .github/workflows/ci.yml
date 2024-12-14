@@ -276,14 +276,23 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Pip cache (Windows)
-      uses: actions/cache@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
       with:
-        path: ~\AppData\Local\pip\Cache
-        key: pip-${{ matrix.os }}-${{ matrix.python-version }}
+        enable-cache: true
+        cache-dependency-glob: "requirements**.txt"
+        cache-suffix: "${{ matrix.python-version }}"
+        prune-cache: false
 
     - name: Installation
       run: |
+        uv venv
+        .venv\Scripts\activate
+        # persist the venv path for future steps
+        "$(pwd)/.venv/Scripts" >> $env:GITHUB_PATH
+
+        function uvpipFunction { uv pip $args }
+        Set-Alias -name pip -value uvpipFunction
         ./build_helpers/install_windows.ps1
 
     - name: Tests
