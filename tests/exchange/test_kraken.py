@@ -58,8 +58,10 @@ def test_kraken_trading_agreement(default_conf, mocker, order_type, time_in_forc
 
 def test_get_balances_prod_kraken(default_conf, mocker):
     balance_item = {"free": 0.0, "total": 10.0, "used": 0.0}
+    kraken = ccxt.kraken()
 
     api_mock = MagicMock()
+    api_mock.commonCurrencies = kraken.commonCurrencies
     api_mock.fetch_balance = MagicMock(
         return_value={
             "1ST": {"free": 0.0, "total": 0.0, "used": 0.0},
@@ -68,6 +70,8 @@ def test_get_balances_prod_kraken(default_conf, mocker):
             "3RD": balance_item.copy(),
             "4TH": balance_item.copy(),
             "EUR": balance_item.copy(),
+            "BTC": {"free": 0.0, "total": 0.0, "used": 0.0},
+            "XBT.F": balance_item.copy(),
             "timestamp": 123123,
         }
     )
@@ -124,7 +128,7 @@ def test_get_balances_prod_kraken(default_conf, mocker):
     default_conf["dry_run"] = False
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="kraken")
     balances = exchange.get_balances()
-    assert len(balances) == 6
+    assert len(balances) == 7
 
     assert balances["1ST"]["free"] == 9.0
     assert balances["1ST"]["total"] == 10.0
@@ -145,6 +149,10 @@ def test_get_balances_prod_kraken(default_conf, mocker):
     assert balances["EUR"]["free"] == 8.0
     assert balances["EUR"]["total"] == 10.0
     assert balances["EUR"]["used"] == 2.0
+
+    assert balances["BTC"]["free"] == 10.0
+    assert balances["BTC"]["total"] == 10.0
+    assert balances["BTC"]["used"] == 0.0
     ccxt_exceptionhandlers(
         mocker, default_conf, api_mock, "kraken", "get_balances", "fetch_balance"
     )

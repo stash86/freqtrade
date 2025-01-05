@@ -118,7 +118,7 @@ When trading on Binance Futures market, orderbook must be used because there is 
   },
 ```
 
-#### Binance futures settings
+#### Binance isolated futures settings
 
 Users will also have to have the futures-setting "Position Mode" set to "One-way Mode", and "Asset Mode" set to "Single-Asset Mode".
 These settings will be checked on startup, and freqtrade will show an error if this setting is wrong.
@@ -126,6 +126,27 @@ These settings will be checked on startup, and freqtrade will show an error if t
 ![Binance futures settings](assets/binance_futures_settings.png)
 
 Freqtrade will not attempt to change these settings.
+
+#### Binance BNFCR futures
+
+BNFCR mode are a special type of futures mode on Binance to work around regulatory issues in Europe.  
+To use BNFCR futures, you will have to have the following combination of settings:
+
+``` jsonc
+{
+    // ...
+    "trading_mode": "futures",
+    "margin_mode": "cross",
+    "proxy_coin": "BNFCR",
+    "stake_currency": "USDT" // or "USDC"
+    // ...
+}
+```
+
+The `stake_currency` setting defines the markets the bot will be operating in. This choice is really arbitrary.
+
+On the exchange, you'll have to use "Multi-asset Mode" - and "Position Mode set to "One-way Mode".
+Freqtrade will check these settings on startup, but won't attempt to change them.
 
 ## Bingx
 
@@ -189,7 +210,7 @@ freqtrade download-data --exchange kraken --dl-trades -p BTC/EUR BCH/EUR
     It will also take a long time, as freqtrade will need to download every single trade that happened on the exchange for the pair / timerange combination, therefore please be patient.
 
 !!! Warning "rateLimit tuning"
-    Please pay attention that rateLimit configuration entry holds delay in milliseconds between requests, NOT requests\sec rate.
+    Please pay attention that rateLimit configuration entry holds delay in milliseconds between requests, NOT requests/sec rate.
     So, in order to mitigate Kraken API "Rate limit exceeded" exception, this configuration should be increased, NOT decreased.
 
 ## Kucoin
@@ -217,12 +238,12 @@ Kucoin supports [time_in_force](configuration.md#understand-order_time_in_force)
 For Kucoin, it is suggested to add `"KCS/<STAKE>"` to your blacklist to avoid issues, unless you are willing to maintain enough extra `KCS` on the account or unless you're willing to disable using `KCS` for fees. 
 Kucoin accounts may use `KCS` for fees, and if a trade happens to be on `KCS`, further trades may consume this position and make the initial `KCS` trade unsellable as the expected amount is not there anymore.
 
-## HTX (formerly Huobi)
+## HTX
 
 !!! Tip "Stoploss on Exchange"
     HTX supports `stoploss_on_exchange` and uses `stop-limit` orders. It provides great advantages, so we recommend to benefit from it by enabling stoploss on exchange.
 
-## OKX (former OKEX)
+## OKX
 
 OKX requires a passphrase for each api key, you will therefore need to add this key into the configuration so your exchange section looks as follows:
 
@@ -235,6 +256,9 @@ OKX requires a passphrase for each api key, you will therefore need to add this 
     // ...
 }
 ```
+
+If you've registered with OKX on the host my.okx.com (OKX EAA)- you will need to use `"myokx"` as the exchange name.
+Using the wrong exchange will result in the error "OKX Error 50119: API key doesn't exist" - as the 2 are separate entities.
 
 !!! Warning
     OKX only provides 100 candles per api call. Therefore, the strategy will only have a pretty low amount of data available in backtesting mode.

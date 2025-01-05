@@ -7,6 +7,7 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
+from freqtrade.loggers import error_console
 from freqtrade.util.rich_progress import CustomProgress
 
 
@@ -30,5 +31,6 @@ def get_progress_tracker(**kwargs) -> CustomProgress:
         "•",
         TimeRemainingColumn(),
         expand=True,
+        console=error_console,
         **kwargs,
     )

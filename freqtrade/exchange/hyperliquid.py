@@ -1,6 +1,7 @@
 """Hyperliquid exchange subclass"""
 
 import logging
+from copy import deepcopy
 from datetime import datetime
 
 from freqtrade.constants import BuySell
@@ -157,9 +158,15 @@ class Hyperliquid(Exchange):
                 logger.warning(f"Could not update funding fees for {pair}.")
         return 0.0
 
-    def fetch_order(self, order_id: str, pair: str, params: dict | None = None) -> CcxtOrder:
-        order = super().fetch_order(order_id, pair, params)
-
+    def _adjust_hyperliquid_order(
+        self,
+        order: dict,
+    ) -> dict:
+        """
+        Adjusts order response for Hyperliquid
+        :param order: Order response from Hyperliquid
+        :return: Adjusted order response
+        """
         if (
             order["average"] is None
             and order["status"] in ("canceled", "closed")
@@ -168,7 +175,9 @@ class Hyperliquid(Exchange):
             # Hyperliquid does not fill the average price in the order response
             # Fetch trades to calculate the average price to have the actual price
             # the order was executed at
-            trades = self.get_trades_for_order(order_id, pair, since=dt_from_ts(order["timestamp"]))
+            trades = self.get_trades_for_order(
+                order["id"], order["symbol"], since=dt_from_ts(order["timestamp"])
+            )
 
             if trades:
                 total_amount = sum(t["amount"] for t in trades)
@@ -177,5 +186,23 @@ class Hyperliquid(Exchange):
                     if total_amount
                     else None
                 )
+        return order
+
+    def fetch_order(self, order_id: str, pair: str, params: dict | None = None) -> CcxtOrder:
+        order = super().fetch_order(order_id, pair, params)
+
+        order = self._adjust_hyperliquid_order(order)
+        self._log_exchange_response("fetch_order2", order)
 
         return order
+
+    def fetch_orders(
+        self, pair: str, since: datetime, params: dict | None = None
+    ) -> list[CcxtOrder]:
+        orders = super().fetch_orders(pair, since, params)
+        for idx, order in enumerate(deepcopy(orders)):
+            order2 = self._adjust_hyperliquid_order(order)
+            orders[idx] = order2
+
+        self._log_exchange_response("fetch_orders2", orders)
+        return orders

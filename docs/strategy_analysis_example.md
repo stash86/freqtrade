@@ -152,7 +152,7 @@ print(stats["strategy"][strategy]["pairlist"])
 # Get market change (average change of all pairs from start to end of the backtest period)
 print(stats["strategy"][strategy]["market_change"])
 # Maximum drawdown ()
-print(stats["strategy"][strategy]["max_drawdown"])
+print(stats["strategy"][strategy]["max_drawdown_abs"])
 # Maximum drawdown start and end
 print(stats["strategy"][strategy]["drawdown_start"])
 print(stats["strategy"][strategy]["drawdown_end"])

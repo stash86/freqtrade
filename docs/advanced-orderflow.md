@@ -4,6 +4,7 @@ This guide walks you through utilizing public trade data for advanced orderflow 
 
 !!! Warning "Experimental Feature"
     The orderflow feature is currently in beta and may be subject to changes in future releases. Please report any issues or feedback on the [Freqtrade GitHub repository](https://github.com/freqtrade/freqtrade/issues).
+    It's also currently not been tested with freqAI - and combining these two features is considered out of scope at this point.
 
 !!! Warning "Performance"
     Orderflow requires raw trades data. This data is rather large, and can cause a slow initial startup, when freqtrade needs to download the trades data for the last X candles. Additionally, enabling this feature will cause increased memory usage. Please ensure to have sufficient resources available.

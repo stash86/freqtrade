@@ -88,8 +88,9 @@ Make sure that the following 2 lines are available in your docker-compose file:
 
 ### Consuming the API
 
-You can consume the API by using `freqtrade-client` (also available as `scripts/rest_client.py`).
-This command can be installed independent of the bot by using `pip install freqtrade-client`.
+We advise consuming the API by using the supported `freqtrade-client` package (also available as `scripts/rest_client.py`).
+
+This command can be installed independent of any running freqtrade bot by using `pip install freqtrade-client`.
 
 This module is designed to be lightweight, and only depends on the `requests` and `python-rapidjson` modules, skipping all heavy dependencies freqtrade otherwise needs.
 
@@ -143,57 +144,6 @@ This method will work for all arguments - check the "show" command for a list of
     ```
 
     For a full list of available commands, please refer to the list below.
-
-### Available endpoints
-
-|  Command | Description |
-|----------|-------------|
-| `ping` | Simple command testing the API Readiness - requires no authentication.
-| `start` | Starts the trader.
-| `stop` | Stops the trader.
-| `stopbuy` | Stops the trader from opening new trades. Gracefully closes open trades according to their rules.
-| `reload_config` | Reloads the configuration file.
-| `trades` | List last trades. Limited to 500 trades per call.
-| `trade/<tradeid>` | Get specific trade.
-| `trades/<tradeid>` | DELETE - Remove trade from the database. Tries to close open orders. Requires manual handling of this trade on the exchange.
-| `trades/<tradeid>/open-order` | DELETE - Cancel open order for this trade.
-| `trades/<tradeid>/reload` | GET - Reload a trade from the Exchange. Only works in live, and can potentially help recover a trade that was manually sold on the exchange.
-| `show_config` | Shows part of the current configuration with relevant settings to operation.
-| `logs` | Shows last log messages.
-| `status` | Lists all open trades.
-| `count` | Displays number of trades used and available.
-| `entries [pair]` | Shows profit statistics for each enter tags for given pair (or all pairs if pair isn't given). Pair is optional.
-| `exits [pair]` | Shows profit statistics for each exit reasons for given pair (or all pairs if pair isn't given). Pair is optional.
-| `mix_tags [pair]` | Shows profit statistics for each combinations of enter tag + exit reasons for given pair (or all pairs if pair isn't given). Pair is optional.
-| `locks` | Displays currently locked pairs.
-| `delete_lock <lock_id>` | Deletes (disables) the lock by id.
-| `locks add <pair>, <until>, [side], [reason]` | Locks a pair until "until". (Until will be rounded up to the nearest timeframe).
-| `profit` | Display a summary of your profit/loss from close trades and some stats about your performance.
-| `forceexit <trade_id> [order_type] [amount]` | Instantly exits the given trade (ignoring `minimum_roi`), using the given order type ("market" or "limit", uses your config setting if not specified), and the chosen amount (full sell if not specified).
-| `forceexit all` | Instantly exits all open trades (Ignoring `minimum_roi`).
-| `forceenter <pair> [rate]` | Instantly enters the given pair. Rate is optional. (`force_entry_enable` must be set to True)
-| `forceenter <pair> <side> [rate]` | Instantly longs or shorts the given pair. Rate is optional. (`force_entry_enable` must be set to True)
-| `performance` | Show performance of each finished trade grouped by pair.
-| `balance` | Show account balance per currency.
-| `daily <n>` | Shows profit or loss per day, over the last n days (n defaults to 7).
-| `weekly <n>` | Shows profit or loss per week, over the last n days (n defaults to 4).
-| `monthly <n>` | Shows profit or loss per month, over the last n days (n defaults to 3).
-| `stats` | Display a summary of profit / loss reasons as well as average holding times.
-| `whitelist` | Show the current whitelist.
-| `blacklist [pair]` | Show the current blacklist, or adds a pair to the blacklist.
-| `edge` | Show validated pairs by Edge if it is enabled.
-| `pair_candles` | Returns dataframe for a pair / timeframe combination while the bot is running. **Alpha**
-| `pair_history` | Returns an analyzed dataframe for a given timerange, analyzed by a given strategy. **Alpha**
-| `plot_config` | Get plot config from the strategy (or nothing if not configured). **Alpha**
-| `strategies` | List strategies in strategy directory. **Alpha**
-| `strategy <strategy>` | Get specific Strategy content. **Alpha**
-| `available_pairs` | List available backtest data. **Alpha**
-| `version` | Show version.
-| `sysinfo` | Show information about the system load.
-| `health` | Show bot health (last bot loop).
-
-!!! Warning "Alpha status"
-    Endpoints labeled with *Alpha status* above may change at any time without notice.
 
 Possible commands can be listed from the rest-client script using the `help` command.
 
@@ -265,6 +215,14 @@ forceexit
 
 health
 	Provides a quick health check of the running bot.
+
+lock_add
+    Manually lock a specific pair
+
+        :param pair: Pair to lock
+        :param until: Lock until this date (format "2024-03-30 16:00:00Z")
+        :param side: Side to lock (long, short, *)
+        :param reason: Reason for the lock        
 
 locks
 	Return current locks
@@ -352,6 +310,62 @@ whitelist
 
 
 ```
+
+### Available endpoints
+
+If you wish to call the REST API manually via another route, e.g. directly via `curl`, the table below shows the relevant URL endpoints and parameters.
+All endpoints in the below table need to be prefixed with the base URL of the API, e.g. `http://127.0.0.1:8080/api/v1/` - so the command becomes `http://127.0.0.1:8080/api/v1/<command>`.
+
+|  Endpoint | Method | Description / Parameters |
+|-----------|--------|--------------------------|
+| `/ping` | GET | Simple command testing the API Readiness - requires no authentication.
+| `/start` | POST | Starts the trader.
+| `/stop` | POST | Stops the trader.
+| `/stopbuy` | POST | Stops the trader from opening new trades. Gracefully closes open trades according to their rules.
+| `/reload_config` | POST | Reloads the configuration file.
+| `/trades` | GET | List last trades. Limited to 500 trades per call.
+| `/trade/<tradeid>` | GET | Get specific trade.<br/>*Params:*<br/>- `tradeid` (`int`)
+| `/trades/<tradeid>` | DELETE | Remove trade from the database. Tries to close open orders. Requires manual handling of this trade on the exchange.<br/>*Params:*<br/>- `tradeid` (`int`) 
+| `/trades/<tradeid>/open-order` | DELETE | Cancel open order for this trade.<br/>*Params:*<br/>- `tradeid` (`int`) 
+| `/trades/<tradeid>/reload` | POST | Reload a trade from the Exchange. Only works in live, and can potentially help recover a trade that was manually sold on the exchange.<br/>*Params:*<br/>- `tradeid` (`int`) 
+| `/show_config` | GET | Shows part of the current configuration with relevant settings to operation.
+| `/logs` | GET | Shows last log messages.
+| `/status` | GET | Lists all open trades.
+| `/count` | GET | Displays number of trades used and available.
+| `/entries` | GET | Shows profit statistics for each enter tags for given pair (or all pairs if pair isn't given). Pair is optional.<br/>*Params:*<br/>- `pair` (`str`) 
+| `/exits` | GET | Shows profit statistics for each exit reasons for given pair (or all pairs if pair isn't given). Pair is optional.<br/>*Params:*<br/>- `pair` (`str`) 
+| `/mix_tags` | GET | Shows profit statistics for each combinations of enter tag + exit reasons for given pair (or all pairs if pair isn't given). Pair is optional.<br/>*Params:*<br/>- `pair` (`str`) 
+| `/locks` | GET | Displays currently locked pairs.
+| `/locks` | POST | Locks a pair until "until". (Until will be rounded up to the nearest timeframe). Side is optional and is either `long` or `short` (default is `long`). Reason is optional.<br/>*Params:*<br/>- `<pair>` (`str`)<br/>- `<until>` (`datetime`)<br/>- `[side]` (`str`)<br/>- `[reason]` (`str`) 
+| `/locks/<lockid>` | DELETE | Deletes (disables) the lock by id.<br/>*Params:*<br/>- `lockid` (`int`) 
+| `/profit` | GET | Display a summary of your profit/loss from close trades and some stats about your performance.
+| `/forceexit` | POST | Instantly exits the given trade (ignoring `minimum_roi`), using the given order type ("market" or "limit", uses your config setting if not specified), and the chosen amount (full sell if not specified). If `all` is supplied as the `tradeid`, then all currently open trades will be forced to exit.<br/>*Params:*<br/>- `<tradeid>` (`int` or `str`)<br/>- `<ordertype>` (`str`)<br/>- `[amount]` (`float`)
+| `/forceenter` | POST | Instantly enters the given pair. Side is optional and is either `long` or `short` (default is `long`). Rate is optional. (`force_entry_enable` must be set to True)<br/>*Params:*<br/>- `<pair>` (`str`)<br/>- `<side>` (`str`)<br/>- `[rate]` (`float`)
+| `/performance` | GET | Show performance of each finished trade grouped by pair.
+| `/balance` | GET | Show account balance per currency.
+| `/daily` | GET | Shows profit or loss per day, over the last n days (n defaults to 7).<br/>*Params:*<br/>- `<n>` (`int`)
+| `/weekly` | GET | Shows profit or loss per week, over the last n days (n defaults to 4).<br/>*Params:*<br/>- `<n>` (`int`)
+| `/monthly` | GET | Shows profit or loss per month, over the last n days (n defaults to 3).<br/>*Params:*<br/>- `<n>` (`int`)
+| `/stats` | GET | Display a summary of profit / loss reasons as well as average holding times.
+| `/whitelist` | GET | Show the current whitelist.
+| `/blacklist` | GET | Show the current blacklist.
+| `/blacklist` | POST | Adds the specified pair to the blacklist.<br/>*Params:*<br/>- `pair` (`str`)
+| `/blacklist` | DELETE | Deletes the specified list of pairs from the blacklist.<br/>*Params:*<br/>- `[pair,pair]` (`list[str]`) 
+| `/edge` | GET | Show validated pairs by Edge if it is enabled.
+| `/pair_candles` | GET | Returns dataframe for a pair / timeframe combination while the bot is running. **Alpha**
+| `/pair_candles` | POST | Returns dataframe for a pair / timeframe combination while the bot is running, filtered by a provided list of columns to return. **Alpha**<br/>*Params:*<br/>- `<column_list>` (`list[str]`)
+| `/pair_history` | GET | Returns an analyzed dataframe for a given timerange, analyzed by a given strategy. **Alpha**
+| `/pair_history` | POST | Returns an analyzed dataframe for a given timerange, analyzed by a given strategy, filtered by a provided list of columns to return. **Alpha**<br/>*Params:*<br/>- `<column_list>` (`list[str]`)
+| `/plot_config` | GET | Get plot config from the strategy (or nothing if not configured). **Alpha**
+| `/strategies` | GET | List strategies in strategy directory. **Alpha**
+| `/strategy/<strategy>` | GET | Get specific Strategy content by strategy class name. **Alpha**<br/>*Params:*<br/>- `<strategy>` (`str`)
+| `/available_pairs` | GET | List available backtest data. **Alpha**
+| `/version` | GET | Show version.
+| `/sysinfo` | GET | Show information about the system load.
+| `/health` | GET | Show bot health (last bot loop).
+
+!!! Warning "Alpha status"
+    Endpoints labeled with *Alpha status* above may change at any time without notice.
 
 ### Message WebSocket
 

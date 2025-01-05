@@ -9,6 +9,7 @@ from freqtrade.util.datetime_helpers import (
     dt_utc,
     format_date,
     format_ms_time,
+    format_ms_time_det,
     shorten_date,
 )
 from freqtrade.util.dry_run_wallet import get_dry_run_wallet
@@ -36,6 +37,7 @@ __all__ = [
     "dt_utc",
     "format_date",
     "format_ms_time",
+    "format_ms_time_det",
     "get_dry_run_wallet",
     "FtPrecise",
     "PeriodicCache",

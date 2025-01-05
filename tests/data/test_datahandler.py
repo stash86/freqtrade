@@ -360,6 +360,11 @@ def test_hdf5datahandler_trades_load(testdatadir):
     # assert len([t for t in trades2 if t[0] > timerange.stopts * 1000]) == 0
 
 
+def test_hdf5datahandler_deprecated(testdatadir, caplog):
+    get_datahandler(testdatadir, "hdf5")
+    log_has_re(r"DEPRECATED: The hdf5 dataformat is deprecated.*", caplog)
+
+
 @pytest.mark.parametrize(
     "pair,timeframe,candle_type,candle_append,startdt,enddt",
     [

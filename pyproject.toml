@@ -217,7 +217,6 @@ exclude = [
   "build_helpers/*.py",
   "ft_client/build/*",
   "build/*",
-  "tests/*",
 ]
 ignore = ["freqtrade/vendor/**"]
 pythonPlatform = "All"

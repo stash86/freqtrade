@@ -68,11 +68,8 @@ class MultiMetricHyperOptLoss(IHyperOptLoss):
         log_profit_factor = np.log(profit_factor + PF_CONST)
 
         # Calculate expectancy
-        expectancy, expectancy_ratio = calculate_expectancy(results)
-        if expectancy_ratio > 10:
-            log_expectancy_ratio = np.log(1.01)
-        else:
-            log_expectancy_ratio = np.log(expectancy_ratio + EXPECTANCY_CONST)
+        _, expectancy_ratio = calculate_expectancy(results)
+        log_expectancy_ratio = np.log(min(10, expectancy_ratio) + EXPECTANCY_CONST)
 
         # Calculate winrate
         winning_trades = results.loc[results["profit_abs"] > 0]

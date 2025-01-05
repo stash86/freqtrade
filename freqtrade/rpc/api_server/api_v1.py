@@ -7,7 +7,7 @@ from fastapi.exceptions import HTTPException
 
 from freqtrade import __version__
 from freqtrade.data.history import get_datahandler
-from freqtrade.enums import CandleType, TradingMode
+from freqtrade.enums import CandleType, State, TradingMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.rpc import RPC
 from freqtrade.rpc.api_server.api_schemas import (
@@ -256,7 +256,7 @@ def edge(rpc: RPC = Depends(get_rpc)):
 
 @router.get("/show_config", response_model=ShowConfig, tags=["info"])
 def show_config(rpc: RPC | None = Depends(get_rpc_optional), config=Depends(get_config)):
-    state = ""
+    state: State | str = ""
     strategy_version = None
     if rpc:
         state = rpc._freqtrade.state

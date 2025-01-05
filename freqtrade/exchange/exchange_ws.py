@@ -11,7 +11,7 @@ from freqtrade.constants import Config, PairWithTimeframe
 from freqtrade.enums.candletype import CandleType
 from freqtrade.exchange.exchange import timeframe_to_seconds
 from freqtrade.exchange.exchange_types import OHLCVResponse
-from freqtrade.util import dt_ts, format_ms_time
+from freqtrade.util import dt_ts, format_ms_time, format_ms_time_det
 
 
 logger = logging.getLogger(__name__)
@@ -147,7 +147,7 @@ class ExchangeWS:
                 self.klines_last_refresh[(pair, timeframe, candle_type)] = dt_ts()
                 logger.debug(
                     f"watch done {pair}, {timeframe}, data {len(data)} "
-                    f"in {dt_ts() - start:.2f}s"
+                    f"in {(dt_ts() - start) / 1000:.3f}s"
                 )
         except ccxt.ExchangeClosedByUser:
             logger.debug("Exchange connection closed by user")
@@ -171,24 +171,27 @@ class ExchangeWS:
         pair: str,
         timeframe: str,
         candle_type: CandleType,
-        candle_date: int,
+        candle_ts: int,
     ) -> OHLCVResponse:
         """
         Returns cached klines from ccxt's "watch" cache.
-        :param candle_date: timestamp of the end-time of the candle.
+        :param candle_ts: timestamp of the end-time of the candle we expect.
         """
         # Deepcopy the response - as it might be modified in the background as new messages arrive
         candles = deepcopy(self.ccxt_object.ohlcvs.get(pair, {}).get(timeframe))
         refresh_date = self.klines_last_refresh[(pair, timeframe, candle_type)]
-        drop_hint = False
-        if refresh_date > candle_date:
-            # Refreshed after candle was complete.
-            # logger.info(f"{candles[-1][0]} >= {candle_date}")
-            drop_hint = candles[-1][0] >= candle_date
+        received_ts = candles[-1][0] if candles else 0
+        drop_hint = received_ts >= candle_ts
+        if received_ts > refresh_date:
+            logger.warning(
+                f"{pair}, {timeframe} - Candle date > last refresh "
+                f"({format_ms_time(received_ts)} > {format_ms_time_det(refresh_date)}). "
+                "This usually suggests a problem with time synchronization."
+            )
         logger.debug(
             f"watch result for {pair}, {timeframe} with length {len(candles)}, "
-            f"{format_ms_time(candles[-1][0])}, "
-            f"lref={format_ms_time(refresh_date)}, "
-            f"candle_date={format_ms_time(candle_date)}, {drop_hint=}"
+            f"r_ts={format_ms_time(received_ts)}, "
+            f"lref={format_ms_time_det(refresh_date)}, "
+            f"candle_ts={format_ms_time(candle_ts)}, {drop_hint=}"
         )
         return pair, timeframe, candle_type, candles, drop_hint

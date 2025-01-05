@@ -1056,6 +1056,7 @@ def test_api_edge_disabled(botclient, mocker, ticker, fee, markets):
 )
 def test_api_profit(botclient, mocker, ticker, fee, markets, is_short, expected):
     ftbot, client = botclient
+    ftbot.config["tradable_balance_ratio"] = 1
     patch_get_signal(ftbot)
     mocker.patch.multiple(
         EXMS,

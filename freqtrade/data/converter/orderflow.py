@@ -50,18 +50,43 @@ def _init_dataframe_with_trades_columns(dataframe: pd.DataFrame):
         dataframe[column] = dataframe[column].astype(object)
 
 
-def _calculate_ohlcv_candle_start_and_end(df: pd.DataFrame, timeframe: str):
-    from freqtrade.exchange import timeframe_to_next_date, timeframe_to_resample_freq
+def timeframe_to_DateOffset(timeframe: str) -> pd.DateOffset:
+    """
+    Translates the timeframe interval value written in the human readable
+    form ('1m', '5m', '1h', '1d', '1w', etc.) to the number
+    of seconds for one timeframe interval.
+    """
+    from freqtrade.exchange import timeframe_to_seconds
 
-    timeframe_frequency = timeframe_to_resample_freq(timeframe)
-    # calculate ohlcv candle start and end
+    timeframe_seconds = timeframe_to_seconds(timeframe)
+    timeframe_minutes = timeframe_seconds // 60
+    if timeframe_minutes < 1:
+        return pd.DateOffset(seconds=timeframe_seconds)
+    elif 59 < timeframe_minutes < 1440:
+        return pd.DateOffset(hours=timeframe_minutes // 60)
+    elif 1440 <= timeframe_minutes < 10080:
+        return pd.DateOffset(days=timeframe_minutes // 1440)
+    elif 10000 < timeframe_minutes < 43200:
+        return pd.DateOffset(weeks=1)
+    elif timeframe_minutes >= 43200 and timeframe_minutes < 525600:
+        return pd.DateOffset(months=1)
+    elif timeframe == "1y":
+        return pd.DateOffset(years=1)
+    else:
+        return pd.DateOffset(minutes=timeframe_minutes)
+
+
+def _calculate_ohlcv_candle_start_and_end(df: pd.DataFrame, timeframe: str):
+    from freqtrade.exchange import timeframe_to_resample_freq
+
     if df is not None and not df.empty:
+        timeframe_frequency = timeframe_to_resample_freq(timeframe)
+        dofs = timeframe_to_DateOffset(timeframe)
+        # calculate ohlcv candle start and end
         df["datetime"] = pd.to_datetime(df["date"], unit="ms")
         df["candle_start"] = df["datetime"].dt.floor(timeframe_frequency)
         # used in _now_is_time_to_refresh_trades
-        df["candle_end"] = df["candle_start"].apply(
-            lambda candle_start: timeframe_to_next_date(timeframe, candle_start)
-        )
+        df["candle_end"] = df["candle_start"] + dofs
         df.drop(columns=["datetime"], inplace=True)
 
 

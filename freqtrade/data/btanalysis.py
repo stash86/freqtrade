@@ -3,8 +3,10 @@ Helpers when analyzing backtest data
 """
 
 import logging
+import zipfile
 from copy import copy
 from datetime import datetime, timezone
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any, Literal
 
@@ -165,8 +167,16 @@ def load_backtest_stats(filename: Path | str) -> BacktestResultType:
     if not filename.is_file():
         raise ValueError(f"File {filename} does not exist.")
     logger.info(f"Loading backtest result from {filename}")
-    with filename.open() as file:
-        data = json_load(file)
+
+    if filename.suffix == ".zip":
+        data = json_load(
+            StringIO(
+                load_file_from_zip(filename, filename.with_suffix(".json").name).decode("utf-8")
+            )
+        )
+    else:
+        with filename.open() as file:
+            data = json_load(file)
 
     # Legacy list format does not contain metadata.
     if isinstance(data, dict):
@@ -194,8 +204,10 @@ def load_and_merge_backtest_result(strategy_name: str, filename: Path, results: 
 
 
 def _get_backtest_files(dirname: Path) -> list[Path]:
-    # Weird glob expression here avoids including .meta.json files.
-    return list(reversed(sorted(dirname.glob("backtest-result-*-[0-9][0-9].json"))))
+    # Get both json and zip files separately and combine the results
+    json_files = dirname.glob("backtest-result-*-[0-9][0-9]*.json")
+    zip_files = dirname.glob("backtest-result-*-[0-9][0-9]*.zip")
+    return list(reversed(sorted(list(json_files) + list(zip_files))))
 
 
 def _extract_backtest_result(filename: Path) -> list[BacktestHistoryEntryType]:
@@ -267,7 +279,11 @@ def get_backtest_market_change(filename: Path, include_ts: bool = True) -> pd.Da
     """
     Read backtest market change file.
     """
-    df = pd.read_feather(filename)
+    if filename.suffix == ".zip":
+        data = load_file_from_zip(filename, f"{filename.stem}_market_change.feather")
+        df = pd.read_feather(BytesIO(data))
+    else:
+        df = pd.read_feather(filename)
     if include_ts:
         df.loc[:, "__date_ts"] = df.loc[:, "date"].astype(np.int64) // 1000 // 1000
     return df
@@ -386,6 +402,93 @@ def load_backtest_data(filename: Path | str, strategy: str | None = None) -> pd.
     if not df.empty:
         df = df.sort_values("open_date").reset_index(drop=True)
     return df
+
+
+def load_file_from_zip(zip_path: Path, filename: str) -> bytes:
+    """
+    Load a file from a zip file
+    :param zip_path: Path to the zip file
+    :param filename: Name of the file to load
+    :return: Bytes of the file
+    :raises: ValueError if loading goes wrong.
+    """
+    try:
+        with zipfile.ZipFile(zip_path) as zipf:
+            try:
+                with zipf.open(filename) as file:
+                    return file.read()
+            except KeyError:
+                logger.error(f"File {filename} not found in zip: {zip_path}")
+                raise ValueError(f"File {filename} not found in zip: {zip_path}") from None
+    except FileNotFoundError:
+        raise ValueError(f"Zip file {zip_path} not found.")
+    except zipfile.BadZipFile:
+        logger.error(f"Bad zip file: {zip_path}.")
+        raise ValueError(f"Bad zip file: {zip_path}.") from None
+
+
+def load_backtest_analysis_data(backtest_dir: Path, name: str):
+    """
+    Load backtest analysis data either from a pickle file or from within a zip file
+    :param backtest_dir: Directory containing backtest results
+    :param name: Name of the analysis data to load (signals, rejected, exited)
+    :return: Analysis data
+    """
+    import joblib
+
+    if backtest_dir.is_dir():
+        lbf = Path(get_latest_backtest_filename(backtest_dir))
+        zip_path = backtest_dir / lbf
+    else:
+        zip_path = backtest_dir
+
+    if zip_path.suffix == ".zip":
+        # Load from zip file
+        analysis_name = f"{zip_path.stem}_{name}.pkl"
+        data = load_file_from_zip(zip_path, analysis_name)
+        if not data:
+            return None
+        loaded_data = joblib.load(BytesIO(data))
+
+        logger.info(f"Loaded {name} candles from zip: {str(zip_path)}:{analysis_name}")
+        return loaded_data
+
+    else:
+        # Load from separate pickle file
+        if backtest_dir.is_dir():
+            scpf = Path(backtest_dir, f"{zip_path.stem}_{name}.pkl")
+        else:
+            scpf = Path(backtest_dir.parent / f"{backtest_dir.stem}_{name}.pkl")
+
+        try:
+            with scpf.open("rb") as scp:
+                loaded_data = joblib.load(scp)
+                logger.info(f"Loaded {name} candles: {str(scpf)}")
+                return loaded_data
+        except Exception:
+            logger.exception(f"Cannot load {name} data from pickled results.")
+            return None
+
+
+def load_rejected_signals(backtest_dir: Path):
+    """
+    Load rejected signals from backtest directory
+    """
+    return load_backtest_analysis_data(backtest_dir, "rejected")
+
+
+def load_signal_candles(backtest_dir: Path):
+    """
+    Load signal candles from backtest directory
+    """
+    return load_backtest_analysis_data(backtest_dir, "signals")
+
+
+def load_exit_signal_candles(backtest_dir: Path) -> dict[str, dict[str, pd.DataFrame]]:
+    """
+    Load exit signal candles from backtest directory
+    """
+    return load_backtest_analysis_data(backtest_dir, "exited")
 
 
 def analyze_trade_parallelism(results: pd.DataFrame, timeframe: str) -> pd.DataFrame:

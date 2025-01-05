@@ -67,13 +67,14 @@ class PairLocks:
 
     @staticmethod
     def get_pair_locks(
-        pair: str | None, now: datetime | None = None, side: str = "*"
+        pair: str | None, now: datetime | None = None, side: str | None = None
     ) -> Sequence[PairLock]:
         """
         Get all currently active locks for this pair
         :param pair: Pair to check for. Returns all current locks if pair is empty
         :param now: Datetime object (generated via datetime.now(timezone.utc)).
                     defaults to datetime.now(timezone.utc)
+        :param side: Side get locks for, can be 'long', 'short', '*' or None
         """
         if not now:
             now = datetime.now(timezone.utc)
@@ -88,7 +89,7 @@ class PairLocks:
                     lock.lock_end_time >= now
                     and lock.active is True
                     and (pair is None or lock.pair == pair)
-                    and (lock.side == "*" or lock.side == side)
+                    and (side is None or lock.side == "*" or lock.side == side)
                 )
             ]
             return locks

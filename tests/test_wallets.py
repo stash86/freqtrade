@@ -244,7 +244,7 @@ def test_get_starting_balance(
 
     freqtrade = get_patched_freqtradebot(mocker, default_conf)
 
-    assert freqtrade.wallets.get_starting_balance() == expected
+    assert freqtrade.wallets.get_starting_balance() == expected * (1 if available_capital else 0.99)
 
 
 def test_sync_wallet_futures_live(mocker, default_conf):
@@ -373,7 +373,10 @@ def test_sync_wallet_dry(mocker, default_conf_usdt, fee):
     # sum of used and free should be total.
     assert usdt_bal.total == usdt_bal.free + usdt_bal.used
 
-    assert freqtrade.wallets.get_starting_balance() == default_conf_usdt["dry_run_wallet"]
+    assert (
+        freqtrade.wallets.get_starting_balance()
+        == default_conf_usdt["dry_run_wallet"] * default_conf_usdt["tradable_balance_ratio"]
+    )
     total = freqtrade.wallets.get_total("LTC")
     free = freqtrade.wallets.get_free("LTC")
     used = freqtrade.wallets.get_used("LTC")
@@ -401,7 +404,10 @@ def test_sync_wallet_futures_dry(mocker, default_conf, fee):
     assert positions["XRP/BTC"].side == "long"
     assert positions["LTC/BTC"].side == "short"
 
-    assert freqtrade.wallets.get_starting_balance() == default_conf["dry_run_wallet"]
+    assert (
+        freqtrade.wallets.get_starting_balance()
+        == default_conf["dry_run_wallet"] * default_conf["tradable_balance_ratio"]
+    )
     total = freqtrade.wallets.get_total("BTC")
     free = freqtrade.wallets.get_free("BTC")
     used = freqtrade.wallets.get_used("BTC")

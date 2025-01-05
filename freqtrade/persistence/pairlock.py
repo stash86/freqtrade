@@ -39,7 +39,7 @@ class PairLock(ModelBase):
 
     @staticmethod
     def query_pair_locks(
-        pair: str | None, now: datetime, side: str = "*"
+        pair: str | None, now: datetime, side: str | None = None
     ) -> ScalarResult["PairLock"]:
         """
         Get all currently active locks for this pair
@@ -53,9 +53,9 @@ class PairLock(ModelBase):
         ]
         if pair:
             filters.append(PairLock.pair == pair)
-        if side != "*":
+        if side is not None and side != "*":
             filters.append(or_(PairLock.side == side, PairLock.side == "*"))
-        else:
+        elif side is not None:
             filters.append(PairLock.side == "*")
 
         return PairLock.session.scalars(select(PairLock).filter(*filters))

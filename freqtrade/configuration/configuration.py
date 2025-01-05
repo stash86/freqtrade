@@ -135,6 +135,12 @@ class Configuration:
         if "logfile" in self.args and self.args["logfile"]:
             config.update({"logfile": self.args["logfile"]})
 
+        if "print_colorized" in self.args and not self.args["print_colorized"]:
+            logger.info("Parameter --no-color detected ...")
+            config.update({"print_colorized": False})
+        else:
+            config.update({"print_colorized": True})
+
         setup_logging(config)
 
     def _process_trading_options(self, config: Config) -> None:
@@ -325,12 +331,6 @@ class Configuration:
             ("print_all", "Parameter --print-all detected ..."),
         ]
         self._args_to_config_loop(config, configurations)
-
-        if "print_colorized" in self.args and not self.args["print_colorized"]:
-            logger.info("Parameter --no-color detected ...")
-            config.update({"print_colorized": False})
-        else:
-            config.update({"print_colorized": True})
 
         configurations = [
             ("print_json", "Parameter --print-json detected ..."),

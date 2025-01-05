@@ -13,6 +13,7 @@ from freqtrade.util import (
     dt_utc,
     format_date,
     format_ms_time,
+    format_ms_time_det,
     shorten_date,
 )
 from freqtrade.util.datetime_helpers import dt_humanize_delta
@@ -91,7 +92,7 @@ def test_dt_humanize() -> None:
 
 def test_format_ms_time() -> None:
     # Date 2018-04-10 18:02:01
-    date_in_epoch_ms = 1523383321000
+    date_in_epoch_ms = 1523383321132
     date = format_ms_time(date_in_epoch_ms)
     assert isinstance(date, str)
     res = datetime(2018, 4, 10, 18, 2, 1, tzinfo=timezone.utc)
@@ -111,3 +112,17 @@ def test_format_date() -> None:
     date = datetime(2021, 9, 30, 22, 59, 3, 455555, tzinfo=timezone.utc)
     assert format_date(date) == "2021-09-30 22:59:03"
     assert format_date(None) == ""
+
+
+def test_format_ms_time_detailed() -> None:
+    # Date 2018-04-10 18:02:01
+    date_in_epoch_ms = 1523383321132
+    date = format_ms_time_det(date_in_epoch_ms)
+    assert isinstance(date, str)
+    res = datetime(2018, 4, 10, 18, 2, 1, 132145, tzinfo=timezone.utc)
+    assert date == res.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+    assert date == "2018-04-10T18:02:01.132"
+    res = datetime(2017, 12, 13, 8, 2, 1, 512321, tzinfo=timezone.utc)
+    # Date 2017-12-13 08:02:01
+    date_in_epoch_ms = 1513152121512
+    assert format_ms_time_det(date_in_epoch_ms) == res.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]

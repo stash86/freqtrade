@@ -371,8 +371,7 @@ def test_backtesting_start(default_conf, mocker, caplog) -> None:
     mocker.patch("freqtrade.optimize.backtesting.Backtesting.backtest")
     mocker.patch("freqtrade.optimize.backtesting.generate_backtest_stats")
     mocker.patch("freqtrade.optimize.backtesting.show_backtest_results")
-    sbs = mocker.patch("freqtrade.optimize.backtesting.store_backtest_stats")
-    sbc = mocker.patch("freqtrade.optimize.backtesting.store_backtest_analysis_results")
+    sbs = mocker.patch("freqtrade.optimize.backtesting.store_backtest_results")
     mocker.patch(
         "freqtrade.plugins.pairlistmanager.PairListManager.whitelist",
         PropertyMock(return_value=["UNITTEST/BTC"]),
@@ -397,7 +396,6 @@ def test_backtesting_start(default_conf, mocker, caplog) -> None:
     assert backtesting.strategy.bot_start.call_count == 1
     assert backtesting.strategy.bot_loop_start.call_count == 0
     assert sbs.call_count == 1
-    assert sbc.call_count == 1
 
 
 def test_backtesting_start_no_data(default_conf, mocker, caplog, testdatadir) -> None:
@@ -568,7 +566,9 @@ def test_backtest__enter_trade_futures(default_conf_usdt, fee, mocker) -> None:
     mocker.patch(f"{EXMS}.get_fee", fee)
     mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.00001)
     mocker.patch(f"{EXMS}.get_max_pair_stake_amount", return_value=float("inf"))
-    mocker.patch(f"{EXMS}.price_to_precision", lambda s, x, y, **kwargs: y)
+    mocker.patch(
+        "freqtrade.persistence.trade_model.price_to_precision", lambda p, *args, **kwargs: p
+    )
     mocker.patch(f"{EXMS}.get_max_leverage", return_value=100)
     mocker.patch("freqtrade.optimize.backtesting.price_to_precision", lambda p, *args: p)
     patch_exchange(mocker)
@@ -2660,7 +2660,7 @@ def test_get_backtest_metadata_filename():
 
     # Test with a string file path with no extension
     filename = "/path/to/backtest_results"
-    expected = Path("/path/to/backtest_results.meta")
+    expected = Path("/path/to/backtest_results.meta.json")
     assert get_backtest_metadata_filename(filename) == expected
 
     # Test with a string file path with multiple dots in the name
@@ -2671,4 +2671,9 @@ def test_get_backtest_metadata_filename():
     # Test with a string file path with no parent directory
     filename = "backtest_results.json"
     expected = Path("backtest_results.meta.json")
+    assert get_backtest_metadata_filename(filename) == expected
+    # Test with a string file path with no parent directory
+
+    filename = "backtest_results_zip.zip"
+    expected = Path("backtest_results_zip.meta.json")
     assert get_backtest_metadata_filename(filename) == expected

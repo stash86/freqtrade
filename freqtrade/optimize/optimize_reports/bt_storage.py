@@ -1,15 +1,31 @@
 import logging
+from io import BytesIO, StringIO
 from pathlib import Path
+from typing import Any
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from pandas import DataFrame
 
 from freqtrade.constants import LAST_BT_RESULT_FN
+from freqtrade.enums.runmode import RunMode
 from freqtrade.ft_types import BacktestResultType
-from freqtrade.misc import file_dump_joblib, file_dump_json
+from freqtrade.misc import dump_json_to_file, file_dump_json
 from freqtrade.optimize.backtest_caching import get_backtest_metadata_filename
 
 
 logger = logging.getLogger(__name__)
+
+
+def file_dump_joblib(file_obj: BytesIO, data: Any, log: bool = True) -> None:
+    """
+    Dump object data into a file
+    :param filename: file to create
+    :param data: Object data to save
+    :return:
+    """
+    import joblib
+
+    joblib.dump(data, file_obj)
 
 
 def _generate_filename(recordfilename: Path, appendix: str, suffix: str) -> Path:
@@ -29,72 +45,68 @@ def _generate_filename(recordfilename: Path, appendix: str, suffix: str) -> Path
     return filename
 
 
-def store_backtest_stats(
-    recordfilename: Path,
+def store_backtest_results(
+    config: dict,
     stats: BacktestResultType,
     dtappendix: str,
     *,
     market_change_data: DataFrame | None = None,
+    analysis_results: dict[str, dict[str, DataFrame]] | None = None,
 ) -> Path:
     """
-    Stores backtest results
-    :param recordfilename: Path object, which can either be a filename or a directory.
-        Filenames will be appended with a timestamp right before the suffix
-        while for directories, <directory>/backtest-result-<datetime>.json will be used as filename
+    Stores backtest results and analysis data in a zip file, with metadata stored separately
+    for convenience.
+    :param config: Configuration dictionary
     :param stats: Dataframe containing the backtesting statistics
     :param dtappendix: Datetime to use for the filename
+    :param market_change_data: Dataframe containing market change data
+    :param analysis_results: Dictionary containing analysis results
     """
-    filename = _generate_filename(recordfilename, dtappendix, ".json")
+    recordfilename: Path = config["exportfilename"]
+    zip_filename = _generate_filename(recordfilename, dtappendix, ".zip")
+    base_filename = _generate_filename(recordfilename, dtappendix, "")
+    json_filename = _generate_filename(recordfilename, dtappendix, ".json")
 
-    # Store metadata separately.
-    file_dump_json(get_backtest_metadata_filename(filename), stats["metadata"])
-    # Don't mutate the original stats dict.
-    stats_copy = {
-        "strategy": stats["strategy"],
-        "strategy_comparison": stats["strategy_comparison"],
-    }
+    # Store metadata separately with .json extension
+    file_dump_json(get_backtest_metadata_filename(json_filename), stats["metadata"])
 
-    file_dump_json(filename, stats_copy)
+    # Store latest backtest info separately
+    latest_filename = Path.joinpath(zip_filename.parent, LAST_BT_RESULT_FN)
+    file_dump_json(latest_filename, {"latest_backtest": str(zip_filename.name)}, log=False)
 
-    latest_filename = Path.joinpath(filename.parent, LAST_BT_RESULT_FN)
-    file_dump_json(latest_filename, {"latest_backtest": str(filename.name)})
+    # Create zip file and add the files
+    with ZipFile(zip_filename, "w", ZIP_DEFLATED) as zipf:
+        # Store stats
+        stats_copy = {
+            "strategy": stats["strategy"],
+            "strategy_comparison": stats["strategy_comparison"],
+        }
+        stats_buf = StringIO()
+        dump_json_to_file(stats_buf, stats_copy)
+        zipf.writestr(json_filename.name, stats_buf.getvalue())
 
-    if market_change_data is not None:
-        filename_mc = _generate_filename(recordfilename, f"{dtappendix}_market_change", ".feather")
-        market_change_data.reset_index().to_feather(
-            filename_mc, compression_level=9, compression="lz4"
-        )
+        # Add market change data if present
+        if market_change_data is not None:
+            market_change_name = f"{base_filename.stem}_market_change.feather"
+            market_change_buf = BytesIO()
+            market_change_data.reset_index().to_feather(
+                market_change_buf, compression_level=9, compression="lz4"
+            )
+            market_change_buf.seek(0)
+            zipf.writestr(market_change_name, market_change_buf.getvalue())
 
-    return filename
+        # Add analysis results if present and running in backtest mode
+        if (
+            config.get("export", "none") == "signals"
+            and analysis_results is not None
+            and config.get("runmode", RunMode.OTHER) == RunMode.BACKTEST
+        ):
+            for name in ["signals", "rejected", "exited"]:
+                if name in analysis_results:
+                    analysis_name = f"{base_filename.stem}_{name}.pkl"
+                    analysis_buf = BytesIO()
+                    file_dump_joblib(analysis_buf, analysis_results[name])
+                    analysis_buf.seek(0)
+                    zipf.writestr(analysis_name, analysis_buf.getvalue())
 
-
-def _store_backtest_analysis_data(
-    recordfilename: Path, data: dict[str, dict], dtappendix: str, name: str
-) -> Path:
-    """
-    Stores backtest trade candles for analysis
-    :param recordfilename: Path object, which can either be a filename or a directory.
-        Filenames will be appended with a timestamp right before the suffix
-        while for directories, <directory>/backtest-result-<datetime>_<name>.pkl will be used
-        as filename
-    :param candles: Dict containing the backtesting data for analysis
-    :param dtappendix: Datetime to use for the filename
-    :param name: Name to use for the file, e.g. signals, rejected
-    """
-    filename = _generate_filename(recordfilename, f"{dtappendix}_{name}", ".pkl")
-
-    file_dump_joblib(filename, data)
-
-    return filename
-
-
-def store_backtest_analysis_results(
-    recordfilename: Path,
-    candles: dict[str, dict],
-    trades: dict[str, dict],
-    exited: dict[str, dict],
-    dtappendix: str,
-) -> None:
-    _store_backtest_analysis_data(recordfilename, candles, dtappendix, "signals")
-    _store_backtest_analysis_data(recordfilename, trades, dtappendix, "rejected")
-    _store_backtest_analysis_data(recordfilename, exited, dtappendix, "exited")
+    return zip_filename

@@ -67,7 +67,7 @@ def default_conf(default_conf) -> dict:
 
 @pytest.fixture
 def update():
-    message = Message(0, datetime.now(timezone.utc), Chat(0, 0))
+    message = Message(0, datetime.now(timezone.utc), Chat(1235, 0))
     _update = Update(0, message=message)
 
     return _update
@@ -167,7 +167,7 @@ def test_telegram_init(default_conf, mocker, caplog) -> None:
         "['stopbuy', 'stopentry'], ['whitelist'], ['blacklist'], "
         "['bl_delete', 'blacklist_delete'], "
         "['logs'], ['edge'], ['health'], ['help'], ['version'], ['marketdir'], "
-        "['order'], ['list_custom_data']]"
+        "['order'], ['list_custom_data'], ['tg_info']]"
     )
 
     assert log_has(message_str, caplog)
@@ -224,8 +224,8 @@ async def test_authorized_only(default_conf, mocker, caplog, update) -> None:
     patch_get_signal(bot)
     await dummy.dummy_handler(update=update, context=MagicMock())
     assert dummy.state["called"] is True
-    assert log_has("Executing handler: dummy_handler for chat_id: 0", caplog)
-    assert not log_has("Rejected unauthorized message from: 0", caplog)
+    assert log_has("Executing handler: dummy_handler for chat_id: 1235", caplog)
+    assert not log_has("Rejected unauthorized message from: 1235", caplog)
     assert not log_has("Exception occurred within Telegram module", caplog)
 
 
@@ -1087,7 +1087,7 @@ async def test_balance_handle_empty_response_dry(default_conf, update, mocker) -
     result = msg_mock.call_args_list[0][0][0]
     assert msg_mock.call_count == 1
     assert "*Warning:* Simulated balances in Dry Mode." in result
-    assert "Starting capital: `1000 BTC`" in result
+    assert "Starting capital: `990 BTC`" in result
 
 
 async def test_balance_handle_too_large_response(default_conf, update, mocker) -> None:
@@ -2967,3 +2967,15 @@ def test_noficiation_settings(default_conf_usdt, mocker):
     assert loudness({"type": RPCMessageType.EXIT, "exit_reason": "roi"}) == "off"
     assert loudness({"type": RPCMessageType.EXIT, "exit_reason": "partial_exit"}) == "off"
     assert loudness({"type": RPCMessageType.EXIT, "exit_reason": "cust_exit112"}) == "off"
+
+
+async def test__tg_info(default_conf_usdt, mocker, update):
+    (telegram, _, _) = get_telegram_testobject(mocker, default_conf_usdt)
+    context = AsyncMock()
+
+    await telegram._tg_info(update, context)
+
+    assert context.bot.send_message.call_count == 1
+    content = context.bot.send_message.call_args[1]["text"]
+    assert "Freqtrade Bot Info:\n" in content
+    assert '"chat_id": "1235"' in content

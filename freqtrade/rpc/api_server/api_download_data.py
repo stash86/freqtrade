@@ -57,7 +57,7 @@ def pairlists_evaluate(
     config_loc = deepcopy(config)
     config_loc["stake_currency"] = ""
     config_loc["pairs"] = payload.pairs
-    config_loc["timeframe"] = payload.timeframes
+    config_loc["timerange"] = payload.timerange
     config_loc["days"] = payload.days
     config_loc["timeframes"] = payload.timeframes
     config_loc["erase"] = payload.erase
