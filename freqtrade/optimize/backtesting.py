@@ -47,8 +47,7 @@ from freqtrade.optimize.optimize_reports import (
     generate_rejected_signals,
     generate_trade_signal_candles,
     show_backtest_results,
-    store_backtest_analysis_results,
-    store_backtest_stats,
+    store_backtest_results,
 )
 from freqtrade.persistence import (
     CustomDataWrapper,
@@ -121,10 +120,12 @@ class Backtesting:
         self.run_ids: dict[str, str] = {}
         self.strategylist: list[IStrategy] = []
         self.all_results: dict[str, dict] = {}
-        self.processed_dfs: dict[str, dict] = {}
+        self.analysis_results: dict[str, dict[str, DataFrame]] = {
+            "signals": {},
+            "rejected": {},
+            "exited": {},
+        }
         self.rejected_dict: dict[str, list] = {}
-        self.rejected_df: dict[str, dict] = {}
-        self.exited_dfs: dict[str, dict] = {}
 
         self._exchange_name = self.config["exchange"]["name"]
         if not exchange:
@@ -1590,15 +1591,13 @@ class Backtesting:
             self.config.get("export", "none") == "signals"
             and self.dataprovider.runmode == RunMode.BACKTEST
         ):
-            self.processed_dfs[strategy_name] = generate_trade_signal_candles(
-                preprocessed_tmp, results, "open_date"
-            )
-            self.rejected_df[strategy_name] = generate_rejected_signals(
-                preprocessed_tmp, self.rejected_dict
-            )
-            self.exited_dfs[strategy_name] = generate_trade_signal_candles(
-                preprocessed_tmp, results, "close_date"
-            )
+            signals = generate_trade_signal_candles(preprocessed_tmp, results, "open_date")
+            rejected = generate_rejected_signals(preprocessed_tmp, self.rejected_dict)
+            exited = generate_trade_signal_candles(preprocessed_tmp, results, "close_date")
+
+            self.analysis_results["signals"][strategy_name] = signals
+            self.analysis_results["rejected"][strategy_name] = rejected
+            self.analysis_results["exited"][strategy_name] = exited
 
         return min_date, max_date
 
@@ -1662,23 +1661,12 @@ class Backtesting:
             dt_appendix = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             if self.config.get("export", "none") in ("trades", "signals"):
                 combined_res = combined_dataframes_with_rel_mean(data, min_date, max_date)
-                store_backtest_stats(
-                    self.config["exportfilename"],
+                store_backtest_results(
+                    self.config,
                     self.results,
                     dt_appendix,
                     market_change_data=combined_res,
-                )
-
-            if (
-                self.config.get("export", "none") == "signals"
-                and self.dataprovider.runmode == RunMode.BACKTEST
-            ):
-                store_backtest_analysis_results(
-                    self.config["exportfilename"],
-                    self.processed_dfs,
-                    self.rejected_df,
-                    self.exited_dfs,
-                    dt_appendix,
+                    analysis_results=self.analysis_results,
                 )
 
         # Results may be mixed up now. Sort them so they follow --strategy-list order.

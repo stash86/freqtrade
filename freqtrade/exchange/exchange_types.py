@@ -47,6 +47,8 @@ class FtHas(TypedDict, total=False):
     needs_trading_fees: bool
     order_props_in_contracts: list[Literal["amount", "cost", "filled", "remaining"]]
 
+    proxy_coin_mapping: dict[str, str]
+
     # Websocket control
     ws_enabled: bool
 

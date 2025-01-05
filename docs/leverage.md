@@ -82,7 +82,7 @@ Each market(trading pair), keeps collateral in a separate account
 "margin_mode": "isolated"
 ```
 
-#### Cross margin mode (currently unavailable)
+#### Cross margin mode
 
 One account is used to share collateral between markets (trading pairs). Margin is taken from total account balance to avoid liquidation when needed.
 

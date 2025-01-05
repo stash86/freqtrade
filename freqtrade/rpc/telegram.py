@@ -90,6 +90,7 @@ class TimeunitMappings:
 def authorized_only(command_handler: Callable[..., Coroutine[Any, Any, None]]):
     """
     Decorator to check if the message comes from the correct chat_id
+    can only be used with Telegram Class to decorate instance methods.
     :param command_handler: Telegram CommandHandler
     :return: decorated function
     """
@@ -102,13 +103,21 @@ def authorized_only(command_handler: Callable[..., Coroutine[Any, Any, None]]):
         # Reject unauthorized messages
         if update.callback_query:
             cchat_id = int(update.callback_query.message.chat.id)
+            ctopic_id = update.callback_query.message.message_thread_id
         else:
             cchat_id = int(update.message.chat_id)
+            ctopic_id = update.message.message_thread_id
 
         chat_id = int(self._config["telegram"]["chat_id"])
         if cchat_id != chat_id:
-            logger.info(f"Rejected unauthorized message from: {update.message.chat_id}")
-            return wrapper
+            logger.info(f"Rejected unauthorized message from: {cchat_id}")
+            return None
+        if (topic_id := self._config["telegram"].get("topic_id")) is not None:
+            if str(ctopic_id) != topic_id:
+                # This can be quite common in multi-topic environments.
+                logger.debug(f"Rejected message from wrong channel: {cchat_id}, {ctopic_id}")
+                return None
+
         # Rollback session to avoid getting data stored in a transaction.
         Trade.rollback()
         logger.debug("Executing handler: %s for chat_id: %s", command_handler.__name__, chat_id)
@@ -291,6 +300,7 @@ class Telegram(RPCHandler):
             CommandHandler("marketdir", self._changemarketdir),
             CommandHandler("order", self._order),
             CommandHandler("list_custom_data", self._list_custom_data),
+            CommandHandler("tg_info", self._tg_info),
         ]
         callbacks = [
             CallbackQueryHandler(self._status_table, pattern="update_status_table"),
@@ -851,11 +861,14 @@ class Telegram(RPCHandler):
         :return: None
         """
         fiat_currency = self._config.get("fiat_display_currency", "")
-        statlist, head, fiat_profit_sum = self._rpc._rpc_status_table(
+        statlist, head, fiat_profit_sum, fiat_total_profit_sum = self._rpc._rpc_status_table(
             self._config["stake_currency"], fiat_currency
         )
 
         show_total = not isnan(fiat_profit_sum) and len(statlist) > 1
+        show_total_realized = (
+            not isnan(fiat_total_profit_sum) and len(statlist) > 1 and fiat_profit_sum
+        ) != fiat_total_profit_sum
         max_trades_per_msg = 50
         """
         Calculate the number of messages of 50 trades per message
@@ -868,12 +881,22 @@ class Telegram(RPCHandler):
             if show_total and i == messages_count - 1:
                 # append total line
                 trades.append(["Total", "", "", f"{fiat_profit_sum:.2f} {fiat_currency}"])
+                if show_total_realized:
+                    trades.append(
+                        [
+                            "Total",
+                            "(incl. realized Profits)",
+                            "",
+                            f"{fiat_total_profit_sum:.2f} {fiat_currency}",
+                        ]
+                    )
 
             message = tabulate(trades, headers=head, tablefmt="simple")
             if show_total and i == messages_count - 1:
                 # insert separators line between Total
                 lines = message.split("\n")
-                message = "\n".join(lines[:-1] + [lines[1]] + [lines[-1]])
+                offset = 2 if show_total_realized else 1
+                message = "\n".join(lines[:-offset] + [lines[1]] + lines[-offset:])
             await self._send_msg(
                 f"<pre>{message}</pre>",
                 parse_mode=ParseMode.HTML,
@@ -1283,7 +1306,7 @@ class Telegram(RPCHandler):
         else:
             fiat_currency = self._config.get("fiat_display_currency", "")
             try:
-                statlist, _, _ = self._rpc._rpc_status_table(
+                statlist, _, _, _ = self._rpc._rpc_status_table(
                     self._config["stake_currency"], fiat_currency
                 )
             except RPCException:
@@ -1812,7 +1835,7 @@ class Telegram(RPCHandler):
             "*/fx <trade_id>|all:* `Alias to /forceexit`\n"
             f"{force_enter_text if self._config.get('force_entry_enable', False) else ''}"
             "*/delete <trade_id>:* `Instantly delete the given trade in the database`\n"
-            "*/reload_trade <trade_id>:* `Relade trade from exchange Orders`\n"
+            "*/reload_trade <trade_id>:* `Reload trade from exchange Orders`\n"
             "*/cancel_open_order <trade_id>:* `Cancels open orders for trade. "
             "Only valid when the trade has open orders.`\n"
             "*/coo <trade_id>|all:* `Alias to /cancel_open_order`\n"
@@ -2060,6 +2083,7 @@ class Telegram(RPCHandler):
                     parse_mode=parse_mode,
                     reply_markup=reply_markup,
                     disable_notification=disable_notification,
+                    message_thread_id=self._config["telegram"].get("topic_id"),
                 )
             except NetworkError as network_err:
                 # Sometimes the telegram server resets the current connection,
@@ -2073,6 +2097,7 @@ class Telegram(RPCHandler):
                     parse_mode=parse_mode,
                     reply_markup=reply_markup,
                     disable_notification=disable_notification,
+                    message_thread_id=self._config["telegram"].get("topic_id"),
                 )
         except TelegramError as telegram_err:
             logger.warning("TelegramError: %s! Giving up on that message.", telegram_err.message)
@@ -2118,3 +2143,37 @@ class Telegram(RPCHandler):
                 "Invalid usage of command /marketdir. \n"
                 "Usage: */marketdir [short |  long | even | none]*"
             )
+
+    async def _tg_info(self, update: Update, context: CallbackContext) -> None:
+        """
+        Intentionally unauthenticated Handler for /tg_info.
+        Returns information about the current telegram chat - even if chat_id does not
+        correspond to this chat.
+
+        :param update: message update
+        :return: None
+        """
+        if not update.message:
+            return
+        chat_id = update.message.chat_id
+        topic_id = update.message.message_thread_id
+
+        msg = f"""Freqtrade Bot Info:
+        ```json
+            {{
+                "enabled": true,
+                "token": "********",
+                "chat_id": "{chat_id}",
+                {f'"topic_id": "{topic_id}"' if topic_id else ""}
+            }}
+        ```
+        """
+        try:
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=msg,
+                parse_mode=ParseMode.MARKDOWN_V2,
+                message_thread_id=topic_id,
+            )
+        except TelegramError as telegram_err:
+            logger.warning("TelegramError: %s! Giving up on that message.", telegram_err.message)

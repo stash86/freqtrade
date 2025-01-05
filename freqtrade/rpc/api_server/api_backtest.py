@@ -43,7 +43,7 @@ router = APIRouter()
 
 def __run_backtest_bg(btconfig: Config):
     from freqtrade.data.metrics import combined_dataframes_with_rel_mean
-    from freqtrade.optimize.optimize_reports import generate_backtest_stats, store_backtest_stats
+    from freqtrade.optimize.optimize_reports import generate_backtest_stats, store_backtest_results
     from freqtrade.resolvers import StrategyResolver
 
     asyncio.set_event_loop(asyncio.new_event_loop())
@@ -101,8 +101,8 @@ def __run_backtest_bg(btconfig: Config):
 
         if btconfig.get("export", "none") == "trades":
             combined_res = combined_dataframes_with_rel_mean(ApiBG.bt["data"], min_date, max_date)
-            fn = store_backtest_stats(
-                btconfig["exportfilename"],
+            fn = store_backtest_results(
+                btconfig,
                 ApiBG.bt["bt"].results,
                 datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
                 market_change_data=combined_res,
@@ -273,15 +273,18 @@ def api_backtest_history(config=Depends(get_config)):
 def api_backtest_history_result(filename: str, strategy: str, config=Depends(get_config)):
     # Get backtest result history, read from metadata files
     bt_results_base: Path = config["user_data_dir"] / "backtest_results"
-    fn = (bt_results_base / filename).with_suffix(".json")
+    for ext in [".zip", ".json"]:
+        fn = (bt_results_base / filename).with_suffix(ext)
+        if is_file_in_dir(fn, bt_results_base):
+            break
+    else:
+        raise HTTPException(status_code=404, detail="File not found.")
 
     results: dict[str, Any] = {
         "metadata": {},
         "strategy": {},
         "strategy_comparison": [],
     }
-    if not is_file_in_dir(fn, bt_results_base):
-        raise HTTPException(status_code=404, detail="File not found.")
     load_and_merge_backtest_result(strategy, fn, results)
     return {
         "status": "ended",
@@ -301,9 +304,12 @@ def api_backtest_history_result(filename: str, strategy: str, config=Depends(get
 def api_delete_backtest_history_entry(file: str, config=Depends(get_config)):
     # Get backtest result history, read from metadata files
     bt_results_base: Path = config["user_data_dir"] / "backtest_results"
-    file_abs = (bt_results_base / file).with_suffix(".json")
-    # Ensure file is in backtest_results directory
-    if not is_file_in_dir(file_abs, bt_results_base):
+    for ext in [".zip", ".json"]:
+        file_abs = (bt_results_base / file).with_suffix(ext)
+        # Ensure file is in backtest_results directory
+        if is_file_in_dir(file_abs, bt_results_base):
+            break
+    else:
         raise HTTPException(status_code=404, detail="File not found.")
 
     delete_backtest_result(file_abs)
@@ -320,10 +326,14 @@ def api_update_backtest_history_entry(
 ):
     # Get backtest result history, read from metadata files
     bt_results_base: Path = config["user_data_dir"] / "backtest_results"
-    file_abs = (bt_results_base / file).with_suffix(".json")
-    # Ensure file is in backtest_results directory
-    if not is_file_in_dir(file_abs, bt_results_base):
+    for ext in [".zip", ".json"]:
+        file_abs = (bt_results_base / file).with_suffix(ext)
+        # Ensure file is in backtest_results directory
+        if is_file_in_dir(file_abs, bt_results_base):
+            break
+    else:
         raise HTTPException(status_code=404, detail="File not found.")
+
     content = {"notes": body.notes}
     try:
         update_backtest_metadata(file_abs, body.strategy, content)
@@ -340,10 +350,17 @@ def api_update_backtest_history_entry(
 )
 def api_get_backtest_market_change(file: str, config=Depends(get_config)):
     bt_results_base: Path = config["user_data_dir"] / "backtest_results"
-    file_abs = (bt_results_base / f"{file}_market_change").with_suffix(".feather")
-    # Ensure file is in backtest_results directory
-    if not is_file_in_dir(file_abs, bt_results_base):
+    for fn in (
+        Path(file).with_suffix(".zip"),
+        Path(f"{file}_market_change").with_suffix(".feather"),
+    ):
+        file_abs = bt_results_base / fn
+        # Ensure file is in backtest_results directory
+        if is_file_in_dir(file_abs, bt_results_base):
+            break
+    else:
         raise HTTPException(status_code=404, detail="File not found.")
+
     df = get_backtest_market_change(file_abs)
 
     return {

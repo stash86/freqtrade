@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock
+from zipfile import ZipFile
 
 import pytest
 from pandas import DataFrame, DateOffset, Timestamp, to_datetime
@@ -15,6 +16,7 @@ from freqtrade.data.btanalysis import (
     get_latest_hyperopt_file,
     load_backtest_data,
     load_backtest_metadata,
+    load_file_from_zip,
     load_trades,
     load_trades_from_db,
 )
@@ -569,3 +571,22 @@ def test_calculate_max_drawdown_abs(profits, relative, highd, lowdays, result, r
     assert drawdown.high_value > drawdown.low_value
     assert drawdown.drawdown_abs == result
     assert pytest.approx(drawdown.relative_account_drawdown) == result_rel
+
+
+def test_load_file_from_zip(tmp_path):
+    with pytest.raises(ValueError, match=r"Zip file .* not found\."):
+        load_file_from_zip(tmp_path / "test.zip", "testfile.txt")
+
+    (tmp_path / "testfile.zip").touch()
+    with pytest.raises(ValueError, match=r"Bad zip file.*"):
+        load_file_from_zip(tmp_path / "testfile.zip", "testfile.txt")
+
+    zip_file = tmp_path / "testfile2.zip"
+    with ZipFile(zip_file, "w") as zipf:
+        zipf.writestr("testfile.txt", "testfile content")
+
+    content = load_file_from_zip(zip_file, "testfile.txt")
+    assert content.decode("utf-8") == "testfile content"
+
+    with pytest.raises(ValueError, match=r"File .* not found in zip.*"):
+        load_file_from_zip(zip_file, "testfile55.txt")

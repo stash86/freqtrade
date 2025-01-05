@@ -2,7 +2,6 @@
 """Wallet"""
 
 import logging
-from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import NamedTuple
 
@@ -46,7 +45,8 @@ class Wallets:
         self._wallets: dict[str, Wallet] = {}
         self._positions: dict[str, PositionWallet] = {}
         self._start_cap: dict[str, float] = {}
-        self._stake_currency = config["stake_currency"]
+
+        self._stake_currency = self._exchange.get_proxy_coin()
 
         if isinstance(_start_cap := config["dry_run_wallet"], float | int):
             self._start_cap[self._stake_currency] = _start_cap
@@ -188,19 +188,16 @@ class Wallets:
 
     def _update_live(self) -> None:
         balances = self._exchange.get_balances()
+        _wallets = {}
 
         for currency in balances:
             if isinstance(balances[currency], dict):
-                self._wallets[currency] = Wallet(
+                _wallets[currency] = Wallet(
                     currency,
                     balances[currency].get("free", 0),
                     balances[currency].get("used", 0),
                     balances[currency].get("total", 0),
                 )
-        # Remove currencies no longer in get_balances output
-        for currency in deepcopy(self._wallets):
-            if currency not in balances:
-                del self._wallets[currency]
 
         positions = self._exchange.fetch_positions()
         _parsed_positions = {}
@@ -220,6 +217,7 @@ class Wallets:
                 side=position["side"],
             )
         self._positions = _parsed_positions
+        self._wallets = _wallets
 
     def update(self, require_update: bool = True) -> None:
         """
@@ -289,7 +287,9 @@ class Wallets:
             tot_profit = Trade.get_total_closed_profit()
             open_stakes = Trade.total_open_trades_stakes()
             available_balance = self.get_free(self._stake_currency)
-            return available_balance - tot_profit + open_stakes
+            return (available_balance - tot_profit + open_stakes) * self._config[
+                "tradable_balance_ratio"
+            ]
 
     def get_total_stake_amount(self):
         """

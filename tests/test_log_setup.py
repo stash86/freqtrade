@@ -6,7 +6,7 @@ import pytest
 from freqtrade.exceptions import OperationalException
 from freqtrade.loggers import (
     FTBufferingHandler,
-    FTStdErrStreamHandler,
+    FtRichHandler,
     set_loggers,
     setup_logging,
     setup_logging_pre,
@@ -72,7 +72,7 @@ def test_set_loggers_syslog():
     setup_logging(config)
     assert len(logger.handlers) == 3
     assert [x for x in logger.handlers if isinstance(x, logging.handlers.SysLogHandler)]
-    assert [x for x in logger.handlers if isinstance(x, FTStdErrStreamHandler)]
+    assert [x for x in logger.handlers if isinstance(x, FtRichHandler)]
     assert [x for x in logger.handlers if isinstance(x, FTBufferingHandler)]
     # setting up logging again should NOT cause the loggers to be added a second time.
     setup_logging(config)
@@ -96,7 +96,7 @@ def test_set_loggers_Filehandler(tmp_path):
     setup_logging(config)
     assert len(logger.handlers) == 3
     assert [x for x in logger.handlers if isinstance(x, logging.handlers.RotatingFileHandler)]
-    assert [x for x in logger.handlers if isinstance(x, FTStdErrStreamHandler)]
+    assert [x for x in logger.handlers if isinstance(x, FtRichHandler)]
     assert [x for x in logger.handlers if isinstance(x, FTBufferingHandler)]
     # setting up logging again should NOT cause the loggers to be added a second time.
     setup_logging(config)
@@ -145,7 +145,7 @@ def test_set_loggers_journald(mocker):
     setup_logging(config)
     assert len(logger.handlers) == 3
     assert [x for x in logger.handlers if type(x).__name__ == "JournaldLogHandler"]
-    assert [x for x in logger.handlers if isinstance(x, FTStdErrStreamHandler)]
+    assert [x for x in logger.handlers if isinstance(x, FtRichHandler)]
     # reset handlers to not break pytest
     logger.handlers = orig_handlers
 

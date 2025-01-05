@@ -6,6 +6,7 @@ from freqtrade.constants import DEFAULT_TRADES_COLUMNS
 from freqtrade.data.converter import populate_dataframe_with_trades
 from freqtrade.data.converter.orderflow import (
     ORDERFLOW_ADDED_COLUMNS,
+    timeframe_to_DateOffset,
     trades_to_volumeprofile_with_total_delta_bid_ask,
 )
 from freqtrade.data.converter.trade_converter import trades_list_to_df
@@ -564,3 +565,14 @@ def test_analyze_with_orderflow(
 
     lastval_of2 = df2.at[len(df2) - 1, "orderflow"]
     assert isinstance(lastval_of2, dict)
+
+
+def test_timeframe_to_DateOffset():
+    assert timeframe_to_DateOffset("1s") == pd.DateOffset(seconds=1)
+    assert timeframe_to_DateOffset("1m") == pd.DateOffset(minutes=1)
+    assert timeframe_to_DateOffset("5m") == pd.DateOffset(minutes=5)
+    assert timeframe_to_DateOffset("1h") == pd.DateOffset(hours=1)
+    assert timeframe_to_DateOffset("1d") == pd.DateOffset(days=1)
+    assert timeframe_to_DateOffset("1w") == pd.DateOffset(weeks=1)
+    assert timeframe_to_DateOffset("1M") == pd.DateOffset(months=1)
+    assert timeframe_to_DateOffset("1y") == pd.DateOffset(years=1)

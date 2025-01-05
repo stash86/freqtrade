@@ -277,7 +277,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v5
       with:
         enable-cache: true
         cache-dependency-glob: "requirements**.txt"
@@ -297,7 +297,7 @@ jobs:
 
     - name: Tests
       run: |
-        pytest --random-order
+        pytest --random-order --durations 20 -n auto
 
     - name: Check for repository changes
       run: |
@@ -548,7 +548,7 @@ jobs:
         merge-multiple: true
 
     - name: Publish to PyPI (Test)
-      uses: pypa/gh-action-pypi-publish@v1.12.2
+      uses: pypa/gh-action-pypi-publish@v1.12.3
       with:
         repository-url: https://test.pypi.org/legacy/
 
@@ -575,7 +575,7 @@ jobs:
         merge-multiple: true
 
     - name: Publish to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.12.2
+      uses: pypa/gh-action-pypi-publish@v1.12.3
 
 
   deploy-docker:

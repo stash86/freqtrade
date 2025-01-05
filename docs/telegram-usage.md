@@ -45,15 +45,22 @@ Get your "Id", you will use it for the config parameter `chat_id`.
 
 #### Use Group id
 
-You can use bots in telegram groups by just adding them to the group. You can find the group id by first adding a [RawDataBot](https://telegram.me/rawdatabot) to your group. The Group id is shown as id in the `"chat"` section, which the RawDataBot will send to you:
+To get the group ID, you can add the bot to the group, start freqtrade, and issue a `/tg_info` command.
+This will return the group id to you, without having to use some random bot.
+While "chat_id" is still required, it doesn't need to be set to this particular group id for this command.
+
+The response will also contain the "topic_id" if necessary - both in a format ready to copy/paste into your configuration.
 
 ``` json
-"chat":{
-   "id":-1001332619709
+ {
+    "enabled": true,
+    "token": "********",
+    "chat_id": "-1001332619709",
+    "topic_id": "122"
 }
 ```
 
-For the Freqtrade configuration, you can then use the full value (including `-` if it's there) as string:
+For the Freqtrade configuration, you can then use the full value (including `-` ) as string:
 
 ```json
    "chat_id": "-1001332619709"
@@ -61,6 +68,18 @@ For the Freqtrade configuration, you can then use the full value (including `-` 
 
 !!! Warning "Using telegram groups"
     When using telegram groups, you're giving every member of the telegram group access to your freqtrade bot and to all commands possible via telegram. Please make sure that you can trust everyone in the telegram group to avoid unpleasant surprises.
+
+##### Group Topic ID
+
+To use a specific topic in a group, you can use the `topic_id` parameter in the configuration. This will allow you to use the bot in a specific topic in a group.  
+Without this, the bot will always respond to the general channel in the group if topics are enabled for a group chat.
+
+```json
+   "chat_id": "-1001332619709",
+   "topic_id": "3"
+```
+
+Similar to the group-id - you can use `/tg_info` from the topic/thread to get the correct topic-id.
 
 ## Control telegram noise
 

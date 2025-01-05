@@ -551,6 +551,13 @@ def get_datahandlerclass(datatype: str) -> type[IDataHandler]:
     elif datatype == "hdf5":
         from .hdf5datahandler import HDF5DataHandler
 
+        logger.warning(
+            "DEPRECATED: The hdf5 dataformat is deprecated and will be removed in the "
+            "next release. "
+            "Please use the convert-data command to convert your data to a supported format."
+            "We recommend using the feather format, as it is faster and is more space-efficient."
+        )
+
         return HDF5DataHandler
     elif datatype == "feather":
         from .featherdatahandler import FeatherDataHandler

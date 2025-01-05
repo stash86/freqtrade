@@ -374,7 +374,7 @@ def test_total_open_trades_stakes(mocker, default_conf_usdt, ticker_usdt, fee) -
 def test_create_trade(
     default_conf_usdt, ticker_usdt, limit_order, fee, mocker, is_short, open_rate
 ) -> None:
-    patch_RPCManager(mocker)
+    send_msg_mock = patch_RPCManager(mocker)
     patch_exchange(mocker)
     mocker.patch.multiple(
         EXMS,
@@ -387,6 +387,7 @@ def test_create_trade(
     whitelist = deepcopy(default_conf_usdt["exchange"]["pair_whitelist"])
     freqtrade = FreqtradeBot(default_conf_usdt)
     patch_get_signal(freqtrade, enter_short=is_short, enter_long=not is_short)
+    send_msg_mock.reset_mock()
     freqtrade.create_trade("ETH/USDT")
 
     trade = Trade.session.scalars(select(Trade)).first()
@@ -402,6 +403,14 @@ def test_create_trade(
         limit_order[entry_side(is_short)], "ADA/USDT", entry_side(is_short)
     )
     trade.update_trade(oobj)
+    assert send_msg_mock.call_count == 1
+    entry_msg = send_msg_mock.call_args_list[0][0][0]
+    assert entry_msg["type"] == RPCMessageType.ENTRY
+    assert entry_msg["stake_amount"] == trade.stake_amount
+    assert entry_msg["stake_currency"] == default_conf_usdt["stake_currency"]
+    assert entry_msg["pair"] == "ETH/USDT"
+    assert entry_msg["direction"] == ("Short" if is_short else "Long")
+    assert entry_msg["sub_trade"] is False
 
     assert trade.open_rate == open_rate
     assert trade.amount == 30.0
@@ -3971,7 +3980,7 @@ def test_get_real_amount_multi(
     markets["BNB/ETH"] = markets["ETH/USDT"]
     freqtrade = get_patched_freqtradebot(mocker, default_conf_usdt)
     mocker.patch(f"{EXMS}.markets", PropertyMock(return_value=markets))
-    mocker.patch(f"{EXMS}.fetch_ticker", return_value={"ask": 0.19, "last": 0.2})
+    mocker.patch(f"{EXMS}.get_conversion_rate", return_value=0.2)
 
     # Amount is reduced by "fee"
     expected_amount = amount * fee_reduction_amount
@@ -5190,6 +5199,13 @@ def test_update_funding_fees(
     open_exit_order = limit_order_open[exit_side(is_short)]
     bid = 0.11
     enter_rate_mock = MagicMock(return_value=bid)
+    open_order.update(
+        {
+            "status": "closed",
+            "filled": open_order["amount"],
+            "remaining": 0,
+        }
+    )
     enter_mm = MagicMock(return_value=open_order)
     patch_RPCManager(mocker)
     patch_exchange(mocker)

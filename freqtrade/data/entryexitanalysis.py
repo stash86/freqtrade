@@ -1,54 +1,23 @@
 import logging
 from pathlib import Path
 
-import joblib
 import pandas as pd
 
 from freqtrade.configuration import TimeRange
 from freqtrade.constants import Config
 from freqtrade.data.btanalysis import (
     BT_DATA_COLUMNS,
-    get_latest_backtest_filename,
     load_backtest_data,
     load_backtest_stats,
+    load_exit_signal_candles,
+    load_rejected_signals,
+    load_signal_candles,
 )
-from freqtrade.exceptions import OperationalException
+from freqtrade.exceptions import ConfigurationError, OperationalException
 from freqtrade.util import print_df_rich_table
 
 
 logger = logging.getLogger(__name__)
-
-
-def _load_backtest_analysis_data(backtest_dir: Path, name: str):
-    if backtest_dir.is_dir():
-        scpf = Path(
-            backtest_dir,
-            Path(get_latest_backtest_filename(backtest_dir)).stem + "_" + name + ".pkl",
-        )
-    else:
-        scpf = Path(backtest_dir.parent / f"{backtest_dir.stem}_{name}.pkl")
-
-    try:
-        with scpf.open("rb") as scp:
-            loaded_data = joblib.load(scp)
-            logger.info(f"Loaded {name} candles: {str(scpf)}")
-    except Exception as e:
-        logger.error(f"Cannot load {name} data from pickled results: ", e)
-        return None
-
-    return loaded_data
-
-
-def _load_rejected_signals(backtest_dir: Path):
-    return _load_backtest_analysis_data(backtest_dir, "rejected")
-
-
-def _load_signal_candles(backtest_dir: Path):
-    return _load_backtest_analysis_data(backtest_dir, "signals")
-
-
-def _load_exit_signal_candles(backtest_dir: Path) -> dict[str, dict[str, pd.DataFrame]]:
-    return _load_backtest_analysis_data(backtest_dir, "exited")
 
 
 def _process_candles_and_indicators(
@@ -374,19 +343,21 @@ def process_entry_exit_reasons(config: Config):
         timerange = TimeRange.parse_timerange(
             None if config.get("timerange") is None else str(config.get("timerange"))
         )
-
-        backtest_stats = load_backtest_stats(config["exportfilename"])
+        try:
+            backtest_stats = load_backtest_stats(config["exportfilename"])
+        except ValueError as e:
+            raise ConfigurationError(e) from e
 
         for strategy_name, results in backtest_stats["strategy"].items():
             trades = load_backtest_data(config["exportfilename"], strategy_name)
 
             if trades is not None and not trades.empty:
-                signal_candles = _load_signal_candles(config["exportfilename"])
-                exit_signals = _load_exit_signal_candles(config["exportfilename"])
+                signal_candles = load_signal_candles(config["exportfilename"])
+                exit_signals = load_exit_signal_candles(config["exportfilename"])
 
                 rej_df = None
                 if do_rejected:
-                    rejected_signals_dict = _load_rejected_signals(config["exportfilename"])
+                    rejected_signals_dict = load_rejected_signals(config["exportfilename"])
                     rej_df = prepare_results(
                         rejected_signals_dict,
                         strategy_name,

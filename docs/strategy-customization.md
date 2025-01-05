@@ -545,7 +545,7 @@ def informative_pairs(self):
             ]
 ```
 
-A full sample can be found [in the DataProvider section](#complete-data-provider-sample).
+A full sample can be found [in the DataProvider section](#complete-dataprovider-sample).
 
 !!! Warning
     As these pairs will be refreshed as part of the regular whitelist refresh, it's best to keep this list short.
@@ -576,7 +576,7 @@ To easily define informative pairs, use the `@informative` decorator. All decora
 and do not have access to data from other informative pairs. However, all informative dataframes for each pair are merged and passed to main `populate_indicators()` method.
 
 !!! Note
-    Do not use the `@informative` decorator if you need to use data from one informative pair when generating another informative pair. Instead, define informative pairs manually as described [in the DataProvider section](#complete-data-provider-sample).
+    Do not use the `@informative` decorator if you need to use data from one informative pair when generating another informative pair. Instead, define informative pairs manually as described [in the DataProvider section](#complete-dataprovider-sample).
 
 When hyperopting, use of the hyperoptable parameter `.value` attribute is not supported. Please use the `.range` attribute. See [optimizing an indicator parameter](hyperopt.md#optimizing-an-indicator-parameter) for more information.
 
@@ -710,7 +710,7 @@ Options:
 - Merge the dataframe without lookahead bias
 - Forward-fill (optional)
 
-For a full sample, please refer to the [complete data provider example](#complete-data-provider-sample) below.
+For a full sample, please refer to the [complete data provider example](#complete-dataprovider-sample) below.
 
 All columns of the informative dataframe will be available on the returning dataframe in a renamed fashion:
 

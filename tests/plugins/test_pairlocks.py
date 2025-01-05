@@ -37,6 +37,7 @@ def test_PairLocks(use_db):
     assert not PairLocks.is_pair_locked(pair)
     assert not PairLocks.is_pair_locked(pair, side="long")
     assert PairLocks.is_pair_locked(pair, side="short")
+    assert len(PairLocks.get_pair_locks(pair)) == 1
 
     # XRP/BTC should not be locked now
     pair = "XRP/BTC"
@@ -47,9 +48,11 @@ def test_PairLocks(use_db):
     PairLocks.lock_pair(pair, dt_now() + timedelta(minutes=4))
     assert PairLocks.is_pair_locked(pair)
 
-    # Get both locks from above
+    # Get all locks from above
     locks = PairLocks.get_pair_locks(None)
-    assert len(locks) == 2
+    assert len(locks) == 4
+
+    assert len(PairLocks.get_pair_locks(None, side="*")) == 2
 
     # Unlock original pair
     pair = "ETH/BTC"

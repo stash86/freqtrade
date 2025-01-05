@@ -625,7 +625,7 @@ def get_default_conf(testdatadir):
         "telegram": {
             "enabled": False,
             "token": "token",
-            "chat_id": "0",
+            "chat_id": "1235",
             "notification_settings": {},
         },
         "datadir": Path(testdatadir),

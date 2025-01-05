@@ -81,4 +81,10 @@ version 2023.3 saw the removal of `populate_any_indicators` in favor of split me
 
 ## Removal of `protections` from configuration
 
- Setting protections from the configuration via `"protections": [],` has been removed in 2024.10, after having raised deprecation warnings for over 3 years.
+Setting protections from the configuration via `"protections": [],` has been removed in 2024.10, after having raised deprecation warnings for over 3 years.
+
+## hdf5 data storage
+
+Using hdf5 as data storage has been deprecated in 2024.12 and will be removed in 2025.1. We recommend switching to the feather data format.
+
+Please use the [`convert-data` subcommand](data-download.md#sub-command-convert-data) to convert your existing data to one of the supported formats.

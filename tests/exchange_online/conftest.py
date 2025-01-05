@@ -139,6 +139,23 @@ EXCHANGES = {
         "leverage_tiers_public": False,
         "leverage_in_spot_market": True,
         "trades_lookback_hours": 12,
+        "sample_balances": {
+            "exchange_response": {
+                "result": {
+                    "ADA": {"balance": "0.00000000", "hold_trade": "0.00000000"},
+                    "ADA.F": {"balance": "2.00000000", "hold_trade": "0.00000000"},
+                    "XBT": {"balance": "0.00060000", "hold_trade": "0.00000000"},
+                    "XBT.F": {"balance": "0.00100000", "hold_trade": "0.00000000"},
+                }
+            },
+            "expected": {
+                "ADA": {"free": 0.0, "total": 0.0, "used": 0.0},
+                "ADA.F": {"free": 2.0, "total": 2.0, "used": 0.0},
+                "BTC": {"free": 0.0006, "total": 0.0006, "used": 0.0},
+                # XBT.F should be mapped to BTC.F
+                "XBT.F": {"free": 0.001, "total": 0.001, "used": 0.0},
+            },
+        },
     },
     "kucoin": {
         "pair": "XRP/USDT",

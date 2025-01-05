@@ -11,7 +11,15 @@ from freqtrade.commands.cli_options import AVAILABLE_CLI_OPTIONS
 from freqtrade.constants import DEFAULT_CONFIG
 
 
-ARGS_COMMON = ["verbosity", "logfile", "version", "config", "datadir", "user_data_dir"]
+ARGS_COMMON = [
+    "verbosity",
+    "print_colorized",
+    "logfile",
+    "version",
+    "config",
+    "datadir",
+    "user_data_dir",
+]
 
 ARGS_STRATEGY = [
     "strategy",
@@ -58,7 +66,6 @@ ARGS_HYPEROPT = ARGS_COMMON_OPTIMIZE + [
     "epochs",
     "spaces",
     "print_all",
-    "print_colorized",
     "print_json",
     "hyperopt_jobs",
     "hyperopt_random_state",
@@ -74,13 +81,12 @@ ARGS_EDGE = ARGS_COMMON_OPTIMIZE + ["stoploss_range"]
 ARGS_LIST_STRATEGIES = [
     "strategy_path",
     "print_one_column",
-    "print_colorized",
     "recursive_strategy_search",
 ]
 
-ARGS_LIST_FREQAIMODELS = ["freqaimodel_path", "print_one_column", "print_colorized"]
+ARGS_LIST_FREQAIMODELS = ["freqaimodel_path", "print_one_column"]
 
-ARGS_LIST_HYPEROPTS = ["hyperopt_path", "print_one_column", "print_colorized"]
+ARGS_LIST_HYPEROPTS = ["hyperopt_path", "print_one_column"]
 
 ARGS_BACKTEST_SHOW = ["exportfilename", "backtest_show_pair_list", "backtest_breakdown"]
 
@@ -202,7 +208,6 @@ ARGS_HYPEROPT_LIST = [
     "hyperopt_list_max_total_profit",
     "hyperopt_list_min_objective",
     "hyperopt_list_max_objective",
-    "print_colorized",
     "print_json",
     "hyperopt_list_no_details",
     "hyperoptexportfilename",

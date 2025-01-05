@@ -79,6 +79,4 @@ class OffsetFilter(IPairList):
         if self._number_pairs:
             pairs = pairs[: self._number_pairs]
 
-        self.log_once(f"Searching {len(pairs)} pairs: {pairs}", logger.info)
-
         return pairs

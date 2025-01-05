@@ -64,7 +64,7 @@ from freqtrade.rpc.rpc_types import (
 )
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
-from freqtrade.util import FtPrecise, MeasureTime, PeriodicCache
+from freqtrade.util import FtPrecise, MeasureTime, PeriodicCache, dt_from_ts
 from freqtrade.util.migrations.binance_mig import migrate_binance_futures_names
 from freqtrade.wallets import Wallets
 
@@ -164,6 +164,7 @@ class FreqtradeBot(LoggingMixin):
 
             def update():
                 self.update_funding_fees()
+                self.update_all_liquidation_prices()
                 self.wallets.update()
 
             # This would be more efficient if scheduled in utc time, and performed at each
@@ -558,9 +559,8 @@ class FreqtradeBot(LoggingMixin):
                     logger.info(f"Found previously unknown order {order['id']} for {trade.pair}.")
 
                     order_obj = Order.parse_from_ccxt_object(order, trade.pair, order["side"])
-                    order_obj.order_filled_date = datetime.fromtimestamp(
-                        safe_value_fallback(order, "lastTradeTimestamp", "timestamp") // 1000,
-                        tz=timezone.utc,
+                    order_obj.order_filled_date = dt_from_ts(
+                        safe_value_fallback(order, "lastTradeTimestamp", "timestamp")
                     )
                     trade.orders.append(order_obj)
                     Trade.commit()
@@ -1231,7 +1231,7 @@ class FreqtradeBot(LoggingMixin):
             trade.pair, side="entry", is_short=trade.is_short, refresh=False
         )
         stake_amount = trade.stake_amount
-        if not fill:
+        if not fill and trade.nr_of_successful_entries > 0:
             # If we have open orders, we need to add the stake amount of the open orders
             # as it's not yet included in the trade.stake_amount
             stake_amount += sum(
@@ -1338,7 +1338,7 @@ class FreqtradeBot(LoggingMixin):
                     self.send_dp_message(msg)
 
                     logger.warning(msg)
-                # Check if we can sell our current pair
+                # Check if we can exit our current pair
                 if not trade.has_open_orders and trade.is_open and self.handle_trade(trade):
                     trades_closed += 1
 

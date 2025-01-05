@@ -53,14 +53,28 @@ class Binance(Exchange):
             PriceType.MARK: "MARK_PRICE",
         },
         "ws_enabled": False,
+        "proxy_coin_mapping": {
+            "BNFCR": "USDC",
+            "BFUSD": "USDT",
+        },
     }
 
     _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [
         # TradingMode.SPOT always supported and not required in this list
         # (TradingMode.MARGIN, MarginMode.CROSS),
-        # (TradingMode.FUTURES, MarginMode.CROSS),
-        (TradingMode.FUTURES, MarginMode.ISOLATED)
+        (TradingMode.FUTURES, MarginMode.CROSS),
+        (TradingMode.FUTURES, MarginMode.ISOLATED),
     ]
+
+    def get_proxy_coin(self) -> str:
+        """
+        Get the proxy coin for the given coin
+        Falls back to the stake currency if no proxy coin is found
+        :return: Proxy coin or stake currency
+        """
+        if self.margin_mode == MarginMode.CROSS:
+            return self._config.get("proxy_coin", self._config["stake_currency"])
+        return self._config["stake_currency"]
 
     def get_tickers(
         self,

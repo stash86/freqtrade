@@ -19,6 +19,15 @@ from freqtrade.enums import SignalTagType, SignalType
 logger = logging.getLogger(__name__)
 
 
+def dump_json_to_file(file_obj: TextIO, data: Any) -> None:
+    """
+    Dump JSON data into a file object
+    :param file_obj: File object to write to
+    :param data: JSON Data to save
+    """
+    rapidjson.dump(data, file_obj, default=str, number_mode=rapidjson.NM_NATIVE)
+
+
 def file_dump_json(filename: Path, data: Any, is_zip: bool = False, log: bool = True) -> None:
     """
     Dump JSON data into a file
@@ -35,30 +44,14 @@ def file_dump_json(filename: Path, data: Any, is_zip: bool = False, log: bool = 
             logger.info(f'dumping json to "{filename}"')
 
         with gzip.open(filename, "wt", encoding="utf-8") as fpz:
-            rapidjson.dump(data, fpz, default=str, number_mode=rapidjson.NM_NATIVE)
+            dump_json_to_file(fpz, data)
     else:
         if log:
             logger.info(f'dumping json to "{filename}"')
         with filename.open("w") as fp:
-            rapidjson.dump(data, fp, default=str, number_mode=rapidjson.NM_NATIVE)
+            dump_json_to_file(fp, data)
 
     logger.debug(f'done json to "{filename}"')
-
-
-def file_dump_joblib(filename: Path, data: Any, log: bool = True) -> None:
-    """
-    Dump object data into a file
-    :param filename: file to create
-    :param data: Object data to save
-    :return:
-    """
-    import joblib
-
-    if log:
-        logger.info(f'dumping joblib to "{filename}"')
-    with filename.open("wb") as fp:
-        joblib.dump(data, fp)
-    logger.debug(f'done joblib dump to "{filename}"')
 
 
 def json_load(datafile: TextIO) -> Any:

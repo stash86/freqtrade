@@ -7,7 +7,7 @@ from abc import abstractmethod
 from collections.abc import Generator, Sequence
 from datetime import date, datetime, timedelta, timezone
 from math import isnan
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import psutil
 from dateutil.relativedelta import relativedelta
@@ -46,7 +46,14 @@ from freqtrade.persistence.models import PairLock
 from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
 from freqtrade.rpc.fiat_convert import CryptoToFiatConverter
 from freqtrade.rpc.rpc_types import RPCSendMsg
-from freqtrade.util import decimals_per_coin, dt_now, dt_ts_def, format_date, shorten_date
+from freqtrade.util import (
+    decimals_per_coin,
+    dt_from_ts,
+    dt_now,
+    dt_ts_def,
+    format_date,
+    shorten_date,
+)
 from freqtrade.util.datetime_helpers import dt_humanize_delta
 from freqtrade.wallets import PositionWallet, Wallet
 
@@ -105,6 +112,10 @@ class RPC:
 
     # Bind _fiat_converter if needed
     _fiat_converter: CryptoToFiatConverter | None = None
+    if TYPE_CHECKING:
+        from freqtrade.freqtradebot import FreqtradeBot
+
+        _freqtrade: FreqtradeBot
 
     def __init__(self, freqtrade) -> None:
         """
@@ -208,7 +219,7 @@ class RPC:
                 # calculate profit and send message to user
                 if trade.is_open:
                     try:
-                        current_rate = self._freqtrade.exchange.get_rate(
+                        current_rate: float = self._freqtrade.exchange.get_rate(
                             trade.pair, side="exit", is_short=trade.is_short, refresh=False
                         )
                     except (ExchangeError, PricingError):
@@ -226,7 +237,7 @@ class RPC:
 
                 else:
                     # Closed trade ...
-                    current_rate = trade.close_rate
+                    current_rate = trade.close_rate or 0.0
                     current_profit = trade.close_profit or 0.0
                     current_profit_abs = trade.close_profit_abs or 0.0
 
@@ -275,6 +286,7 @@ class RPC:
                         stoploss_entry_dist=stoploss_entry_dist,
                         stoploss_entry_dist_ratio=round(stoploss_entry_dist_ratio, 8),
                         open_orders=oo_details,
+                        nr_of_successful_entries=trade.nr_of_successful_entries,
                     )
                 )
                 cfg = self._config
@@ -285,85 +297,85 @@ class RPC:
 
     def _rpc_status_table(
         self, stake_currency: str, fiat_display_currency: str
-    ) -> tuple[list, list, float]:
-        trades: list[Trade] = Trade.get_open_trades()
+    ) -> tuple[list, list, float, float]:
+        """
+        :return: list of trades, list of columns, sum of fiat profit
+        """
         nonspot = self._config.get("trading_mode", TradingMode.SPOT) != TradingMode.SPOT
-        if not trades:
+        if not Trade.get_open_trades():
             raise RPCException("no active trade")
-        else:
-            trades_list = []
-            fiat_profit_sum = nan
-            for trade in trades:
-                # calculate profit and send message to user
-                try:
-                    current_rate = self._freqtrade.exchange.get_rate(
-                        trade.pair, side="exit", is_short=trade.is_short, refresh=False
-                    )
-                except (PricingError, ExchangeError):
-                    current_rate = nan
-                    trade_profit = nan
-                    profit_str = f"{nan:.2%}"
-                else:
-                    if trade.nr_of_successful_entries > 0:
-                        profit = trade.calculate_profit(current_rate)
-                        trade_profit = profit.profit_abs
-                        profit_str = f"{profit.profit_ratio:.2%}"
-                    else:
-                        trade_profit = 0.0
-                        profit_str = f"{0.0:.2f}"
-                leverage = f"{trade.leverage:.3g}"
-                direction_str = (
-                    (f"S {leverage}x" if trade.is_short else f"L {leverage}x") if nonspot else ""
+
+        trades_list = []
+        fiat_profit_sum = nan
+        fiat_total_profit_sum = nan
+        for trade in self._rpc_trade_status():
+            # Format profit as a string with the right sign
+            profit = f"{trade['profit_ratio']:.2%}"
+            fiat_profit = trade.get("profit_fiat", None)
+            if fiat_profit is None or isnan(fiat_profit):
+                fiat_profit = trade.get("profit_abs", 0.0)
+            if not isnan(fiat_profit):
+                profit += f" ({fiat_profit:.2f})"
+                fiat_profit_sum = (
+                    fiat_profit if isnan(fiat_profit_sum) else fiat_profit_sum + fiat_profit
                 )
-                if self._fiat_converter:
-                    fiat_profit = self._fiat_converter.convert_amount(
-                        trade_profit, stake_currency, fiat_display_currency
-                    )
-                    if not isnan(fiat_profit):
-                        profit_str += f" ({fiat_profit:.2f})"
-                        fiat_profit_sum = (
-                            fiat_profit if isnan(fiat_profit_sum) else fiat_profit_sum + fiat_profit
-                        )
-                else:
-                    profit_str += f" ({trade_profit:.2f})"
-                    fiat_profit_sum = (
-                        trade_profit if isnan(fiat_profit_sum) else fiat_profit_sum + trade_profit
-                    )
+            total_profit = trade.get("total_profit_fiat", None)
+            if total_profit is None or isnan(total_profit):
+                total_profit = trade.get("total_profit_abs", 0.0)
+            if not isnan(total_profit):
+                fiat_total_profit_sum = (
+                    total_profit
+                    if isnan(fiat_total_profit_sum)
+                    else fiat_total_profit_sum + total_profit
+                )
 
-                active_attempt_side_symbols = [
-                    "*" if (oo and oo.ft_order_side == trade.entry_side) else "**"
-                    for oo in trade.open_orders
-                ]
+            # Format the active order side symbols
+            active_order_side = ""
+            orders = trade.get("orders", [])
+            if orders:
+                active_order_side = ".".join(
+                    "*" if (o.get("is_open") and o.get("ft_is_entry")) else "**"
+                    for o in orders
+                    if o.get("is_open")
+                )
 
-                # example: '*.**.**' trying to enter, exit and exit with 3 different orders
-                active_attempt_side_symbols_str = ".".join(active_attempt_side_symbols)
+            # Direction string for non-spot
+            direction_str = ""
+            if nonspot:
+                leverage = trade.get("leverage", 1.0)
+                direction_str = f"{'S' if trade.get('is_short') else 'L'} {leverage:.3g}x"
 
-                detail_trade = [
-                    f"{trade.id} {direction_str}",
-                    trade.pair + active_attempt_side_symbols_str,
-                    shorten_date(dt_humanize_delta(trade.open_date_utc)),
-                    f"{trade.min_profit:.2%}",
-                    f"{trade.max_profit:.2%}",
-                    profit_str,
-                ]
+            detail_trade = [
+                f"{trade.id} {direction_str}",
+                f"{trade['pair']}{active_order_side}",
+                shorten_date(dt_humanize_delta(dt_from_ts(trade["open_timestamp"]))),
+                f"{trade.min_profit:.2%}",
+                f"{trade.max_profit:.2%}",
+                profit,
+            ]
 
-                if self._config.get("position_adjustment_enable", False):
-                    max_entry_str = ""
-                    if self._config.get("max_entry_position_adjustment", -1) > 0:
-                        max_entry_str = f"/{self._config['max_entry_position_adjustment'] + 1}"
-                    filled_entries = trade.nr_of_successful_entries
-                    detail_trade.append(f"{filled_entries}{max_entry_str}")
-                trades_list.append(detail_trade)
-            profitcol = "Profit"
-            if self._fiat_converter:
-                profitcol += " (" + fiat_display_currency + ")"
-            else:
-                profitcol += " (" + stake_currency + ")"
-
-            columns = ["ID L/S" if nonspot else "ID", "Pair", "Since", "Min %", "Max %", profitcol]
+            # Add number of entries if position adjustment is enabled
             if self._config.get("position_adjustment_enable", False):
-                columns.append("# Entries")
-            return trades_list, columns, fiat_profit_sum
+                max_entry_str = ""
+                if self._config.get("max_entry_position_adjustment", -1) > 0:
+                    max_entry_str = f"/{self._config['max_entry_position_adjustment'] + 1}"
+                filled_entries = trade.get("nr_of_successful_entries", 0)
+                detail_trade.append(f"{filled_entries}{max_entry_str}")
+            trades_list.append(detail_trade)
+
+        columns = [
+            "ID L/S" if nonspot else "ID",
+            "Pair",
+            "Since",
+            "Min %",
+            "Max %",
+            f"Profit ({fiat_display_currency if self._fiat_converter else stake_currency})",
+        ]
+
+        if self._config.get("position_adjustment_enable", False):
+            columns.append("# Entries")
+
+        return trades_list, columns, fiat_profit_sum, fiat_total_profit_sum
 
     def _rpc_timeunit_profit(
         self,
@@ -588,8 +600,8 @@ class RPC:
         # Doing the sum is not right - overall profit needs to be based on initial capital
         profit_all_ratio_sum = sum(profit_all_ratio) if profit_all_ratio else 0.0
         starting_balance = self._freqtrade.wallets.get_starting_balance()
-        profit_closed_ratio_fromstart = 0
-        profit_all_ratio_fromstart = 0
+        profit_closed_ratio_fromstart = 0.0
+        profit_all_ratio_fromstart = 0.0
         if starting_balance:
             profit_closed_ratio_fromstart = profit_closed_coin_sum / starting_balance
             profit_all_ratio_fromstart = profit_all_coin_sum / starting_balance
@@ -697,9 +709,10 @@ class RPC:
     ) -> tuple[float, float]:
         est_stake = 0.0
         est_bot_stake = 0.0
-        if coin == stake_currency:
+        is_futures = self._config.get("trading_mode", TradingMode.SPOT) == TradingMode.FUTURES
+        if coin == self._freqtrade.exchange.get_proxy_coin():
             est_stake = balance.total
-            if self._config.get("trading_mode", TradingMode.SPOT) != TradingMode.SPOT:
+            if is_futures:
                 # in Futures, "total" includes the locked stake, and therefore all positions
                 est_stake = balance.free
             est_bot_stake = amount
@@ -709,7 +722,7 @@ class RPC:
                     coin, stake_currency
                 )
                 if rate:
-                    est_stake = rate * balance.total
+                    est_stake = rate * (balance.free if is_futures else balance.total)
                     est_bot_stake = rate * amount
 
                 return est_stake, est_bot_stake
@@ -741,10 +754,15 @@ class RPC:
             if not balance.total and not balance.free:
                 continue
 
-            trade = open_assets.get(coin, None)
-            is_bot_managed = coin == stake_currency or trade is not None
+            trade = (
+                open_assets.get(coin, None)
+                if self._freqtrade.trading_mode != TradingMode.FUTURES
+                else None
+            )
+            is_stake_currency = coin == self._freqtrade.exchange.get_proxy_coin()
+            is_bot_managed = is_stake_currency or trade is not None
             trade_amount = trade.amount if trade else 0
-            if coin == stake_currency:
+            if is_stake_currency:
                 trade_amount = self._freqtrade.wallets.get_available_stake_amount()
 
             try:
@@ -909,10 +927,10 @@ class RPC:
             if amount and amount < trade.amount:
                 # Partial exit ...
                 min_exit_stake = self._freqtrade.exchange.get_min_pair_stake_amount(
-                    trade.pair, current_rate, trade.stop_loss_pct
+                    trade.pair, current_rate, trade.stop_loss_pct or 0.0
                 )
                 remaining = (trade.amount - amount) * current_rate
-                if remaining < min_exit_stake:
+                if min_exit_stake and remaining < min_exit_stake:
                     raise RPCException(f"Remaining amount of {remaining} would be too small.")
                 sub_amount = amount
 
@@ -1252,7 +1270,7 @@ class RPC:
             for pair in add:
                 if pair not in self._freqtrade.pairlists.blacklist:
                     try:
-                        expand_pairlist([pair], self._freqtrade.exchange.get_markets().keys())
+                        expand_pairlist([pair], list(self._freqtrade.exchange.get_markets().keys()))
                         self._freqtrade.pairlists.blacklist.append(pair)
 
                     except ValueError:

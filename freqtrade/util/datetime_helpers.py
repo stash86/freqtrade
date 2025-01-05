@@ -107,3 +107,12 @@ def format_ms_time(date: int | float) -> str:
     : epoch-string in ms
     """
     return dt_from_ts(date).strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def format_ms_time_det(date: int | float) -> str:
+    """
+    convert MS date to readable format - detailed.
+    : epoch-string in ms
+    """
+    # return dt_from_ts(date).isoformat(timespec="milliseconds")
+    return dt_from_ts(date).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]

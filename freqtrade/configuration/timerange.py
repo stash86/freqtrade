@@ -10,6 +10,7 @@ from typing_extensions import Self
 
 from freqtrade.constants import DATETIME_PRINT_FORMAT
 from freqtrade.exceptions import ConfigurationError
+from freqtrade.util import dt_from_ts
 
 
 logger = logging.getLogger(__name__)
@@ -37,13 +38,13 @@ class TimeRange:
     @property
     def startdt(self) -> datetime | None:
         if self.startts:
-            return datetime.fromtimestamp(self.startts, tz=timezone.utc)
+            return dt_from_ts(self.startts)
         return None
 
     @property
     def stopdt(self) -> datetime | None:
         if self.stopts:
-            return datetime.fromtimestamp(self.stopts, tz=timezone.utc)
+            return dt_from_ts(self.stopts)
         return None
 
     @property

@@ -215,7 +215,7 @@ class Order(ModelBase):
         self.stop_price = safe_value_fallback(order, "stopPrice", default_value=self.stop_price)
         order_date = safe_value_fallback(order, "timestamp")
         if order_date:
-            self.order_date = datetime.fromtimestamp(order_date / 1000, tz=timezone.utc)
+            self.order_date = dt_from_ts(order_date)
         elif not self.order_date:
             self.order_date = dt_now()
 
@@ -779,7 +779,9 @@ class LocalTrade:
         """
         if liquidation_price is None:
             return
-        self.liquidation_price = liquidation_price
+        self.liquidation_price = price_to_precision(
+            liquidation_price, self.price_precision, self.precision_mode_price
+        )
 
     def set_funding_fees(self, funding_fee: float) -> None:
         """
@@ -1258,7 +1260,11 @@ class LocalTrade:
         if current_amount_tr > 0.0:
             # Trade is still open
             # Leverage not updated, as we don't allow changing leverage through DCA at the moment.
-            self.open_rate = float(current_stake / current_amount)
+            self.open_rate = price_to_precision(
+                float(current_stake / current_amount),
+                self.price_precision,
+                self.precision_mode_price,
+            )
             self.amount = current_amount_tr
             self.stake_amount = float(current_stake) / (self.leverage or 1.0)
             self.fee_open_cost = self.fee_open * float(self.max_stake_amount)

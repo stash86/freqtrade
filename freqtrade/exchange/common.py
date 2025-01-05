@@ -47,6 +47,7 @@ MAP_EXCHANGE_CHILDCLASS = {
     "binanceje": "binance",
     "binanceusdm": "binance",
     "okex": "okx",
+    "myokx": "okx",
     "gateio": "gate",
     "huboi": "htx",
 }
