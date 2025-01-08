@@ -136,22 +136,6 @@ function install_talib() {
     cd ..
 }
 
-function install_mac_newer_python_dependencies() {
-
-    if [ ! $(brew --prefix --installed hdf5 2>/dev/null) ]
-    then
-        echo_block "Installing hdf5"
-        brew install hdf5
-    fi
-    export HDF5_DIR=$(brew --prefix)
-
-    if [ ! $(brew --prefix --installed c-blosc 2>/dev/null) ]
-    then
-        echo_block "Installing c-blosc"
-        brew install c-blosc
-    fi
-    export CBLOSC_DIR=$(brew --prefix)
-}
 
 # Install bot MacOS
 function install_macos() {
@@ -165,10 +149,6 @@ function install_macos() {
 
     #Gets number after decimal in python version
     version=$(egrep -o 3.\[0-9\]+ <<< $PYTHON | sed 's/3.//g')
-
-    if [[ $version -ge 10 ]]; then               #Checks if python version >= 3.10
-        install_mac_newer_python_dependencies
-    fi
 }
 
 # Install bot Debian_ubuntu

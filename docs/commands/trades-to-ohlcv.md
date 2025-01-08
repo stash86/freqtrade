@@ -1,0 +1,48 @@
+```
+usage: freqtrade trades-to-ohlcv [-h] [-v] [--no-color] [--logfile FILE] [-V]
+                                 [-c PATH] [-d PATH] [--userdir PATH]
+                                 [-p PAIRS [PAIRS ...]]
+                                 [-t TIMEFRAMES [TIMEFRAMES ...]]
+                                 [--exchange EXCHANGE]
+                                 [--data-format-ohlcv {json,jsongz,feather,parquet}]
+                                 [--data-format-trades {json,jsongz,feather,parquet}]
+                                 [--trading-mode {spot,margin,futures}]
+
+options:
+  -h, --help            show this help message and exit
+  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
+                        Limit command to these pairs. Pairs are space-
+                        separated.
+  -t TIMEFRAMES [TIMEFRAMES ...], --timeframes TIMEFRAMES [TIMEFRAMES ...]
+                        Specify which tickers to download. Space-separated
+                        list. Default: `1m 5m`.
+  --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
+  --data-format-ohlcv {json,jsongz,feather,parquet}
+                        Storage format for downloaded candle (OHLCV) data.
+                        (default: `feather`).
+  --data-format-trades {json,jsongz,feather,parquet}
+                        Storage format for downloaded trades data. (default:
+                        `feather`).
+  --trading-mode {spot,margin,futures}, --tradingmode {spot,margin,futures}
+                        Select Trading mode
+
+Common arguments:
+  -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
+  --no-color            Disable colorization of hyperopt results. May be
+                        useful if you are redirecting output to a file.
+  --logfile FILE, --log-file FILE
+                        Log to the file specified. Special values are:
+                        'syslog', 'journald'. See the documentation for more
+                        details.
+  -V, --version         show program's version number and exit
+  -c PATH, --config PATH
+                        Specify configuration file (default:
+                        `userdir/config.json` or `config.json` whichever
+                        exists). Multiple --config options may be used. Can be
+                        set to `-` to read config from stdin.
+  -d PATH, --datadir PATH, --data-dir PATH
+                        Path to directory with historical backtesting data.
+  --userdir PATH, --user-data-dir PATH
+                        Path to userdata directory.
+
+```

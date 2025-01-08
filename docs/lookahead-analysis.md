@@ -29,39 +29,7 @@ Those are set to avoid users accidentally generating false positives.
 
 ## Lookahead-analysis command reference
 
-```
-usage: freqtrade lookahead-analysis [-h] [-v] [--logfile FILE] [-V] [-c PATH]
-                                    [-d PATH] [--userdir PATH] [-s NAME]
-                                    [--strategy-path PATH]
-                                    [--recursive-strategy-search]
-                                    [--freqaimodel NAME]
-                                    [--freqaimodel-path PATH] [-i TIMEFRAME]
-                                    [--timerange TIMERANGE]
-                                    [--data-format-ohlcv {json,jsongz,hdf5,feather,parquet}]
-                                    [--max-open-trades INT]
-                                    [--stake-amount STAKE_AMOUNT]
-                                    [--fee FLOAT] [-p PAIRS [PAIRS ...]]
-                                    [--dry-run-wallet DRY_RUN_WALLET]
-                                    [--timeframe-detail TIMEFRAME_DETAIL]
-                                    [--strategy-list STRATEGY_LIST [STRATEGY_LIST ...]]
-                                    [--export {none,trades,signals}]
-                                    [--export-filename PATH]
-                                    [--breakdown {day,week,month} [{day,week,month} ...]]
-                                    [--cache {none,day,week,month}]
-                                    [--freqai-backtest-live-models]
-                                    [--minimum-trade-amount INT]
-                                    [--targeted-trade-amount INT]
-                                    [--lookahead-analysis-exportfilename LOOKAHEAD_ANALYSIS_EXPORTFILENAME]
-
-options:
-  --minimum-trade-amount INT
-                        Minimum trade amount for lookahead-analysis
-  --targeted-trade-amount INT
-                        Targeted trade amount for lookahead analysis
-  --lookahead-analysis-exportfilename LOOKAHEAD_ANALYSIS_EXPORTFILENAME
-                        Use this csv-filename to store lookahead-analysis-
-                        results
-```
+--8<-- "commands/lookahead-analysis.md"
 
 !!! Note ""
     The above Output was reduced to options `lookahead-analysis` adds on top of regular backtesting commands.

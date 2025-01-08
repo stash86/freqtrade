@@ -98,10 +98,6 @@ freqai_rl = [
   "sb3-contrib",
   "tqdm",
 ]
-hdf5 = [
-  "tables",
-  "blosc",
-]
 develop = [
   "coveralls",
   "isort",
@@ -129,7 +125,7 @@ jupyter = [
   "nbconvert",
 ]
 all = [
-  "freqtrade[plot,hyperopt,freqai,freqai_rl,hdf5,jupyter]",
+  "freqtrade[plot,hyperopt,freqai,freqai_rl,jupyter]",
 ]
 dev = [
   "freqtrade[all,develop]",

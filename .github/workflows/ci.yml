@@ -91,6 +91,11 @@ jobs:
       run: |
         python build_helpers/extract_config_json_schema.py
 
+    - name: Run command docs partials extract
+      # This should be kept before the repository check to ensure that the docs are up-to-date
+      run: |
+        python build_helpers/create_command_partials.py
+
     - name: Check for repository changes
       run: |
         if [ -n "$(git status --porcelain)" ]; then

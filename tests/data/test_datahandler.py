@@ -12,7 +12,6 @@ from pandas.testing import assert_frame_equal
 from freqtrade.configuration import TimeRange
 from freqtrade.constants import AVAILABLE_DATAHANDLERS
 from freqtrade.data.history.datahandlers.featherdatahandler import FeatherDataHandler
-from freqtrade.data.history.datahandlers.hdf5datahandler import HDF5DataHandler
 from freqtrade.data.history.datahandlers.idatahandler import (
     IDataHandler,
     get_datahandler,
@@ -21,6 +20,7 @@ from freqtrade.data.history.datahandlers.idatahandler import (
 from freqtrade.data.history.datahandlers.jsondatahandler import JsonDataHandler, JsonGzDataHandler
 from freqtrade.data.history.datahandlers.parquetdatahandler import ParquetDataHandler
 from freqtrade.enums import CandleType, TradingMode
+from freqtrade.exceptions import OperationalException
 from tests.conftest import log_has, log_has_re
 
 
@@ -45,17 +45,11 @@ def test_datahandler_ohlcv_get_pairs(testdatadir):
     pairs = JsonGzDataHandler.ohlcv_get_pairs(testdatadir, "8m", candle_type=CandleType.SPOT)
     assert set(pairs) == {"UNITTEST/BTC"}
 
-    pairs = HDF5DataHandler.ohlcv_get_pairs(testdatadir, "5m", candle_type=CandleType.SPOT)
-    assert set(pairs) == {"UNITTEST/BTC"}
-
     pairs = FeatherDataHandler.ohlcv_get_pairs(testdatadir, "1h", candle_type=CandleType.MARK)
     assert set(pairs) == {"UNITTEST/USDT:USDT", "XRP/USDT:USDT"}
 
     pairs = JsonGzDataHandler.ohlcv_get_pairs(testdatadir, "1h", candle_type=CandleType.FUTURES)
     assert set(pairs) == {"XRP/USDT:USDT"}
-
-    pairs = HDF5DataHandler.ohlcv_get_pairs(testdatadir, "1h", candle_type=CandleType.MARK)
-    assert set(pairs) == {"UNITTEST/USDT:USDT"}
 
 
 @pytest.mark.parametrize(
@@ -134,8 +128,6 @@ def test_datahandler_ohlcv_get_available_data(testdatadir):
 
     paircombs = JsonGzDataHandler.ohlcv_get_available_data(testdatadir, TradingMode.SPOT)
     assert set(paircombs) == {("UNITTEST/BTC", "8m", CandleType.SPOT)}
-    paircombs = HDF5DataHandler.ohlcv_get_available_data(testdatadir, TradingMode.SPOT)
-    assert set(paircombs) == {("UNITTEST/BTC", "5m", CandleType.SPOT)}
 
 
 def test_jsondatahandler_ohlcv_purge(mocker, testdatadir):
@@ -321,7 +313,6 @@ def test_datahandler_trades_append(datahandler, testdatadir):
     "datahandler,expected",
     [
         ("jsongz", {"XRP/ETH", "XRP/OLD"}),
-        ("hdf5", {"XRP/ETH"}),
         ("feather", {"XRP/ETH"}),
         ("parquet", {"XRP/ETH"}),
     ],
@@ -332,37 +323,11 @@ def test_datahandler_trades_get_pairs(testdatadir, datahandler, expected):
     assert set(pairs) == expected
 
 
-def test_hdf5datahandler_trades_load(testdatadir):
-    dh = get_datahandler(testdatadir, "hdf5")
-    trades = dh.trades_load("XRP/ETH", TradingMode.SPOT)
-    assert isinstance(trades, DataFrame)
-
-    trades1 = dh.trades_load("UNITTEST/NONEXIST", TradingMode.SPOT)
-    assert isinstance(trades1, DataFrame)
-    assert trades1.empty
-    # data goes from 2019-10-11 - 2019-10-13
-    timerange = TimeRange.parse_timerange("20191011-20191012")
-
-    trades2 = dh._trades_load("XRP/ETH", TradingMode.SPOT, timerange)
-    assert len(trades) > len(trades2)
-    # Check that ID is None (If it's nan, it's wrong)
-    assert trades2.iloc[0]["type"] is None
-
-    # unfiltered load has trades before starttime
-
-    assert len(trades.loc[trades["timestamp"] < timerange.startts * 1000]) >= 0
-    # filtered list does not have trades before starttime
-    assert len(trades2.loc[trades2["timestamp"] < timerange.startts * 1000]) == 0
-    # unfiltered load has trades after endtime
-    assert len(trades.loc[trades["timestamp"] > timerange.stopts * 1000]) >= 0
-    # filtered list does not have trades after endtime
-    assert len(trades2.loc[trades2["timestamp"] > timerange.stopts * 1000]) == 0
-    # assert len([t for t in trades2 if t[0] > timerange.stopts * 1000]) == 0
-
-
-def test_hdf5datahandler_deprecated(testdatadir, caplog):
-    get_datahandler(testdatadir, "hdf5")
-    log_has_re(r"DEPRECATED: The hdf5 dataformat is deprecated.*", caplog)
+def test_hdf5datahandler_deprecated(testdatadir):
+    with pytest.raises(
+        OperationalException, match=r"DEPRECATED: The hdf5 dataformat is deprecated and has.*"
+    ):
+        get_datahandler(testdatadir, "hdf5")
 
 
 @pytest.mark.parametrize(
@@ -374,52 +339,7 @@ def test_hdf5datahandler_deprecated(testdatadir, caplog):
         ("UNITTEST/USDT:USDT", "1h", "mark", "-mark", "2021-11-16", "2021-11-18"),
     ],
 )
-def test_hdf5datahandler_ohlcv_load_and_resave(
-    testdatadir, tmp_path, pair, timeframe, candle_type, candle_append, startdt, enddt
-):
-    tmpdir2 = tmp_path
-    if candle_type not in ("", "spot"):
-        tmpdir2 = tmp_path / "futures"
-        tmpdir2.mkdir()
-    dh = get_datahandler(testdatadir, "hdf5")
-    ohlcv = dh._ohlcv_load(pair, timeframe, None, candle_type=candle_type)
-    assert isinstance(ohlcv, DataFrame)
-    assert len(ohlcv) > 0
-
-    file = tmpdir2 / f"UNITTEST_NEW-{timeframe}{candle_append}.h5"
-    assert not file.is_file()
-
-    dh1 = get_datahandler(tmp_path, "hdf5")
-    dh1.ohlcv_store("UNITTEST/NEW", timeframe, ohlcv, candle_type=candle_type)
-    assert file.is_file()
-
-    assert not ohlcv[ohlcv["date"] < startdt].empty
-
-    timerange = TimeRange.parse_timerange(f"{startdt.replace('-', '')}-{enddt.replace('-', '')}")
-
-    # Call private function to ensure timerange is filtered in hdf5
-    ohlcv = dh._ohlcv_load(pair, timeframe, timerange, candle_type=candle_type)
-    ohlcv1 = dh1._ohlcv_load("UNITTEST/NEW", timeframe, timerange, candle_type=candle_type)
-    assert len(ohlcv) == len(ohlcv1)
-    assert ohlcv.equals(ohlcv1)
-    assert ohlcv[ohlcv["date"] < startdt].empty
-    assert ohlcv[ohlcv["date"] > enddt].empty
-
-    # Try loading inexisting file
-    ohlcv = dh.ohlcv_load("UNITTEST/NONEXIST", timeframe, candle_type=candle_type)
-    assert ohlcv.empty
-
-
-@pytest.mark.parametrize(
-    "pair,timeframe,candle_type,candle_append,startdt,enddt",
-    [
-        # Data goes from 2018-01-10 - 2018-01-30
-        ("UNITTEST/BTC", "5m", "spot", "", "2018-01-15", "2018-01-19"),
-        # Mark data goes from to 2021-11-15 2021-11-19
-        ("UNITTEST/USDT:USDT", "1h", "mark", "-mark", "2021-11-16", "2021-11-18"),
-    ],
-)
-@pytest.mark.parametrize("datahandler", ["hdf5", "feather", "parquet"])
+@pytest.mark.parametrize("datahandler", ["feather", "parquet"])
 def test_generic_datahandler_ohlcv_load_and_resave(
     datahandler,
     mocker,
@@ -458,14 +378,7 @@ def test_generic_datahandler_ohlcv_load_and_resave(
     timerange = TimeRange.parse_timerange(f"{startdt.replace('-', '')}-{enddt.replace('-', '')}")
 
     ohlcv = dhbase.ohlcv_load(pair, timeframe, timerange=timerange, candle_type=candle_type)
-    if datahandler == "hdf5":
-        ohlcv1 = dh1._ohlcv_load("UNITTEST/NEW", timeframe, timerange, candle_type=candle_type)
-        if candle_type == "mark":
-            ohlcv1["volume"] = 0.0
-    else:
-        ohlcv1 = dh1.ohlcv_load(
-            "UNITTEST/NEW", timeframe, timerange=timerange, candle_type=candle_type
-        )
+    ohlcv1 = dh1.ohlcv_load("UNITTEST/NEW", timeframe, timerange=timerange, candle_type=candle_type)
 
     assert len(ohlcv) == len(ohlcv1)
     assert ohlcv.equals(ohlcv1)
@@ -485,30 +398,12 @@ def test_generic_datahandler_ohlcv_load_and_resave(
         "freqtrade.data.history.datahandlers.parquetdatahandler.read_parquet",
         side_effect=Exception("Test"),
     )
-    mocker.patch(
-        "freqtrade.data.history.datahandlers.hdf5datahandler.pd.read_hdf",
-        side_effect=Exception("Test"),
-    )
     ohlcv_e = dh1.ohlcv_load("UNITTEST/NEW", timeframe, candle_type=candle_type)
     assert ohlcv_e.empty
     assert log_has_re("Error loading data from", caplog)
 
 
-def test_hdf5datahandler_ohlcv_purge(mocker, testdatadir):
-    mocker.patch.object(Path, "exists", MagicMock(return_value=False))
-    unlinkmock = mocker.patch.object(Path, "unlink", MagicMock())
-    dh = get_datahandler(testdatadir, "hdf5")
-    assert not dh.ohlcv_purge("UNITTEST/NONEXIST", "5m", "")
-    assert not dh.ohlcv_purge("UNITTEST/NONEXIST", "5m", candle_type="mark")
-    assert unlinkmock.call_count == 0
-
-    mocker.patch.object(Path, "exists", MagicMock(return_value=True))
-    assert dh.ohlcv_purge("UNITTEST/NONEXIST", "5m", "")
-    assert dh.ohlcv_purge("UNITTEST/NONEXIST", "5m", candle_type="mark")
-    assert unlinkmock.call_count == 2
-
-
-@pytest.mark.parametrize("datahandler", ["jsongz", "hdf5", "feather", "parquet"])
+@pytest.mark.parametrize("datahandler", ["jsongz", "feather", "parquet"])
 def test_datahandler_trades_load(testdatadir, datahandler):
     dh = get_datahandler(testdatadir, datahandler)
     trades = dh.trades_load("XRP/ETH", TradingMode.SPOT)
@@ -522,7 +417,7 @@ def test_datahandler_trades_load(testdatadir, datahandler):
     assert trades1.empty
 
 
-@pytest.mark.parametrize("datahandler", ["jsongz", "hdf5", "feather", "parquet"])
+@pytest.mark.parametrize("datahandler", ["jsongz", "feather", "parquet"])
 def test_datahandler_trades_store(testdatadir, tmp_path, datahandler):
     dh = get_datahandler(testdatadir, datahandler)
     trades = dh.trades_load("XRP/ETH", TradingMode.SPOT)
@@ -538,7 +433,7 @@ def test_datahandler_trades_store(testdatadir, tmp_path, datahandler):
     assert len(trades_new) == len(trades)
 
 
-@pytest.mark.parametrize("datahandler", ["jsongz", "hdf5", "feather", "parquet"])
+@pytest.mark.parametrize("datahandler", ["jsongz", "feather", "parquet"])
 def test_datahandler_trades_purge(mocker, testdatadir, datahandler):
     mocker.patch.object(Path, "exists", MagicMock(return_value=False))
     unlinkmock = mocker.patch.object(Path, "unlink", MagicMock())
@@ -562,8 +457,6 @@ def test_datahandler_trades_get_available_data(testdatadir):
 
     paircombs = JsonGzDataHandler.trades_get_available_data(testdatadir, TradingMode.SPOT)
     assert set(paircombs) == {"XRP/ETH", "XRP/OLD"}
-    paircombs = HDF5DataHandler.trades_get_available_data(testdatadir, TradingMode.SPOT)
-    assert set(paircombs) == {"XRP/ETH"}
 
 
 def test_datahandler_trades_data_min_max(testdatadir):
@@ -594,10 +487,6 @@ def test_gethandlerclass():
     assert issubclass(cl, IDataHandler)
     assert issubclass(cl, JsonDataHandler)
 
-    cl = get_datahandlerclass("hdf5")
-    assert cl == HDF5DataHandler
-    assert issubclass(cl, IDataHandler)
-
     cl = get_datahandlerclass("feather")
     assert cl == FeatherDataHandler
     assert issubclass(cl, IDataHandler)
@@ -617,6 +506,3 @@ def test_get_datahandler(testdatadir):
     assert isinstance(dh, JsonGzDataHandler)
     dh1 = get_datahandler(testdatadir, "jsongz", dh)
     assert id(dh1) == id(dh)
-
-    dh = get_datahandler(testdatadir, "hdf5")
-    assert isinstance(dh, HDF5DataHandler)

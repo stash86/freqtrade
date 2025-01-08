@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -6,6 +5,7 @@ from freqtrade.constants import DEFAULT_TRADES_COLUMNS
 from freqtrade.data.converter import populate_dataframe_with_trades
 from freqtrade.data.converter.orderflow import (
     ORDERFLOW_ADDED_COLUMNS,
+    stacked_imbalance,
     timeframe_to_DateOffset,
     trades_to_volumeprofile_with_total_delta_bid_ask,
 )
@@ -185,24 +185,24 @@ def test_public_trades_mock_populate_dataframe_with_trades__check_orderflow(
     assert results["max_delta"] == 17.298
 
     # Assert that stacked imbalances are NaN (not applicable in this test)
-    assert np.isnan(results["stacked_imbalances_bid"])
-    assert np.isnan(results["stacked_imbalances_ask"])
+    assert results["stacked_imbalances_bid"] == []
+    assert results["stacked_imbalances_ask"] == []
 
     # Repeat assertions for the third from last row
     results = df.iloc[-2]
     assert pytest.approx(results["delta"]) == -20.862
     assert pytest.approx(results["min_delta"]) == -54.559999
     assert 82.842 == results["max_delta"]
-    assert 234.99 == results["stacked_imbalances_bid"]
-    assert 234.96 == results["stacked_imbalances_ask"]
+    assert results["stacked_imbalances_bid"] == [234.97]
+    assert results["stacked_imbalances_ask"] == [234.94]
 
     # Repeat assertions for the last row
     results = df.iloc[-1]
     assert pytest.approx(results["delta"]) == -49.302
     assert results["min_delta"] == -70.222
     assert pytest.approx(results["max_delta"]) == 11.213
-    assert np.isnan(results["stacked_imbalances_bid"])
-    assert np.isnan(results["stacked_imbalances_ask"])
+    assert results["stacked_imbalances_bid"] == []
+    assert results["stacked_imbalances_ask"] == []
 
 
 def test_public_trades_trades_mock_populate_dataframe_with_trades__check_trades(
@@ -358,7 +358,8 @@ def test_public_trades_binned_big_sample_list(public_trades_list):
     assert 197.512 == df["bid_amount"].iloc[0]  # total bid amount
     assert 88.98 == df["ask_amount"].iloc[0]  # total ask amount
     assert 26 == df["ask"].iloc[0]  # ask price
-    assert -108.532 == pytest.approx(df["delta"].iloc[0])  # delta (bid amount - ask amount)
+    # delta (bid amount - ask amount)
+    assert -108.532 == pytest.approx(df["delta"].iloc[0])
 
     assert 3 == df["bid"].iloc[-1]  # bid price
     assert 50.659 == df["bid_amount"].iloc[-1]  # total bid amount
@@ -565,6 +566,40 @@ def test_analyze_with_orderflow(
 
     lastval_of2 = df2.at[len(df2) - 1, "orderflow"]
     assert isinstance(lastval_of2, dict)
+
+
+def test_stacked_imbalances_multiple_prices():
+    """Test that stacked imbalances correctly returns multiple price levels when present"""
+    # Test with empty result
+    df_no_stacks = pd.DataFrame(
+        {
+            "bid_imbalance": [False, False, True, False],
+            "ask_imbalance": [False, True, False, False],
+        },
+        index=[234.95, 234.96, 234.97, 234.98],
+    )
+    no_stacks = stacked_imbalance(df_no_stacks, "bid", stacked_imbalance_range=2)
+    assert no_stacks == []
+
+    # Create a sample DataFrame with known imbalances
+    df = pd.DataFrame(
+        {
+            "bid_imbalance": [True, True, True, False, False, True, True, False, True],
+            "ask_imbalance": [False, False, True, True, True, False, False, True, True],
+        },
+        index=[234.95, 234.96, 234.97, 234.98, 234.99, 235.00, 235.01, 235.02, 235.03],
+    )
+    # Test bid imbalances (should return prices in ascending order)
+    bid_prices = stacked_imbalance(df, "bid", stacked_imbalance_range=2)
+    assert bid_prices == [234.95, 234.96, 235.00]
+
+    # Test ask imbalances (should return prices in descending order)
+    ask_prices = stacked_imbalance(df, "ask", stacked_imbalance_range=2)
+    assert ask_prices == [234.97, 234.98, 235.02]
+
+    # Test with higher stacked_imbalance_range
+    bid_prices_higher = stacked_imbalance(df, "bid", stacked_imbalance_range=3)
+    assert bid_prices_higher == [234.95]
 
 
 def test_timeframe_to_DateOffset():

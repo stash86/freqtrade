@@ -1055,7 +1055,6 @@
       "enum": [
         "json",
         "jsongz",
-        "hdf5",
         "feather",
         "parquet"
       ],
@@ -1067,7 +1066,6 @@
       "enum": [
         "json",
         "jsongz",
-        "hdf5",
         "feather",
         "parquet"
       ],

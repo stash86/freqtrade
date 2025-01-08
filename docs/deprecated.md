@@ -85,6 +85,6 @@ Setting protections from the configuration via `"protections": [],` has been rem
 
 ## hdf5 data storage
 
-Using hdf5 as data storage has been deprecated in 2024.12 and will be removed in 2025.1. We recommend switching to the feather data format.
+Using hdf5 as data storage has been deprecated in 2024.12 and was removed in 2025.1. We recommend switching to the feather data format.
 
-Please use the [`convert-data` subcommand](data-download.md#sub-command-convert-data) to convert your existing data to one of the supported formats.
+Please use the [`convert-data` subcommand](data-download.md#sub-command-convert-data) to convert your existing data to one of the supported formats before updating.

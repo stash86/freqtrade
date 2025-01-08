@@ -18,7 +18,7 @@ Features include:
 * **Extensibility** - The generalized and robust architecture allows for incorporating any [machine learning library/method](freqai-configuration.md#using-different-prediction-models) available in Python. Eight examples are currently available, including classifiers, regressors, and a convolutional neural network
 * **Smart outlier removal** - Remove outliers from training and prediction data sets using a variety of [outlier detection techniques](freqai-feature-engineering.md#outlier-detection)
 * **Crash resilience** - Store trained models to disk to make reloading from a crash fast and easy, and [purge obsolete files](freqai-running.md#purging-old-model-data) for sustained dry/live runs
-* **Automatic data normalization** - [Normalize the data](freqai-feature-engineering.md#feature-normalization) in a smart and statistically safe way
+* **Automatic data normalization** - [Normalize the data](freqai-feature-engineering.md#building-the-data-pipeline) in a smart and statistically safe way
 * **Automatic data download** - Compute timeranges for data downloads and update historic data (in live deployments)
 * **Cleaning of incoming data** - Handle NaNs safely before training and model inferencing
 * **Dimensionality reduction** - Reduce the size of the training data via [Principal Component Analysis](freqai-feature-engineering.md#data-dimensionality-reduction-with-principal-component-analysis)

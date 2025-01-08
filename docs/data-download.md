@@ -16,76 +16,7 @@ You can use a relative timerange (`--days 20`) or an absolute starting point (`-
 
 ### Usage
 
-```
-usage: freqtrade download-data [-h] [-v] [--logfile FILE] [-V] [-c PATH]
-                               [-d PATH] [--userdir PATH]
-                               [-p PAIRS [PAIRS ...]] [--pairs-file FILE]
-                               [--days INT] [--new-pairs-days INT]
-                               [--include-inactive-pairs]
-                               [--timerange TIMERANGE] [--dl-trades]
-                               [--convert] [--exchange EXCHANGE]
-                               [-t TIMEFRAMES [TIMEFRAMES ...]] [--erase]
-                               [--data-format-ohlcv {json,jsongz,hdf5,feather,parquet}]
-                               [--data-format-trades {json,jsongz,hdf5,feather,parquet}]
-                               [--trading-mode {spot,margin,futures}]
-                               [--prepend]
-
-options:
-  -h, --help            show this help message and exit
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
-                        Limit command to these pairs. Pairs are space-
-                        separated.
-  --pairs-file FILE     File containing a list of pairs. Takes precedence over
-                        --pairs or pairs configured in the configuration.
-  --days INT            Download data for given number of days.
-  --new-pairs-days INT  Download data of new pairs for given number of days.
-                        Default: `None`.
-  --include-inactive-pairs
-                        Also download data from inactive pairs.
-  --timerange TIMERANGE
-                        Specify what timerange of data to use.
-  --dl-trades           Download trades instead of OHLCV data. The bot will
-                        resample trades to the desired timeframe as specified
-                        as --timeframes/-t.
-  --convert             Convert downloaded trades to OHLCV data. Only
-                        applicable in combination with `--dl-trades`. Will be
-                        automatic for exchanges which don't have historic
-                        OHLCV (e.g. Kraken). If not provided, use `trades-to-
-                        ohlcv` to convert trades data to OHLCV data.
-  --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
-  -t TIMEFRAMES [TIMEFRAMES ...], --timeframes TIMEFRAMES [TIMEFRAMES ...]
-                        Specify which tickers to download. Space-separated
-                        list. Default: `1m 5m`.
-  --erase               Clean all existing data for the selected
-                        exchange/pairs/timeframes.
-  --data-format-ohlcv {json,jsongz,hdf5,feather,parquet}
-                        Storage format for downloaded candle (OHLCV) data.
-                        (default: `feather`).
-  --data-format-trades {json,jsongz,hdf5,feather,parquet}
-                        Storage format for downloaded trades data. (default:
-                        `feather`).
-  --trading-mode {spot,margin,futures}, --tradingmode {spot,margin,futures}
-                        Select Trading mode
-  --prepend             Allow data prepending. (Data-appending is disabled)
-
-Common arguments:
-  -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
-  --logfile FILE, --log-file FILE
-                        Log to the file specified. Special values are:
-                        'syslog', 'journald'. See the documentation for more
-                        details.
-  -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
-                        `userdir/config.json` or `config.json` whichever
-                        exists). Multiple --config options may be used. Can be
-                        set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
-                        Path to directory with historical backtesting data.
-  --userdir PATH, --user-data-dir PATH
-                        Path to userdata directory.
-
-```
+--8<-- "commands/download-data.md"
 
 !!! Tip "Downloading all data for one quote currency"
     Often, you'll want to download data for all pairs of a specific quote-currency. In such cases, you can use the following shorthand:
@@ -162,7 +93,6 @@ Freqtrade currently supports the following data-formats:
 * `feather` - a dataformat based on Apache Arrow
 * `json` -  plain "text" json files
 * `jsongz` - a gzip-zipped version of json files
-* `hdf5` - a high performance datastore (deprecated)
 * `parquet` - columnar datastore (OHLCV only)
 
 By default, both OHLCV data and trades data are stored in the `feather` format.
@@ -172,8 +102,8 @@ To persist this change, you should also add the following snippet to your config
 
 ``` jsonc
     // ...
-    "dataformat_ohlcv": "hdf5",
-    "dataformat_trades": "hdf5",
+    "dataformat_ohlcv": "feather",
+    "dataformat_trades": "feather",
     // ...
 ```
 
@@ -211,7 +141,6 @@ time freqtrade list-data --show-timerange --data-format-ohlcv <dataformat>
 | `feather` | 72Mb | 3.5s |
 | `json` | 149Mb | 25.6s |
 | `jsongz` | 39Mb | 27s |
-| `hdf5` | 145Mb | 3.9s |
 | `parquet` | 83Mb | 3.8s |
 
 Size has been taken from the BTC/USDT 1m spot combination for the timerange specified above.
@@ -249,55 +178,7 @@ Mixing different stake-currencies is allowed for this file, since it's only used
 
 ## Sub-command convert data
 
-```
-usage: freqtrade convert-data [-h] [-v] [--logfile FILE] [-V] [-c PATH]
-                              [-d PATH] [--userdir PATH]
-                              [-p PAIRS [PAIRS ...]] --format-from
-                              {json,jsongz,hdf5,feather,parquet} --format-to
-                              {json,jsongz,hdf5,feather,parquet} [--erase]
-                              [--exchange EXCHANGE]
-                              [-t TIMEFRAMES [TIMEFRAMES ...]]
-                              [--trading-mode {spot,margin,futures}]
-                              [--candle-types {spot,futures,mark,index,premiumIndex,funding_rate} [{spot,futures,mark,index,premiumIndex,funding_rate} ...]]
-
-options:
-  -h, --help            show this help message and exit
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
-                        Limit command to these pairs. Pairs are space-
-                        separated.
-  --format-from {json,jsongz,hdf5,feather,parquet}
-                        Source format for data conversion.
-  --format-to {json,jsongz,hdf5,feather,parquet}
-                        Destination format for data conversion.
-  --erase               Clean all existing data for the selected
-                        exchange/pairs/timeframes.
-  --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
-  -t TIMEFRAMES [TIMEFRAMES ...], --timeframes TIMEFRAMES [TIMEFRAMES ...]
-                        Specify which tickers to download. Space-separated
-                        list. Default: `1m 5m`.
-  --trading-mode {spot,margin,futures}, --tradingmode {spot,margin,futures}
-                        Select Trading mode
-  --candle-types {spot,futures,mark,index,premiumIndex,funding_rate} [{spot,futures,mark,index,premiumIndex,funding_rate} ...]
-                        Select candle type to convert. Defaults to all
-                        available types.
-
-Common arguments:
-  -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
-  --logfile FILE, --log-file FILE
-                        Log to the file specified. Special values are:
-                        'syslog', 'journald'. See the documentation for more
-                        details.
-  -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
-                        `userdir/config.json` or `config.json` whichever
-                        exists). Multiple --config options may be used. Can be
-                        set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
-                        Path to directory with historical backtesting data.
-  --userdir PATH, --user-data-dir PATH
-                        Path to userdata directory.
-```
+--8<-- "commands/convert-data.md"
 
 ### Example converting data
 
@@ -310,46 +191,7 @@ freqtrade convert-data --format-from json --format-to jsongz --datadir ~/.freqtr
 
 ## Sub-command convert trade data
 
-```
-usage: freqtrade convert-trade-data [-h] [-v] [--logfile FILE] [-V] [-c PATH]
-                                    [-d PATH] [--userdir PATH]
-                                    [-p PAIRS [PAIRS ...]] --format-from
-                                    {json,jsongz,hdf5,feather,parquet}
-                                    --format-to
-                                    {json,jsongz,hdf5,feather,parquet}
-                                    [--erase] [--exchange EXCHANGE]
-
-options:
-  -h, --help            show this help message and exit
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
-                        Limit command to these pairs. Pairs are space-
-                        separated.
-  --format-from {json,jsongz,hdf5,feather,parquet}
-                        Source format for data conversion.
-  --format-to {json,jsongz,hdf5,feather,parquet}
-                        Destination format for data conversion.
-  --erase               Clean all existing data for the selected
-                        exchange/pairs/timeframes.
-  --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
-
-Common arguments:
-  -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
-  --logfile FILE, --log-file FILE
-                        Log to the file specified. Special values are:
-                        'syslog', 'journald'. See the documentation for more
-                        details.
-  -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
-                        `userdir/config.json` or `config.json` whichever
-                        exists). Multiple --config options may be used. Can be
-                        set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
-                        Path to directory with historical backtesting data.
-  --userdir PATH, --user-data-dir PATH
-                        Path to userdata directory.
-
-```
+--8<-- "commands/convert-trade-data.md"
 
 ### Example converting trades
 
@@ -365,49 +207,7 @@ freqtrade convert-trade-data --format-from jsongz --format-to json --datadir ~/.
 When you need to use `--dl-trades` (kraken only) to download data, conversion of trades data to ohlcv data is the last step.
 This command will allow you to repeat this last step for additional timeframes without re-downloading the data.
 
-```
-usage: freqtrade trades-to-ohlcv [-h] [-v] [--logfile FILE] [-V] [-c PATH]
-                                 [-d PATH] [--userdir PATH]
-                                 [-p PAIRS [PAIRS ...]]
-                                 [-t TIMEFRAMES [TIMEFRAMES ...]]
-                                 [--exchange EXCHANGE]
-                                 [--data-format-ohlcv {json,jsongz,hdf5,feather,parquet}]
-                                 [--data-format-trades {json,jsongz,hdf5,feather}]
-
-options:
-  -h, --help            show this help message and exit
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
-                        Limit command to these pairs. Pairs are space-
-                        separated.
-  -t TIMEFRAMES [TIMEFRAMES ...], --timeframes TIMEFRAMES [TIMEFRAMES ...]
-                        Specify which tickers to download. Space-separated
-                        list. Default: `1m 5m`.
-  --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
-  --data-format-ohlcv {json,jsongz,hdf5,feather,parquet}
-                        Storage format for downloaded candle (OHLCV) data.
-                        (default: `feather`).
-  --data-format-trades {json,jsongz,hdf5,feather}
-                        Storage format for downloaded trades data. (default:
-                        `feather`).
-
-Common arguments:
-  -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
-  --logfile FILE, --log-file FILE
-                        Log to the file specified. Special values are:
-                        'syslog', 'journald'. See the documentation for more
-                        details.
-  -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
-                        `userdir/config.json` or `config.json` whichever
-                        exists). Multiple --config options may be used. Can be
-                        set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
-                        Path to directory with historical backtesting data.
-  --userdir PATH, --user-data-dir PATH
-                        Path to userdata directory.
-
-```
+--8<-- "commands/trades-to-ohlcv.md"
 
 ### Example trade-to-ohlcv conversion
 
@@ -419,51 +219,7 @@ freqtrade trades-to-ohlcv --exchange kraken -t 5m 1h 1d --pairs BTC/EUR ETH/EUR
 
 You can get a list of downloaded data using the `list-data` sub-command.
 
-```
-usage: freqtrade list-data [-h] [-v] [--logfile FILE] [-V] [-c PATH] [-d PATH]
-                           [--userdir PATH] [--exchange EXCHANGE]
-                           [--data-format-ohlcv {json,jsongz,hdf5,feather,parquet}]
-                           [--data-format-trades {json,jsongz,hdf5,feather,parquet}]
-                           [--trades] [-p PAIRS [PAIRS ...]]
-                           [--trading-mode {spot,margin,futures}]
-                           [--show-timerange]
-
-options:
-  -h, --help            show this help message and exit
-  --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
-  --data-format-ohlcv {json,jsongz,hdf5,feather,parquet}
-                        Storage format for downloaded candle (OHLCV) data.
-                        (default: `feather`).
-  --data-format-trades {json,jsongz,hdf5,feather,parquet}
-                        Storage format for downloaded trades data. (default:
-                        `feather`).
-  --trades              Work on trades data instead of OHLCV data.
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
-                        Limit command to these pairs. Pairs are space-
-                        separated.
-  --trading-mode {spot,margin,futures}, --tradingmode {spot,margin,futures}
-                        Select Trading mode
-  --show-timerange      Show timerange available for available data. (May take
-                        a while to calculate).
-
-Common arguments:
-  -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
-  --logfile FILE, --log-file FILE
-                        Log to the file specified. Special values are:
-                        'syslog', 'journald'. See the documentation for more
-                        details.
-  -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
-                        `userdir/config.json` or `config.json` whichever
-                        exists). Multiple --config options may be used. Can be
-                        set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
-                        Path to directory with historical backtesting data.
-  --userdir PATH, --user-data-dir PATH
-                        Path to userdata directory.
-
-```
+--8<-- "commands/list-data.md"
 
 ### Example list-data
 

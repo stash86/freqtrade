@@ -1053,3 +1053,6 @@ async def test__async_get_trade_history_id_binance(default_conf_usdt, mocker, fe
 
     assert fetch_trades_cal[2][1]["params"][pagination_arg] != "0"
     assert fetch_trades_cal[3][1]["params"][pagination_arg] != "0"
+
+    # Clean up event loop to avoid warnings
+    exchange.close()

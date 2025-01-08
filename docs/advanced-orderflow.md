@@ -70,8 +70,8 @@ dataframe["delta"] # Difference between ask and bid volume.
 dataframe["min_delta"] # Minimum delta within the candle
 dataframe["max_delta"] # Maximum delta within the candle
 dataframe["total_trades"] # Total number of trades
-dataframe["stacked_imbalances_bid"] # Price level of stacked bid imbalance 
-dataframe["stacked_imbalances_ask"] # Price level of stacked ask imbalance  
+dataframe["stacked_imbalances_bid"] # List of price levels of stacked bid imbalance range beginnings
+dataframe["stacked_imbalances_ask"] # List of price levels of stacked ask imbalance range beginnings
 ```
 
 You can access these columns in your strategy code for further analysis. Here's an example:
