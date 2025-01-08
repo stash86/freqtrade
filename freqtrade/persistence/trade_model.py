@@ -1260,11 +1260,9 @@ class LocalTrade:
         if current_amount_tr > 0.0:
             # Trade is still open
             # Leverage not updated, as we don't allow changing leverage through DCA at the moment.
-            self.open_rate = price_to_precision(
-                float(current_stake / current_amount),
-                self.price_precision,
-                self.precision_mode_price,
-            )
+
+            # Remove this when a better logic is placed
+            self.open_rate = float(current_stake / current_amount)
             self.amount = current_amount_tr
             self.stake_amount = float(current_stake) / (self.leverage or 1.0)
             self.fee_open_cost = self.fee_open * float(self.max_stake_amount)
