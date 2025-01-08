@@ -9,8 +9,6 @@
     "dry_run": true,
     "dry_run_wallet": 220,
     "cancel_open_orders_on_exit": true,
-    "dataformat_ohlcv": "feather",
-    "dataformat_trades": "hdf5",
     "unfilledtimeout": {
         "entry": 2,
         "exit": 30

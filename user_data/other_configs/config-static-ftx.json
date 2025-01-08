@@ -46,8 +46,6 @@
         //     "sort_key": "quoteVolume",
         // },
     ],
-    "dataformat_ohlcv": "feather",
-    "dataformat_trades": "hdf5",
     "exchange": {
         "name": "ftx",
         "key": "1",

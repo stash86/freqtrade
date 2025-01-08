@@ -116,8 +116,6 @@
      ],
      "name": "kucoin",
   },
-  "dataformat_ohlcv": "feather",
-  "dataformat_trades": "hdf5",
   "dry_run_wallet": 1000,
   "max_open_trades": -1,
   "dry_run": false

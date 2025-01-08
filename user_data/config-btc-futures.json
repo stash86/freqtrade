@@ -45,8 +45,6 @@
     "pairlists": [
         {"method": "StaticPairList"},
     ],
-    "dataformat_ohlcv": "feather",
-    "dataformat_trades": "hdf5",
     "exchange": {
         "pair_whitelist": [
             "BTC/USDT:USDT",

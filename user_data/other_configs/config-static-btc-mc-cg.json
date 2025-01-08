@@ -42,8 +42,6 @@
         {"method": "StaticPairList"},
         // {"method": "AgeFilter", "min_days_listed": 30},
     ],
-    "dataformat_ohlcv": "feather",
-    "dataformat_trades": "hdf5",
     "exchange": {
         "name": "binance",
         "key": "1",
