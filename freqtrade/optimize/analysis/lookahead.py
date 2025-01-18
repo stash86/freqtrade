@@ -208,8 +208,7 @@ class LookaheadAnalysis(BaseAnalysis):
         found_signals: int = self.full_varHolder.result["results"].shape[0] + 1
         if found_signals >= self.targeted_trade_amount:
             logger.info(
-                f"Found {found_signals} trades, "
-                f"calculating {self.targeted_trade_amount} trades."
+                f"Found {found_signals} trades, calculating {self.targeted_trade_amount} trades."
             )
         elif self.targeted_trade_amount >= found_signals >= self.minimum_trade_amount:
             logger.info(f"Only found {found_signals} trades. Calculating all available trades.")

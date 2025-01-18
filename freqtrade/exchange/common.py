@@ -40,6 +40,9 @@ BAD_EXCHANGES = {
     "bitmex": "Various reasons.",
     "probit": "Requires additional, regular calls to `signIn()`.",
     "poloniex": "Does not provide fetch_order endpoint to fetch both open and closed orders.",
+    "kucoinfutures": "Unsupported futures exchange.",
+    "poloniexfutures": "Unsupported futures exchange.",
+    "binancecoinm": "Unsupported futures exchange.",
 }
 
 MAP_EXCHANGE_CHILDCLASS = {

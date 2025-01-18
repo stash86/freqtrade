@@ -23,7 +23,7 @@ STOPLOSS_LIMIT_ORDERTYPE = "stop-loss-limit"
 )
 def test_kraken_trading_agreement(default_conf, mocker, order_type, time_in_force, expected_params):
     api_mock = MagicMock()
-    order_id = f"test_prod_{order_type}_{randint(0, 10 ** 6)}"
+    order_id = f"test_prod_{order_type}_{randint(0, 10**6)}"
     api_mock.options = {}
     api_mock.create_order = MagicMock(
         return_value={"id": order_id, "symbol": "ETH/BTC", "info": {"foo": "bar"}}
@@ -168,7 +168,7 @@ def test_get_balances_prod_kraken(default_conf, mocker):
 )
 def test_create_stoploss_order_kraken(default_conf, mocker, ordertype, side, adjustedprice):
     api_mock = MagicMock()
-    order_id = f"test_prod_buy_{randint(0, 10 ** 6)}"
+    order_id = f"test_prod_buy_{randint(0, 10**6)}"
 
     api_mock.create_order = MagicMock(return_value={"id": order_id, "info": {"foo": "bar"}})
 

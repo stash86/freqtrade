@@ -75,8 +75,7 @@ def init_db(db_url: str) -> None:
         engine = create_engine(db_url, future=True, **kwargs)
     except NoSuchModuleError:
         raise OperationalException(
-            f"Given value for db_url: '{db_url}' "
-            f"is no valid database URL! (See {_SQL_DOCS_URL})"
+            f"Given value for db_url: '{db_url}' is no valid database URL! (See {_SQL_DOCS_URL})"
         )
 
     # https://docs.sqlalchemy.org/en/13/orm/contextual.html#thread-local-scope

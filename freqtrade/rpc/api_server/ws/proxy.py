@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import WebSocket as FastAPIWebSocket
 from websockets.asyncio.client import ClientConnection as WebSocket
 
-from freqtrade.rpc.api_server.ws.types import WebSocketType
+from freqtrade.rpc.api_server.ws.ws_types import WebSocketType
 
 
 class WebSocketProxy:

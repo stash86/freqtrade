@@ -112,6 +112,5 @@ class RecursiveAnalysisSubFunctions:
             )
         else:
             logger.error(
-                "There was no strategy specified through --strategy "
-                "or timeframe was not specified."
+                "There was no strategy specified through --strategy or timeframe was not specified."
             )

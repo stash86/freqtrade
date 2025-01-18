@@ -5,7 +5,7 @@
 torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'
 torch==2.5.1; sys_platform != 'darwin' or platform_machine != 'x86_64'
 gymnasium==0.29.1
-stable_baselines3==2.4.0
+stable_baselines3==2.4.1
 sb3_contrib>=2.2.1
 # Progress bar for stable-baselines3 and sb3-contrib
 tqdm==4.67.1

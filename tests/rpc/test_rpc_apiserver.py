@@ -284,7 +284,7 @@ def test_api_token_login(botclient):
     rc = client.get(
         f"{BASE_URI}/count",
         headers={
-            "Authorization": f'Bearer {rc.json()["access_token"]}',
+            "Authorization": f"Bearer {rc.json()['access_token']}",
             "Origin": "http://example.com",
         },
     )
@@ -299,7 +299,7 @@ def test_api_token_refresh(botclient):
         f"{BASE_URI}/token/refresh",
         data=None,
         headers={
-            "Authorization": f'Bearer {rc.json()["refresh_token"]}',
+            "Authorization": f"Bearer {rc.json()['refresh_token']}",
             "Origin": "http://example.com",
         },
     )

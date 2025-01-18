@@ -383,8 +383,7 @@ def test_exception_send_msg(default_conf, mocker, caplog):
     }
     webhook.send_msg(msg)
     assert log_has(
-        "Problem calling Webhook. Please check your webhook configuration. "
-        "Exception: 'DEADBEEF'",
+        "Problem calling Webhook. Please check your webhook configuration. Exception: 'DEADBEEF'",
         caplog,
     )
 

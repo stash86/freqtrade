@@ -1160,8 +1160,12 @@ class IStrategy(ABC, HyperStrategyMixin):
             logger.warning(f"Empty candle (OHLCV) data for pair {pair}")
             return None, None
 
-        latest_date_pd = dataframe["date"].max()
-        latest = dataframe.loc[dataframe["date"] == latest_date_pd].iloc[-1]
+        try:
+            latest_date_pd = dataframe["date"].max()
+            latest = dataframe.loc[dataframe["date"] == latest_date_pd].iloc[-1]
+        except Exception as e:
+            logger.warning(f"Unable to get latest candle (OHLCV) data for pair {pair} - {e}")
+            return None, None
         # Explicitly convert to datetime object to ensure the below comparison does not fail
         latest_date: datetime = latest_date_pd.to_pydatetime()
 

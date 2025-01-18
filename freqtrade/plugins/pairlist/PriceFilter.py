@@ -158,8 +158,7 @@ class PriceFilter(IPairList):
         if self._min_price != 0:
             if price < self._min_price:
                 self.log_once(
-                    f"Removed {pair} from whitelist, "
-                    f"because last price < {self._min_price:.8f}",
+                    f"Removed {pair} from whitelist, because last price < {self._min_price:.8f}",
                     logger.info,
                 )
                 return False
@@ -168,8 +167,7 @@ class PriceFilter(IPairList):
         if self._max_price != 0:
             if price > self._max_price:
                 self.log_once(
-                    f"Removed {pair} from whitelist, "
-                    f"because last price > {self._max_price:.8f}",
+                    f"Removed {pair} from whitelist, because last price > {self._max_price:.8f}",
                     logger.info,
                 )
                 return False

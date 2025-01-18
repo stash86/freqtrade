@@ -35,18 +35,21 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
+        cache-dependency-glob: "requirements**.txt"
+        cache-suffix: "${{ matrix.python-version }}"
+        prune-cache: false
+
     - name: Cache_dependencies
       uses: actions/cache@v4
       id: cache
       with:
         path: ~/dependencies/
         key: ${{ runner.os }}-dependencies
-
-    - name: pip cache (linux)
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: pip-${{ matrix.python-version }}-ubuntu
 
     - name: TA binary *nix
       if: steps.cache.outputs.cache-hit != 'true'
@@ -55,13 +58,13 @@ jobs:
 
     - name: Installation - *nix
       run: |
-        python -m pip install --upgrade pip wheel
+        uv pip install --upgrade wheel
         export LD_LIBRARY_PATH=${HOME}/dependencies/lib:$LD_LIBRARY_PATH
         export TA_LIBRARY_PATH=${HOME}/dependencies/lib
         export TA_INCLUDE_PATH=${HOME}/dependencies/include
-        pip install -r requirements-dev.txt
-        pip install -e ft_client/
-        pip install -e .
+        uv pip install -r requirements-dev.txt
+        uv pip install -e ft_client/
+        uv pip install -e .
 
     - name: Check for version alignment
       run: |
@@ -161,18 +164,21 @@ jobs:
         python-version: ${{ matrix.python-version }}
         check-latest: true
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: ${{ matrix.python-version }}
+        cache-dependency-glob: "requirements**.txt"
+        cache-suffix: "${{ matrix.python-version }}"
+        prune-cache: false
+
     - name: Cache_dependencies
       uses: actions/cache@v4
       id: cache
       with:
         path: ~/dependencies/
         key: ${{ matrix.os }}-dependencies
-
-    - name: pip cache (macOS)
-      uses: actions/cache@v4
-      with:
-        path: ~/Library/Caches/pip
-        key: pip-${{ matrix.os }}-${{ matrix.python-version }}
 
     - name: TA binary *nix
       if: steps.cache.outputs.cache-hit != 'true'
@@ -205,13 +211,13 @@ jobs:
 
     - name: Installation (python)
       run: |
-        python -m pip install --upgrade pip wheel
+        uv pip install wheel
         export LD_LIBRARY_PATH=${HOME}/dependencies/lib:$LD_LIBRARY_PATH
         export TA_LIBRARY_PATH=${HOME}/dependencies/lib
         export TA_INCLUDE_PATH=${HOME}/dependencies/include
-        pip install -r requirements-dev.txt
-        pip install -e ft_client/
-        pip install -e .
+        uv pip install -r requirements-dev.txt
+        uv pip install -e ft_client/
+        uv pip install -e .
 
     - name: Tests
       run: |
@@ -285,19 +291,16 @@ jobs:
       uses: astral-sh/setup-uv@v5
       with:
         enable-cache: true
+        python-version: ${{ matrix.python-version }}
         cache-dependency-glob: "requirements**.txt"
         cache-suffix: "${{ matrix.python-version }}"
         prune-cache: false
 
     - name: Installation
       run: |
-        uv venv
-        .venv\Scripts\activate
-        # persist the venv path for future steps
-        "$(pwd)/.venv/Scripts" >> $env:GITHUB_PATH
-
         function uvpipFunction { uv pip $args }
         Set-Alias -name pip -value uvpipFunction
+
         ./build_helpers/install_windows.ps1
 
     - name: Tests
@@ -423,6 +426,15 @@ jobs:
       with:
         python-version: "3.12"
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        python-version: "3.12"
+        cache-dependency-glob: "requirements**.txt"
+        cache-suffix: "3.12"
+        prune-cache: false
+
     - name: Cache_dependencies
       uses: actions/cache@v4
       id: cache
@@ -430,11 +442,6 @@ jobs:
         path: ~/dependencies/
         key: ${{ runner.os }}-dependencies
 
-    - name: pip cache (linux)
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: pip-3.12-ubuntu
 
     - name: TA binary *nix
       if: steps.cache.outputs.cache-hit != 'true'
@@ -443,13 +450,13 @@ jobs:
 
     - name: Installation - *nix
       run: |
-        python -m pip install --upgrade pip wheel
+        uv pip install --upgrade wheel
         export LD_LIBRARY_PATH=${HOME}/dependencies/lib:$LD_LIBRARY_PATH
         export TA_LIBRARY_PATH=${HOME}/dependencies/lib
         export TA_INCLUDE_PATH=${HOME}/dependencies/include
-        pip install -r requirements-dev.txt
-        pip install -e ft_client/
-        pip install -e .
+        uv pip install -r requirements-dev.txt
+        uv pip install -e ft_client/
+        uv pip install -e .
 
     - name: Tests incl. ccxt compatibility tests
       env:

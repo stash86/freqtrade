@@ -426,7 +426,7 @@ class IFreqaiModel(ABC):
         # append the historic data once per round
         if self.dd.historic_data:
             self.dd.update_historic_data(strategy, dk)
-            logger.debug(f'Updating historic data on pair {metadata["pair"]}')
+            logger.debug(f"Updating historic data on pair {metadata['pair']}")
             self.track_current_candle()
 
         (_, new_trained_timerange, data_load_timerange) = dk.check_if_new_training_required(

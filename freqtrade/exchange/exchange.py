@@ -548,6 +548,7 @@ class Exchange:
             and (
                 self.precisionMode != TICK_SIZE
                 # Too low precision will falsify calculations
+                or market.get("precision", {}).get("price") is None
                 or market.get("precision", {}).get("price") > 1e-11
             )
             and (
@@ -3003,8 +3004,7 @@ class Exchange:
                     trades.extend(t[x])
                     if from_id == from_id_next or t[-1][0] > until:
                         logger.debug(
-                            f"Stopping because from_id did not change. "
-                            f"Reached {t[-1][0]} > {until}"
+                            f"Stopping because from_id did not change. Reached {t[-1][0]} > {until}"
                         )
                         # Reached the end of the defined-download period - add last trade as well.
                         if has_overlap:

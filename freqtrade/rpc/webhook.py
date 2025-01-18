@@ -94,8 +94,7 @@ class Webhook(RPCHandler):
             self._send_msg(payload)
         except KeyError as exc:
             logger.exception(
-                "Problem calling Webhook. Please check your webhook configuration. "
-                "Exception: %s",
+                "Problem calling Webhook. Please check your webhook configuration. Exception: %s",
                 exc,
             )
 

@@ -48,7 +48,6 @@ AVAILABLE_CLI_OPTIONS = {
         "--verbose",
         help="Verbose mode (-vv for more, -vvv to get all messages).",
         action="count",
-        default=0,
     ),
     "logfile": Arg(
         "--logfile",
@@ -335,7 +334,7 @@ AVAILABLE_CLI_OPTIONS = {
         help="Specify the class name of the hyperopt loss function class (IHyperOptLoss). "
         "Different functions can generate completely different results, "
         "since the target for optimization is different. Built-in Hyperopt-loss-functions are: "
-        f'{", ".join(HYPEROPT_LOSS_BUILTIN)}',
+        f"{', '.join(HYPEROPT_LOSS_BUILTIN)}",
         metavar="NAME",
     ),
     "hyperoptexportfilename": Arg(
@@ -664,8 +663,7 @@ AVAILABLE_CLI_OPTIONS = {
         "--ignore-missing-spaces",
         "--ignore-unparameterized-spaces",
         help=(
-            "Suppress errors for any requested Hyperopt spaces "
-            "that do not contain any parameters."
+            "Suppress errors for any requested Hyperopt spaces that do not contain any parameters."
         ),
         action="store_true",
     ),

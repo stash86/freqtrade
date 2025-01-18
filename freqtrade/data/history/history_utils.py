@@ -259,8 +259,8 @@ def _download_pair_history(
         logger.info(
             f'Download history data for "{pair}", {timeframe}, '
             f"{candle_type} and store in {datadir}. "
-            f'From {format_ms_time(since_ms) if since_ms else "start"} to '
-            f'{format_ms_time(until_ms) if until_ms else "now"}'
+            f"From {format_ms_time(since_ms) if since_ms else 'start'} to "
+            f"{format_ms_time(until_ms) if until_ms else 'now'}"
         )
 
         logger.debug(

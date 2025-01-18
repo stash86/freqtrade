@@ -138,8 +138,8 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             )
 
         logger.info(
-            f'Training model on {len(dk.data_dictionary["train_features"].columns)}'
-            f' features and {len(dd["train_features"])} data points'
+            f"Training model on {len(dk.data_dictionary['train_features'].columns)}"
+            f" features and {len(dd['train_features'])} data points"
         )
 
         self.set_train_and_eval_environments(dd, prices_train, prices_test, dk)
@@ -346,8 +346,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
             )
         elif prices_train.empty:
             raise OperationalException(
-                "No prices found, please follow log warning "
-                "instructions to correct the strategy."
+                "No prices found, please follow log warning instructions to correct the strategy."
             )
 
         prices_train.rename(columns=rename_dict, inplace=True)
