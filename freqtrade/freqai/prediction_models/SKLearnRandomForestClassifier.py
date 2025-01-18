@@ -45,8 +45,7 @@ class SKLearnRandomForestClassifier(BaseClassifierModel):
 
         if self.freqai_info.get("continual_learning", False):
             logger.warning(
-                "Continual learning is not supported for "
-                "SKLearnRandomForestClassifier, ignoring."
+                "Continual learning is not supported for SKLearnRandomForestClassifier, ignoring."
             )
 
         train_weights = data_dictionary["train_weights"]

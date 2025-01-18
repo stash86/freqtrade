@@ -120,8 +120,7 @@ def test_ohlcv_fill_up_missing_data(testdatadir, caplog):
     assert (data.columns == data2.columns).all()
 
     assert log_has_re(
-        f"Missing data fillup for UNITTEST/BTC, 1m: before: "
-        f"{len(data)} - after: {len(data2)}.*",
+        f"Missing data fillup for UNITTEST/BTC, 1m: before: {len(data)} - after: {len(data2)}.*",
         caplog,
     )
 

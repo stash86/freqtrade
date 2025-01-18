@@ -79,7 +79,7 @@ class DataProvider:
 
     def _set_dataframe_max_date(self, limit_date: datetime):
         """
-        Limit infomrative dataframe to max specified index.
+        Limit informative dataframe to max specified index.
         Only relevant in backtesting.
         :param limit_date: "current date"
         """

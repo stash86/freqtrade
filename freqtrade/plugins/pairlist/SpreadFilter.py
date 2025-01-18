@@ -41,8 +41,7 @@ class SpreadFilter(IPairList):
         Short whitelist method description - used for startup-messages
         """
         return (
-            f"{self.name} - Filtering pairs with ask/bid diff above "
-            f"{self._max_spread_ratio:.2%}."
+            f"{self.name} - Filtering pairs with ask/bid diff above {self._max_spread_ratio:.2%}."
         )
 
     @staticmethod

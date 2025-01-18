@@ -111,7 +111,7 @@ def test_load_config_file_error_range(default_conf, mocker, caplog) -> None:
 
     x = log_config_error_range("somefile", "Parse error at offset 4: Invalid value.")
     assert isinstance(x, str)
-    assert x == '  "max_open_trades": 1,\n  "stake_currency": "BTC",\n' '  "stake_amount": .001,'
+    assert x == '  "max_open_trades": 1,\n  "stake_currency": "BTC",\n  "stake_amount": .001,'
 
     x = log_config_error_range("-", "")
     assert x == ""

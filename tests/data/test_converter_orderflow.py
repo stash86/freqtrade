@@ -556,9 +556,9 @@ def test_analyze_with_orderflow(
         assert col in df2.columns, f"Round2: Column {col} not found in df.columns"
 
         if col not in ("stacked_imbalances_bid", "stacked_imbalances_ask"):
-            assert (
-                df2[col].count() == 5
-            ), f"Round2: Column {col} has {df2[col].count()} non-NaN values"
+            assert df2[col].count() == 5, (
+                f"Round2: Column {col} has {df2[col].count()} non-NaN values"
+            )
 
     lastval_trade2 = df2.at[len(df2) - 1, "trades"]
     assert isinstance(lastval_trade2, list)

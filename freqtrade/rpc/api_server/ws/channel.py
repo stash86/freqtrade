@@ -15,7 +15,7 @@ from freqtrade.rpc.api_server.ws.serializer import (
     HybridJSONWebSocketSerializer,
     WebSocketSerializer,
 )
-from freqtrade.rpc.api_server.ws.types import WebSocketType
+from freqtrade.rpc.api_server.ws.ws_types import WebSocketType
 from freqtrade.rpc.api_server.ws_schemas import WSMessageSchemaType
 
 

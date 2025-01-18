@@ -64,7 +64,7 @@ def test_load_data_30min_timeframe(caplog, testdatadir) -> None:
     ld = load_pair_history(pair="UNITTEST/BTC", timeframe="30m", datadir=testdatadir)
     assert isinstance(ld, DataFrame)
     assert not log_has(
-        'Download history data for pair: "UNITTEST/BTC", timeframe: 30m ' "and store in None.",
+        'Download history data for pair: "UNITTEST/BTC", timeframe: 30m and store in None.',
         caplog,
     )
 
@@ -86,7 +86,7 @@ def test_load_data_1min_timeframe(ohlcv_history, mocker, caplog, testdatadir) ->
     load_data(datadir=testdatadir, timeframe="1m", pairs=["UNITTEST/BTC"])
     assert file.is_file()
     assert not log_has(
-        'Download history data for pair: "UNITTEST/BTC", interval: 1m ' "and store in None.", caplog
+        'Download history data for pair: "UNITTEST/BTC", interval: 1m and store in None.', caplog
     )
 
 
@@ -96,7 +96,7 @@ def test_load_data_mark(ohlcv_history, mocker, caplog, testdatadir) -> None:
     load_data(datadir=testdatadir, timeframe="1h", pairs=["UNITTEST/BTC"], candle_type="mark")
     assert file.is_file()
     assert not log_has(
-        'Download history data for pair: "UNITTEST/USDT:USDT", interval: 1m ' "and store in None.",
+        'Download history data for pair: "UNITTEST/USDT:USDT", interval: 1m and store in None.',
         caplog,
     )
 

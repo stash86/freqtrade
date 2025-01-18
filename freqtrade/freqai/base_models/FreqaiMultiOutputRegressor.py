@@ -35,8 +35,7 @@ class FreqaiMultiOutputRegressor(MultiOutputRegressor):
 
         if y.ndim == 1:
             raise ValueError(
-                "y must have at least two dimensions for "
-                "multi-output regression but has only one."
+                "y must have at least two dimensions for multi-output regression but has only one."
             )
 
         if sample_weight is not None and not has_fit_parameter(self.estimator, "sample_weight"):

@@ -950,7 +950,8 @@ Returning any other price will cancel the existing order, and replace it with a 
 The trade open-date (`trade.open_date_utc`) will remain at the time of the very first order placed.
 Please make sure to be aware of this - and eventually adjust your logic in other callbacks to account for this, and use the date of the first filled order instead.
 
-If the cancellation of the original order fails, then the order will not be replaced - though the order will most likely have been canceled on exchange. Having this happen on initial entries will result in the deletion of the order, while on position adjustment orders, it'll result in the trade size remaining as is.
+If the cancellation of the original order fails, then the order will not be replaced - though the order will most likely have been canceled on exchange. Having this happen on initial entries will result in the deletion of the order, while on position adjustment orders, it'll result in the trade size remaining as is.  
+If the order has been partially filled, the order will not be replaced. You can however use [`adjust_trade_position()`](#adjust-trade-position) to adjust the trade size to the full, expected position size, should this be necessary / desired.
 
 !!! Warning "Regular timeout"
     Entry `unfilledtimeout` mechanism (as well as `check_entry_timeout()`) takes precedence over this.

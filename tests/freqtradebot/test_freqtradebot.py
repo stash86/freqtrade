@@ -702,7 +702,7 @@ def test_process_trade_creation(
     assert pytest.approx(trade.amount_requested) == 60 / ticker_usdt.return_value[ticker_side]
 
     assert log_has(
-        f'{"Short" if is_short else "Long"} signal found: about create a new trade for ETH/USDT '
+        f"{'Short' if is_short else 'Long'} signal found: about create a new trade for ETH/USDT "
         "with stake_amount: 60.0 ...",
         caplog,
     )
@@ -2053,7 +2053,7 @@ def test_adjust_entry_replace_fail(
     assert len(trades) == 0
     assert len(Order.session.scalars(select(Order)).all()) == 0
     assert fetch_order_mock.call_count == 4
-    assert log_has_re(r"Could not cancel order.*, therefore not replacing\.", caplog)
+    assert log_has_re(r"Could not fully cancel order.*, therefore not replacing\.", caplog)
 
     # Entry adjustment is called
     assert freqtrade.strategy.adjust_entry_price.call_count == 1

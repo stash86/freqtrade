@@ -36,7 +36,7 @@ def check_exchange(config: Config, check_for_bad: bool = True) -> bool:
             f"This command requires a configured exchange. You should either use "
             f"`--exchange <exchange_name>` or specify a configuration file via `--config`.\n"
             f"The following exchanges are available for Freqtrade: "
-            f'{", ".join(available_exchanges())}'
+            f"{', '.join(available_exchanges())}"
         )
 
     if not is_exchange_known_ccxt(exchange):
@@ -44,21 +44,21 @@ def check_exchange(config: Config, check_for_bad: bool = True) -> bool:
             f'Exchange "{exchange}" is not known to the ccxt library '
             f"and therefore not available for the bot.\n"
             f"The following exchanges are available for Freqtrade: "
-            f'{", ".join(available_exchanges())}'
+            f"{', '.join(available_exchanges())}"
         )
 
     valid, reason, _ = validate_exchange(exchange)
     if not valid:
         if check_for_bad:
             raise OperationalException(
-                f'Exchange "{exchange}"  will not work with Freqtrade. ' f"Reason: {reason}"
+                f'Exchange "{exchange}"  will not work with Freqtrade. Reason: {reason}'
             )
         else:
             logger.warning(f'Exchange "{exchange}"  will not work with Freqtrade. Reason: {reason}')
 
     if MAP_EXCHANGE_CHILDCLASS.get(exchange, exchange) in SUPPORTED_EXCHANGES:
         logger.info(
-            f'Exchange "{exchange}" is officially supported ' f"by the Freqtrade development team."
+            f'Exchange "{exchange}" is officially supported by the Freqtrade development team.'
         )
     else:
         logger.warning(

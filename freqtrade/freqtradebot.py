@@ -1747,7 +1747,7 @@ class FreqtradeBot(LoggingMixin):
                 )
                 if not res:
                     self.replace_order_failed(
-                        trade, f"Could not cancel order for {trade}, therefore not replacing."
+                        trade, f"Could not fully cancel order for {trade}, therefore not replacing."
                     )
                     return
                 if adjusted_entry_price:
