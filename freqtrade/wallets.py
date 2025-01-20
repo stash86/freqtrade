@@ -413,7 +413,7 @@ class Wallets:
 
         if min_stake_amount is not None and min_stake_amount > max_allowed_stake:
             if not self._is_backtest:
-                msg = f"Minimum stake amount > available balance. {min_stake_amount} > {max_allowed_stake}"
+                msg = f"{pair} - Minimum stake amount > available balance. {min_stake_amount} > {max_allowed_stake}"
                 logger.warning(msg)
                 self.send_dp_message(msg)
 
