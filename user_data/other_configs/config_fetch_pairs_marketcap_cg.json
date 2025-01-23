@@ -49,20 +49,20 @@
         "pair_whitelist": [
             ".*/USDT"
         ],
-        "pair_blacklist": [
-            // Bad
-            "(DOGE|SHIB)/.*",
-            // Leverage
-            ".*(_PREMIUM|BEAR|BULL|DOWN|HALF|HEDGE|UP|[1235][SL]|2021)/.*",
-            // Timed futures
-            ".*(USDT_|USDT-).*",
-            // Fiat
-            "(AUD|BRZ|CAD|CHF|EUR|GBP|HKD|IDRT|JPY|NGN|RUB|SGD|TRY|UAH|USD|ZAR)/.*",
-            // Stable
-            "(BUSD|CUSD|CUSDT|DAI|FDUSD|PAX|PAXG|SUSD|TUSD|USDC|USDN|USDP|USDT|UST|VAI|USDD|USDJ)/.*",
-            // FAN
-            "(ACM|AFA|ALA|ALL|ALPINE|ANT|APL|ASR|ATM|BAR|CAI|CITY|FOR|GAL|GOZ|IBFK|JUV|LAZIO|LEG|LOCK-1|MULTI|NAVI|NMR|NOV|OG|PFL|PORTO|PSG|ROUSH|SANTOS|STV|TH|TRA|UCH|UFC|VAI|XMR|YBO)/.*",
-        ]
+        // "pair_blacklist": [
+        //     // Bad
+        //     "(DOGE|SHIB)/.*",
+        //     // Leverage
+        //     ".*(_PREMIUM|BEAR|BULL|DOWN|HALF|HEDGE|UP|[1235][SL]|2021)/.*",
+        //     // Timed futures
+        //     ".*(USDT_|USDT-).*",
+        //     // Fiat
+        //     "(AUD|BRZ|CAD|CHF|EUR|GBP|HKD|IDRT|JPY|NGN|RUB|SGD|TRY|UAH|USD|ZAR)/.*",
+        //     // Stable
+        //     "(BUSD|CUSD|CUSDT|DAI|FDUSD|PAX|PAXG|SUSD|TUSD|USDC|USDN|USDP|USDT|UST|VAI|USDD|USDJ)/.*",
+        //     // FAN
+        //     "(ACM|AFA|ALA|ALL|ALPINE|ANT|APL|ASR|ATM|BAR|CAI|CITY|FOR|GAL|GOZ|IBFK|JUV|LAZIO|LEG|LOCK-1|MULTI|NAVI|NMR|NOV|OG|PFL|PORTO|PSG|ROUSH|SANTOS|STV|TH|TRA|UCH|UFC|VAI|XMR|YBO)/.*",
+        // ]
     },
     "pairlists": [
         {
