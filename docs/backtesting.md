@@ -508,7 +508,12 @@ To utilize this, you can append `--timeframe-detail 5m` to your regular backtest
 freqtrade backtesting --strategy AwesomeStrategy --timeframe 1h --timeframe-detail 5m
 ```
 
-This will load 1h data as well as 5m data for the timeframe. The strategy will be analyzed with the 1h timeframe, and Entry orders will only be placed at the main timeframe, however Order fills and exit signals will be evaluated at the 5m candle, simulating intra-candle movements.
+This will load 1h data (the main timeframe) as well as 5m data (detail timeframe) for the selected timerange.
+The strategy will be analyzed with the 1h timeframe.
+Candles where activity may take place (there's an active signal, the pair is in a trade) are  evaluated at the 5m timeframe.
+This will allow for a more accurate simulation of intra-candle movements - and can lead to different results, especially on higher timeframes.
+
+Entries will generally still happen at the main candle's open, however freed trade slots may be freed earlier (if the exit signal is triggered on the 5m candle), which can then be used for a new trade of a different pair.
 
 All callback functions (`custom_exit()`, `custom_stoploss()`, ... ) will be running for each 5m candle once the trade is opened (so 12 times in the above example of 1h timeframe, and 5m detailed timeframe).
 
@@ -519,6 +524,27 @@ Also, data must be available / downloaded already.
 
 !!! Tip
     You can use this function as the last part of strategy development, to ensure your strategy is not exploiting one of the [backtesting assumptions](#assumptions-made-by-backtesting). Strategies that perform similarly well with this mode have a good chance to perform well in dry/live modes too (although only forward-testing (dry-mode) can really confirm a strategy).
+
+??? Sample "Extreme Difference Example"
+    Using `--timeframe-detail` on an extreme example (all below pairs have the 10:00 candle with an entry signal) may lead to the following backtesting Trade sequence with 1 max_open_trades:
+
+    | Pair | Entry Time | Exit Time | Duration |
+    |------|------------|-----------| -------- |
+    | BTC/USDT | 2024-01-01 10:00:00 | 2021-01-01 10:05:00 | 5m |
+    | ETH/USDT | 2024-01-01 10:05:00 | 2021-01-01 10:15:00 | 10m |
+    | XRP/USDT | 2024-01-01 10:15:00 | 2021-01-01 10:30:00 | 15m |
+    | SOL/USDT | 2024-01-01 10:15:00 | 2021-01-01 11:05:00 | 50m |
+    | BTC/USDT | 2024-01-01 11:05:00 | 2021-01-01 12:00:00 | 55m |
+
+    Without timeframe-detail, this would look like:
+
+    | Pair | Entry Time | Exit Time | Duration |
+    |------|------------|-----------| -------- |
+    | BTC/USDT | 2024-01-01 10:00:00 | 2021-01-01 11:00:00 | 1h |
+    | BTC/USDT | 2024-01-01 11:00:00 | 2021-01-01 12:00:00 | 1h |
+
+    The difference is significant, as without detail data, only the first `max_open_trades` signals per candle are evaluated, and the trade slots are only freed at the end of the candle, allowing for a new trade to be opened at the next candle.
+
 
 ## Backtesting multiple strategies
 

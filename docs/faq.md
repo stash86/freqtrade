@@ -46,9 +46,11 @@ Make sure you set the `initial_state` config option to `"running"` in your confi
 
 ### I have waited 5 minutes, why hasn't the bot made any trades yet?
 
-* Depending on the buy strategy, the amount of whitelisted coins, the
-situation of the market etc, it can take up to hours to find a good entry
+* Depending on the entry strategy, the amount of whitelisted coins, the
+situation of the market etc, it can take up to hours or days to find a good entry
 position for a trade. Be patient!
+
+* Backtesting will tell you roughly how many trades to expect - but that won't guarantee that they'll be distributed evenly across time - so you could have 20 trades on one day, and 0 for the rest of the week.
 
 * It may be because of a configuration error. It's best to check the logs, they usually tell you if the bot is simply not getting buy signals (only heartbeat messages), or if there is something wrong (errors / exceptions in the log).
 

@@ -5,7 +5,7 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import ANY, MagicMock, PropertyMock
 
 import numpy as np
 import pandas as pd
@@ -795,6 +795,7 @@ def test_backtest_one(default_conf, mocker, testdatadir) -> None:
                         "order_filled_timestamp": 1517251200000,
                         "ft_is_entry": True,
                         "ft_order_tag": "",
+                        "cost": ANY,
                     },
                     {
                         "amount": 0.00957442,
@@ -803,6 +804,7 @@ def test_backtest_one(default_conf, mocker, testdatadir) -> None:
                         "order_filled_timestamp": 1517265300000,
                         "ft_is_entry": False,
                         "ft_order_tag": "roi",
+                        "cost": ANY,
                     },
                 ],
                 [
@@ -813,6 +815,7 @@ def test_backtest_one(default_conf, mocker, testdatadir) -> None:
                         "order_filled_timestamp": 1517283000000,
                         "ft_is_entry": True,
                         "ft_order_tag": "",
+                        "cost": ANY,
                     },
                     {
                         "amount": 0.0097064,
@@ -821,6 +824,7 @@ def test_backtest_one(default_conf, mocker, testdatadir) -> None:
                         "order_filled_timestamp": 1517285400000,
                         "ft_is_entry": False,
                         "ft_order_tag": "roi",
+                        "cost": ANY,
                     },
                 ],
             ],
@@ -866,6 +870,7 @@ def test_backtest_one_detail(default_conf_usdt, mocker, testdatadir, use_detail)
     backtesting = Backtesting(default_conf_usdt)
     backtesting._set_strategy(backtesting.strategylist[0])
     backtesting.strategy.populate_entry_trend = advise_entry
+    backtesting.strategy.ignore_buying_expired_candle_after = 59
     backtesting.strategy.custom_entry_price = custom_entry_price
     pair = "XRP/ETH"
     # Pick a timerange adapted to the pair we use to test
@@ -936,7 +941,7 @@ def test_backtest_one_detail(default_conf_usdt, mocker, testdatadir, use_detail)
 @pytest.mark.parametrize(
     "use_detail,exp_funding_fee, exp_ff_updates",
     [
-        (True, -0.018054162, 11),
+        (True, -0.018054162, 10),
         (False, -0.01780296, 6),
     ],
 )
@@ -998,7 +1003,7 @@ def test_backtest_one_detail_futures(
     results = result["results"]
     assert not results.empty
     # Timeout settings from default_conf = entry: 10, exit: 30
-    assert len(results) == (5 if use_detail else 2)
+    assert len(results) == (4 if use_detail else 2)
 
     assert "orders" in results.columns
     data_pair = processed[pair]
@@ -1771,16 +1776,21 @@ def test_backtest_multi_pair_detail_simplified(
 
     if use_detail:
         # Backtest loop is called once per candle per pair
-        # Exact numbers depend on trade state - but should be around 3_800
-        assert bl_spy.call_count > 3_350
-        assert bl_spy.call_count < 3_800
+        # Exact numbers depend on trade state - but should be around 2_600
+        assert bl_spy.call_count > 2_170
+        assert bl_spy.call_count < 2_800
+        assert len(evaluate_result_multi(results["results"], "1h", 3)) > 0
     else:
         assert bl_spy.call_count < 995
+        assert len(evaluate_result_multi(results["results"], "1h", 3)) == 0
 
     # Make sure we have parallel trades
     assert len(evaluate_result_multi(results["results"], "1h", 2)) > 0
+    assert len(evaluate_result_multi(results["results"], "5m", 2)) > 0
     # make sure we don't have trades with more than configured max_open_trades
-    assert len(evaluate_result_multi(results["results"], "1h", 3)) == 0
+    # This must evaluate on detail timeframe - as we can have entries within the candle.
+    assert len(evaluate_result_multi(results["results"], "5m", 3)) == 0
+    assert len(evaluate_result_multi(results["results"], "1m", 3)) == 0
 
     # # Cached data correctly removed amounts
     offset = 1 if tres == 0 else 0
@@ -1799,7 +1809,12 @@ def test_backtest_multi_pair_detail_simplified(
         "end_date": max_date,
     }
     results = backtesting.backtest(**backtest_conf)
-    assert len(evaluate_result_multi(results["results"], "1h", 1)) == 0
+    if use_detail:
+        assert len(evaluate_result_multi(results["results"], "1h", 1)) > 0
+    else:
+        assert len(evaluate_result_multi(results["results"], "1h", 1)) == 0
+    assert len(evaluate_result_multi(results["results"], "5m", 1)) == 0
+    assert len(evaluate_result_multi(results["results"], "1m", 1)) == 0
 
 
 @pytest.mark.parametrize("use_detail", [True, False])
@@ -1896,9 +1911,9 @@ def test_backtest_multi_pair_long_short_switch(
 
     if use_detail:
         # Backtest loop is called once per candle per pair
-        assert bl_spy.call_count == 1484
+        assert bl_spy.call_count == 1511
     else:
-        assert bl_spy.call_count == 479
+        assert bl_spy.call_count == 508
 
     # Make sure we have parallel trades
     assert len(evaluate_result_multi(results["results"], "5m", 0)) > 0

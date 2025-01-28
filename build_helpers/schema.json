@@ -979,7 +979,7 @@
             "type": "string"
           }
         },
-        "x": {
+        "verbosity": {
           "description": "Logging verbosity level.",
           "type": "string",
           "enum": [

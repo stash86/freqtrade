@@ -150,6 +150,7 @@ class Profit(BaseModel):
     best_pair: str
     best_rate: float
     best_pair_profit_ratio: float
+    best_pair_profit_abs: float
     winning_trades: int
     losing_trades: int
     profit_factor: float

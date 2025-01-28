@@ -35,6 +35,7 @@ from tests.conftest import (
     CURRENT_TEST_STRATEGY,
     EXMS,
     create_mock_trades,
+    create_mock_trades_usdt,
     get_mock_coro,
     get_patched_freqtradebot,
     log_has,
@@ -962,9 +963,10 @@ def test_api_edge_disabled(botclient, mocker, ticker, fee, markets):
         (
             True,
             {
-                "best_pair": "ETC/BTC",
-                "best_rate": -0.5,
-                "best_pair_profit_ratio": -0.005,
+                "best_pair": "XRP/BTC",
+                "best_rate": -0.02,
+                "best_pair_profit_ratio": -0.00018780487,
+                "best_pair_profit_abs": -0.001155,
                 "profit_all_coin": 15.382312,
                 "profit_all_fiat": 189894.6470718,
                 "profit_all_percent_mean": 49.62,
@@ -993,9 +995,10 @@ def test_api_edge_disabled(botclient, mocker, ticker, fee, markets):
         (
             False,
             {
-                "best_pair": "XRP/BTC",
-                "best_rate": 1.0,
-                "best_pair_profit_ratio": 0.01,
+                "best_pair": "ETC/BTC",
+                "best_rate": 0.0,
+                "best_pair_profit_ratio": 0.00003860975,
+                "best_pair_profit_abs": 0.000584127,
                 "profit_all_coin": -15.46546305,
                 "profit_all_fiat": -190921.14135225,
                 "profit_all_percent_mean": -49.62,
@@ -1025,8 +1028,9 @@ def test_api_edge_disabled(botclient, mocker, ticker, fee, markets):
             None,
             {
                 "best_pair": "XRP/BTC",
-                "best_rate": 1.0,
-                "best_pair_profit_ratio": 0.01,
+                "best_rate": 0.0,
+                "best_pair_profit_ratio": 0.000025203252,
+                "best_pair_profit_abs": 0.000155,
                 "profit_all_coin": -14.87167525,
                 "profit_all_fiat": -183590.83096125,
                 "profit_all_percent_mean": 0.13,
@@ -1079,7 +1083,8 @@ def test_api_profit(botclient, mocker, ticker, fee, markets, is_short, expected)
     assert rc.json() == {
         "avg_duration": ANY,
         "best_pair": expected["best_pair"],
-        "best_pair_profit_ratio": expected["best_pair_profit_ratio"],
+        "best_pair_profit_ratio": pytest.approx(expected["best_pair_profit_ratio"]),
+        "best_pair_profit_abs": expected["best_pair_profit_abs"],
         "best_rate": expected["best_rate"],
         "first_trade_date": ANY,
         "first_trade_humanized": ANY,
@@ -1156,59 +1161,35 @@ def test_api_performance(botclient, fee):
     ftbot, client = botclient
     patch_get_signal(ftbot)
 
-    trade = Trade(
-        pair="LTC/ETH",
-        amount=1,
-        exchange="binance",
-        stake_amount=1,
-        open_rate=0.245441,
-        is_open=False,
-        fee_close=fee.return_value,
-        fee_open=fee.return_value,
-        close_rate=0.265441,
-        leverage=1.0,
-    )
-    trade.close_profit = trade.calc_profit_ratio(trade.close_rate)
-    trade.close_profit_abs = trade.calc_profit(trade.close_rate)
-    Trade.session.add(trade)
-
-    trade = Trade(
-        pair="XRP/ETH",
-        amount=5,
-        stake_amount=1,
-        exchange="binance",
-        open_rate=0.412,
-        is_open=False,
-        fee_close=fee.return_value,
-        fee_open=fee.return_value,
-        close_rate=0.391,
-        leverage=1.0,
-    )
-    trade.close_profit = trade.calc_profit_ratio(trade.close_rate)
-    trade.close_profit_abs = trade.calc_profit(trade.close_rate)
-
-    Trade.session.add(trade)
-    Trade.commit()
+    create_mock_trades_usdt(fee)
 
     rc = client_get(client, f"{BASE_URI}/performance")
     assert_response(rc)
-    assert len(rc.json()) == 2
+    assert len(rc.json()) == 3
     assert rc.json() == [
         {
             "count": 1,
-            "pair": "LTC/ETH",
-            "profit": 7.61,
-            "profit_pct": 7.61,
-            "profit_ratio": 0.07609203,
-            "profit_abs": 0.0187228,
+            "pair": "NEO/USDT",
+            "profit": 1.99,
+            "profit_pct": 1.99,
+            "profit_ratio": 0.0199375,
+            "profit_abs": 3.9875,
         },
         {
             "count": 1,
-            "pair": "XRP/ETH",
-            "profit": -5.57,
-            "profit_pct": -5.57,
-            "profit_ratio": -0.05570419,
-            "profit_abs": -0.1150375,
+            "pair": "XRP/USDT",
+            "profit": 9.47,
+            "profit_abs": 2.8425,
+            "profit_pct": 9.47,
+            "profit_ratio": pytest.approx(0.094749999),
+        },
+        {
+            "count": 1,
+            "pair": "LTC/USDT",
+            "profit": -20.45,
+            "profit_abs": -4.09,
+            "profit_pct": -20.45,
+            "profit_ratio": -0.2045,
         },
     ]
 
@@ -1229,7 +1210,8 @@ def test_api_entries(botclient, fee):
     resp = response[0]
     assert resp["enter_tag"] == "TEST1"
     assert resp["count"] == 1
-    assert resp["profit_pct"] == 0.5
+    assert resp["profit_pct"] == 0.0
+    assert pytest.approx(resp["profit_ratio"]) == 0.000038609756
 
 
 def test_api_exits(botclient, fee):
@@ -1248,7 +1230,8 @@ def test_api_exits(botclient, fee):
     resp = response[0]
     assert resp["exit_reason"] == "sell_signal"
     assert resp["count"] == 1
-    assert resp["profit_pct"] == 0.5
+    assert resp["profit_pct"] == 0.0
+    assert pytest.approx(resp["profit_ratio"]) == 0.000038609756
 
 
 def test_api_mix_tag(botclient, fee):

@@ -3,12 +3,14 @@ Performance pair list filter
 """
 
 import logging
+from datetime import timedelta
 
 import pandas as pd
 
 from freqtrade.exchange.exchange_types import Tickers
 from freqtrade.persistence import Trade
 from freqtrade.plugins.pairlist.IPairList import IPairList, PairlistParameter, SupportsBacktesting
+from freqtrade.util.datetime_helpers import dt_now
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +71,8 @@ class PerformanceFilter(IPairList):
         """
         # Get the trading performance for pairs from database
         try:
-            performance = pd.DataFrame(Trade.get_overall_performance(self._minutes))
+            start_date = dt_now() - timedelta(minutes=self._minutes)
+            performance = pd.DataFrame(Trade.get_overall_performance(start_date))
         except AttributeError:
             # Performancefilter does not work in backtesting.
             self.log_once("PerformanceFilter is not available in this mode.", logger.warning)

@@ -758,7 +758,7 @@ For performance reasons, it's disabled by default and freqtrade will show a warn
 
 Additional orders also result in additional fees and those orders don't count towards `max_open_trades`.
 
-This callback is **not** called when there is an open order (either buy or sell) waiting for execution.
+This callback is also called when there is an open order (either buy or sell) waiting for execution - and will cancel the existing open order to place a new order if the amount, price or direction is different.
 
 `adjust_trade_position()` is called very frequently for the duration of a trade, so you must keep your implementation as performant as possible.
 
@@ -773,6 +773,11 @@ The combined stake currently allocated to the position is held in `trade.stake_a
     On dry and live run, this function will be called every `throttle_process_secs` (default to 5s). If you have a loose logic, for example your logic for extra entry is only to check RSI of last candle is below 30, then when such condition fulfilled, your bot will do extra re-entry every 5 secs until either it run out of money, it hit the `max_position_adjustment` limit, or a new candle with RSI more than 30 arrived.
 
     Same thing also can happen with partial exit. So be sure to have a strict logic and/or check for the last filled order.
+
+!!! Warning "Performance with many position adjustments"
+    Position adjustments can be a good approach to increase a strategy's output - but it can also have drawbacks if using this feature extensively.  
+    Each of the orders will be attached to the trade object for the duration of the trade - hence increasing memory usage.
+    Trades with long duration and 10s or even 100ds of position adjustments are therefore not recommended, and should be closed at regular intervals to not affect performance.
 
 !!! Warning "Backtesting"
     During backtesting this callback is called for each candle in `timeframe` or `timeframe_detail`, so run-time performance will be affected.
@@ -809,11 +814,6 @@ Back to the example above, since current rate is 200, the current USDT value of 
     Regular stoploss rules still apply (cannot move down).
 
     While `/stopentry` command stops the bot from entering new trades, the position adjustment feature will continue buying new orders on existing trades.
-
-!!! Warning "Performance with many position adjustments"
-    Position adjustments can be a good approach to increase a strategy's output - but it can also have drawbacks if using this feature extensively.  
-    Each of the orders will be attached to the trade object for the duration of the trade - hence increasing memory usage.
-    Trades with long duration and 10s or even 100ds of position adjustments are therefore not recommended, and should be closed at regular intervals to not affect performance.
 
 ``` python
 # Default imports

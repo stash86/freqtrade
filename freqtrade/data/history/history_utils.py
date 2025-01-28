@@ -19,6 +19,7 @@ from freqtrade.exceptions import OperationalException
 from freqtrade.exchange import Exchange
 from freqtrade.plugins.pairlist.pairlist_helpers import dynamic_expand_pairlist
 from freqtrade.util import dt_now, dt_ts, format_ms_time
+from freqtrade.util.datetime_helpers import format_ms_time_det
 from freqtrade.util.migrations import migrate_data
 from freqtrade.util.progress_tracker import CustomProgress, retrieve_progress_tracker
 
@@ -431,11 +432,11 @@ def _download_trades_history(
     # DEFAULT_TRADES_COLUMNS: 0 -> timestamp
     # DEFAULT_TRADES_COLUMNS: 1 -> id
 
-    if not trades.empty and since > 0 and since < trades.iloc[0]["timestamp"]:
+    if not trades.empty and since > 0 and (since + 1000) < trades.iloc[0]["timestamp"]:
         # since is before the first trade
         raise ValueError(
-            f"Start {format_ms_time(since)} earlier than "
-            f"available data ({trades.iloc[0]['date']:{DATETIME_PRINT_FORMAT}}). "
+            f"Start {format_ms_time_det(since)} earlier than "
+            f"available data ({format_ms_time_det(trades.iloc[0]['timestamp'])}). "
             f"Please use `--erase` if you'd like to redownload {pair}."
         )
 
@@ -443,7 +444,7 @@ def _download_trades_history(
     if not trades.empty and since < trades.iloc[-1]["timestamp"]:
         # Reset since to the last available point
         # - 5 seconds (to ensure we're getting all trades)
-        since = trades.iloc[-1]["timestamp"] - (5 * 1000)
+        since = int(trades.iloc[-1]["timestamp"] - (5 * 1000))
         logger.info(
             f"Using last trade date -5s - Downloading trades for {pair} "
             f"since: {format_ms_time(since)}."
@@ -462,7 +463,6 @@ def _download_trades_history(
     )
     logger.info(f"Current Amount of trades: {len(trades)}")
 
-    # Default since_ms to 30 days if nothing is given
     new_trades = exchange.get_historic_trades(
         pair=pair,
         since=since,
@@ -679,11 +679,17 @@ def download_data(
                 )
         else:
             if not exchange.get_option("ohlcv_has_history", True):
-                raise OperationalException(
-                    f"Historic klines not available for {exchange.name}. "
-                    "Please use `--dl-trades` instead for this exchange "
-                    "(will unfortunately take a long time)."
-                )
+                if not exchange.get_option("trades_has_history", True):
+                    raise OperationalException(
+                        f"Historic data not available for {exchange.name}. "
+                        f"{exchange.name} does not support downloading trades or ohlcv data."
+                    )
+                else:
+                    raise OperationalException(
+                        f"Historic klines not available for {exchange.name}. "
+                        "Please use `--dl-trades` instead for this exchange "
+                        "(will unfortunately take a long time)."
+                    )
             migrate_data(config, exchange)
             pairs_not_available = refresh_backtest_ohlcv_data(
                 exchange,

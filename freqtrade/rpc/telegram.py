@@ -1031,6 +1031,7 @@ class Telegram(RPCHandler):
         avg_duration = stats["avg_duration"]
         best_pair = stats["best_pair"]
         best_pair_profit_ratio = stats["best_pair_profit_ratio"]
+        best_pair_profit_abs = fmt_coin(stats["best_pair_profit_abs"], stake_cur)
         winrate = stats["winrate"]
         expectancy = stats["expectancy"]
         expectancy_ratio = stats["expectancy_ratio"]
@@ -1069,7 +1070,8 @@ class Telegram(RPCHandler):
             if stats["closed_trade_count"] > 0:
                 markdown_msg += (
                     f"\n*Avg. Duration:* `{avg_duration}`\n"
-                    f"*Best Performing:* `{best_pair}: {best_pair_profit_ratio:.2%}`\n"
+                    f"*Best Performing:* `{best_pair}: {best_pair_profit_abs} "
+                    f"({best_pair_profit_ratio:.2%})`\n"
                     f"*Trading volume:* `{fmt_coin(stats['trading_volume'], stake_cur)}`\n"
                     f"*Profit factor:* `{stats['profit_factor']:.2f}`\n"
                     f"*Expectancy (Ratio):* `{expectancy:.2f} ({expectancy_ratio:.2f})`\n"

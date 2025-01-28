@@ -2397,7 +2397,7 @@ class Exchange:
             if self._exchange_ws:
                 candle_ts = dt_ts(timeframe_to_prev_date(timeframe))
                 prev_candle_ts = dt_ts(date_minus_candles(timeframe, 1))
-                candles = self._exchange_ws.ccxt_object.ohlcvs.get(pair, {}).get(timeframe)
+                candles = self._exchange_ws.ohlcvs(pair, timeframe)
                 half_candle = int(candle_ts - (candle_ts - prev_candle_ts) * 0.5)
                 last_refresh_time = int(
                     self._exchange_ws.klines_last_refresh.get((pair, timeframe, candle_type), 0)
@@ -2960,7 +2960,7 @@ class Exchange:
             return trades[-1].get("timestamp")
 
     async def _async_get_trade_history_id_startup(
-        self, pair: str, since: int | None
+        self, pair: str, since: int
     ) -> tuple[list[list], str]:
         """
         override for initial trade_history_id call
@@ -2968,7 +2968,7 @@ class Exchange:
         return await self._async_fetch_trades(pair, since=since)
 
     async def _async_get_trade_history_id(
-        self, pair: str, until: int, since: int | None = None, from_id: str | None = None
+        self, pair: str, *, until: int, since: int, from_id: str | None = None
     ) -> tuple[str, list[list]]:
         """
         Asynchronously gets trade history using fetch_trades
@@ -3022,7 +3022,7 @@ class Exchange:
         return (pair, trades)
 
     async def _async_get_trade_history_time(
-        self, pair: str, until: int, since: int | None = None
+        self, pair: str, until: int, since: int
     ) -> tuple[str, list[list]]:
         """
         Asynchronously gets trade history using fetch_trades,
@@ -3063,7 +3063,7 @@ class Exchange:
     async def _async_get_trade_history(
         self,
         pair: str,
-        since: int | None = None,
+        since: int,
         until: int | None = None,
         from_id: str | None = None,
     ) -> tuple[str, list[list]]:
@@ -3094,7 +3094,7 @@ class Exchange:
     def get_historic_trades(
         self,
         pair: str,
-        since: int | None = None,
+        since: int,
         until: int | None = None,
         from_id: str | None = None,
     ) -> tuple[str, list]:

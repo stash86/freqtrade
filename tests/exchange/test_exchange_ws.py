@@ -18,7 +18,7 @@ def test_exchangews_init(mocker):
     sleep(0.1)
 
     assert exchange_ws.config == config
-    assert exchange_ws.ccxt_object == ccxt_object
+    assert exchange_ws._ccxt_object == ccxt_object
     assert exchange_ws._thread.name == "ccxt_ws"
     assert exchange_ws._background_tasks == set()
     assert exchange_ws._klines_watching == set()
@@ -67,12 +67,12 @@ async def test_exchangews_ohlcv(mocker, time_machine):
 
     async def sleeper(*args, **kwargs):
         # pass
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.12)
         return MagicMock()
 
     ccxt_object.watch_ohlcv = AsyncMock(side_effect=sleeper)
     ccxt_object.close = AsyncMock()
-    time_machine.move_to("2024-11-01 01:00:00 +00:00")
+    time_machine.move_to("2024-11-01 01:00:02 +00:00")
 
     mocker.patch("freqtrade.exchange.exchange_ws.ExchangeWS._start_forever", MagicMock())
 
@@ -84,7 +84,7 @@ async def test_exchangews_ohlcv(mocker, time_machine):
 
         exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
         exchange_ws.schedule_ohlcv("XRP/BTC", "1m", CandleType.SPOT)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.2)
 
         assert exchange_ws._klines_watching == {
             ("ETH/BTC", "1m", CandleType.SPOT),
@@ -95,19 +95,23 @@ async def test_exchangews_ohlcv(mocker, time_machine):
             ("XRP/BTC", "1m", CandleType.SPOT),
         }
         await asyncio.sleep(0.1)
-        assert ccxt_object.watch_ohlcv.call_count == 2
+        assert ccxt_object.watch_ohlcv.call_count == 6
         ccxt_object.watch_ohlcv.reset_mock()
 
         time_machine.shift(timedelta(minutes=5))
-        await asyncio.sleep(0.1)
         exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
+        await asyncio.sleep(1)
         # XRP/BTC should be cleaned up.
         assert exchange_ws._klines_watching == {
             ("ETH/BTC", "1m", CandleType.SPOT),
         }
+        # Cleanup happened.
+        exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
+        assert exchange_ws._klines_watching == {
+            ("ETH/BTC", "1m", CandleType.SPOT),
+        }
         assert exchange_ws._klines_scheduled == {
             ("ETH/BTC", "1m", CandleType.SPOT),
-            ("XRP/BTC", "1m", CandleType.SPOT),
         }
 
     finally:

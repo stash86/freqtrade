@@ -82,8 +82,8 @@ def test_common_scripts_options() -> None:
 
 
 def test_parse_args_version() -> None:
-    with pytest.raises(SystemExit, match=r"0"):
-        Arguments(["--version"]).get_parsed_arg()
+    args = Arguments(["--version"]).get_parsed_arg()
+    assert args["version_main"] is True
 
 
 def test_parse_args_invalid() -> None:

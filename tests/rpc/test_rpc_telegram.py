@@ -918,7 +918,7 @@ async def test_telegram_profit_handle(
     )
     assert "∙ `6.253 USD`" in msg_mock.call_args_list[-1][0][0]
 
-    assert "*Best Performing:* `ETH/USDT: 9.45%`" in msg_mock.call_args_list[-1][0][0]
+    assert "*Best Performing:* `ETH/USDT: 5.685 USDT (9.47%)`" in msg_mock.call_args_list[-1][0][0]
     assert "*Max Drawdown:*" in msg_mock.call_args_list[-1][0][0]
     assert "*Profit factor:*" in msg_mock.call_args_list[-1][0][0]
     assert "*Winrate:*" in msg_mock.call_args_list[-1][0][0]
@@ -1591,7 +1591,7 @@ async def test_telegram_performance_handle(default_conf_usdt, update, ticker, fe
     await telegram._performance(update=update, context=MagicMock())
     assert msg_mock.call_count == 1
     assert "Performance" in msg_mock.call_args_list[0][0][0]
-    assert "<code>XRP/USDT\t2.842 USDT (10.00%) (1)</code>" in msg_mock.call_args_list[0][0][0]
+    assert "<code>XRP/USDT\t2.842 USDT (9.47%) (1)</code>" in msg_mock.call_args_list[0][0][0]
 
 
 async def test_telegram_entry_tag_performance_handle(
@@ -1611,7 +1611,7 @@ async def test_telegram_entry_tag_performance_handle(
     await telegram._enter_tag_performance(update=update, context=context)
     assert msg_mock.call_count == 1
     assert "Entry Tag Performance" in msg_mock.call_args_list[0][0][0]
-    assert "`TEST1\t3.987 USDT (5.00%) (1)`" in msg_mock.call_args_list[0][0][0]
+    assert "`TEST1\t3.987 USDT (1.99%) (1)`" in msg_mock.call_args_list[0][0][0]
 
     context.args = ["XRP/USDT"]
     await telegram._enter_tag_performance(update=update, context=context)
@@ -1644,7 +1644,7 @@ async def test_telegram_exit_reason_performance_handle(
     await telegram._exit_reason_performance(update=update, context=context)
     assert msg_mock.call_count == 1
     assert "Exit Reason Performance" in msg_mock.call_args_list[0][0][0]
-    assert "`roi\t2.842 USDT (10.00%) (1)`" in msg_mock.call_args_list[0][0][0]
+    assert "`roi\t2.842 USDT (9.47%) (1)`" in msg_mock.call_args_list[0][0][0]
     context.args = ["XRP/USDT"]
 
     await telegram._exit_reason_performance(update=update, context=context)
