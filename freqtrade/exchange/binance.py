@@ -368,7 +368,7 @@ class Binance(Exchange):
             return {}
 
     async def _async_get_trade_history_id_startup(
-        self, pair: str, since: int | None
+        self, pair: str, since: int
     ) -> tuple[list[list], str]:
         """
         override for initial call

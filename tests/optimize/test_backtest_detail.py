@@ -1185,6 +1185,39 @@ tc56 = BTContainer(
 )
 
 
+# Test 57: Custom-entry-price for position adjustment which won't fill
+# Causing the negative adjustment to cancel the unfilled order and exit partially
+tc57 = BTContainer(
+    data=[
+        # D   O     H     L     C    V    EL XL ES Xs  BT
+        [0, 5000, 5050, 4950, 5000, 6172, 1, 0, 0, 0],
+        [1, 4598, 5200, 4498, 5000, 6172, 0, 0, 0, 0],
+        [2, 4900, 5250, 4900, 5100, 6172, 0, 0, 0, 0],  # Enhance position, but won't fill
+        [3, 5100, 5100, 4650, 4750, 6172, 0, 0, 0, 0],
+        [4, 4750, 4950, 4650, 4750, 6172, 0, 0, 0, 0],
+        [5, 4750, 4950, 4650, 4750, 6172, 0, 1, 0, 0],
+        [6, 4750, 4950, 4650, 4750, 6172, 0, 0, 0, 0],
+    ],
+    stop_loss=-0.2,
+    roi={"0": 0.50},
+    profit_perc=0.033,
+    use_exit_signal=True,
+    timeout=1000,
+    custom_entry_price=4600,
+    adjust_trade_position=[
+        None,
+        0.001,
+        None,
+        -0.0001,  # Cancels the above unfilled order and exits partially
+        None,
+        None,
+    ],
+    trades=[
+        BTrade(exit_reason=ExitType.EXIT_SIGNAL, open_tick=1, close_tick=6, is_short=False),
+    ],
+)
+
+
 TESTS = [
     tc0,
     tc1,
@@ -1243,6 +1276,7 @@ TESTS = [
     tc54,
     tc55,
     tc56,
+    tc57,
 ]
 
 
@@ -1289,7 +1323,13 @@ def test_backtest_results(default_conf, mocker, caplog, data: BTContainer) -> No
         backtesting.strategy.custom_entry_price = MagicMock(return_value=data.custom_entry_price)
     if data.custom_exit_price:
         backtesting.strategy.custom_exit_price = MagicMock(return_value=data.custom_exit_price)
-    backtesting.strategy.adjust_entry_price = MagicMock(return_value=data.adjust_entry_price)
+    if data.adjust_trade_position:
+        backtesting.strategy.position_adjustment_enable = True
+        backtesting.strategy.adjust_trade_position = MagicMock(
+            side_effect=data.adjust_trade_position
+        )
+    if data.adjust_entry_price:
+        backtesting.strategy.adjust_entry_price = MagicMock(return_value=data.adjust_entry_price)
 
     backtesting.strategy.use_custom_stoploss = data.use_custom_stoploss
     backtesting.strategy.leverage = lambda **kwargs: data.leverage
@@ -1317,6 +1357,6 @@ def test_backtest_results(default_conf, mocker, caplog, data: BTContainer) -> No
         assert res.close_date == _get_frame_time_from_offset(trade.close_tick)
         assert res.is_short == trade.is_short
     assert len(LocalTrade.bt_trades) == len(data.trades)
-    assert len(LocalTrade.bt_trades_open) == 0
+    assert len(LocalTrade.bt_trades_open) == 0, "Left open trade"
     backtesting.cleanup()
     del backtesting

@@ -294,7 +294,7 @@ async def test_get_daily_ohlcv(mocker, testdatadir):
             "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get",
             return_value=MockResponse(spot_path.read_bytes(), 200),
         )
-        df = await get_daily_ohlcv("spot", symbol, timeframe, date, session)
+        df = await get_daily_ohlcv(symbol, timeframe, CandleType.SPOT, date, session)
         assert get.call_count == 1
         assert df["date"].iloc[0] == first_date
         assert df["date"].iloc[-1] == last_date
@@ -306,7 +306,7 @@ async def test_get_daily_ohlcv(mocker, testdatadir):
             "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get",
             return_value=MockResponse(futures_path.read_bytes(), 200),
         )
-        df = await get_daily_ohlcv("futures/um", symbol, timeframe, date, session)
+        df = await get_daily_ohlcv(symbol, timeframe, CandleType.FUTURES, date, session)
         assert get.call_count == 1
         assert df["date"].iloc[0] == first_date
         assert df["date"].iloc[-1] == last_date
@@ -316,7 +316,9 @@ async def test_get_daily_ohlcv(mocker, testdatadir):
             return_value=MockResponse(b"", 404),
         )
         with pytest.raises(Http404):
-            df = await get_daily_ohlcv("spot", symbol, timeframe, date, session, retry_delay=0)
+            df = await get_daily_ohlcv(
+                symbol, timeframe, CandleType.SPOT, date, session, retry_delay=0
+            )
         assert get.call_count == 1
 
         get = mocker.patch(
@@ -325,7 +327,7 @@ async def test_get_daily_ohlcv(mocker, testdatadir):
         )
         mocker.patch("asyncio.sleep")
         with pytest.raises(BadHttpStatus):
-            df = await get_daily_ohlcv("spot", symbol, timeframe, date, session)
+            df = await get_daily_ohlcv(symbol, timeframe, CandleType.SPOT, date, session)
         assert get.call_count == 4  # 1 + 3 default retries
 
         get = mocker.patch(
@@ -333,5 +335,5 @@ async def test_get_daily_ohlcv(mocker, testdatadir):
             return_value=MockResponse(b"nop", 200),
         )
         with pytest.raises(zipfile.BadZipFile):
-            df = await get_daily_ohlcv("spot", symbol, timeframe, date, session)
+            df = await get_daily_ohlcv(symbol, timeframe, CandleType.SPOT, date, session)
         assert get.call_count == 4  # 1 + 3 default retries

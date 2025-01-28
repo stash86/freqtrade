@@ -145,7 +145,7 @@ To use BNFCR futures, you will have to have the following combination of setting
 
 The `stake_currency` setting defines the markets the bot will be operating in. This choice is really arbitrary.
 
-On the exchange, you'll have to use "Multi-asset Mode" - and "Position Mode set to "One-way Mode".
+On the exchange, you'll have to use "Multi-asset Mode" - and "Position Mode set to "One-way Mode".  
 Freqtrade will check these settings on startup, but won't attempt to change them.
 
 ## Bingx

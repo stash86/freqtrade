@@ -1,5 +1,6 @@
 # pragma pylint: disable=missing-docstring
 
+import re
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock
@@ -24,6 +25,14 @@ def test_parse_args_None(caplog) -> None:
     with pytest.raises(SystemExit):
         main([])
     assert log_has_re(r"Usage of Freqtrade requires a subcommand.*", caplog)
+
+
+def test_parse_args_version(capsys) -> None:
+    with pytest.raises(SystemExit):
+        main(["-V"])
+    captured = capsys.readouterr()
+    assert re.search(r"CCXT Version:\s.*", captured.out, re.MULTILINE)
+    assert re.search(r"Freqtrade Version:\s+freqtrade\s.*", captured.out, re.MULTILINE)
 
 
 def test_parse_args_backtesting(mocker) -> None:

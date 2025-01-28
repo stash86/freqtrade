@@ -45,6 +45,7 @@ class BTContainer(NamedTuple):
     leverage: float = 1.0
     timeout: int | None = None
     adjust_entry_price: float | None = None
+    adjust_trade_position: list[float] | None = None
 
 
 def _get_frame_time_from_offset(offset):

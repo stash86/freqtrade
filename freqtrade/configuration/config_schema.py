@@ -755,7 +755,7 @@ CONF_SCHEMA = {
                     "type": "array",
                     "items": {"type": "string"},
                 },
-                "x": {
+                "verbosity": {
                     "description": "Logging verbosity level.",
                     "type": "string",
                     "enum": ["error", "info"],

@@ -347,7 +347,7 @@ class Arguments:
         self.parser = ArgumentParser(
             prog="freqtrade", description="Free, open source crypto trading bot"
         )
-        self._build_args(optionlist=["version"], parser=self.parser)
+        self._build_args(optionlist=["version_main"], parser=self.parser)
 
         from freqtrade.commands import (
             start_analysis_entries_exits,

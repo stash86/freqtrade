@@ -18,7 +18,7 @@ from freqtrade.commands import Arguments
 from freqtrade.constants import DOCS_LINK
 from freqtrade.exceptions import ConfigurationError, FreqtradeException, OperationalException
 from freqtrade.loggers import setup_logging_pre
-from freqtrade.system import asyncio_setup, gc_set_threshold
+from freqtrade.system import asyncio_setup, gc_set_threshold, print_version_info
 
 
 logger = logging.getLogger("freqtrade")
@@ -38,7 +38,10 @@ def main(sysargv: list[str] | None = None) -> None:
         args = arguments.get_parsed_arg()
 
         # Call subcommand.
-        if "func" in args:
+        if args.get("version") or args.get("version_main"):
+            print_version_info()
+            return_code = 0
+        elif "func" in args:
             logger.info(f"freqtrade {__version__}")
             gc_set_threshold()
             return_code = args["func"](args)

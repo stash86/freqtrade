@@ -4,7 +4,7 @@ Definition of cli arguments used in arguments.py
 
 from argparse import SUPPRESS, ArgumentTypeError
 
-from freqtrade import __version__, constants
+from freqtrade import constants
 from freqtrade.constants import HYPEROPT_LOSS_BUILTIN
 from freqtrade.enums import CandleType
 
@@ -59,8 +59,15 @@ AVAILABLE_CLI_OPTIONS = {
     "version": Arg(
         "-V",
         "--version",
-        action="version",
-        version=f"%(prog)s {__version__}",
+        help="show program's version number and exit",
+        action="store_true",
+    ),
+    "version_main": Arg(
+        # Copy of version - used to have -V available with and without subcommand.
+        "-V",
+        "--version",
+        help="show program's version number and exit",
+        action="store_true",
     ),
     "config": Arg(
         "-c",

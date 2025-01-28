@@ -360,6 +360,8 @@ Return the performance of each crypto-currency the bot has sold.
 > 5. `STORJ/BTC 0.0009 BTC (27.24%) (1)`  
 > ...  
 
+The relative performance is calculated against the total investment in the currency, aggregating all filled entries for the currency.
+
 ### /balance
 
 Return the balance of all crypto-currency your have on the exchange.

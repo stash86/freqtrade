@@ -6,7 +6,7 @@ import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from math import isclose
 from typing import Any, ClassVar, Optional, cast
 
@@ -19,6 +19,7 @@ from sqlalchemy import (
     Select,
     String,
     UniqueConstraint,
+    case,
     desc,
     func,
     select,
@@ -191,6 +192,7 @@ class Order(ModelBase):
         return (
             f"Order(id={self.id}, trade={self.ft_trade_id}, order_id={self.order_id}, "
             f"side={self.side}, filled={self.safe_filled}, price={self.safe_price}, "
+            f"amount={self.amount}, "
             f"status={self.status}, date={self.order_date_utc:{DATETIME_PRINT_FORMAT}})"
         )
 
@@ -268,6 +270,7 @@ class Order(ModelBase):
             "order_filled_timestamp": dt_ts_none(self.order_filled_utc),
             "ft_is_entry": self.ft_order_side == entry_side,
             "ft_order_tag": self.ft_order_tag,
+            "cost": self.cost if self.cost else 0,
         }
         if not minified:
             resp.update(
@@ -276,7 +279,6 @@ class Order(ModelBase):
                     "order_id": self.order_id,
                     "status": self.status,
                     "average": round(self.average, 8) if self.average else 0,
-                    "cost": self.cost if self.cost else 0,
                     "filled": self.filled,
                     "is_open": self.ft_is_open,
                     "order_date": (
@@ -391,7 +393,6 @@ class LocalTrade:
     # Copy of trades_open - but indexed by pair
     bt_trades_open_pp: dict[str, list["LocalTrade"]] = defaultdict(list)
     bt_open_open_trade_count: int = 0
-    bt_open_open_trade_count_candle: int = 0
     bt_total_profit: float = 0
     realized_profit: float = 0
 
@@ -600,6 +601,13 @@ class LocalTrade:
         return len(open_orders_wo_sl) > 0
 
     @property
+    def has_open_position(self) -> bool:
+        """
+        True if there is an open position for this trade
+        """
+        return self.amount > 0
+
+    @property
     def open_sl_orders(self) -> list[Order]:
         """
         All open stoploss orders for this trade
@@ -762,7 +770,6 @@ class LocalTrade:
         LocalTrade.bt_trades_open = []
         LocalTrade.bt_trades_open_pp = defaultdict(list)
         LocalTrade.bt_open_open_trade_count = 0
-        LocalTrade.bt_open_open_trade_count_candle = 0
         LocalTrade.bt_total_profit = 0
 
     def adjust_min_max_rates(self, current_price: float, current_price_low: float) -> None:
@@ -1491,11 +1498,6 @@ class LocalTrade:
         LocalTrade.bt_trades_open.remove(trade)
         LocalTrade.bt_trades_open_pp[trade.pair].remove(trade)
         LocalTrade.bt_open_open_trade_count -= 1
-        if (trade.close_date_utc - trade.open_date_utc) > timedelta(minutes=trade.timeframe):
-            # Only subtract trades that are open for more than 1 candle
-            # To avoid exceeding max_open_trades.
-            # Must be reset at the start of every candle during backesting.
-            LocalTrade.bt_open_open_trade_count_candle -= 1
         LocalTrade.bt_trades.append(trade)
         LocalTrade.bt_total_profit += trade.close_profit_abs
 
@@ -1505,7 +1507,6 @@ class LocalTrade:
             LocalTrade.bt_trades_open.append(trade)
             LocalTrade.bt_trades_open_pp[trade.pair].append(trade)
             LocalTrade.bt_open_open_trade_count += 1
-            LocalTrade.bt_open_open_trade_count_candle += 1
         else:
             LocalTrade.bt_trades.append(trade)
 
@@ -1514,9 +1515,6 @@ class LocalTrade:
         LocalTrade.bt_trades_open.remove(trade)
         LocalTrade.bt_trades_open_pp[trade.pair].remove(trade)
         LocalTrade.bt_open_open_trade_count -= 1
-        # TODO: The below may have odd behavior in case of canceled entries
-        # It might need to be removed so the trade "counts" as open for this candle.
-        LocalTrade.bt_open_open_trade_count_candle -= 1
 
     @staticmethod
     def get_open_trades() -> list[Any]:
@@ -1945,28 +1943,72 @@ class Trade(ModelBase, LocalTrade):
         return total_open_stake_amount or 0
 
     @staticmethod
-    def get_overall_performance(minutes=None) -> list[dict[str, Any]]:
+    def _generic_performance_query(columns: list, filters: list, fallback: str = "") -> Select:
+        """
+        Retrieve a generic select object to calculate performance grouped on `columns`.
+        Returns the following columns:
+        - columns
+        - profit_ratio
+        - profit_sum_abs
+        - count
+        NOTE: Not supported in Backtesting.
+        """
+        columns_coal = [func.coalesce(c, fallback).label(c.name) for c in columns]
+        pair_costs = (
+            select(
+                *columns_coal,
+                func.sum(
+                    (
+                        func.coalesce(Order.filled, Order.amount)
+                        * func.coalesce(Order.average, Order.price, Order.ft_price)
+                    )
+                    / func.coalesce(Trade.leverage, 1)
+                ).label("cost_per_pair"),
+            )
+            .join(Order, Trade.id == Order.ft_trade_id)
+            .filter(
+                *filters,
+                Order.ft_order_side == case((Trade.is_short.is_(True), "sell"), else_="buy"),
+                Order.filled > 0,
+            )
+            .group_by(*columns)
+            .cte("pair_costs")
+        )
+        trades_grouped = (
+            select(
+                *columns_coal,
+                func.sum(Trade.close_profit_abs).label("profit_sum_abs"),
+                func.count(*columns_coal).label("count"),
+            )
+            .filter(*filters)
+            .group_by(*columns_coal)
+            .cte("trades_grouped")
+        )
+        q = (
+            select(
+                *[trades_grouped.c[x.name] for x in columns],
+                (trades_grouped.c.profit_sum_abs / pair_costs.c.cost_per_pair).label(
+                    "profit_ratio"
+                ),
+                trades_grouped.c.profit_sum_abs,
+                trades_grouped.c.count,
+            )
+            .join(pair_costs, *[trades_grouped.c[x.name] == pair_costs.c[x.name] for x in columns])
+            .order_by(desc("profit_sum_abs"))
+        )
+        return q
+
+    @staticmethod
+    def get_overall_performance(start_date: datetime | None = None) -> list[dict[str, Any]]:
         """
         Returns List of dicts containing all Trades, including profit and trade count
         NOTE: Not supported in Backtesting.
         """
         filters: list = [Trade.is_open.is_(False)]
-        if minutes:
-            start_date = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+        if start_date:
             filters.append(Trade.close_date >= start_date)
-
-        pair_rates = Trade.session.execute(
-            select(
-                Trade.pair,
-                func.sum(Trade.close_profit).label("profit_sum"),
-                func.sum(Trade.close_profit_abs).label("profit_sum_abs"),
-                func.count(Trade.pair).label("count"),
-            )
-            .filter(*filters)
-            .group_by(Trade.pair)
-            .order_by(desc("profit_sum_abs"))
-        ).all()
-
+        pair_rates_query = Trade._generic_performance_query([Trade.pair], filters)
+        pair_rates = Trade.session.execute(pair_rates_query).all()
         return [
             {
                 "pair": pair,
@@ -1991,17 +2033,8 @@ class Trade(ModelBase, LocalTrade):
         if pair is not None:
             filters.append(Trade.pair == pair)
 
-        enter_tag_perf = Trade.session.execute(
-            select(
-                Trade.enter_tag,
-                func.sum(Trade.close_profit).label("profit_sum"),
-                func.sum(Trade.close_profit_abs).label("profit_sum_abs"),
-                func.count(Trade.pair).label("count"),
-            )
-            .filter(*filters)
-            .group_by(Trade.enter_tag)
-            .order_by(desc("profit_sum_abs"))
-        ).all()
+        pair_rates_query = Trade._generic_performance_query([Trade.enter_tag], filters, "Other")
+        enter_tag_perf = Trade.session.execute(pair_rates_query).all()
 
         return [
             {
@@ -2025,17 +2058,9 @@ class Trade(ModelBase, LocalTrade):
         filters: list = [Trade.is_open.is_(False)]
         if pair is not None:
             filters.append(Trade.pair == pair)
-        sell_tag_perf = Trade.session.execute(
-            select(
-                Trade.exit_reason,
-                func.sum(Trade.close_profit).label("profit_sum"),
-                func.sum(Trade.close_profit_abs).label("profit_sum_abs"),
-                func.count(Trade.pair).label("count"),
-            )
-            .filter(*filters)
-            .group_by(Trade.exit_reason)
-            .order_by(desc("profit_sum_abs"))
-        ).all()
+
+        pair_rates_query = Trade._generic_performance_query([Trade.exit_reason], filters, "Other")
+        sell_tag_perf = Trade.session.execute(pair_rates_query).all()
 
         return [
             {
@@ -2116,13 +2141,9 @@ class Trade(ModelBase, LocalTrade):
         if start_date:
             filters.append(Trade.close_date >= start_date)
 
-        best_pair = Trade.session.execute(
-            select(Trade.pair, func.sum(Trade.close_profit).label("profit_sum"))
-            .filter(*filters)
-            .group_by(Trade.pair)
-            .order_by(desc("profit_sum"))
-        ).first()
-
+        pair_rates_query = Trade._generic_performance_query([Trade.pair], filters)
+        best_pair = Trade.session.execute(pair_rates_query).first()
+        # returns pair, profit_ratio, abs_profit, count
         return best_pair
 
     @staticmethod

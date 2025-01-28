@@ -102,3 +102,16 @@ def test_download_data_main_data_invalid(mocker):
     )
     with pytest.raises(OperationalException, match=r"Historic klines not available for .*"):
         download_data_main(config)
+
+    patch_exchange(mocker, exchange="hyperliquid")
+    mocker.patch(f"{EXMS}.get_markets", return_value={"ETH/USDC": {}})
+    config2 = setup_utils_configuration({"exchange": "hyperliquid"}, RunMode.UTIL_EXCHANGE)
+    config2.update(
+        {
+            "days": 20,
+            "pairs": ["ETH/USDC", "XRP/USDC"],
+            "timeframes": ["5m", "1h"],
+        }
+    )
+    with pytest.raises(OperationalException, match=r"Historic data not available for .*"):
+        download_data_main(config2)
