@@ -2,7 +2,7 @@
     "exchange": {
         "pair_blacklist": [
             // Bad
-            "(DOGE|SHIB|PEPE)/.*",
+            "(DOGE|SHIB|PEPE|TRUMP)/.*",
             // Leverage
             ".*(_PREMIUM|BEAR|BULL|DOWN|HALF|HEDGE|UP|[1235][SL]|2021)/.*",
             // Timed futures
