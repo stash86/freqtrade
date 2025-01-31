@@ -12,7 +12,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from math import floor, isnan
 from threading import Lock
-from typing import Any, Literal, TypeGuard
+from typing import Any, Literal, TypeGuard, TypeVar
 
 import ccxt
 import ccxt.pro as ccxt_pro
@@ -112,6 +112,8 @@ from freqtrade.util.periodic_cache import PeriodicCache
 
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class Exchange:
@@ -886,6 +888,24 @@ class Exchange:
         if endpoint in self._ft_has.get("exchange_has_overrides", {}):
             return self._ft_has["exchange_has_overrides"][endpoint]
         return endpoint in self._api_async.has and self._api_async.has[endpoint]
+
+    def features(
+        self, market_type: Literal["spot", "futures"], endpoint, attribute, default: T
+    ) -> T:
+        """
+        Returns the exchange features for the given markettype
+        https://docs.ccxt.com/#/README?id=features
+        attributes are in a nested dict, with spot and swap.linear
+        e.g. spot.fetchOHLCV.limit
+             swap.linear.fetchOHLCV.limit
+        """
+        feat = (
+            self._api_async.features.get("spot", {})
+            if market_type == "spot"
+            else self._api_async.features.get("swap", {}).get("linear", {})
+        )
+
+        return feat.get(endpoint, {}).get(attribute, default)
 
     def get_precision_amount(self, pair: str) -> float | None:
         """

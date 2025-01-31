@@ -1779,15 +1779,6 @@ def limit_buy_order_open():
     }
 
 
-@pytest.fixture(scope="function")
-def limit_buy_order(limit_buy_order_open):
-    order = deepcopy(limit_buy_order_open)
-    order["status"] = "closed"
-    order["filled"] = order["amount"]
-    order["remaining"] = 0.0
-    return order
-
-
 @pytest.fixture
 def limit_buy_order_old():
     return {
