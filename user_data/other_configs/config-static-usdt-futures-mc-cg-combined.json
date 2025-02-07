@@ -1,12 +1,14 @@
 {
-    "max_open_trades": 4,
+    "max_open_trades": -1,
     "stake_currency": "USDT",
-    "stake_amount": 15,
+    "stake_amount" : 45,
+    "amend_last_stake_amount ": true,
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
     "dry_run": true,
-    "dry_run_wallet": 65,
+    "dry_run_wallet": 11500,
     "trading_mode": "futures",
+    "margin_mode": "isolated",
     "cancel_open_orders_on_exit": false,
     "unfilledtimeout": {
         "entry": 10,
@@ -39,51 +41,31 @@
         "use_order_book": true,
         "order_book_top": 1
     },
+    "pairlists": [
+        {"method": "StaticPairList"},
+    ],
     "exchange": {
         "name": "binance",
         "key": "1",
         "secret": "2",
-        "ccxt_config": {},
+        "ccxt_config": {"enableRateLimit": true},
         "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 200
         },
         "pair_whitelist": [
-            ".*/USDT:USDT"
+            "BTC/USDT:USDT", "ETH/USDT:USDT", "BNB/USDT:USDT", "SOL/USDT:USDT", "XRP/USDT:USDT", "ADA/USDT:USDT", 
+            "AVAX/USDT:USDT", "LINK/USDT:USDT", "TRX/USDT:USDT", "DOT/USDT:USDT", "MATIC/USDT:USDT", "ICP/USDT:USDT", 
+            "LTC/USDT:USDT", "UNI/USDT:USDT", "BCH/USDT:USDT", "ETC/USDT:USDT", "ATOM/USDT:USDT", "OP/USDT:USDT", 
+            "XLM/USDT:USDT", "IMX/USDT:USDT", "SUI/USDT:USDT", "TON/USDT:USDT", "HBAR/USDT:USDT", "NEAR/USDT:USDT", 
+            "APT/USDT:USDT", "XMR/USDT:USDT", "VET/USDT:USDT", "OM/USDT:USDT", "ALGO/USDT:USDT", "KAS/USDT:USDT", 
+            "TAO/USDT:USDT", "FIL/USDT:USDT", "TIA/USDT:USDT", "INJ/USDT:USDT", "THETA/USDT:USDT", "SEI/USDT:USDT", 
+            "GALA/USDT:USDT", "KAIA/USDT:USDT", "XTZ/USDT:USDT", "IOTA/USDT:USDT", "FLOW/USDT:USDT", "AR/USDT:USDT", 
+            "EGLD/USDT:USDT", "DYDX/USDT:USDT", "CHZ/USDT:USDT", "KAVA/USDT:USDT", "ROSE/USDT:USDT", "ASTR/USDT:USDT", 
+            "FET/USDT:USDT", "RNDR/USDT:USDT", "STX/USDT:USDT", "ARB/USDT:USDT", "WIF/USDT:USDT"
         ],
-        "pair_blacklist": [
-            // Bad
-            "(DOGE|SHIB|PEPE|TRUMP)/.*",
-            // Leverage
-            ".*(_PREMIUM|BEAR|BULL|DOWN|HALF|HEDGE|UP|[1235][SL]|2021)/.*",
-            // Timed futures
-            ".*(USDT_|USDT-).*",
-            // Fiat
-            "(AUD|BRZ|CAD|CHF|EUR|GBP|HKD|IDRT|JPY|NGN|RUB|SGD|TRY|UAH|USD|ZAR)/.*",
-            // Stable
-            "(BUSD|CUSD|CUSDT|DAI|PAX|PAXG|SUSD|TUSD|USDC|USDN|USDP|USDT|UST|VAI|USDD|USDJ)/.*",
-            // FAN
-            "(ACM|AFA|ALA|ALL|ALPINE|ANT|APL|ASR|ATM|BAR|CAI|CITY|FOR|GAL|GOZ|IBFK|JUV|LAZIO|LEG|LOCK-1|MULTI|NAVI|NMR|NOV|OG|PFL|PORTO|PSG|ROUSH|SANTOS|STV|TH|TRA|UCH|UFC|VAI|XMR|YBO)/.*",
-        ]
+        "pair_blacklist": []
     },
-    "pairlists": [
-        {
-            "method": "MarketCapPairList",
-            "number_assets": 40,
-            "max_rank": 50,
-            "refresh_period": 86400
-        },
-        {"method": "AgeFilter", "min_days_listed": 30},
-        // {
-        //     "method": "VolatilityFilter",
-        //     "lookback_days": 3,
-        //     "min_volatility": 0.02,
-        //     "refresh_period": 1800
-        // },
-        // {
-        //     "method": "VolumePairList",
-        //     "number_assets": 170,
-        //     "sort_key": "quoteVolume"
-        // }
-    ],
     "edge": {
         "enabled": false,
         "process_throttle_secs": 3600,
@@ -93,29 +75,24 @@
         "stoploss_range_max": -0.1,
         "stoploss_range_step": -0.01,
         "minimum_winrate": 0.60,
-        "minimum_expectancy": 0.20,
+        "minimum_expectancy": 0.10,
         "min_trade_number": 10,
         "max_trade_duration_minute": 1440,
         "remove_pumps": false
     },
-    "telegram": {
-        "enabled": false,
-        "token": "your_telegram_token",
-        "chat_id": "your_telegram_chat_id"
-    },
     "api_server": {
         "enabled": false,
-        "listen_ip_address": "127.0.0.1",
+        "listen_ip_address": "0.0.0.0",
         "listen_port": 8080,
         "verbosity": "error",
-        "jwt_secret_key": "somethingrandom",
+        "jwt_secret_key": "00",
         "CORS_origins": [],
-        "username": "freqtrader",
-        "password": "SuperSecurePassword"
+        "username": "11",
+        "password": "22"
     },
-    "bot_name": "freqtrade",
+    "bot_name": "freqtrade_bot",
     "initial_state": "running",
-    "forcebuy_enable": false,
+    "force_entry_enable": false,
     "internals": {
         "process_throttle_secs": 5
     }
