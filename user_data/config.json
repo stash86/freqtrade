@@ -5,7 +5,6 @@
     "amend_last_stake_amount ": true,
     // "tradable_balance_ratio": 0.99,
     "available_capital": 100,
-    "fiat_display_currency": "USD",
     "dry_run": true,
     "dry_run_wallet": 100,
     "cancel_open_orders_on_exit": false,
@@ -13,7 +12,7 @@
     "initial_state": "running",
     "force_entry_enable": false,
     "internals": {
-        "process_throttle_secs": 5
+        "process_throttle_secs": 3
     },
     // "db_url": "sqlite:///user_data/tradesv3.sqlite",
     "db_url": "sqlite:////freqtrade/user_data/tradesv3-cend-2-kucoin.sqlite", // docker
@@ -21,8 +20,8 @@
     "strategy": "SampleStrategy",
     "strategy_path": "freqtrade_strategies",
     "add_config_files": [
-        "config-pairlist-usdt-mc.json",
-        "config-orders-limit-entry-15m.json",
+        "config-pairlist-usdt-futures-mc-cg.json",
+        "config-orders-futures-all-limit-same-15m.json",
         "config-exchange.json",
         "config-exchange-general.json",
         "config-exchange-blacklist.json",
