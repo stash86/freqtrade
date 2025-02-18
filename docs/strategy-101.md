@@ -79,6 +79,8 @@ import talib.abstract as ta
 
 class MyStrategy(IStrategy):
 
+    timeframe = '15m'
+
     # set the initial stoploss to -10%
     stoploss = -0.10
 

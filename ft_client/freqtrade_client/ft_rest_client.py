@@ -23,10 +23,18 @@ PostDataT = dict[str, Any] | list[dict[str, Any]] | None
 
 class FtRestClient:
     def __init__(
-        self, serverurl, username=None, password=None, *, pool_connections=10, pool_maxsize=10
+        self,
+        serverurl,
+        username=None,
+        password=None,
+        *,
+        pool_connections=10,
+        pool_maxsize=10,
+        timeout=10,
     ):
         self._serverurl = serverurl
         self._session = requests.Session()
+        self._timeout = timeout
 
         # allow configuration of pool
         adapter = HTTPAdapter(pool_connections=pool_connections, pool_maxsize=pool_maxsize)
@@ -50,7 +58,9 @@ class FtRestClient:
         url = urlunparse((schema, netloc, path, par, query, fragment))
 
         try:
-            resp = self._session.request(method, url, headers=hd, data=json.dumps(data))
+            resp = self._session.request(
+                method, url, headers=hd, timeout=self._timeout, data=json.dumps(data)
+            )
             # return resp.text
             return resp.json()
         except RequestConnectionError:

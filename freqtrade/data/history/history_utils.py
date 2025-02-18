@@ -18,8 +18,7 @@ from freqtrade.enums import CandleType, TradingMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange import Exchange
 from freqtrade.plugins.pairlist.pairlist_helpers import dynamic_expand_pairlist
-from freqtrade.util import dt_now, dt_ts, format_ms_time
-from freqtrade.util.datetime_helpers import format_ms_time_det
+from freqtrade.util import dt_now, dt_ts, format_ms_time, format_ms_time_det
 from freqtrade.util.migrations import migrate_data
 from freqtrade.util.progress_tracker import CustomProgress, retrieve_progress_tracker
 

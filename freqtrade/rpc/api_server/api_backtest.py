@@ -99,16 +99,18 @@ def __run_backtest_bg(btconfig: Config):
                 ApiBG.bt["data"], ApiBG.bt["bt"].all_results, min_date=min_date, max_date=max_date
             )
 
-        if btconfig.get("export", "none") == "trades":
-            combined_res = combined_dataframes_with_rel_mean(ApiBG.bt["data"], min_date, max_date)
-            fn = store_backtest_results(
-                btconfig,
-                ApiBG.bt["bt"].results,
-                datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
-                market_change_data=combined_res,
-            )
-            ApiBG.bt["bt"].results["metadata"][strategy_name]["filename"] = str(fn.stem)
-            ApiBG.bt["bt"].results["metadata"][strategy_name]["strategy"] = strategy_name
+            if btconfig.get("export", "none") == "trades":
+                combined_res = combined_dataframes_with_rel_mean(
+                    ApiBG.bt["data"], min_date, max_date
+                )
+                fn = store_backtest_results(
+                    btconfig,
+                    ApiBG.bt["bt"].results,
+                    datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
+                    market_change_data=combined_res,
+                )
+                ApiBG.bt["bt"].results["metadata"][strategy_name]["filename"] = str(fn.stem)
+                ApiBG.bt["bt"].results["metadata"][strategy_name]["strategy"] = strategy_name
 
         logger.info("Backtest finished.")
 

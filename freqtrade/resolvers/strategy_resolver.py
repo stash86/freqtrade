@@ -16,7 +16,7 @@ from freqtrade.configuration.config_validation import validate_migrated_strategy
 from freqtrade.constants import REQUIRED_ORDERTIF, REQUIRED_ORDERTYPES, USERPATH_STRATEGIES, Config
 from freqtrade.enums import TradingMode
 from freqtrade.exceptions import OperationalException
-from freqtrade.resolvers import IResolver
+from freqtrade.resolvers.iresolver import IResolver
 from freqtrade.strategy.interface import IStrategy
 
 

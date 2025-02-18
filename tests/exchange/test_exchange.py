@@ -4436,7 +4436,7 @@ def test_ohlcv_candle_limit(default_conf, mocker, exchange_name):
         pytest.skip("Tested separately for okx")
     exchange = get_patched_exchange(mocker, default_conf, exchange=exchange_name)
     timeframes = ("1m", "5m", "1h")
-    expected = exchange._ft_has["ohlcv_candle_limit"]
+    expected = exchange._ft_has.get("ohlcv_candle_limit", 500)
     for timeframe in timeframes:
         # if 'ohlcv_candle_limit_per_timeframe' in exchange._ft_has:
         # expected = exchange._ft_has['ohlcv_candle_limit_per_timeframe'][timeframe]

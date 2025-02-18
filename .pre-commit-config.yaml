@@ -9,7 +9,7 @@ repos:
         # stages: [push]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.14.1"
+    rev: "v1.15.0"
     hooks:
       - id: mypy
         exclude: build_helpers
@@ -19,7 +19,7 @@ repos:
           - types-requests==2.32.0.20241016
           - types-tabulate==0.9.0.20241207
           - types-python-dateutil==2.9.0.20241206
-          - SQLAlchemy==2.0.37
+          - SQLAlchemy==2.0.38
         # stages: [push]
 
   - repo: https://github.com/pycqa/isort
@@ -31,7 +31,7 @@ repos:
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.9.3'
+    rev: 'v0.9.6'
     hooks:
       - id: ruff
       - id: ruff-format
@@ -62,8 +62,14 @@ repos:
       - id: strip-exif
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.0
+    rev: v2.4.1
     hooks:
     - id: codespell
       additional_dependencies:
         - tomli
+
+  # Ensure github actions remain safe
+  - repo: https://github.com/woodruffw/zizmor-pre-commit
+    rev: v1.3.1
+    hooks:
+    - id: zizmor

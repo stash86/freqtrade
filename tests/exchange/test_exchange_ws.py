@@ -1,8 +1,11 @@
 import asyncio
+import logging
 import threading
 from datetime import timedelta
 from time import sleep
 from unittest.mock import AsyncMock, MagicMock
+
+from ccxt import NotSupported
 
 from freqtrade.enums import CandleType
 from freqtrade.exchange.exchange_ws import ExchangeWS
@@ -61,14 +64,17 @@ def patch_eventloop_threading(exchange):
         pass
 
 
-async def test_exchangews_ohlcv(mocker, time_machine):
+async def test_exchangews_ohlcv(mocker, time_machine, caplog):
     config = MagicMock()
     ccxt_object = MagicMock()
+    caplog.set_level(logging.DEBUG)
 
     async def sleeper(*args, **kwargs):
         # pass
         await asyncio.sleep(0.12)
         return MagicMock()
+
+    ccxt_object.un_watch_ohlcv_for_symbols = AsyncMock(side_effect=NotSupported)
 
     ccxt_object.watch_ohlcv = AsyncMock(side_effect=sleeper)
     ccxt_object.close = AsyncMock()
@@ -101,11 +107,14 @@ async def test_exchangews_ohlcv(mocker, time_machine):
         time_machine.shift(timedelta(minutes=5))
         exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
         await asyncio.sleep(1)
+        assert log_has_re("un_watch_ohlcv_for_symbols not supported: ", caplog)
         # XRP/BTC should be cleaned up.
         assert exchange_ws._klines_watching == {
             ("ETH/BTC", "1m", CandleType.SPOT),
         }
+
         # Cleanup happened.
+        ccxt_object.un_watch_ohlcv_for_symbols = AsyncMock(side_effect=ValueError)
         exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
         assert exchange_ws._klines_watching == {
             ("ETH/BTC", "1m", CandleType.SPOT),
@@ -117,6 +126,7 @@ async def test_exchangews_ohlcv(mocker, time_machine):
     finally:
         # Cleanup
         exchange_ws.cleanup()
+    assert log_has_re("Exception in _unwatch_ohlcv", caplog)
 
 
 async def test_exchangews_get_ohlcv(mocker, caplog):

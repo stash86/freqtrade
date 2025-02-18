@@ -75,8 +75,7 @@ def setup_logging(config: Config) -> None:
             # config['logfilename']), which defaults to '/dev/log', applicable for most
             # of the systems.
             address = (s[1], int(s[2])) if len(s) > 2 else s[1] if len(s) > 1 else "/dev/log"
-            handler_sl = get_existing_handlers(SysLogHandler)
-            if handler_sl:
+            if handler_sl := get_existing_handlers(SysLogHandler):
                 logging.root.removeHandler(handler_sl)
             handler_sl = SysLogHandler(address=address)
             # No datetime field for logging into syslog, to allow syslog
@@ -92,8 +91,7 @@ def setup_logging(config: Config) -> None:
                     "You need the cysystemd python package be installed in "
                     "order to use logging to journald."
                 )
-            handler_jd = get_existing_handlers(JournaldLogHandler)
-            if handler_jd:
+            if handler_jd := get_existing_handlers(JournaldLogHandler):
                 logging.root.removeHandler(handler_jd)
             handler_jd = JournaldLogHandler()
             # No datetime field for logging into journald, to allow syslog
@@ -102,8 +100,7 @@ def setup_logging(config: Config) -> None:
             handler_jd.setFormatter(Formatter("%(name)s - %(levelname)s - %(message)s"))
             logging.root.addHandler(handler_jd)
         else:
-            handler_rf = get_existing_handlers(RotatingFileHandler)
-            if handler_rf:
+            if handler_rf := get_existing_handlers(RotatingFileHandler):
                 logging.root.removeHandler(handler_rf)
             try:
                 logfile_path = Path(logfile)

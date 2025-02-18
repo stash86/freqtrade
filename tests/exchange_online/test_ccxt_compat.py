@@ -48,6 +48,22 @@ class TestCCXTExchange:
             }
         )
 
+    def test_ohlcv_limit(self, exchange: EXCHANGE_FIXTURE_TYPE):
+        exch, exchangename = exchange
+        expected_count = EXCHANGES[exchangename].get("candle_count")
+        if not expected_count:
+            pytest.skip("No expected candle count for exchange")
+
+        assert exch.ohlcv_candle_limit("1m", CandleType.SPOT) == expected_count
+
+    def test_ohlcv_limit_futures(self, exchange_futures: EXCHANGE_FIXTURE_TYPE):
+        exch, exchangename = exchange_futures
+        expected_count = EXCHANGES[exchangename].get("candle_count")
+        if not expected_count:
+            pytest.skip("No expected candle count for exchange")
+
+        assert exch.ohlcv_candle_limit("1m", CandleType.SPOT) == expected_count
+
     def test_load_markets_futures(self, exchange_futures: EXCHANGE_FIXTURE_TYPE):
         exchange, exchangename = exchange_futures
         pair = EXCHANGES[exchangename]["pair"]
