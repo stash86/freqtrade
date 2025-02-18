@@ -7,7 +7,7 @@ This module contains the backtesting logic
 import logging
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any
 
 from numpy import nan
@@ -63,7 +63,7 @@ from freqtrade.plugins.protectionmanager import ProtectionManager
 from freqtrade.resolvers import ExchangeResolver, StrategyResolver
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
-from freqtrade.util import FtPrecise
+from freqtrade.util import FtPrecise, dt_now
 from freqtrade.util.migrations import migrate_data
 from freqtrade.wallets import Wallets
 
@@ -1656,7 +1656,7 @@ class Backtesting:
         self.progress.init_step(BacktestState.ANALYZE, 0)
         strategy_name = strat.get_strategy_name()
         logger.info(f"Running backtesting for Strategy {strategy_name}")
-        backtest_start_time = datetime.now(timezone.utc)
+        backtest_start_time = dt_now()
         self._set_strategy(strat)
 
         # need to reprocess data every time to populate signals
@@ -1683,7 +1683,7 @@ class Backtesting:
             start_date=min_date,
             end_date=max_date,
         )
-        backtest_end_time = datetime.now(timezone.utc)
+        backtest_end_time = dt_now()
         results.update(
             {
                 "run_id": self.run_ids.get(strategy_name, ""),
@@ -1710,14 +1710,14 @@ class Backtesting:
     def _get_min_cached_backtest_date(self):
         min_backtest_date = None
         backtest_cache_age = self.config.get("backtest_cache", constants.BACKTEST_CACHE_DEFAULT)
-        if self.timerange.stopts == 0 or self.timerange.stopdt > datetime.now(tz=timezone.utc):
+        if self.timerange.stopts == 0 or self.timerange.stopdt > dt_now():
             logger.warning("Backtest result caching disabled due to use of open-ended timerange.")
         elif backtest_cache_age == "day":
-            min_backtest_date = datetime.now(tz=timezone.utc) - timedelta(days=1)
+            min_backtest_date = dt_now() - timedelta(days=1)
         elif backtest_cache_age == "week":
-            min_backtest_date = datetime.now(tz=timezone.utc) - timedelta(weeks=1)
+            min_backtest_date = dt_now() - timedelta(weeks=1)
         elif backtest_cache_age == "month":
-            min_backtest_date = datetime.now(tz=timezone.utc) - timedelta(weeks=4)
+            min_backtest_date = dt_now() - timedelta(weeks=4)
         return min_backtest_date
 
     def load_prior_backtest(self):

@@ -22,7 +22,6 @@ class Hyperliquid(Exchange):
 
     _ft_has: FtHas = {
         "ohlcv_has_history": False,
-        "ohlcv_candle_limit": 5000,
         "l2_limit_range": [20],
         "trades_has_history": False,
         "tickers_have_bid_ask": False,

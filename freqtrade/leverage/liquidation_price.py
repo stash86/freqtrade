@@ -35,19 +35,20 @@ def update_liquidation_prices(
 
             open_trades: list[Trade] = Trade.get_open_trades()
             for t in open_trades:
-                # TODO: This should be done in a batch update
-                t.set_liquidation_price(
-                    exchange.get_liquidation_price(
-                        pair=t.pair,
-                        open_rate=t.open_rate,
-                        is_short=t.is_short,
-                        amount=t.amount,
-                        stake_amount=t.stake_amount,
-                        leverage=t.leverage,
-                        wallet_balance=total_wallet_stake,
-                        open_trades=open_trades,
+                if t.has_open_position:
+                    # TODO: This should be done in a batch update
+                    t.set_liquidation_price(
+                        exchange.get_liquidation_price(
+                            pair=t.pair,
+                            open_rate=t.open_rate,
+                            is_short=t.is_short,
+                            amount=t.amount,
+                            stake_amount=t.stake_amount,
+                            leverage=t.leverage,
+                            wallet_balance=total_wallet_stake,
+                            open_trades=open_trades,
+                        )
                     )
-                )
         elif trade:
             trade.set_liquidation_price(
                 exchange.get_liquidation_price(

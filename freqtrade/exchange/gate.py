@@ -30,7 +30,6 @@ class Gate(Exchange):
     unified_account = False
 
     _ft_has: FtHas = {
-        "ohlcv_candle_limit": 1000,
         "order_time_in_force": ["GTC", "IOC"],
         "stoploss_on_exchange": True,
         "stoploss_order_types": {"limit": "limit"},

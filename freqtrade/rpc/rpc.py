@@ -38,7 +38,7 @@ from freqtrade.enums import (
     TradingMode,
 )
 from freqtrade.exceptions import ExchangeError, PricingError
-from freqtrade.exchange import timeframe_to_minutes, timeframe_to_msecs
+from freqtrade.exchange import Exchange, timeframe_to_minutes, timeframe_to_msecs
 from freqtrade.exchange.exchange_utils import price_to_precision
 from freqtrade.loggers import bufferHandler
 from freqtrade.persistence import KeyStoreKeys, KeyValueStore, PairLocks, Trade
@@ -49,12 +49,13 @@ from freqtrade.rpc.rpc_types import RPCSendMsg
 from freqtrade.util import (
     decimals_per_coin,
     dt_from_ts,
+    dt_humanize_delta,
     dt_now,
+    dt_ts,
     dt_ts_def,
     format_date,
     shorten_date,
 )
-from freqtrade.util.datetime_helpers import dt_humanize_delta
 from freqtrade.wallets import PositionWallet, Wallet
 
 
@@ -1456,7 +1457,12 @@ class RPC:
 
     @staticmethod
     def _rpc_analysed_history_full(
-        config: Config, pair: str, timeframe: str, exchange, selected_cols: list[str] | None
+        config: Config,
+        pair: str,
+        timeframe: str,
+        exchange: Exchange,
+        selected_cols: list[str] | None,
+        live: bool,
     ) -> dict[str, Any]:
         timerange_parsed = TimeRange.parse_timerange(config.get("timerange"))
 
@@ -1464,31 +1470,53 @@ class RPC:
         from freqtrade.data.dataprovider import DataProvider
         from freqtrade.resolvers.strategy_resolver import StrategyResolver
 
-        strategy = StrategyResolver.load_strategy(config)
-        startup_candles = strategy.startup_candle_count
+        strategy_name = ""
+        startup_candles = 0
+        if config.get("strategy"):
+            strategy = StrategyResolver.load_strategy(config)
+            startup_candles = strategy.startup_candle_count
+            strategy_name = strategy.get_strategy_name()
 
-        _data = load_data(
-            datadir=config["datadir"],
-            pairs=[pair],
-            timeframe=timeframe,
-            timerange=timerange_parsed,
-            data_format=config["dataformat_ohlcv"],
-            candle_type=config.get("candle_type_def", CandleType.SPOT),
-            startup_candles=startup_candles,
-        )
-        if pair not in _data:
-            raise RPCException(
-                f"No data for {pair}, {timeframe} in {config.get('timerange')} found."
+        if live:
+            data = exchange.get_historic_ohlcv(
+                pair=pair,
+                timeframe=timeframe,
+                since_ms=timerange_parsed.startts * 1000
+                if timerange_parsed.startts
+                else dt_ts(dt_now() - timedelta(days=30)),
+                is_new_pair=True,  # history is never available - so always treat as new pair
+                candle_type=config.get("candle_type_def", CandleType.SPOT),
+                until_ms=timerange_parsed.stopts,
             )
+        else:
+            _data = load_data(
+                datadir=config["datadir"],
+                pairs=[pair],
+                timeframe=timeframe,
+                timerange=timerange_parsed,
+                data_format=config["dataformat_ohlcv"],
+                candle_type=config.get("candle_type_def", CandleType.SPOT),
+                startup_candles=startup_candles,
+            )
+            if pair not in _data:
+                raise RPCException(
+                    f"No data for {pair}, {timeframe} in {config.get('timerange')} found."
+                )
+            data = _data[pair]
 
-        strategy.dp = DataProvider(config, exchange=exchange, pairlists=None)
-        strategy.ft_bot_start()
+        if config.get("strategy"):
+            strategy.dp = DataProvider(config, exchange=exchange, pairlists=None)
+            strategy.ft_bot_start()
 
-        df_analyzed = strategy.analyze_ticker(_data[pair], {"pair": pair})
-        df_analyzed = trim_dataframe(df_analyzed, timerange_parsed, startup_candles=startup_candles)
+            df_analyzed = strategy.analyze_ticker(data, {"pair": pair})
+            df_analyzed = trim_dataframe(
+                df_analyzed, timerange_parsed, startup_candles=startup_candles
+            )
+        else:
+            df_analyzed = data
 
         return RPC._convert_dataframe_to_dict(
-            strategy.get_strategy_name(),
+            strategy_name,
             pair,
             timeframe,
             df_analyzed.copy(),

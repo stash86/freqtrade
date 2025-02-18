@@ -276,3 +276,67 @@ def test_trade_serialize_load_back(fee):
 
     trade3 = LocalTrade.from_json(trade_string)
     assert len(trade3.orders) == len(t.orders)
+
+
+@pytest.mark.usefixtures("init_persistence")
+def test_trade_fromjson_backtesting():
+    """
+    trade.from_json should be able to load a trade output via backtesting.
+    """
+    trade_string = """
+        {
+             "pair":"XRP/USDT:USDT",
+             "stake_amount":3015.294001,
+             "max_stake_amount":60305.88002,
+             "amount":94612.3,
+             "open_date":"2024-03-02 10:40:00+00:00",
+             "close_date":"2024-03-02 11:10:00+00:00",
+             "open_rate":0.6374,
+             "close_rate":0.6399,
+             "fee_open":0.0005,
+             "fee_close":0.0005,
+             "trade_duration":30,
+             "profit_ratio":-0.09853216535933962,
+             "profit_abs":-296.95489539,
+             "exit_reason":"trailing_stop_loss",
+             "initial_stop_loss_abs":0.6689,
+             "initial_stop_loss_ratio":-0.99,
+             "stop_loss_abs":0.6399,
+             "stop_loss_ratio":-0.3368287257705749,
+             "min_rate":0.6294,
+             "max_rate":0.6421,
+             "is_open":false,
+             "enter_tag":"[0.6373, 0.5993, 0.64]",
+             "leverage":20,
+             "is_short":true,
+             "open_timestamp":1709376000000,
+             "close_timestamp":1709377800000,
+             "orders":[
+                {
+                   "amount":94612.3,
+                   "safe_price":0.6374,
+                   "ft_order_side":"sell",
+                   "order_filled_timestamp":1709376000000,
+                   "ft_is_entry":true,
+                   "ft_order_tag":"[0.6373, 0.5993, 0.64]",
+                   "cost":60336.032960009994
+                },
+                {
+                   "amount":94612.3,
+                   "safe_price":0.6399,
+                   "ft_order_side":"buy",
+                   "order_filled_timestamp":1709377800000,
+                   "ft_is_entry":false,
+                   "ft_order_tag":"trailing_stop_loss",
+                   "cost":60572.681975385
+                }
+             ]
+          }
+        """
+
+    trade = Trade.from_json(trade_string)
+    Trade.session.add(trade)
+    Trade.commit()
+
+    # Trade-id not given - use first available
+    assert trade.id == 1

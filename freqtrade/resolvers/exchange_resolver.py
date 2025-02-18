@@ -9,7 +9,7 @@ from typing import Any
 import freqtrade.exchange as exchanges
 from freqtrade.constants import Config, ExchangeConfig
 from freqtrade.exchange import MAP_EXCHANGE_CHILDCLASS, Exchange
-from freqtrade.resolvers import IResolver
+from freqtrade.resolvers.iresolver import IResolver
 
 
 logger = logging.getLogger(__name__)

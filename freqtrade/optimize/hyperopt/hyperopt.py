@@ -6,7 +6,6 @@ This module contains the hyperopt logic
 
 import logging
 import random
-import sys
 from datetime import datetime
 from math import ceil
 from multiprocessing import Manager
@@ -15,7 +14,6 @@ from typing import Any
 
 import rapidjson
 from joblib import Parallel, cpu_count, delayed, wrap_non_picklable_objects
-from joblib.externals import cloudpickle
 
 from freqtrade.constants import FTHYPT_FILEVERSION, LAST_BT_RESULT_FN, Config
 from freqtrade.enums import HyperoptState
@@ -109,17 +107,6 @@ class Hyperopt:
             if p.is_file():
                 logger.info(f"Removing `{p}`.")
                 p.unlink()
-
-    def hyperopt_pickle_magic(self, bases) -> None:
-        """
-        Hyperopt magic to allow strategy inheritance across files.
-        For this to properly work, we need to register the module of the imported class
-        to pickle as value.
-        """
-        for modules in bases:
-            if modules.__name__ != "IStrategy":
-                cloudpickle.register_pickle_by_value(sys.modules[modules.__module__])
-                self.hyperopt_pickle_magic(modules.__bases__)
 
     def _save_result(self, epoch: dict) -> None:
         """

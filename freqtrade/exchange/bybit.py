@@ -31,7 +31,6 @@ class Bybit(Exchange):
     unified_account = False
 
     _ft_has: FtHas = {
-        "ohlcv_candle_limit": 1000,
         "ohlcv_has_history": True,
         "order_time_in_force": ["GTC", "FOK", "IOC", "PO"],
         "ws_enabled": True,

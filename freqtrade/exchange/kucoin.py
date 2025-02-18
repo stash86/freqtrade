@@ -28,7 +28,6 @@ class Kucoin(Exchange):
         "l2_limit_range": [20, 100],
         "l2_limit_range_required": False,
         "order_time_in_force": ["GTC", "FOK", "IOC"],
-        "ohlcv_candle_limit": 1500,
     }
 
     def _get_stop_params(self, side: BuySell, ordertype: str, stop_price: float) -> dict:
