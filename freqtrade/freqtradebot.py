@@ -64,7 +64,7 @@ from freqtrade.rpc.rpc_types import (
 )
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
-from freqtrade.util import FtPrecise, MeasureTime, PeriodicCache, dt_from_ts
+from freqtrade.util import FtPrecise, MeasureTime, PeriodicCache, dt_from_ts, dt_now
 from freqtrade.util.migrations.binance_mig import migrate_binance_futures_names
 from freqtrade.wallets import Wallets
 
@@ -156,6 +156,7 @@ class FreqtradeBot(LoggingMixin):
         # Protect exit-logic from forcesell and vice versa
         self._exit_lock = Lock()
         timeframe_secs = timeframe_to_seconds(self.strategy.timeframe)
+        self._exit_reason_cache = PeriodicCache(100, ttl=timeframe_secs)
         LoggingMixin.__init__(self, logger, timeframe_secs)
 
         self._schedule = Scheduler()
@@ -1412,6 +1413,15 @@ class FreqtradeBot(LoggingMixin):
         for should_exit in exits:
             if should_exit.exit_flag:
                 exit_tag1 = exit_tag if should_exit.exit_type == ExitType.EXIT_SIGNAL else None
+                if trade.has_open_orders:
+                    if prev_eval := self._exit_reason_cache.get(
+                        f"{trade.pair}_{trade.id}_{exit_tag1 or should_exit.exit_reason}", None
+                    ):
+                        logger.debug(
+                            f"Exit reason already seen this candle, first seen at {prev_eval}"
+                        )
+                        continue
+
                 logger.info(
                     f"Exit for {trade.pair} detected. Reason: {should_exit.exit_type}"
                     f"{f' Tag: {exit_tag1}' if exit_tag1 is not None else ''}"
@@ -1826,7 +1836,7 @@ class FreqtradeBot(LoggingMixin):
         if trade.has_open_orders:
             oo = trade.select_order(side, True)
             if oo is not None:
-                if (price == oo.price) and (side == oo.side) and (amount == oo.amount):
+                if price == oo.price and side == oo.side and amount == oo.amount:
                     logger.info(
                         f"A similar open order was found for {trade.pair}. "
                         f"Keeping existing {trade.exit_side} order. {price=},  {amount=}"
@@ -2144,6 +2154,7 @@ class FreqtradeBot(LoggingMixin):
             self.handle_insufficient_funds(trade)
             return False
 
+        self._exit_reason_cache[f"{trade.pair}_{trade.id}_{exit_reason}"] = dt_now()
         order_obj = Order.parse_from_ccxt_object(order, trade.pair, trade.exit_side, amount, limit)
         order_obj.ft_order_tag = exit_reason
         trade.orders.append(order_obj)

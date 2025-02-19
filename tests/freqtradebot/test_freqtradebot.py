@@ -3743,8 +3743,9 @@ def test_trailing_stop_loss_positive(
 
 @pytest.mark.parametrize("is_short", [False, True])
 def test_disable_ignore_roi_if_entry_signal(
-    default_conf_usdt, limit_order, limit_order_open, is_short, fee, mocker
+    default_conf_usdt, limit_order, limit_order_open, is_short, fee, mocker, time_machine
 ) -> None:
+    time_machine.move_to("2025-01-10 08:00:16 +00:00")
     patch_RPCManager(mocker)
     patch_exchange(mocker)
     eside = entry_side(is_short)
@@ -3773,6 +3774,13 @@ def test_disable_ignore_roi_if_entry_signal(
     patch_get_signal(freqtrade, enter_long=not is_short, enter_short=is_short, exit_short=is_short)
     assert freqtrade.handle_trade(trade) is True
 
+    # Test if entry-signal is absent
+    patch_get_signal(freqtrade)
+    # Signal was evaluated already - no action.
+    assert freqtrade.handle_trade(trade) is False
+
+    # Move to after the candle expired
+    time_machine.shift(timedelta(hours=5))
     # Test if entry-signal is absent
     patch_get_signal(freqtrade)
     assert freqtrade.handle_trade(trade) is True
