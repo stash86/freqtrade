@@ -1089,7 +1089,10 @@ class IStrategy(ABC, HyperStrategyMixin):
             pair, self.timeframe, candle_type=self.config.get("candle_type_def", CandleType.SPOT)
         )
         if not isinstance(dataframe, DataFrame) or dataframe.empty:
-            logger.warning("Empty candle (OHLCV) data for pair %s", pair)
+            msg = f"Empty candle (OHLCV) data for pair {pair}"
+            self.dp.send_msg(msg)
+            logger.warning(msg)
+            # logger.warning("Empty candle (OHLCV) data for pair %s", pair)
             return
 
         try:
@@ -1101,11 +1104,15 @@ class IStrategy(ABC, HyperStrategyMixin):
 
             self.assert_df(dataframe, df_len, df_close, df_date)
         except StrategyError as error:
-            logger.warning(f"Unable to analyze candle (OHLCV) data for pair {pair}: {error}")
+            msg = f"Unable to analyze candle (OHLCV) data for pair {pair}: {error}"
+            self.dp.send_msg(msg)
+            logger.warning(msg)
             return
 
         if dataframe.empty:
-            logger.warning("Empty dataframe for pair %s", pair)
+            msg = f"Empty dataframe for pair {pair}"
+            self.dp.send_msg(msg)
+            logger.warning(msg)
             return
 
     def analyze(self, pairs: list[str]) -> None:
