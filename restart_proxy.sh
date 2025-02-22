@@ -1,0 +1,1 @@
+sudo docker restart binance_proxy_futures
