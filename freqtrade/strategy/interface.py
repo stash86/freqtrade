@@ -1088,12 +1088,10 @@ class IStrategy(ABC, HyperStrategyMixin):
         dataframe = self.dp.ohlcv(
             pair, self.timeframe, candle_type=self.config.get("candle_type_def", CandleType.SPOT)
         )
-        self.dp.send_msg("test")
         if not isinstance(dataframe, DataFrame) or dataframe.empty:
             msg = f"Empty candle (OHLCV) data for pair {pair}"
             self.dp.send_msg(msg)
             logger.warning(msg)
-            # logger.warning("Empty candle (OHLCV) data for pair %s", pair)
             return
 
         try:
@@ -1165,14 +1163,18 @@ class IStrategy(ABC, HyperStrategyMixin):
         :return: (None, None) or (Dataframe, latest_date) - corresponding to the last candle
         """
         if not isinstance(dataframe, DataFrame) or dataframe.empty:
-            logger.warning(f"Empty candle (OHLCV) data for pair {pair}")
+            msg = f"Empty candle (OHLCV) data for pair {pair}"
+            self.dp.send_msg(msg)
+            logger.warning(msg)
             return None, None
 
         try:
             latest_date_pd = dataframe["date"].max()
             latest = dataframe.loc[dataframe["date"] == latest_date_pd].iloc[-1]
         except Exception as e:
-            logger.warning(f"Unable to get latest candle (OHLCV) data for pair {pair} - {e}")
+            msg = f"Unable to get latest candle (OHLCV) data for pair {pair} - {e}"
+            self.dp.send_msg(msg)
+            logger.warning(msg)
             return None, None
         # Explicitly convert to datetime object to ensure the below comparison does not fail
         latest_date: datetime = latest_date_pd.to_pydatetime()
@@ -1181,11 +1183,9 @@ class IStrategy(ABC, HyperStrategyMixin):
         timeframe_minutes = timeframe_to_minutes(timeframe)
         offset = self.config.get("exchange", {}).get("outdated_offset", 5)
         if latest_date < (dt_now() - timedelta(minutes=timeframe_minutes * 2 + offset)):
-            logger.warning(
-                "Outdated history for pair %s. Last tick is %s minutes old",
-                pair,
-                int((dt_now() - latest_date).total_seconds() // 60),
-            )
+            msg = f"Outdated history for pair {pair}. Last tick is {int((dt_now() - latest_date).total_seconds() // 60)} minutes old"
+            self.dp.send_msg(msg)
+            logger.warning(msg)
             return None, None
         return latest, latest_date
 
