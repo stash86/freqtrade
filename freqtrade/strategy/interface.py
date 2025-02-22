@@ -1088,6 +1088,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         dataframe = self.dp.ohlcv(
             pair, self.timeframe, candle_type=self.config.get("candle_type_def", CandleType.SPOT)
         )
+        self.dp.send_msg("test")
         if not isinstance(dataframe, DataFrame) or dataframe.empty:
             msg = f"Empty candle (OHLCV) data for pair {pair}"
             self.dp.send_msg(msg)
