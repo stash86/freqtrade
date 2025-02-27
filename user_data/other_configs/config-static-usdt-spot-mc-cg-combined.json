@@ -1,0 +1,66 @@
+{
+    "max_open_trades": -1,
+    "stake_currency": "USDT",
+    "stake_amount" : 45,
+    "amend_last_stake_amount ": true,
+    "tradable_balance_ratio": 0.99,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "dry_run_wallet": 11500,
+    "trading_mode": "spot",
+    "cancel_open_orders_on_exit": false,
+    "unfilledtimeout": {
+        "entry": 10,
+        "exit": 10,
+        "exit_timeout_count": 0,
+        "unit": "minutes"
+    },
+    "order_types": {
+        "entry": "market",
+        "exit": "market",
+        "emergency_exit": "market",
+        "force_exit": "market",
+        "force_entry": "market",
+        "stoploss": "market",
+        "stoploss_on_exchange": false,
+        "stoploss_on_exchange_interval": 60
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "pairlists": [
+        {"method": "StaticPairList"},
+    ],
+    "exchange": {
+        "name": "binance",
+        "key": "1",
+        "secret": "2",
+        "pair_whitelist": [
+            "AAVE/USDT", "ADA/USDT", "ALGO/USDT", "APT/USDT", "AR/USDT", "AVAX/USDT", "BCH/USDT", "BNB/USDT",
+            "BTC/USDT", "CHZ/USDT", "DOT/USDT", "DYDX/USDT", "EGLD/USDT", "ETC/USDT", "ETH/USDT", "FIL/USDT",
+            "FLOW/USDT", "GALA/USDT", "HBAR/USDT", "ICP/USDT", "INJ/USDT", "IOTA/USDT", "KAIA/USDT", "KAVA/USDT",
+            "LINK/USDT", "LTC/USDT", "NEAR/USDT", "OM/USDT", "SEI/USDT", "SOL/USDT", "SUI/USDT", "S/USDT",
+            "TAO/USDT", "THETA/USDT", "TIA/USDT", "TON/USDT", "TRX/USDT", "UNI/USDT", "VET/USDT", "WBTC/USDT",
+            "XEC/USDT", "XLM/USDT", "XRP/USDT", "XTZ/USDT", "ZEC/USDT"
+        ],
+        "pair_blacklist": []
+    },
+    "bot_name": "freqtrade_bot",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}
