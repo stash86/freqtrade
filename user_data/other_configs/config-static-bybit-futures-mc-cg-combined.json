@@ -1,0 +1,71 @@
+{
+    "max_open_trades": -1,
+    "stake_currency": "USDT",
+    "stake_amount" : 45,
+    "amend_last_stake_amount ": true,
+    "tradable_balance_ratio": 0.99,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "dry_run_wallet": 11500,
+    "trading_mode": "futures",
+    "margin_mode": "isolated",
+    "cancel_open_orders_on_exit": false,
+    "unfilledtimeout": {
+        "entry": 10,
+        "exit": 10,
+        "exit_timeout_count": 0,
+        "unit": "minutes"
+    },
+    "order_types": {
+        "entry": "market",
+        "exit": "market",
+        "emergency_exit": "market",
+        "force_exit": "market",
+        "force_entry": "market",
+        "stoploss": "market",
+        "stoploss_on_exchange": false,
+        "stoploss_on_exchange_interval": 60
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "pairlists": [
+        {"method": "StaticPairList"},
+    ],
+    "exchange": {
+        "name": "bybit",
+        "key": "1",
+        "secret": "2",
+        "pair_whitelist": [
+            "AAVE/USDT:USDT", "ADA/USDT:USDT", "ALGO/USDT:USDT", "APT/USDT:USDT", "AVAX/USDT:USDT",
+            "BCH/USDT:USDT", "BNB/USDT:USDT", "BTC/USDT:USDT", "CRO/USDT:USDT", "DOT/USDT:USDT",
+            "ETC/USDT:USDT", "ETH/USDT:USDT", "FIL/USDT:USDT", "FLOW/USDT:USDT", "FLR/USDT:USDT",
+            "FTN/USDT:USDT", "GALA/USDT:USDT", "HBAR/USDT:USDT", "HYPE/USDT:USDT", "ICP/USDT:USDT",
+            "INJ/USDT:USDT", "IOTA/USDT:USDT", "KAIA/USDT:USDT", "KAS/USDT:USDT", "LINK/USDT:USDT",
+            "LTC/USDT:USDT", "MNT/USDT:USDT", "NEAR/USDT:USDT", "OM/USDT:USDT", "ONDO/USDT:USDT",
+            "SEI/USDT:USDT", "SOL/USDT:USDT", "SUI/USDT:USDT", "S/USDT:USDT", "TAO/USDT:USDT",
+            "THETA/USDT:USDT", "TIA/USDT:USDT", "TON/USDT:USDT", "TRX/USDT:USDT", "UNI/USDT:USDT",
+            "USDE/USDT:USDT", "VET/USDT:USDT", "XLM/USDT:USDT", "XMR/USDT:USDT", "XRP/USDT:USDT",
+            "XTZ/USDT:USDT"
+        ],
+        "pair_blacklist": []
+    },
+    "bot_name": "freqtrade_bot",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}
