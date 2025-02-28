@@ -46,37 +46,14 @@
         "name": "binance",
         "key": "1",
         "secret": "2",
-        "ccxt_config": {"enableRateLimit": true},
-        "ccxt_async_config": {
-            "enableRateLimit": true,
-            "rateLimit": 200
-        },
-        "pair_whitelist": ["ETH/BTC","BNB/BTC","SOL/BTC","XRP/BTC","ADA/BTC","AVAX/BTC","BCH/BTC","DOT/BTC","WBTC/BTC","TRX/BTC","LINK/BTC","MATIC/BTC","UNI/BTC","ICP/BTC","NEAR/BTC","LTC/BTC","APT/BTC","ETC/BTC","STX/BTC","FIL/BTC","ATOM/BTC","ARB/BTC","IMX/BTC","WIF/BTC","RNDR/BTC","XLM/BTC","HBAR/BTC","VET/BTC","MKR/BTC","OP/BTC","GRT/BTC","INJ/BTC","THETA/BTC","FET/BTC"],
+        "pair_whitelist": [
+            "AAVE/BTC", "ADA/BTC", "ALGO/BTC", "APT/BTC", "AR/BTC", "AVAX/BTC", "BCH/BTC", "BNB/BTC",
+            "CHZ/BTC", "DOT/BTC", "DYDX/BTC", "EGLD/BTC", "ETC/BTC", "ETH/BTC", "FIL/BTC", "FLOW/BTC",
+            "GALA/BTC", "HBAR/BTC", "ICP/BTC", "INJ/BTC", "IOTA/BTC", "KAVA/BTC", "LINK/BTC", "LTC/BTC",
+            "NEAR/BTC", "OM/BTC", "SEI/BTC", "SOL/BTC", "SUI/BTC", "S/BTC", "TAO/BTC", "THETA/BTC",
+            "TIA/BTC", "TON/BTC", "TRX/BTC", "UNI/BTC", "WBTC/BTC", "XLM/BTC", "XRP/BTC", "XTZ/BTC", "ZEC/BTC"
+        ],
         "pair_blacklist": []
-    },
-    "edge": {
-        "enabled": false,
-        "process_throttle_secs": 3600,
-        "calculate_since_number_of_days": 7,
-        "allowed_risk": 0.01,
-        "stoploss_range_min": -0.01,
-        "stoploss_range_max": -0.1,
-        "stoploss_range_step": -0.01,
-        "minimum_winrate": 0.60,
-        "minimum_expectancy": 0.10,
-        "min_trade_number": 10,
-        "max_trade_duration_minute": 1440,
-        "remove_pumps": false
-    },
-    "api_server": {
-        "enabled": false,
-        "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080,
-        "verbosity": "error",
-        "jwt_secret_key": "00",
-        "CORS_origins": [],
-        "username": "11",
-        "password": "22"
     },
     "bot_name": "freqtrade_bot",
     "initial_state": "running",
