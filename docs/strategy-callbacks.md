@@ -934,28 +934,25 @@ class DigDeeperStrategy(IStrategy):
 
     The total profit for this trade was 950$ on a 3350$ investment (`100@8$ + 100@9$ + 150@11$`). As such - the final relative profit is 28.35% (`950 / 3350`).
 
-## Adjust Entry Price
+## Adjust order Price
 
-The `adjust_entry_price()` callback may be used by strategy developer to refresh/replace limit orders upon arrival of new candles.  
+The `adjust_order_price()` callback may be used by strategy developer to refresh/replace limit orders upon arrival of new candles.  
 This callback is called once every iteration unless the order has been (re)placed within the current candle - limiting the maximum (re)placement of each order to once per candle.
 This also means that the first call will be at the start of the next candle after the initial order was placed.
 
-Be aware that `custom_entry_price()` is still the one dictating initial entry limit order price target at the time of entry trigger.
+Be aware that `custom_entry_price()`/`custom_exit_price()` is still the one dictating initial limit order price target at the time of the signal.
 
 Orders can be cancelled out of this callback by returning `None`.
 
 Returning `current_order_rate` will keep the order on the exchange "as is".
 Returning any other price will cancel the existing order, and replace it with a new order.
 
-The trade open-date (`trade.open_date_utc`) will remain at the time of the very first order placed.
-Please make sure to be aware of this - and eventually adjust your logic in other callbacks to account for this, and use the date of the first filled order instead.
-
 If the cancellation of the original order fails, then the order will not be replaced - though the order will most likely have been canceled on exchange. Having this happen on initial entries will result in the deletion of the order, while on position adjustment orders, it'll result in the trade size remaining as is.  
-If the order has been partially filled, the order will not be replaced. You can however use [`adjust_trade_position()`](#adjust-trade-position) to adjust the trade size to the full, expected position size, should this be necessary / desired.
+If the order has been partially filled, the order will not be replaced. You can however use [`adjust_trade_position()`](#adjust-trade-position) to adjust the trade size to the expected position size, should this be necessary / desired.
 
 !!! Warning "Regular timeout"
-    Entry `unfilledtimeout` mechanism (as well as `check_entry_timeout()`) takes precedence over this.
-    Entry Orders that are cancelled via the above methods will not have this callback called. Be sure to update timeout values to match your expectations.
+    Entry `unfilledtimeout` mechanism (as well as `check_entry_timeout()`/`check_exit_timeout()`) takes precedence over this callback.
+    Orders that are cancelled via the above methods will not have this callback called. Be sure to update timeout values to match your expectations.
 
 ```python
 # Default imports
@@ -964,13 +961,25 @@ class AwesomeStrategy(IStrategy):
 
     # ... populate_* methods
 
-    def adjust_entry_price(self, trade: Trade, order: Order | None, pair: str,
-                           current_time: datetime, proposed_rate: float, current_order_rate: float,
-                           entry_tag: str | None, side: str, **kwargs) -> float:
+    def adjust_order_price(
+        self,
+        trade: Trade,
+        order: Order | None,
+        pair: str,
+        current_time: datetime,
+        proposed_rate: float,
+        current_order_rate: float,
+        entry_tag: str | None,
+        side: str,
+        is_entry: bool,
+        **kwargs,
+    ) -> float:
         """
-        Entry price re-adjustment logic, returning the user desired limit price.
+        Exit and entry order price re-adjustment logic, returning the user desired limit price.
         This only executes when a order was already placed, still open (unfilled fully or partially)
         and not timed out on subsequent candles after entry trigger.
+
+        For full documentation please go to https://www.freqtrade.io/en/latest/strategy-callbacks/
 
         When not implemented by a strategy, returns current_order_rate as default.
         If current_order_rate is returned then the existing order is maintained.
@@ -983,14 +992,16 @@ class AwesomeStrategy(IStrategy):
         :param proposed_rate: Rate, calculated based on pricing settings in entry_pricing.
         :param current_order_rate: Rate of the existing order in place.
         :param entry_tag: Optional entry_tag (buy_tag) if provided with the buy signal.
-        :param side: "long" or "short" - indicating the direction of the proposed trade
+        :param side: 'long' or 'short' - indicating the direction of the proposed trade
+        :param is_entry: True if the order is an entry order, False if it's an exit order.
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
         :return float: New entry price value if provided
-
         """
-        # Limit orders to use and follow SMA200 as price target for the first 10 minutes since entry trigger for BTC/USDT pair.
+
+        # Limit entry orders to use and follow SMA200 as price target for the first 10 minutes since entry trigger for BTC/USDT pair.
         if (
-            pair == "BTC/USDT" 
+            is_entry
+            and pair == "BTC/USDT" 
             and entry_tag == "long_sma200" 
             and side == "long" 
             and (current_time - timedelta(minutes=10)) <= trade.open_date_utc
@@ -1006,6 +1017,26 @@ class AwesomeStrategy(IStrategy):
         # default: maintain existing order
         return current_order_rate
 ```
+
+!!! danger "Incompatibility with `adjust_*_price()`"
+    If you have both `adjust_order_price()` and `adjust_entry_price()`/`adjust_exit_price()` implemented, only `adjust_order_price()` will be used.
+    If you need to adjust entry/exit prices, you can either implement the logic in `adjust_order_price()`, or use the split `adjust_entry_price()` / `adjust_exit_price()` callbacks, but not both.
+    Mixing these is not supported and will raise an error during bot startup.
+
+### Adjust Entry Price
+
+The `adjust_entry_price()` callback may be used by strategy developer to refresh/replace entry limit orders upon arrival.
+It's a sub-set of `adjust_order_price()` and is called only for entry orders.
+All remaining behavior is identical to `adjust_order_price()`.
+
+The trade open-date (`trade.open_date_utc`) will remain at the time of the very first order placed.
+Please make sure to be aware of this - and eventually adjust your logic in other callbacks to account for this, and use the date of the first filled order instead.
+
+### Adjust Exit Price
+
+The `adjust_exit_price()` callback may be used by strategy developer to refresh/replace exit limit orders upon arrival.
+It's a sub-set of `adjust_order_price()` and is called only for exit orders.
+All remaining behavior is identical to `adjust_order_price()`.
 
 ## Leverage Callback
 

@@ -124,6 +124,7 @@ def migrate_trades_and_orders_table(
     funding_fees = get_column_def(cols, "funding_fees", "0.0")
     funding_fee_running = get_column_def(cols, "funding_fee_running", "null")
     max_stake_amount = get_column_def(cols, "max_stake_amount", "stake_amount")
+    record_version = get_column_def(cols, "record_version", "1")
 
     # If ticker-interval existed use that, else null.
     if has_column(cols, "ticker_interval"):
@@ -180,7 +181,7 @@ def migrate_trades_and_orders_table(
             trading_mode, leverage, liquidation_price, is_short,
             interest_rate, funding_fees, funding_fee_running, realized_profit,
             amount_precision, price_precision, precision_mode, precision_mode_price, contract_size,
-            max_stake_amount
+            max_stake_amount, record_version
             )
         select id, lower(exchange), pair, {base_currency} base_currency,
             {stake_currency} stake_currency,
@@ -210,7 +211,8 @@ def migrate_trades_and_orders_table(
             {realized_profit} realized_profit,
             {amount_precision} amount_precision, {price_precision} price_precision,
             {precision_mode} precision_mode, {precision_mode_price} precision_mode_price,
-            {contract_size} contract_size, {max_stake_amount} max_stake_amount
+            {contract_size} contract_size, {max_stake_amount} max_stake_amount,
+            {record_version} record_version
             from {trade_back_name}
             """
             )
@@ -329,6 +331,25 @@ def fix_old_dry_orders(engine):
         connection.execute(stmt)
 
 
+def fix_wrong_max_stake_amount(engine):
+    """
+    Fix max_stake_amount for leveraged closed trades
+    This caused record_version to be bumped to 2.
+    """
+    with engine.begin() as connection:
+        stmt = (
+            update(Trade)
+            .where(
+                Trade.record_version < 2,
+                Trade.leverage > 1,
+                Trade.is_open.is_(False),
+                Trade.max_stake_amount != 0,
+            )
+            .values(max_stake_amount=Trade.max_stake_amount / Trade.leverage, record_version=2)
+        )
+        connection.execute(stmt)
+
+
 def check_migrate(engine, decl_base, previous_tables) -> None:
     """
     Checks if migration is necessary and migrates if necessary
@@ -350,7 +371,7 @@ def check_migrate(engine, decl_base, previous_tables) -> None:
     # if ('orders' not in previous_tables
     # or not has_column(cols_orders, 'funding_fee')):
     migrating = False
-    if not has_column(cols_trades, "precision_mode_price"):
+    if not has_column(cols_trades, "record_version"):
         # if not has_column(cols_orders, "ft_order_tag"):
         migrating = True
         logger.info(
@@ -383,6 +404,7 @@ def check_migrate(engine, decl_base, previous_tables) -> None:
 
     set_sqlite_to_wal(engine)
     fix_old_dry_orders(engine)
+    fix_wrong_max_stake_amount(engine)
 
     if migrating:
         logger.info("Database migration finished.")

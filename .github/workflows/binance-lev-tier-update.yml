@@ -44,6 +44,7 @@ jobs:
         branch: update/binance-leverage-tiers
         title: Update Binance Leverage Tiers
         commit-message: "chore: update pre-commit hooks"
-        committer: Freqtrade Bot <noreply@github.com>
+        committer: Freqtrade Bot <154552126+freqtrade-bot@users.noreply.github.com>
+        author: Freqtrade Bot <154552126+freqtrade-bot@users.noreply.github.com>
         body: Update binance leverage tiers.
         delete-branch: true

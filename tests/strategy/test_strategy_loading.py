@@ -460,6 +460,10 @@ def test_missing_implements(default_conf, caplog):
     ):
         StrategyResolver.load_strategy(default_conf)
 
+    default_conf["strategy"] = "TestStrategyAdjustOrderPrice"
+    with pytest.raises(OperationalException, match=r"If you implement `adjust_order_price`.*"):
+        StrategyResolver.load_strategy(default_conf)
+
 
 def test_call_deprecated_function(default_conf):
     default_location = Path(__file__).parent / "strats/broken_strats/"

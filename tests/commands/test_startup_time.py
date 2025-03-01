@@ -1,8 +1,10 @@
 import subprocess
 import time
 
+from tests.conftest import is_arm, is_mac
 
-MAXIMUM_STARTUP_TIME = 0.5
+
+MAXIMUM_STARTUP_TIME = 0.7 if is_mac() and not is_arm() else 0.5
 
 
 def test_startup_time():
@@ -14,4 +16,5 @@ def test_startup_time():
     elapsed = time.time() - start
     assert elapsed < MAXIMUM_STARTUP_TIME, (
         "The startup time is too long, try to use lazy import in the command entry function"
+        f" (maximum {MAXIMUM_STARTUP_TIME}s, got {elapsed}s)"
     )

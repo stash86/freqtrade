@@ -1,5 +1,6 @@
 # pragma pylint: disable=missing-docstring, protected-access, invalid-name
 from datetime import datetime, timedelta, timezone
+from math import isnan, nan
 
 import pytest
 from ccxt import (
@@ -321,6 +322,7 @@ def test_amount_to_precision(
         (2.9977, TICK_SIZE, 0.005, 3.0, ROUND),
         (234.24, TICK_SIZE, 0.5, 234.0, ROUND),
         (234.26, TICK_SIZE, 0.5, 234.5, ROUND),
+        (nan, TICK_SIZE, 3, nan, ROUND),
         # Tests for TRUNCATTE
         (2.34559, DECIMAL_PLACES, 4, 2.3455, TRUNCATE),
         (2.34559, DECIMAL_PLACES, 5, 2.34559, TRUNCATE),
@@ -359,10 +361,11 @@ def test_amount_to_precision(
     ],
 )
 def test_price_to_precision(price, precision_mode, precision, expected, rounding_mode):
-    assert (
-        price_to_precision(price, precision, precision_mode, rounding_mode=rounding_mode)
-        == expected
-    )
+    result = price_to_precision(price, precision, precision_mode, rounding_mode=rounding_mode)
+    if not isnan(expected):
+        assert result == expected
+    else:
+        assert isnan(result)
 
 
 @pytest.mark.parametrize(
