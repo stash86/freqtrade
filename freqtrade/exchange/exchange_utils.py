@@ -4,7 +4,7 @@ Exchange support utils
 
 import inspect
 from datetime import datetime, timedelta, timezone
-from math import ceil, floor
+from math import ceil, floor, isnan
 from typing import Any
 
 import ccxt
@@ -305,7 +305,7 @@ def price_to_precision(
     :param rounding_mode: rounding mode to use. Defaults to ROUND
     :return: price rounded up to the precision the Exchange accepts
     """
-    if price_precision is not None and precisionMode is not None:
+    if price_precision is not None and precisionMode is not None and not isnan(price):
         if rounding_mode not in (ROUND_UP, ROUND_DOWN):
             # Use CCXT code where possible.
             return float(

@@ -40,7 +40,7 @@ def custom_entry_price(
     """
     return proposed_rate
 
-def adjust_entry_price(
+def adjust_order_price(
     self,
     trade: Trade,
     order: Order | None,
@@ -50,10 +50,11 @@ def adjust_entry_price(
     current_order_rate: float,
     entry_tag: str | None,
     side: str,
+    is_entry: bool,
     **kwargs,
 ) -> float:
     """
-    Entry price re-adjustment logic, returning the user desired limit price.
+    Exit and entry order price re-adjustment logic, returning the user desired limit price.
     This only executes when a order was already placed, still open (unfilled fully or partially)
     and not timed out on subsequent candles after entry trigger.
 
@@ -71,6 +72,7 @@ def adjust_entry_price(
     :param current_order_rate: Rate of the existing order in place.
     :param entry_tag: Optional entry_tag (buy_tag) if provided with the buy signal.
     :param side: 'long' or 'short' - indicating the direction of the proposed trade
+    :param is_entry: True if the order is an entry order, False if it's an exit order.
     :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
     :return float: New entry price value if provided
 

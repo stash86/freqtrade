@@ -1217,6 +1217,46 @@ tc57 = BTContainer(
     ],
 )
 
+# Test 58: Custom-exit-price short - below all candles
+tc58 = BTContainer(
+    data=[
+        # D   O     H     L     C    V    EL XL ES Xs  BT
+        [0, 5000, 5050, 4950, 5000, 6172, 0, 0, 1, 0],
+        [1, 5000, 5200, 4951, 5000, 6172, 0, 0, 0, 0],  # enter trade (signal on last candle)
+        [2, 4900, 5250, 4900, 5100, 6172, 0, 0, 0, 1],  # Exit - delayed
+        [3, 5100, 5100, 4650, 4750, 6172, 0, 0, 0, 0],  #
+        [4, 4750, 5100, 4350, 4750, 6172, 0, 0, 0, 0],
+    ],
+    stop_loss=-0.10,
+    roi={"0": 1.00},
+    profit_perc=-0.01,
+    use_exit_signal=True,
+    timeout=1000,
+    custom_exit_price=4300,
+    adjust_exit_price=5050,
+    trades=[BTrade(exit_reason=ExitType.EXIT_SIGNAL, open_tick=1, close_tick=4, is_short=True)],
+)
+
+# Test 59: Custom-exit-price above all candles - readjust order
+tc59 = BTContainer(
+    data=[
+        # D   O     H     L     C    V    EL XL ES Xs  BT
+        [0, 5000, 5050, 4950, 5000, 6172, 1, 0],
+        [1, 5000, 5500, 4951, 5000, 6172, 0, 0],
+        [2, 4900, 5250, 4500, 5100, 6172, 0, 1],  # exit
+        [3, 5100, 5100, 4650, 4750, 6172, 0, 0],  # order readjust
+        [4, 4750, 4950, 4350, 4750, 6172, 0, 0],
+    ],
+    stop_loss=-0.2,
+    roi={"0": 0.10},
+    profit_perc=-0.02,
+    use_exit_signal=True,
+    timeout=1000,
+    custom_exit_price=5300,
+    adjust_exit_price=4900,
+    trades=[BTrade(exit_reason=ExitType.EXIT_SIGNAL, open_tick=1, close_tick=4, is_short=False)],
+)
+
 
 TESTS = [
     tc0,
@@ -1277,6 +1317,8 @@ TESTS = [
     tc55,
     tc56,
     tc57,
+    tc58,
+    tc59,
 ]
 
 
@@ -1330,6 +1372,8 @@ def test_backtest_results(default_conf, mocker, caplog, data: BTContainer) -> No
         )
     if data.adjust_entry_price:
         backtesting.strategy.adjust_entry_price = MagicMock(return_value=data.adjust_entry_price)
+    if data.adjust_exit_price:
+        backtesting.strategy.adjust_exit_price = MagicMock(return_value=data.adjust_exit_price)
 
     backtesting.strategy.use_custom_stoploss = data.use_custom_stoploss
     backtesting.strategy.leverage = lambda **kwargs: data.leverage
