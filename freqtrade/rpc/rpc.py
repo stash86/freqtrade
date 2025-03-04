@@ -6,13 +6,12 @@ import logging
 from abc import abstractmethod
 from collections.abc import Generator, Sequence
 from datetime import date, datetime, timedelta, timezone
-from math import isnan
 from typing import TYPE_CHECKING, Any
 
 import psutil
 from dateutil.relativedelta import relativedelta
 from dateutil.tz import tzlocal
-from numpy import inf, int64, mean, nan
+from numpy import inf, int64, isnan, mean, nan
 from pandas import DataFrame, NaT
 from sqlalchemy import func, select
 

@@ -242,6 +242,14 @@ class StrategyResolver(IResolver):
         if has_after_fill:
             strategy._ft_stop_uses_after_fill = True
 
+        if check_override(strategy, IStrategy, "adjust_order_price") and (
+            check_override(strategy, IStrategy, "adjust_entry_price")
+            or check_override(strategy, IStrategy, "adjust_exit_price")
+        ):
+            raise OperationalException(
+                "If you implement `adjust_order_price`, `adjust_entry_price` and "
+                "`adjust_exit_price` will not be used. Please pick one approach for your strategy."
+            )
         return strategy
 
     @staticmethod

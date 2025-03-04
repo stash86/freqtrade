@@ -436,6 +436,7 @@ def test_dca_order_adjust(default_conf_usdt, ticker_usdt, leverage, fee, mocker)
 
     # Replace new order with diff. order at a lower price
     freqtrade.strategy.adjust_entry_price = MagicMock(return_value=1.95)
+    freqtrade.strategy.adjust_exit_price = MagicMock(side_effect=ValueError)
     freqtrade.strategy.adjust_trade_position = MagicMock(return_value=None)
     freqtrade.process()
     trade = Trade.get_trades().first()
@@ -445,6 +446,8 @@ def test_dca_order_adjust(default_conf_usdt, ticker_usdt, leverage, fee, mocker)
     assert pytest.approx(trade.stake_amount) == 60
     assert trade.orders[-1].price == 1.95
     assert pytest.approx(trade.orders[-1].cost) == 120 * leverage
+    assert freqtrade.strategy.adjust_entry_price.call_count == 1
+    assert freqtrade.strategy.adjust_exit_price.call_count == 0
 
     # Fill DCA order
     freqtrade.strategy.adjust_trade_position = MagicMock(return_value=None)
@@ -469,6 +472,7 @@ def test_dca_order_adjust(default_conf_usdt, ticker_usdt, leverage, fee, mocker)
     mocker.patch(f"{EXMS}._dry_is_price_crossed", return_value=False)
     freqtrade.strategy.custom_exit = MagicMock(return_value="Exit now")
     freqtrade.strategy.adjust_entry_price = MagicMock(return_value=2.02)
+    freqtrade.strategy.adjust_exit_price = MagicMock(side_effect=ValueError)
     freqtrade.process()
     trade = Trade.get_trades().first()
     assert len(trade.orders) == 5
@@ -478,8 +482,9 @@ def test_dca_order_adjust(default_conf_usdt, ticker_usdt, leverage, fee, mocker)
     assert pytest.approx(trade.amount) == 91.689215 * leverage
     assert pytest.approx(trade.orders[-1].amount) == 91.689215 * leverage
     assert freqtrade.strategy.adjust_entry_price.call_count == 0
+    assert freqtrade.strategy.adjust_exit_price.call_count == 0
 
-    # Process again, should not adjust entry price
+    # Process again, should not adjust price
     freqtrade.process()
     trade = Trade.get_trades().first()
 
@@ -490,6 +495,21 @@ def test_dca_order_adjust(default_conf_usdt, ticker_usdt, leverage, fee, mocker)
     assert trade.orders[-1].price == 2.02
     # Adjust entry price cannot be called - this is an exit order
     assert freqtrade.strategy.adjust_entry_price.call_count == 0
+    assert freqtrade.strategy.adjust_exit_price.call_count == 1
+
+    freqtrade.strategy.adjust_exit_price = MagicMock(return_value=2.03)
+
+    # Process again, should adjust exit price
+    freqtrade.process()
+    trade = Trade.get_trades().first()
+
+    assert trade.orders[-2].status == "canceled"
+    assert len(trade.orders) == 6
+    assert trade.orders[-1].side == trade.exit_side
+    assert trade.orders[-1].status == "open"
+    assert trade.orders[-1].price == 2.03
+    assert freqtrade.strategy.adjust_entry_price.call_count == 0
+    assert freqtrade.strategy.adjust_exit_price.call_count == 1
 
 
 @pytest.mark.parametrize("leverage", [1, 2])

@@ -513,7 +513,7 @@ By default, freqtrade will attempt to load strategies from all `.py` files withi
 Assuming your strategy is called `AwesomeStrategy`, stored in the file `user_data/strategies/AwesomeStrategy.py`, then you can start freqtrade in dry (or live, depending on your configuration) mode with:
 
 ```bash
-    freqtrade trade --strategy AwesomeStrategy`
+freqtrade trade --strategy AwesomeStrategy
 ```
 
 Note that we're using the class name, not the file name.
