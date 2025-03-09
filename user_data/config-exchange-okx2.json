@@ -1,0 +1,14 @@
+{
+    "exchange": {
+        "name": "okx",
+        "key": "1",
+        "secret": "2",
+        "password": "3", // for kucoin
+        "ccxt_config": {
+            "options": {
+                "defaultType": "future"
+            },
+        },
+
+    }
+}
