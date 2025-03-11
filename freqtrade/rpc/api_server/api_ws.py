@@ -33,7 +33,7 @@ async def channel_reader(channel: WebSocketChannel, rpc: RPC):
     Iterate over the messages from the channel and process the request
     """
     client_ip = channel.remote_addr
-    logger.debug(f"Processing incoming request from IP: {client_ip}")
+    logger.info(f"Processing incoming request from IP: {client_ip}")
     async for message in channel:
         try:
             await _process_consumer_request(message, channel, rpc)
