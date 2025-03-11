@@ -230,6 +230,10 @@ async def create_channel(websocket: WebSocketType, **kwargs) -> AsyncIterator[We
     Context manager for safely opening and closing a WebSocketChannel
     """
     channel = WebSocketChannel(websocket, **kwargs)
+
+    client_addr = channel.remote_addr
+    logger.info(f"New connection from {client_addr}")
+
     try:
         await channel.accept()
         logger.info(f"Connected to channel - {channel}")
