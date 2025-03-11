@@ -22,6 +22,7 @@ import math
 import pandas_ta as pta
 import logging
 from logging import FATAL
+import time
 
 class E0V1E_15m(IStrategy):
 
@@ -53,6 +54,8 @@ class E0V1E_15m(IStrategy):
     sell_fastx = IntParameter(50, 100, default=75, space="sell", optimize=False)
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
+        start = time.time()
+
         # buy_1 indicators
         dataframe["ema_15"] = ta.EMA(dataframe, timeperiod=15)
         dataframe["cti"] = pta.cti(dataframe["close"], length=20)
@@ -63,7 +66,9 @@ class E0V1E_15m(IStrategy):
         # profit sell indicators
         stoch_fast = ta.STOCHF(dataframe, 5, 15, 0)
         dataframe["fastk"] = stoch_fast["fastk"]
-
+        
+        end = time.time()
+        logging.info(f"populate_indicators took {end - start} seconds")
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
