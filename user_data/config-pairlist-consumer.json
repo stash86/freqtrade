@@ -3,7 +3,7 @@
         {
             "method": "ProducerPairList",
             // "number_assets": 5,
-            "producer_name": "default",
+            "producer_name": "prod",
         }
     ],
 }
