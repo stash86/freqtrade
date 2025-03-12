@@ -577,7 +577,7 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers, proxy_coin, marg
             "symbol": "ETH/USDT:USDT",
             "timestamp": None,
             "datetime": None,
-            "initialMargin": 0.0,
+            "initialMargin": 20,
             "initialMarginPercentage": None,
             "maintenanceMargin": 0.0,
             "maintenanceMarginPercentage": 0.005,
@@ -590,8 +590,9 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers, proxy_coin, marg
             "marginRatio": None,
             "liquidationPrice": 0.0,
             "markPrice": 2896.41,
-            "collateral": 20,
-            "marginType": "isolated",
+            # Collateral is in USDT - and can be higher than position size in cross mode
+            "collateral": 50,
+            "marginType": "cross",
             "side": "short",
             "percentage": None,
         }

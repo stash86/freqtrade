@@ -937,14 +937,14 @@ class FreqtradeBot(LoggingMixin):
 
         msg = (
             f"Position adjust: about to create a new order for {pair} with stake_amount: "
-            f"{stake_amount} for {trade}"
+            f"{stake_amount} and price: {enter_limit_requested} for {trade}"
             if mode == "pos_adjust"
             else (
                 f"Replacing {side} order: about create a new order for {pair} with stake_amount: "
-                f"{stake_amount} ..."
+                f"{stake_amount} and price: {enter_limit_requested} ..."
                 if mode == "replace"
                 else f"{name} signal found: about create a new trade for {pair} with stake_amount: "
-                f"{stake_amount} ..."
+                f"{stake_amount} and price: {enter_limit_requested} ..."
             )
         )
         logger.info(msg)
@@ -1953,7 +1953,10 @@ class FreqtradeBot(LoggingMixin):
             # to the trade object
             self.update_trade_state(trade, order_id, corder)
 
-            logger.info(f"Partial {trade.entry_side} order timeout for {trade}.")
+            logger.info(
+                f"Partial {trade.entry_side} order timeout for {trade}. Filled: {filled_amount}, "
+                f"total: {order_obj.ft_amount}"
+            )
             order_obj.ft_cancel_reason += f", {constants.CANCEL_REASON['PARTIALLY_FILLED']}"
 
         self.wallets.update()
@@ -2641,7 +2644,18 @@ class FreqtradeBot(LoggingMixin):
         max_custom_price_allowed = proposed_price + (proposed_price * cust_p_max_dist_r)
 
         # Bracket between min_custom_price_allowed and max_custom_price_allowed
-        return max(min(valid_custom_price, max_custom_price_allowed), min_custom_price_allowed)
+        final_price = max(
+            min(valid_custom_price, max_custom_price_allowed), min_custom_price_allowed
+        )
+
+        # Log a warning if the custom price was adjusted by clamping.
+        if final_price != valid_custom_price:
+            logger.info(
+                f"Custom price adjusted from {valid_custom_price} to {final_price} based on "
+                "custom_price_max_distance_ratio of {cust_p_max_dist_r}."
+            )
+
+        return final_price
 
     def send_dp_message(self, msg: str) -> None:
         if msg not in self.__msg_cache:

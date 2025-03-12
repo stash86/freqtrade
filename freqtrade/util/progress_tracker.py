@@ -7,7 +7,6 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-from freqtrade.loggers import error_console
 from freqtrade.util.rich_progress import CustomProgress
 
 
@@ -21,6 +20,8 @@ def get_progress_tracker(**kwargs) -> CustomProgress:
     """
     Get progress Bar with custom columns.
     """
+    from freqtrade.loggers import error_console
+
     return CustomProgress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(bar_width=None),

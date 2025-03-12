@@ -4,7 +4,7 @@ usage: freqtrade hyperopt-show [-h] [-v] [--no-color] [--logfile FILE] [-V]
                                [--profitable] [-n INT] [--print-json]
                                [--hyperopt-filename FILENAME] [--no-header]
                                [--disable-param-export]
-                               [--breakdown {day,week,month} [{day,week,month} ...]]
+                               [--breakdown {day,week,month,year} [{day,week,month,year} ...]]
 
 options:
   -h, --help            show this help message and exit
@@ -18,8 +18,9 @@ options:
   --no-header           Do not print epoch details header.
   --disable-param-export
                         Disable automatic hyperopt parameter export.
-  --breakdown {day,week,month} [{day,week,month} ...]
-                        Show backtesting breakdown per [day, week, month].
+  --breakdown {day,week,month,year} [{day,week,month,year} ...]
+                        Show backtesting breakdown per [day, week, month,
+                        year].
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).

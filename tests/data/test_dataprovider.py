@@ -408,20 +408,20 @@ def test_get_analyzed_dataframe(mocker, default_conf, ohlcv_history):
 
     # Test backtest mode
     default_conf["runmode"] = RunMode.BACKTEST
-    dp._set_dataframe_max_index(1)
+    dp._set_dataframe_max_index("XRP/BTC", 1)
     dataframe, time = dp.get_analyzed_dataframe("XRP/BTC", timeframe)
 
     assert len(dataframe) == 1
 
-    dp._set_dataframe_max_index(2)
+    dp._set_dataframe_max_index("XRP/BTC", 2)
     dataframe, time = dp.get_analyzed_dataframe("XRP/BTC", timeframe)
     assert len(dataframe) == 2
 
-    dp._set_dataframe_max_index(3)
+    dp._set_dataframe_max_index("XRP/BTC", 3)
     dataframe, time = dp.get_analyzed_dataframe("XRP/BTC", timeframe)
     assert len(dataframe) == 3
 
-    dp._set_dataframe_max_index(500)
+    dp._set_dataframe_max_index("XRP/BTC", 500)
     dataframe, time = dp.get_analyzed_dataframe("XRP/BTC", timeframe)
     assert len(dataframe) == len(ohlcv_history)
 

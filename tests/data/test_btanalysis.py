@@ -30,6 +30,7 @@ from freqtrade.data.metrics import (
     calculate_max_drawdown,
     calculate_sharpe,
     calculate_sortino,
+    calculate_sqn,
     calculate_underwater,
     combine_dataframes_with_mean,
     combined_dataframes_with_rel_mean,
@@ -455,6 +456,42 @@ def test_calculate_calmar(testdatadir):
     )
     assert isinstance(calmar, float)
     assert pytest.approx(calmar) == 559.040508
+
+
+def test_calculate_sqn(testdatadir):
+    filename = testdatadir / "backtest_results/backtest-result.json"
+    bt_data = load_backtest_data(filename)
+
+    sqn = calculate_sqn(DataFrame(), 0)
+    assert sqn == 0.0
+
+    sqn = calculate_sqn(
+        bt_data,
+        0.01,
+    )
+    assert isinstance(sqn, float)
+    assert pytest.approx(sqn) == 3.2991
+
+
+@pytest.mark.parametrize(
+    "profits,starting_balance,expected_sqn,description",
+    [
+        ([1.0, -0.5, 2.0, -1.0, 0.5, 1.5, -0.5, 1.0], 100, 1.3229, "Mixed profits/losses"),
+        ([], 100, 0.0, "Empty dataframe"),
+        ([1.0, 0.5, 2.0, 1.5, 0.8], 100, 4.3657, "All winning trades"),
+        ([-1.0, -0.5, -2.0, -1.5, -0.8], 100, -4.3657, "All losing trades"),
+        ([1.0], 100, -100, "Single trade"),
+    ],
+)
+def test_calculate_sqn_cases(profits, starting_balance, expected_sqn, description):
+    """
+    Test SQN calculation with various scenarios:
+    """
+    trades = DataFrame({"profit_abs": profits})
+    sqn = calculate_sqn(trades, starting_balance=starting_balance)
+
+    assert isinstance(sqn, float)
+    assert pytest.approx(sqn, rel=1e-4) == expected_sqn
 
 
 @pytest.mark.parametrize(

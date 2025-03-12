@@ -876,6 +876,9 @@ class DigDeeperStrategy(IStrategy):
                        Return None for no action.
                        Optionally, return a tuple with a 2nd element with an order reason
         """
+        if trade.has_open_orders:
+            # Only act if no orders are open
+            return
 
         if current_profit > 0.05 and trade.nr_of_successful_exits == 0:
             # Take half of the profit at +5%

@@ -1543,8 +1543,7 @@ def test_backtest_multi_pair(default_conf, fee, mocker, tres, pair, testdatadir)
     assert len(evaluate_result_multi(results["results"], "5m", 3)) == 0
 
     # Cached data correctly removed amounts
-    offset = 1 if tres == 0 else 0
-    removed_candles = len(data[pair]) - offset
+    removed_candles = len(data[pair]) - 1
     assert len(backtesting.dataprovider.get_analyzed_dataframe(pair, "5m")[0]) == removed_candles
     assert (
         len(backtesting.dataprovider.get_analyzed_dataframe("NXT/BTC", "5m")[0])
@@ -1663,8 +1662,7 @@ def test_backtest_multi_pair_detail(
     assert len(evaluate_result_multi(results["results"], "5m", 3)) == 0
 
     # Cached data correctly removed amounts
-    offset = 1 if tres == 0 else 0
-    removed_candles = len(data[pair]) - offset
+    removed_candles = len(data[pair]) - 1
     assert len(backtesting.dataprovider.get_analyzed_dataframe(pair, "5m")[0]) == removed_candles
     assert (
         len(backtesting.dataprovider.get_analyzed_dataframe("NXT/USDT", "5m")[0])
@@ -1793,7 +1791,7 @@ def test_backtest_multi_pair_detail_simplified(
     assert len(evaluate_result_multi(results["results"], "1m", 3)) == 0
 
     # # Cached data correctly removed amounts
-    offset = 1 if tres == 0 else 0
+    offset = 1
     removed_candles = len(data[pair]) - offset
     assert len(backtesting.dataprovider.get_analyzed_dataframe(pair, "1h")[0]) == removed_candles
     assert (

@@ -35,6 +35,7 @@ The following attributes / properties are available for each individual trade - 
 | `trade_direction` | "long" / "short" | Trade direction in text - long or short. |
 | `nr_of_successful_entries` | int | Number of successful (filled) entry orders. |
 | `nr_of_successful_exits` | int | Number of successful (filled) exit orders. |
+| `has_open_orders` | boolean | Has the trade open orders (excluding stoploss orders). |
 
 ## Class methods
 

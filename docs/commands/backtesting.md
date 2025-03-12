@@ -15,7 +15,7 @@ usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
                              [--strategy-list STRATEGY_LIST [STRATEGY_LIST ...]]
                              [--export {none,trades,signals}]
                              [--export-filename PATH]
-                             [--breakdown {day,week,month} [{day,week,month} ...]]
+                             [--breakdown {day,week,month,year} [{day,week,month,year} ...]]
                              [--cache {none,day,week,month}]
                              [--freqai-backtest-live-models]
 
@@ -65,8 +65,9 @@ options:
                         Use this filename for backtest results.Requires
                         `--export` to be set as well. Example: `--export-filen
                         ame=user_data/backtest_results/backtest_today.json`
-  --breakdown {day,week,month} [{day,week,month} ...]
-                        Show backtesting breakdown per [day, week, month].
+  --breakdown {day,week,month,year} [{day,week,month,year} ...]
+                        Show backtesting breakdown per [day, week, month,
+                        year].
   --cache {none,day,week,month}
                         Load a cached backtest result no older than specified
                         age (default: day).

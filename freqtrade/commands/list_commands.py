@@ -17,11 +17,11 @@ def start_list_exchanges(args: dict[str, Any]) -> None:
     :param args: Cli args from Arguments()
     :return: None
     """
-    from rich.console import Console
     from rich.table import Table
     from rich.text import Text
 
     from freqtrade.exchange import list_available_exchanges
+    from freqtrade.loggers.rich_console import get_rich_console
 
     available_exchanges: list[ValidExchangesType] = list_available_exchanges(
         args["list_exchanges_all"]
@@ -77,14 +77,15 @@ def start_list_exchanges(args: dict[str, Any]) -> None:
             )
             # table.add_row(*[exchange[header] for header in headers])
 
-        console = Console()
+        console = get_rich_console()
         console.print(table)
 
 
 def _print_objs_tabular(objs: list, print_colorized: bool) -> None:
-    from rich.console import Console
     from rich.table import Table
     from rich.text import Text
+
+    from freqtrade.loggers.rich_console import get_rich_console
 
     names = [s["name"] for s in objs]
     objs_to_print: list[dict[str, Text | str]] = [
@@ -118,10 +119,7 @@ def _print_objs_tabular(objs: list, print_colorized: bool) -> None:
     for row in objs_to_print:
         table.add_row(*[row[header] for header in objs_to_print[0].keys()])
 
-    console = Console(
-        color_system="auto" if print_colorized else None,
-        width=200 if "pytest" in sys.modules else None,
-    )
+    console = get_rich_console(color_system="auto" if print_colorized else None)
     console.print(table)
 
 
@@ -219,7 +217,7 @@ def start_list_markets(args: dict[str, Any], pairs_only: bool = False) -> None:
     """
     from freqtrade.configuration import setup_utils_configuration
     from freqtrade.exchange import market_is_active
-    from freqtrade.misc import plural
+    from freqtrade.misc import plural, safe_value_fallback
     from freqtrade.resolvers import ExchangeResolver
     from freqtrade.util import print_rich_table
 
@@ -246,88 +244,99 @@ def start_list_markets(args: dict[str, Any], pairs_only: bool = False) -> None:
     except Exception as e:
         raise OperationalException(f"Cannot get markets. Reason: {e}") from e
 
-    else:
-        summary_str = (
-            (f"Exchange {exchange.name} has {len(pairs)} ")
-            + ("active " if active_only else "")
-            + (plural(len(pairs), "pair" if pairs_only else "market"))
-            + (
-                f" with {', '.join(base_currencies)} as base "
-                f"{plural(len(base_currencies), 'currency', 'currencies')}"
-                if base_currencies
-                else ""
-            )
-            + (" and" if base_currencies and quote_currencies else "")
-            + (
-                f" with {', '.join(quote_currencies)} as quote "
-                f"{plural(len(quote_currencies), 'currency', 'currencies')}"
-                if quote_currencies
-                else ""
-            )
+    tickers = exchange.get_tickers()
+
+    summary_str = (
+        (f"Exchange {exchange.name} has {len(pairs)} ")
+        + ("active " if active_only else "")
+        + (plural(len(pairs), "pair" if pairs_only else "market"))
+        + (
+            f" with {', '.join(base_currencies)} as base "
+            f"{plural(len(base_currencies), 'currency', 'currencies')}"
+            if base_currencies
+            else ""
         )
+        + (" and" if base_currencies and quote_currencies else "")
+        + (
+            f" with {', '.join(quote_currencies)} as quote "
+            f"{plural(len(quote_currencies), 'currency', 'currencies')}"
+            if quote_currencies
+            else ""
+        )
+    )
 
-        headers = [
-            "Id",
-            "Symbol",
-            "Base",
-            "Quote",
-            "Active",
-            "Spot",
-            "Margin",
-            "Future",
-            "Leverage",
-        ]
+    headers = [
+        "Id",
+        "Symbol",
+        "Base",
+        "Quote",
+        "Active",
+        "Spot",
+        "Margin",
+        "Future",
+        "Leverage",
+        "Min Stake",
+    ]
 
-        tabular_data = [
-            {
-                "Id": v["id"],
-                "Symbol": v["symbol"],
-                "Base": v["base"],
-                "Quote": v["quote"],
-                "Active": market_is_active(v),
-                "Spot": "Spot" if exchange.market_is_spot(v) else "",
-                "Margin": "Margin" if exchange.market_is_margin(v) else "",
-                "Future": "Future" if exchange.market_is_future(v) else "",
-                "Leverage": exchange.get_max_leverage(v["symbol"], 20),
-            }
-            for _, v in pairs.items()
-        ]
+    tabular_data = [
+        {
+            "Id": v["id"],
+            "Symbol": v["symbol"],
+            "Base": v["base"],
+            "Quote": v["quote"],
+            "Active": market_is_active(v),
+            "Spot": "Spot" if exchange.market_is_spot(v) else "",
+            "Margin": "Margin" if exchange.market_is_margin(v) else "",
+            "Future": "Future" if exchange.market_is_future(v) else "",
+            "Leverage": exchange.get_max_leverage(v["symbol"], 20),
+            "Min Stake": round(
+                exchange.get_min_pair_stake_amount(
+                    v["symbol"],
+                    safe_value_fallback(tickers.get(v["symbol"], {}), "last", "ask", 0.0),
+                    0.0,
+                )
+                or 0.0,
+                8,
+            ),
+        }
+        for _, v in pairs.items()
+    ]
 
-        if (
-            args.get("print_one_column", False)
-            or args.get("list_pairs_print_json", False)
-            or args.get("print_csv", False)
-        ):
-            # Print summary string in the log in case of machine-readable
-            # regular formats.
-            logger.info(f"{summary_str}.")
+    if (
+        args.get("print_one_column", False)
+        or args.get("list_pairs_print_json", False)
+        or args.get("print_csv", False)
+    ):
+        # Print summary string in the log in case of machine-readable
+        # regular formats.
+        logger.info(f"{summary_str}.")
+    else:
+        # Print empty string separating leading logs and output in case of
+        # human-readable formats.
+        print()
+
+    if pairs:
+        if args.get("print_list", False):
+            # print data as a list, with human-readable summary
+            print(f"{summary_str}: {', '.join(pairs.keys())}.")
+        elif args.get("print_one_column", False):
+            print("\n".join(pairs.keys()))
+        elif args.get("list_pairs_print_json", False):
+            import rapidjson
+
+            print(rapidjson.dumps(list(pairs.keys()), default=str))
+        elif args.get("print_csv", False):
+            writer = csv.DictWriter(sys.stdout, fieldnames=headers)
+            writer.writeheader()
+            writer.writerows(tabular_data)
         else:
-            # Print empty string separating leading logs and output in case of
-            # human-readable formats.
-            print()
-
-        if pairs:
-            if args.get("print_list", False):
-                # print data as a list, with human-readable summary
-                print(f"{summary_str}: {', '.join(pairs.keys())}.")
-            elif args.get("print_one_column", False):
-                print("\n".join(pairs.keys()))
-            elif args.get("list_pairs_print_json", False):
-                import rapidjson
-
-                print(rapidjson.dumps(list(pairs.keys()), default=str))
-            elif args.get("print_csv", False):
-                writer = csv.DictWriter(sys.stdout, fieldnames=headers)
-                writer.writeheader()
-                writer.writerows(tabular_data)
-            else:
-                print_rich_table(tabular_data, headers, summary_str)
-        elif not (
-            args.get("print_one_column", False)
-            or args.get("list_pairs_print_json", False)
-            or args.get("print_csv", False)
-        ):
-            print(f"{summary_str}.")
+            print_rich_table(tabular_data, headers, summary_str)
+    elif not (
+        args.get("print_one_column", False)
+        or args.get("list_pairs_print_json", False)
+        or args.get("print_csv", False)
+    ):
+        print(f"{summary_str}.")
 
 
 def start_show_trades(args: dict[str, Any]) -> None:

@@ -701,9 +701,9 @@ def test_process_trade_creation(
     assert pytest.approx(trade.amount) == 0
     assert pytest.approx(trade.amount_requested) == 60 / ticker_usdt.return_value[ticker_side]
 
-    assert log_has(
+    assert log_has_re(
         f"{'Short' if is_short else 'Long'} signal found: about create a new trade for ETH/USDT "
-        "with stake_amount: 60.0 ...",
+        r"with stake_amount: 60.0 and price: .*",
         caplog,
     )
     mocker.patch("freqtrade.freqtradebot.FreqtradeBot._check_and_execute_exit")

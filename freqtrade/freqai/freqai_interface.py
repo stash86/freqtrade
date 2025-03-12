@@ -618,7 +618,7 @@ class IFreqaiModel(ABC):
         )
 
         unfiltered_dataframe = dk.use_strategy_to_populate_indicators(
-            strategy, corr_dataframes, base_dataframes, pair
+            strategy, corr_dataframes=corr_dataframes, base_dataframes=base_dataframes, pair=pair
         )
 
         trained_timestamp = new_trained_timerange.stopts

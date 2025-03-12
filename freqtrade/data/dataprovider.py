@@ -49,7 +49,7 @@ class DataProvider:
         self._pairlists = pairlists
         self.__rpc = rpc
         self.__cached_pairs: dict[PairWithTimeframe, tuple[DataFrame, datetime]] = {}
-        self.__slice_index: int | None = None
+        self.__slice_index: dict[str, int] = {}
         self.__slice_date: datetime | None = None
 
         self.__cached_pairs_backtesting: dict[PairWithTimeframe, DataFrame] = {}
@@ -69,13 +69,13 @@ class DataProvider:
         self.producers = self._config.get("external_message_consumer", {}).get("producers", [])
         self.external_data_enabled = len(self.producers) > 0
 
-    def _set_dataframe_max_index(self, limit_index: int):
+    def _set_dataframe_max_index(self, pair: str, limit_index: int):
         """
         Limit analyzed dataframe to max specified index.
         Only relevant in backtesting.
         :param limit_index: dataframe index.
         """
-        self.__slice_index = limit_index
+        self.__slice_index[pair] = limit_index
 
     def _set_dataframe_max_date(self, limit_date: datetime):
         """
@@ -393,9 +393,10 @@ class DataProvider:
                 df, date = self.__cached_pairs[pair_key]
             else:
                 df, date = self.__cached_pairs[pair_key]
-                if self.__slice_index is not None:
-                    max_index = self.__slice_index
+                if (max_index := self.__slice_index.get(pair)) is not None:
                     df = df.iloc[max(0, max_index - MAX_DATAFRAME_CANDLES) : max_index]
+                else:
+                    return (DataFrame(), datetime.fromtimestamp(0, tz=timezone.utc))
             return df, date
         else:
             return (DataFrame(), datetime.fromtimestamp(0, tz=timezone.utc))
@@ -430,7 +431,7 @@ class DataProvider:
         # Don't reset backtesting pairs -
         # otherwise they're reloaded each time during hyperopt due to with analyze_per_epoch
         # self.__cached_pairs_backtesting = {}
-        self.__slice_index = 0
+        self.__slice_index = {}
 
     # Exchange functions
 
