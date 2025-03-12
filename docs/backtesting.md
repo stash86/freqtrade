@@ -315,6 +315,7 @@ It contains some useful key metrics about performance of your strategy on backte
 | Sortino                     | 1.88                |
 | Sharpe                      | 2.97                |
 | Calmar                      | 6.29                |
+| SQN                         | 2.45                |
 | Profit factor               | 1.11                |
 | Expectancy (Ratio)          | -0.15 (-0.05)       |
 | Avg. stake amount           | 0.001      BTC      |
@@ -368,6 +369,7 @@ It contains some useful key metrics about performance of your strategy on backte
 - `Sortino`: Annualized Sortino ratio.
 - `Sharpe`: Annualized Sharpe ratio.
 - `Calmar`: Annualized Calmar ratio.
+- `SQN`: System Quality Number (SQN) - by Van Tharp.
 - `Profit factor`: profit / loss.
 - `Avg. stake amount`: Average stake amount, either `stake_amount` or the average when using dynamic stake amount.
 - `Total trade volume`: Volume generated on the exchange to reach the above profit.

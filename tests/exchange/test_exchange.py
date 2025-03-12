@@ -2177,13 +2177,11 @@ def test_get_historic_ohlcv(default_conf, mocker, caplog, exchange_name, candle_
 
     caplog.clear()
 
-    async def mock_get_candle_hist_error(pair, *args, **kwargs):
-        raise TimeoutError()
-
-    exchange._async_get_candle_history = MagicMock(side_effect=mock_get_candle_hist_error)
-    ret = exchange.get_historic_ohlcv(
-        pair, "5m", dt_ts(dt_now() - timedelta(seconds=since)), candle_type=candle_type
-    )
+    exchange._async_get_candle_history = get_mock_coro(side_effect=TimeoutError())
+    with pytest.raises(TimeoutError):
+        exchange.get_historic_ohlcv(
+            pair, "5m", dt_ts(dt_now() - timedelta(seconds=since)), candle_type=candle_type
+        )
     assert log_has_re(r"Async code raised an exception: .*", caplog)
 
 
@@ -2373,6 +2371,8 @@ def test_refresh_latest_trades(
     caplog.set_level(logging.DEBUG)
     use_trades_conf = default_conf
     use_trades_conf["exchange"]["use_public_trades"] = True
+    use_trades_conf["exchange"]["only_from_ccxt"] = True
+
     use_trades_conf["datadir"] = tmp_path
     use_trades_conf["orderflow"] = {"max_candles": 1500}
     exchange = get_patched_exchange(mocker, use_trades_conf)
@@ -3365,6 +3365,7 @@ async def test__async_fetch_trades_contract_size(
 async def test__async_get_trade_history_id(
     default_conf, mocker, exchange_name, fetch_trades_result
 ):
+    default_conf["exchange"]["only_from_ccxt"] = True
     exchange = get_patched_exchange(mocker, default_conf, exchange=exchange_name)
     if exchange._trades_pagination != "id":
         exchange.close()
@@ -6076,44 +6077,47 @@ def test_get_liquidation_price1(mocker, default_conf):
 
 @pytest.mark.parametrize("liquidation_buffer", [0.0])
 @pytest.mark.parametrize(
-    "is_short,trading_mode,exchange_name,margin_mode,leverage,open_rate,amount,expected_liq",
+    "is_short,trading_mode,exchange_name,margin_mode,leverage,open_rate,amount,mramt,expected_liq",
     [
-        (False, "spot", "binance", "", 5.0, 10.0, 1.0, None),
-        (True, "spot", "binance", "", 5.0, 10.0, 1.0, None),
-        (False, "spot", "gate", "", 5.0, 10.0, 1.0, None),
-        (True, "spot", "gate", "", 5.0, 10.0, 1.0, None),
-        (False, "spot", "okx", "", 5.0, 10.0, 1.0, None),
-        (True, "spot", "okx", "", 5.0, 10.0, 1.0, None),
+        (False, "spot", "binance", "", 5.0, 10.0, 1.0, (0.01, 0.01), None),
+        (True, "spot", "binance", "", 5.0, 10.0, 1.0, (0.01, 0.01), None),
+        (False, "spot", "gate", "", 5.0, 10.0, 1.0, (0.01, 0.01), None),
+        (True, "spot", "gate", "", 5.0, 10.0, 1.0, (0.01, 0.01), None),
+        (False, "spot", "okx", "", 5.0, 10.0, 1.0, (0.01, 0.01), None),
+        (True, "spot", "okx", "", 5.0, 10.0, 1.0, (0.01, 0.01), None),
         # Binance, short
-        (True, "futures", "binance", "isolated", 5.0, 10.0, 1.0, 11.89108910891089),
-        (True, "futures", "binance", "isolated", 3.0, 10.0, 1.0, 13.211221122079207),
-        (True, "futures", "binance", "isolated", 5.0, 8.0, 1.0, 9.514851485148514),
-        (True, "futures", "binance", "isolated", 5.0, 10.0, 0.6, 11.897689768976898),
+        (True, "futures", "binance", "isolated", 5.0, 10.0, 1.0, (0.01, 0.01), 11.89108910891089),
+        (True, "futures", "binance", "isolated", 3.0, 10.0, 1.0, (0.01, 0.01), 13.211221122079207),
+        (True, "futures", "binance", "isolated", 5.0, 8.0, 1.0, (0.01, 0.01), 9.514851485148514),
+        (True, "futures", "binance", "isolated", 5.0, 10.0, 0.6, (0.01, 0.01), 11.897689768976898),
         # Binance, long
-        (False, "futures", "binance", "isolated", 5, 10, 1.0, 8.070707070707071),
-        (False, "futures", "binance", "isolated", 5, 8, 1.0, 6.454545454545454),
-        (False, "futures", "binance", "isolated", 3, 10, 1.0, 6.723905723905723),
-        (False, "futures", "binance", "isolated", 5, 10, 0.6, 8.063973063973064),
+        (False, "futures", "binance", "isolated", 5, 10, 1.0, (0.01, 0.01), 8.070707070707071),
+        (False, "futures", "binance", "isolated", 5, 8, 1.0, (0.01, 0.01), 6.454545454545454),
+        (False, "futures", "binance", "isolated", 3, 10, 1.0, (0.01, 0.01), 6.723905723905723),
+        (False, "futures", "binance", "isolated", 5, 10, 0.6, (0.01, 0.01), 8.063973063973064),
         # Gate/okx, short
-        (True, "futures", "gate", "isolated", 5, 10, 1.0, 11.87413417771621),
-        (True, "futures", "gate", "isolated", 5, 10, 2.0, 11.87413417771621),
-        (True, "futures", "gate", "isolated", 3, 10, 1.0, 13.193482419684678),
-        (True, "futures", "gate", "isolated", 5, 8, 1.0, 9.499307342172967),
-        (True, "futures", "okx", "isolated", 3, 10, 1.0, 13.193482419684678),
+        (True, "futures", "gate", "isolated", 5, 10, 1.0, (0.01, 0.01), 11.87413417771621),
+        (True, "futures", "gate", "isolated", 5, 10, 2.0, (0.01, 0.01), 11.87413417771621),
+        (True, "futures", "gate", "isolated", 3, 10, 1.0, (0.01, 0.01), 13.193482419684678),
+        (True, "futures", "gate", "isolated", 5, 8, 1.0, (0.01, 0.01), 9.499307342172967),
+        (True, "futures", "okx", "isolated", 3, 10, 1.0, (0.01, 0.01), 13.193482419684678),
         # Gate/okx, long
-        (False, "futures", "gate", "isolated", 5.0, 10.0, 1.0, 8.085708510208207),
-        (False, "futures", "gate", "isolated", 3.0, 10.0, 1.0, 6.738090425173506),
-        (False, "futures", "okx", "isolated", 3.0, 10.0, 1.0, 6.738090425173506),
+        (False, "futures", "gate", "isolated", 5.0, 10.0, 1.0, (0.01, 0.01), 8.085708510208207),
+        (False, "futures", "gate", "isolated", 3.0, 10.0, 1.0, (0.01, 0.01), 6.738090425173506),
+        (False, "futures", "okx", "isolated", 3.0, 10.0, 1.0, (0.01, 0.01), 6.738090425173506),
         # bybit, long
-        (False, "futures", "bybit", "isolated", 1.0, 10.0, 1.0, 0.1),
-        (False, "futures", "bybit", "isolated", 3.0, 10.0, 1.0, 6.7666666),
-        (False, "futures", "bybit", "isolated", 5.0, 10.0, 1.0, 8.1),
-        (False, "futures", "bybit", "isolated", 10.0, 10.0, 1.0, 9.1),
+        (False, "futures", "bybit", "isolated", 1.0, 10.0, 1.0, (0.01, 0.01), 0.1),
+        (False, "futures", "bybit", "isolated", 3.0, 10.0, 1.0, (0.01, 0.01), 6.7666666),
+        (False, "futures", "bybit", "isolated", 5.0, 10.0, 1.0, (0.01, 0.01), 8.1),
+        (False, "futures", "bybit", "isolated", 10.0, 10.0, 1.0, (0.01, 0.01), 9.1),
+        # From the bybit example - without additional margin
+        (False, "futures", "bybit", "isolated", 50.0, 40000.0, 1.0, (0.005, None), 39400),
+        (False, "futures", "bybit", "isolated", 50.0, 20000.0, 1.0, (0.005, None), 19700),
         # bybit, short
-        (True, "futures", "bybit", "isolated", 1.0, 10.0, 1.0, 19.9),
-        (True, "futures", "bybit", "isolated", 3.0, 10.0, 1.0, 13.233333),
-        (True, "futures", "bybit", "isolated", 5.0, 10.0, 1.0, 11.9),
-        (True, "futures", "bybit", "isolated", 10.0, 10.0, 1.0, 10.9),
+        (True, "futures", "bybit", "isolated", 1.0, 10.0, 1.0, (0.01, 0.01), 19.9),
+        (True, "futures", "bybit", "isolated", 3.0, 10.0, 1.0, (0.01, 0.01), 13.233333),
+        (True, "futures", "bybit", "isolated", 5.0, 10.0, 1.0, (0.01, 0.01), 11.9),
+        (True, "futures", "bybit", "isolated", 10.0, 10.0, 1.0, (0.01, 0.01), 10.9),
     ],
 )
 def test_get_liquidation_price(
@@ -6126,6 +6130,7 @@ def test_get_liquidation_price(
     leverage,
     open_rate,
     amount,
+    mramt,
     expected_liq,
     liquidation_buffer,
 ):
@@ -6189,7 +6194,7 @@ def test_get_liquidation_price(
     mocker.patch(f"{EXMS}.price_to_precision", lambda s, x, y, **kwargs: y)
     exchange = get_patched_exchange(mocker, default_conf_usdt, exchange=exchange_name)
 
-    exchange.get_maintenance_ratio_and_amt = MagicMock(return_value=(0.01, 0.01))
+    exchange.get_maintenance_ratio_and_amt = MagicMock(return_value=mramt)
     exchange.name = exchange_name
     # default_conf_usdt.update({
     #     "dry_run": False,

@@ -224,7 +224,7 @@ AVAILABLE_CLI_OPTIONS = {
     ),
     "backtest_breakdown": Arg(
         "--breakdown",
-        help="Show backtesting breakdown per [day, week, month].",
+        help="Show backtesting breakdown per [day, week, month, year].",
         nargs="+",
         choices=constants.BACKTEST_BREAKDOWNS,
     ),

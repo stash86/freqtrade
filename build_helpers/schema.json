@@ -257,7 +257,8 @@
         "enum": [
           "day",
           "week",
-          "month"
+          "month",
+          "year"
         ]
       }
     },
@@ -1366,10 +1367,10 @@
           "type": "boolean",
           "default": false
         },
-        "keras": {
-          "description": "Use Keras for model training.",
-          "type": "boolean",
-          "default": false
+        "identifier": {
+          "description": "A unique ID for the current model. Must be changed when modifying features.",
+          "type": "string",
+          "default": "example"
         },
         "write_metrics_to_disk": {
           "description": "Write metrics to disk?",
@@ -1399,15 +1400,49 @@
           "type": "number",
           "default": 7
         },
-        "identifier": {
-          "description": "A unique ID for the current model. Must be changed when modifying features.",
-          "type": "string",
-          "default": "example"
+        "live_retrain_hours": {
+          "description": "Frequency of retraining during dry/live runs.",
+          "type": "number",
+          "default": 0
+        },
+        "expiration_hours": {
+          "description": "Avoid making predictions if a model is more than `expiration_hours` old. Defaults to 0 (no expiration).",
+          "type": "number",
+          "default": 0
+        },
+        "save_backtest_models": {
+          "description": "Save models to disk when running backtesting.",
+          "type": "boolean",
+          "default": false
+        },
+        "fit_live_predictions_candles": {
+          "description": "Number of historical candles to use for computing target (label) statistics from prediction data, instead of from the training dataset.",
+          "type": "boolean",
+          "default": false
+        },
+        "data_kitchen_thread_count": {
+          "description": "Designate the number of threads you want to use for data processing (outlier methods, normalization, etc.).",
+          "type": "integer"
+        },
+        "activate_tensorboard": {
+          "description": "Indicate whether or not to activate tensorboard",
+          "type": "boolean",
+          "default": true
         },
         "wait_for_training_iteration_on_reload": {
           "description": "Wait for the next training iteration to complete after /reload or ctrl+c.",
           "type": "boolean",
           "default": true
+        },
+        "continual_learning": {
+          "description": "Use the final state of the most recently trained model as starting point for the new model, allowing for incremental learning.",
+          "type": "boolean",
+          "default": false
+        },
+        "keras": {
+          "description": "Use Keras for model training.",
+          "type": "boolean",
+          "default": false
         },
         "feature_parameters": {
           "description": "The parameters used to engineer the feature set",

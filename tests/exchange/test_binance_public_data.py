@@ -14,11 +14,15 @@ from freqtrade.enums import CandleType
 from freqtrade.exchange.binance_public_data import (
     BadHttpStatus,
     Http404,
+    binance_vision_trades_zip_url,
     binance_vision_zip_name,
     download_archive_ohlcv,
+    download_archive_trades,
     get_daily_ohlcv,
+    get_daily_trades,
 )
 from freqtrade.util.datetime_helpers import dt_ts, dt_utc
+from ft_client.test_client.test_rest_client import log_has_re
 
 
 @pytest.fixture(scope="module")
@@ -336,4 +340,157 @@ async def test_get_daily_ohlcv(mocker, testdatadir):
         )
         with pytest.raises(zipfile.BadZipFile):
             df = await get_daily_ohlcv(symbol, timeframe, CandleType.SPOT, date, session)
+        assert get.call_count == 4  # 1 + 3 default retries
+
+
+async def test_download_archive_trades(mocker, caplog):
+    pair = "BTC/USDT"
+
+    since_ms = dt_ts(dt_utc(2020, 1, 1))
+    until_ms = dt_ts(dt_utc(2020, 1, 2))
+    markets = {"BTC/USDT": {"id": "BTCUSDT"}, "BTC/USDT:USDT": {"id": "BTCUSDT"}}
+
+    mocker.patch("freqtrade.exchange.binance_public_data.get_daily_trades", return_value=[[2, 3]])
+
+    pair1, res = await download_archive_trades(
+        CandleType.SPOT, pair, since_ms=since_ms, until_ms=until_ms, markets=markets
+    )
+    assert pair1 == pair
+    assert res == [[2, 3], [2, 3]]
+
+    mocker.patch(
+        "freqtrade.exchange.binance_public_data.get_daily_trades",
+        side_effect=Http404("xxx", dt_utc(2020, 1, 1), "http://example.com/something"),
+    )
+
+    pair1, res = await download_archive_trades(
+        CandleType.SPOT, pair, since_ms=since_ms, until_ms=until_ms, markets=markets
+    )
+
+    assert pair1 == pair
+    assert res == []
+    # exit on day 1
+    assert log_has_re("Fast download is unavailable", caplog)
+
+    # Test fail on day 2
+    caplog.clear()
+    mocker.patch(
+        "freqtrade.exchange.binance_public_data.get_daily_trades",
+        side_effect=[
+            [[2, 3]],
+            [[2, 3]],
+            Http404("xxx", dt_utc(2020, 1, 2), "http://example.com/something"),
+            [[2, 3]],
+        ],
+    )
+    # Download 3 days
+    until_ms = dt_ts(dt_utc(2020, 1, 3))
+
+    pair1, res = await download_archive_trades(
+        CandleType.SPOT, pair, since_ms=since_ms, until_ms=until_ms, markets=markets
+    )
+
+    assert pair1 == pair
+    assert res == [[2, 3], [2, 3]]
+    assert log_has_re(r"Binance fast download .*stopped", caplog)
+
+
+async def test_download_archive_trades_exception(mocker, caplog):
+    pair = "BTC/USDT"
+
+    since_ms = dt_ts(dt_utc(2020, 1, 1))
+    until_ms = dt_ts(dt_utc(2020, 1, 2))
+
+    markets = {"BTC/USDT": {"id": "BTCUSDT"}, "BTC/USDT:USDT": {"id": "BTCUSDT"}}
+    mocker.patch(
+        "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get", side_effect=RuntimeError
+    )
+
+    pair1, res = await download_archive_trades(
+        CandleType.SPOT, pair, since_ms=since_ms, until_ms=until_ms, markets=markets
+    )
+
+    assert pair1 == pair
+    assert res == []
+    mocker.patch(
+        "freqtrade.exchange.binance_public_data._download_archive_trades", side_effect=RuntimeError
+    )
+
+    await download_archive_trades(
+        CandleType.SPOT, pair, since_ms=since_ms, until_ms=until_ms, markets=markets
+    )
+    assert pair1 == pair
+    assert res == []
+    assert log_has_re("An exception occurred during fast trades download", caplog)
+
+
+async def test_binance_vision_trades_zip_url():
+    url = binance_vision_trades_zip_url("BTCUSDT", CandleType.SPOT, dt_utc(2023, 10, 27))
+    assert (
+        url == "https://data.binance.vision/data/spot/daily/aggTrades/"
+        "BTCUSDT/BTCUSDT-aggTrades-2023-10-27.zip"
+    )
+
+    url = binance_vision_trades_zip_url("BTCUSDT", CandleType.FUTURES, dt_utc(2023, 10, 28))
+    assert (
+        url == "https://data.binance.vision/data/futures/um/daily/aggTrades/"
+        "BTCUSDT/BTCUSDT-aggTrades-2023-10-28.zip"
+    )
+
+
+async def test_get_daily_trades(mocker, testdatadir):
+    symbol = "PEPEUSDT"
+    symbol_futures = "APEUSDT"
+    date = dt_utc(2024, 10, 28).date()
+    first_date = 1729987202368
+    last_date = 1730073596350
+
+    async with aiohttp.ClientSession() as session:
+        spot_path = (
+            testdatadir / "binance/binance_public_data/spot-PEPEUSDT-aggTrades-2024-10-27.zip"
+        )
+        get = mocker.patch(
+            "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get",
+            return_value=MockResponse(spot_path.read_bytes(), 200),
+        )
+        res = await get_daily_trades(symbol, CandleType.SPOT, date, session)
+        assert get.call_count == 1
+        assert res[0][0] == first_date
+        assert res[-1][0] == last_date
+
+        futures_path = (
+            testdatadir / "binance/binance_public_data/futures-APEUSDT-aggTrades-2024-10-18.zip"
+        )
+        get = mocker.patch(
+            "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get",
+            return_value=MockResponse(futures_path.read_bytes(), 200),
+        )
+        res_fut = await get_daily_trades(symbol_futures, CandleType.FUTURES, date, session)
+        assert get.call_count == 1
+        assert res_fut[0][0] == 1729209603958
+        assert res_fut[-1][0] == 1729295981272
+
+        get = mocker.patch(
+            "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get",
+            return_value=MockResponse(b"", 404),
+        )
+        with pytest.raises(Http404):
+            await get_daily_trades(symbol, CandleType.SPOT, date, session, retry_delay=0)
+        assert get.call_count == 1
+
+        get = mocker.patch(
+            "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get",
+            return_value=MockResponse(b"", 500),
+        )
+        mocker.patch("asyncio.sleep")
+        with pytest.raises(BadHttpStatus):
+            await get_daily_trades(symbol, CandleType.SPOT, date, session)
+        assert get.call_count == 4  # 1 + 3 default retries
+
+        get = mocker.patch(
+            "freqtrade.exchange.binance_public_data.aiohttp.ClientSession.get",
+            return_value=MockResponse(b"nop", 200),
+        )
+        with pytest.raises(zipfile.BadZipFile):
+            await get_daily_trades(symbol, CandleType.SPOT, date, session)
         assert get.call_count == 4  # 1 + 3 default retries

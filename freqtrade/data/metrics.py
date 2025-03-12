@@ -375,3 +375,32 @@ def calculate_calmar(
 
     # print(expected_returns_mean, max_drawdown, calmar_ratio)
     return calmar_ratio
+
+
+def calculate_sqn(trades: pd.DataFrame, starting_balance: float) -> float:
+    """
+    Calculate System Quality Number (SQN) - Van K. Tharp.
+    SQN measures systematic trading quality and takes into account both
+    the number of trades and their standard deviation.
+
+    :param trades: DataFrame containing trades (requires column profit_abs)
+    :param starting_balance: Starting balance of the trading system
+    :return: SQN value
+    """
+    if len(trades) == 0:
+        return 0.0
+
+    total_profit = trades["profit_abs"] / starting_balance
+    number_of_trades = len(trades)
+
+    # Calculate average trade and standard deviation
+    average_profits = total_profit.mean()
+    profits_std = total_profit.std()
+
+    if profits_std != 0 and not np.isnan(profits_std):
+        sqn = math.sqrt(number_of_trades) * (average_profits / profits_std)
+    else:
+        # Define negative SQN to indicate this is NOT optimal
+        sqn = -100.0
+
+    return round(sqn, 4)

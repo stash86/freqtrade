@@ -1122,6 +1122,7 @@ The following list contains some common patterns which should be avoided to prev
 - don't use `.iloc[-1]` or any other absolute position in the dataframe within `populate_` functions, as this will be different between dry-run and backtesting. Absolute `iloc` indexing is safe to use in callbacks however - see [Strategy Callbacks](strategy-callbacks.md).
 - don't use functions that use all dataframe or column values, e.g. `dataframe['mean_volume'] = dataframe['volume'].mean()`. As backtesting uses the full dataframe, at any point in the dataframe, the `'mean_volume'` series would include data from the future. Use rolling() calculations instead, e.g. `dataframe['volume'].rolling(<window>).mean()`.
 - don't use `.resample('1h')`. This uses the left border of the period interval, so moves data from an hour boundary to the start of the hour. Use `.resample('1h', label='right')` instead.
+- don't use `.merge()` to combine longer timeframes onto shorter ones. Instead, use the [informative pair](#informative-pairs) helpers. (A plain merge can implicitly cause a lookahead bias as date refers to open date, not close date).
 
 !!! Tip "Identifying problems"
     You should always use the two helper commands [lookahead-analysis](lookahead-analysis.md) and [recursive-analysis](recursive-analysis.md), which can each help you figure out problems with your strategy in different ways.

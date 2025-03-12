@@ -1067,10 +1067,13 @@ CONF_SCHEMA = {
                     "type": "boolean",
                     "default": False,
                 },
-                "keras": {
-                    "description": "Use Keras for model training.",
-                    "type": "boolean",
-                    "default": False,
+                "identifier": {
+                    "description": (
+                        "A unique ID for the current model. "
+                        "Must be changed when modifying features."
+                    ),
+                    "type": "string",
+                    "default": "example",
                 },
                 "write_metrics_to_disk": {
                     "description": "Write metrics to disk?",
@@ -1102,13 +1105,43 @@ CONF_SCHEMA = {
                     "type": "number",
                     "default": 7,
                 },
-                "identifier": {
+                "live_retrain_hours": {
+                    "description": "Frequency of retraining during dry/live runs.",
+                    "type": "number",
+                    "default": 0,
+                },
+                "expiration_hours": {
                     "description": (
-                        "A unique ID for the current model. "
-                        "Must be changed when modifying features."
+                        "Avoid making predictions if a model is more than `expiration_hours` "
+                        "old. Defaults to 0 (no expiration)."
                     ),
-                    "type": "string",
-                    "default": "example",
+                    "type": "number",
+                    "default": 0,
+                },
+                "save_backtest_models": {
+                    "description": "Save models to disk when running backtesting.",
+                    "type": "boolean",
+                    "default": False,
+                },
+                "fit_live_predictions_candles": {
+                    "description": (
+                        "Number of historical candles to use for computing target (label) "
+                        "statistics from prediction data, instead of from the training dataset."
+                    ),
+                    "type": "boolean",
+                    "default": False,
+                },
+                "data_kitchen_thread_count": {
+                    "description": (
+                        "Designate the number of threads you want to use for data processing "
+                        "(outlier methods, normalization, etc.)."
+                    ),
+                    "type": "integer",
+                },
+                "activate_tensorboard": {
+                    "description": "Indicate whether or not to activate tensorboard",
+                    "type": "boolean",
+                    "default": True,
                 },
                 "wait_for_training_iteration_on_reload": {
                     "description": (
@@ -1116,6 +1149,20 @@ CONF_SCHEMA = {
                     ),
                     "type": "boolean",
                     "default": True,
+                },
+                "continual_learning": {
+                    "description": (
+                        "Use the final state of the most recently trained model "
+                        "as starting point for the new model, allowing for "
+                        "incremental learning."
+                    ),
+                    "type": "boolean",
+                    "default": False,
+                },
+                "keras": {
+                    "description": "Use Keras for model training.",
+                    "type": "boolean",
+                    "default": False,
                 },
                 "feature_parameters": {
                     "description": "The parameters used to engineer the feature set",

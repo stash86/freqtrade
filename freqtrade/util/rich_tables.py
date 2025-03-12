@@ -1,11 +1,11 @@
-import sys
 from collections.abc import Sequence
 from typing import Any, TypeAlias
 
 from pandas import DataFrame
-from rich.console import Console
 from rich.table import Column, Table
 from rich.text import Text
+
+from freqtrade.loggers.rich_console import get_rich_console
 
 
 TextOrString: TypeAlias = str | Text
@@ -38,11 +38,7 @@ def print_rich_table(
             row_to_add: list[str | Text] = [r if isinstance(r, Text) else str(r) for r in row]
             table.add_row(*row_to_add)
 
-    width = None
-    if any(module in ["pytest", "ipykernel"] for module in sys.modules):
-        width = 200
-
-    console = Console(width=width)
+    console = get_rich_console()
     console.print(table)
 
 
@@ -74,9 +70,5 @@ def print_df_rich_table(
         row = [_format_value(x, floatfmt=".3f") for x in value_list]
         table.add_row(*row)
 
-    width = None
-    if any(module in ["pytest", "ipykernel"] for module in sys.modules):
-        width = 200
-
-    console = Console(width=width)
+    console = get_rich_console()
     console.print(table)

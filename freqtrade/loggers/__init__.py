@@ -3,12 +3,11 @@ from logging import Formatter
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from pathlib import Path
 
-from rich.console import Console
-
 from freqtrade.constants import Config
 from freqtrade.exceptions import OperationalException
 from freqtrade.loggers.buffering_handler import FTBufferingHandler
 from freqtrade.loggers.ft_rich_handler import FtRichHandler
+from freqtrade.loggers.rich_console import get_rich_console
 from freqtrade.loggers.set_log_levels import set_loggers
 
 
@@ -22,7 +21,8 @@ LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 bufferHandler = FTBufferingHandler(1000)
 bufferHandler.setFormatter(Formatter(LOGFORMAT))
 
-error_console = Console(stderr=True, color_system=None)
+
+error_console = get_rich_console(stderr=True, color_system=None)
 
 
 def get_existing_handlers(handlertype):

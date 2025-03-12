@@ -6,6 +6,7 @@ import ccxt
 import pandas as pd
 import pytest
 
+from freqtrade.data.converter.trade_converter import trades_dict_to_list
 from freqtrade.enums import CandleType, MarginMode, TradingMode
 from freqtrade.exceptions import DependencyException, InvalidOrderException, OperationalException
 from freqtrade.exchange.exchange_utils_timeframe import timeframe_to_seconds
@@ -1002,6 +1003,7 @@ def test_get_maintenance_ratio_and_amt_binance(
 
 
 async def test__async_get_trade_history_id_binance(default_conf_usdt, mocker, fetch_trades_result):
+    default_conf_usdt["exchange"]["only_from_ccxt"] = True
     exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="binance")
 
     async def mock_get_trade_hist(pair, *args, **kwargs):
@@ -1053,6 +1055,56 @@ async def test__async_get_trade_history_id_binance(default_conf_usdt, mocker, fe
 
     assert fetch_trades_cal[2][1]["params"][pagination_arg] != "0"
     assert fetch_trades_cal[3][1]["params"][pagination_arg] != "0"
+
+    # Clean up event loop to avoid warnings
+    exchange.close()
+
+
+async def test__async_get_trade_history_id_binance_fast(
+    default_conf_usdt, mocker, fetch_trades_result
+):
+    default_conf_usdt["exchange"]["only_from_ccxt"] = False
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="binance")
+
+    async def mock_get_trade_hist(pair, *args, **kwargs):
+        if "since" in kwargs:
+            pass
+            # older than initial call
+            # if kwargs["since"] < 1565798399752:
+            #     return []
+            # else:
+            #     # Don't expect to get here
+            #     raise ValueError("Unexpected call")
+            #     # return fetch_trades_result[:-2]
+        elif kwargs.get("params", {}).get(exchange._trades_pagination_arg) == "0":
+            # Return first 3
+            return fetch_trades_result[:-2]
+        # elif kwargs.get("params", {}).get(exchange._trades_pagination_arg) in (
+        #     fetch_trades_result[-3]["id"],
+        #     1565798399752,
+        # ):
+        #     # Return 2
+        #     return fetch_trades_result[-3:-1]
+        # else:
+        #     # Return last 2
+        #     return fetch_trades_result[-2:]
+
+    pair = "ETH/BTC"
+    mocker.patch(
+        "freqtrade.exchange.binance.download_archive_trades",
+        return_value=(pair, trades_dict_to_list(fetch_trades_result[-2:])),
+    )
+
+    exchange._api_async.fetch_trades = MagicMock(side_effect=mock_get_trade_hist)
+
+    ret = await exchange._async_get_trade_history(
+        pair,
+        since=fetch_trades_result[0]["timestamp"],
+        until=fetch_trades_result[-1]["timestamp"] - 1,
+    )
+
+    assert ret[0] == pair
+    assert isinstance(ret[1], list)
 
     # Clean up event loop to avoid warnings
     exchange.close()

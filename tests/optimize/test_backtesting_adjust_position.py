@@ -162,7 +162,7 @@ def test_backtest_position_adjustment_detailed(default_conf, fee, mocker, levera
     backtesting.strategy.adjust_trade_position = MagicMock(return_value=None)
     assert pytest.approx(trade.liquidation_price) == (0.10278333 if leverage == 1 else 1.2122249)
 
-    trade = backtesting._get_adjust_trade_entry_for_candle(trade, row_enter, current_time)
+    trade = backtesting._check_adjust_trade_for_candle(trade, row_enter, current_time)
     assert trade
     assert pytest.approx(trade.stake_amount) == 100.0
     assert pytest.approx(trade.amount) == 47.61904762 * leverage
@@ -170,7 +170,7 @@ def test_backtest_position_adjustment_detailed(default_conf, fee, mocker, levera
     # Increase position by 100
     backtesting.strategy.adjust_trade_position = MagicMock(return_value=(100, "PartIncrease"))
 
-    trade = backtesting._get_adjust_trade_entry_for_candle(trade, row_enter, current_time)
+    trade = backtesting._check_adjust_trade_for_candle(trade, row_enter, current_time)
 
     liq_price = 0.1038916 if leverage == 1 else 1.2127791
     assert trade
@@ -184,7 +184,7 @@ def test_backtest_position_adjustment_detailed(default_conf, fee, mocker, levera
     backtesting.strategy.adjust_trade_position = MagicMock(return_value=-500)
     current_time = row_exit[0].to_pydatetime()
 
-    trade = backtesting._get_adjust_trade_entry_for_candle(trade, row_exit, current_time)
+    trade = backtesting._check_adjust_trade_for_candle(trade, row_exit, current_time)
 
     assert trade
     assert pytest.approx(trade.stake_amount) == 200.0
@@ -195,7 +195,7 @@ def test_backtest_position_adjustment_detailed(default_conf, fee, mocker, levera
 
     # Reduce position by 50
     backtesting.strategy.adjust_trade_position = MagicMock(return_value=(-100, "partDecrease"))
-    trade = backtesting._get_adjust_trade_entry_for_candle(trade, row_exit, current_time)
+    trade = backtesting._check_adjust_trade_for_candle(trade, row_exit, current_time)
 
     assert trade
     assert pytest.approx(trade.stake_amount) == 100.0
@@ -208,7 +208,7 @@ def test_backtest_position_adjustment_detailed(default_conf, fee, mocker, levera
 
     # Adjust below minimum
     backtesting.strategy.adjust_trade_position = MagicMock(return_value=-99)
-    trade = backtesting._get_adjust_trade_entry_for_candle(trade, row_exit, current_time)
+    trade = backtesting._check_adjust_trade_for_candle(trade, row_exit, current_time)
 
     assert trade
     assert pytest.approx(trade.stake_amount) == 100.0
@@ -220,5 +220,5 @@ def test_backtest_position_adjustment_detailed(default_conf, fee, mocker, levera
 
     # Adjust to close trade
     backtesting.strategy.adjust_trade_position = MagicMock(return_value=-trade.stake_amount)
-    trade = backtesting._get_adjust_trade_entry_for_candle(trade, row_exit, current_time)
+    trade = backtesting._check_adjust_trade_for_candle(trade, row_exit, current_time)
     assert trade.is_open is False
