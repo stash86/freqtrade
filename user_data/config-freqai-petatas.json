@@ -2,7 +2,7 @@
     "freqai": {
         "enabled": true,
         "purge_old_models": 0,
-        "train_period_days": 60,
+        "train_period_days": 180,
         "backtest_period_days": 1,
         "live_retrain_hours": 24,
         "identifier": "petatas",
