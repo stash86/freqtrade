@@ -1,0 +1,20 @@
+{
+   "external_message_consumer": {
+        "enabled": true,
+        "producers": [
+            {
+                "name": "default",
+                "host": "",
+                "port": 8081,
+                "ws_token": ""
+            },
+            {
+                "name": "default",
+                "host": "",
+                "port": 8081,
+                "ws_token": ""
+            }
+        ],
+        "remove_entry_exit_signals": false,
+    }
+}
