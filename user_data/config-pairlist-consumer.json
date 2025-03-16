@@ -4,6 +4,7 @@
             "method": "ProducerPairList",
             // "number_assets": 5,
             "producer_name": "prod",
-        }
+        },
+        {"method": "FullTradesFilter"},
     ],
 }
