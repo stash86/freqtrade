@@ -1,0 +1,21 @@
+{
+    "pairlists": [
+        {
+            "method": "ProducerPairList",
+            "producer_name": "prod",
+        },
+        {
+            "method": "MarketCapPairList",
+            "number_assets": 30,
+            "max_rank": 50,
+            "refresh_period": 86400,
+            "categories": ["layer-1"]
+        },
+        {
+            "method": "VolumePairList",
+            "number_assets": 20,
+            "sort_key": "quoteVolume",
+        },
+        {"method": "FullTradesFilter"},
+    ],
+}
