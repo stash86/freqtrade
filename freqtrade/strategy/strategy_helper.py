@@ -45,6 +45,13 @@ def merge_informative_pair(
     if minutes == minutes_inf:
         # No need to forwardshift if the timeframes are identical
         informative["date_merge"] = informative[date_column]
+
+        if((suffix is None) or (suffix == "")) and (append_timeframe == False):
+            # drop OHLCV column to avoid duplicate columns issue
+            drop_columns = ["open", "high", "low", "close", "volume", "date"]
+            informative.drop(
+                columns=informative.columns.intersection(drop_columns), inplace=True
+            )
     elif minutes < minutes_inf:
         # Subtract "small" timeframe so merging is not delayed by 1 small candle
         # Detailed explanation in https://github.com/freqtrade/freqtrade/issues/4073
@@ -77,9 +84,6 @@ def merge_informative_pair(
     elif suffix:
         date_merge = f"date_merge_{suffix}"
         informative.columns = [f"{col}_{suffix}" for col in informative.columns]
-    else:
-        # drop date column to avoid duplicate columns
-        informative = informative.drop('date', axis=1)
 
     # Combine the 2 dataframes
     # all indicators on the informative sample MUST be calculated before this point
