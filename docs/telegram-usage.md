@@ -81,6 +81,19 @@ Without this, the bot will always respond to the general channel in the group if
 
 Similar to the group-id - you can use `/tg_info` from the topic/thread to get the correct topic-id.
 
+#### Authorized users
+
+For groups, it can be useful to limit who can send commands to the bot.
+
+If `"authorized_users": []` is present and empty, no user will be allowed to control the bot.
+In the below example, only the user with the id "1234567" is allowed to control the bot - all other users will only be able to receive messages.
+
+```json
+   "chat_id": "-1001332619709",
+   "topic_id": "3",
+   "authorized_users": ["1234567"]
+```
+
 ## Control telegram noise
 
 Freqtrade provides means to control the verbosity of your telegram bot.

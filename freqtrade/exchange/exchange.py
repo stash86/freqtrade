@@ -2441,8 +2441,8 @@ class Exchange:
 
                     return self._exchange_ws.get_ohlcv(pair, timeframe, candle_type, candle_ts)
                 logger.info(
-                    f"Failed to reuse watch {pair}, {timeframe}, {candle_ts < last_refresh_time},"
-                    f" {candle_ts}, {last_refresh_time}, "
+                    f"Couldn't reuse watch for {pair}, {timeframe}, falling back to REST api. "
+                    f"{candle_ts < last_refresh_time}, {candle_ts}, {last_refresh_time}, "
                     f"{format_ms_time(candle_ts)}, {format_ms_time(last_refresh_time)} "
                 )
 

@@ -587,7 +587,7 @@ def test_generate_periodic_breakdown_stats(testdatadir):
     day = res[0]
     assert "date" in day
     assert "draws" in day
-    assert "loses" in day
+    assert "losses" in day
     assert "wins" in day
     assert "profit_abs" in day
 
