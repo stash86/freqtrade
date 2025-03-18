@@ -74,10 +74,12 @@ def merge_informative_pair(
     elif append_timeframe:
         date_merge = f"date_merge_{timeframe_inf}"
         informative.columns = [f"{col}_{timeframe_inf}" for col in informative.columns]
-
     elif suffix:
         date_merge = f"date_merge_{suffix}"
         informative.columns = [f"{col}_{suffix}" for col in informative.columns]
+    else:
+        # drop date column to avoid duplicate columns
+        informative = informative.drop('date', axis=1)
 
     # Combine the 2 dataframes
     # all indicators on the informative sample MUST be calculated before this point
