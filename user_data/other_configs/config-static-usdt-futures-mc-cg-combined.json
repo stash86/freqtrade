@@ -42,7 +42,10 @@
         "order_book_top": 1
     },
     "pairlists": [
-        {"method": "StaticPairList"},
+        {
+            "method": "StaticPairList",
+            "allow_inactive": true,
+        },
     ],
     "exchange": {
         "name": "binance",
