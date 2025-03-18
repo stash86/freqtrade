@@ -613,6 +613,14 @@
           "description": "Telegram topic ID - only applicable for group chats",
           "type": "string"
         },
+        "authorized_users": {
+          "description": "Authorized users for the bot.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
         "allow_custom_messages": {
           "description": "Allow sending custom messages from the Strategy.",
           "type": "boolean",
@@ -1417,8 +1425,7 @@
         },
         "fit_live_predictions_candles": {
           "description": "Number of historical candles to use for computing target (label) statistics from prediction data, instead of from the training dataset.",
-          "type": "boolean",
-          "default": false
+          "type": "integer"
         },
         "data_kitchen_thread_count": {
           "description": "Designate the number of threads you want to use for data processing (outlier methods, normalization, etc.).",

@@ -471,6 +471,12 @@ CONF_SCHEMA = {
                     "description": "Telegram topic ID - only applicable for group chats",
                     "type": "string",
                 },
+                "authorized_users": {
+                    "description": "Authorized users for the bot.",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "uniqueItems": True,
+                },
                 "allow_custom_messages": {
                     "description": "Allow sending custom messages from the Strategy.",
                     "type": "boolean",
@@ -1128,8 +1134,7 @@ CONF_SCHEMA = {
                         "Number of historical candles to use for computing target (label) "
                         "statistics from prediction data, instead of from the training dataset."
                     ),
-                    "type": "boolean",
-                    "default": False,
+                    "type": "integer",
                 },
                 "data_kitchen_thread_count": {
                     "description": (
