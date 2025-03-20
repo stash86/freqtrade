@@ -1,0 +1,15 @@
+{
+    "pairlists": [
+        {
+            "method": "ProducerPairList",
+            // "number_assets": 5,
+            "producer_name": "prod",
+        },
+        {
+            "method": "VolumePairList",
+            "number_assets": 10,
+            "sort_key": "quoteVolume",
+        },
+        {"method": "FullTradesFilter"},
+    ],
+}
