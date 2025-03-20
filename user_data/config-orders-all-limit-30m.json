@@ -1,10 +1,10 @@
 {
     "trading_mode": "spot", //futures
     // "margin_mode": "isolated",
-    "ignore_buying_expired_candle_after": 300,
+    "ignore_buying_expired_candle_after": 120,
     "unfilledtimeout": {
-        "entry": 30,
-        "exit": 1,
+        "entry": 15,
+        "exit": 5,
         "unit": "minutes"
     },
     "order_types": {
@@ -19,7 +19,7 @@
     },
     "entry_pricing": {
         "price_side": "same",
-        "use_order_book": true, // true for futures binance
+        "use_order_book": true,
         "order_book_top": 1,
         "price_last_balance": 0.0,
         "check_depth_of_market": {
@@ -29,7 +29,7 @@
     },
     "exit_pricing": {
         "price_side": "same",
-        "use_order_book": true, // true for futures binance
+        "use_order_book": true,
         "order_book_top": 1
     },
 }
