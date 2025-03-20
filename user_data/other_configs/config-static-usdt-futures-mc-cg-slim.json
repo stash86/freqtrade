@@ -1,0 +1,74 @@
+{
+    "max_open_trades": -1,
+    "stake_currency": "USDT",
+    "stake_amount" : 45,
+    "amend_last_stake_amount ": true,
+    "tradable_balance_ratio": 0.99,
+    "fiat_display_currency": "USD",
+    "dry_run": true,
+    "dry_run_wallet": 11500,
+    "trading_mode": "futures",
+    "margin_mode": "isolated",
+    "cancel_open_orders_on_exit": false,
+    "unfilledtimeout": {
+        "entry": 10,
+        "exit": 10,
+        "exit_timeout_count": 0,
+        "unit": "minutes"
+    },
+    "order_types": {
+        "entry": "market",
+        "exit": "market",
+        "emergency_exit": "market",
+        "force_exit": "market",
+        "force_entry": "market",
+        "stoploss": "market",
+        "stoploss_on_exchange": false,
+        "stoploss_on_exchange_interval": 60
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList",
+            "allow_inactive": true,
+        },
+    ],
+    "exchange": {
+        "name": "binance",
+        "key": "1",
+        "secret": "2",
+        "ccxt_config": {"enableRateLimit": true},
+        "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 200
+        },
+        "pair_whitelist": [
+            "BTC/USDT:USDT","ETH/USDT:USDT","BNB/USDT:USDT","SOL/USDT:USDT","XRP/USDT:USDT",
+            "ADA/USDT:USDT","AVAX/USDT:USDT","LINK/USDT:USDT","TRX/USDT:USDT","DOT/USDT:USDT",
+            "MATIC/USDT:USDT","ICP/USDT:USDT","LTC/USDT:USDT","UNI/USDT:USDT","BCH/USDT:USDT",
+            "ETC/USDT:USDT","ATOM/USDT:USDT","OP/USDT:USDT","XLM/USDT:USDT","IMX/USDT:USDT",
+            "TON/USDT:USDT","HBAR/USDT:USDT","SUI/USDT:USDT","APT/USDT:USDT","NEAR/USDT:USDT"
+        ],
+        "pair_blacklist": []
+    },
+    "bot_name": "freqtrade_bot",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}
