@@ -4,7 +4,7 @@
             "enableRateLimit": false,
             "urls": {
                 "api": {
-                    "public": "http://binance_proxy:8090/api/v3"
+                    "public": "http://binance_proxy_futures:8090/api/v3"
                 }
             }
         },
