@@ -1,0 +1,24 @@
+{
+    "exchange": {
+        "pair_whitelist": [
+            "BTC/USDT:USDT","ETH/USDT:USDT","BNB/USDT:USDT","SOL/USDT:USDT","XRP/USDT:USDT",
+            "ADA/USDT:USDT","AVAX/USDT:USDT","LINK/USDT:USDT","TRX/USDT:USDT","DOT/USDT:USDT",
+            "ICP/USDT:USDT","LTC/USDT:USDT","UNI/USDT:USDT","BCH/USDT:USDT",
+            "ETC/USDT:USDT","ATOM/USDT:USDT","OP/USDT:USDT","XLM/USDT:USDT","IMX/USDT:USDT",
+            "TON/USDT:USDT","HBAR/USDT:USDT","SUI/USDT:USDT","APT/USDT:USDT","NEAR/USDT:USDT",
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {"method": "StaticPairList"},
+        {
+            "method": "VolumePairList",
+            "number_assets": 15,
+            "sort_key": "quoteVolume",
+            "min_value": 0,
+            "refresh_period": 86400,
+            "lookback_days": 7
+        },
+        {"method": "FullTradesFilter"},
+    ],
+}
