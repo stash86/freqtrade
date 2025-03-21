@@ -1,6 +1,6 @@
 {
     "exchange": {
-        "name": "kraken",
+        "name": "kucoin",
         "key": "1",
         "secret": "2",
         "password": "3", // for kucoin
