@@ -549,6 +549,14 @@ def user_dir(mocker, tmp_path) -> Path:
     return user_dir
 
 
+@pytest.fixture()
+def keep_log_config_loggers(mocker):
+    # Mock the _handle_existing_loggers function to prevent it from disabling all loggers.
+    # This is necessary to keep all loggers active, and avoid random failures if
+    # this file is ran before the test_rest_client file.
+    mocker.patch("logging.config._handle_existing_loggers")
+
+
 @pytest.fixture(autouse=True)
 def patch_coingecko(mocker) -> None:
     """

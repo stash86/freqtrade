@@ -639,3 +639,16 @@ class Health(BaseModel):
     bot_start_ts: int | None = None
     bot_startup: datetime | None = None
     bot_startup_ts: int | None = None
+
+
+class CustomDataEntry(BaseModel):
+    key: str
+    type: str
+    value: Any
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
+class ListCustomData(BaseModel):
+    trade_id: int
+    custom_data: list[CustomDataEntry]

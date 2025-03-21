@@ -188,30 +188,111 @@ as the watchdog.
 
 ## Advanced Logging
 
+Freqtrade uses the default logging module provided by python.
+Python allows for extensive [logging configuration](https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig) in this regards - way more than what can be covered here.
+
+Default logging (Colored terminal output) is setup by default if no `log_config` is provided.
+Using `--logfile logfile.log` will enable the RotatingFileHandler.
+If you're not content with the log format - or with the default settings provided for the RotatingFileHandler, you can customize logging to your liking.
+
+The default configuration looks roughly like the below - with the file handler being provided - but not enabled.
+
+``` json hl_lines="5-7 13-16 27"
+{
+  "log_config": {
+      "version": 1,
+      "formatters": {
+          "basic": {
+              "format": "%(message)s"
+          },
+          "standard": {
+              "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+          }
+      },
+      "handlers": {
+          "console": {
+              "class": "freqtrade.loggers.ft_rich_handler.FtRichHandler",
+              "formatter": "basic"
+          },
+          "file": {
+              "class": "logging.handlers.RotatingFileHandler",
+              "formatter": "standard",
+              // "filename": "someRandomLogFile.log",
+              "maxBytes": 10485760,
+              "backupCount": 10
+          }
+      },
+      "root": {
+          "handlers": [
+              "console",
+              // "file"
+          ],
+          "level": "INFO",
+      }
+  }
+}
+```
+
+!!! Note "highlighted lines"
+    Highlighted lines in the above code-block define the Rich handler and belong together.
+    The formatter "standard" and "file" will belong to the FileHandler.
+
+Each handler must use one of the defined formatters (by name) - and it's class must be available and a valid logging class.
+To actually use a handler - it must be in the "handlers" section inside the "root" segment.
+If this section is left out, freqtrade will provide no output (in the non-configured handler, anyway).
+
+!!! Tip "Explicit log configuration"
+    We recommend to extract the logging configuration from your main configuration, and provide it to your bot via [multiple configuration files](configuration.md#multiple-configuration-files) functionality. This will avoid unnecessary code duplication.
+
+---
+
 On many Linux systems the bot can be configured to send its log messages to `syslog` or `journald` system services. Logging to a remote `syslog` server is also available on Windows. The special values for the `--logfile` command line option can be used for this.
 
 ### Logging to syslog
 
-To send Freqtrade log messages to a local or remote `syslog` service use the `--logfile` command line option with the value in the following format:
+To send Freqtrade log messages to a local or remote `syslog` service use the `"log_config"` setup option to configure logging.
 
-* `--logfile syslog:<syslog_address>` -- send log messages to `syslog` service using the `<syslog_address>` as the syslog address.
+``` json
+{
+  // ...
+  "log_config": {
+    "version": 1,
+    "formatters": {
+      "syslog_fmt": {
+        "format": "%(name)s - %(levelname)s - %(message)s"
+      }
+    },
+    "handlers": {
+      // Other handlers? 
+      "syslog": {
+         "class": "logging.handlers.SysLogHandler",
+          "formatter": "syslog_fmt",
+          // Use one of the other options above as address instead? 
+          "address": "/dev/log"
+      }
+    },
+    "root": {
+      "handlers": [
+        // other handlers
+        "syslog",
+        
+      ]
+    }
 
-The syslog address can be either a Unix domain socket (socket filename) or a UDP socket specification, consisting of IP address and UDP port, separated by the `:` character.
+  }
+}
+```
 
-So, the following are the examples of possible usages:
+[Additional log-handlers](#advanced-logging) may need to be configured to for example also have log output in the console.
 
-* `--logfile syslog:/dev/log` -- log to syslog (rsyslog) using the `/dev/log` socket, suitable for most systems.
-* `--logfile syslog` -- same as above, the shortcut for `/dev/log`.
-* `--logfile syslog:/var/run/syslog` -- log to syslog (rsyslog) using the `/var/run/syslog` socket. Use this on MacOS.
-* `--logfile syslog:localhost:514` -- log to local syslog using UDP socket, if it listens on port 514.
-* `--logfile syslog:<ip>:514` -- log to remote syslog at IP address and port 514. This may be used on Windows for remote logging to an external syslog server.
+#### Syslog usage
 
 Log messages are send to `syslog` with the `user` facility. So you can see them with the following commands:
 
-* `tail -f /var/log/user`, or 
+* `tail -f /var/log/user`, or
 * install a comprehensive graphical viewer (for instance, 'Log File Viewer' for Ubuntu).
 
-On many systems `syslog` (`rsyslog`) fetches data from `journald` (and vice versa), so both `--logfile syslog` or `--logfile journald` can be used and the messages be viewed with both `journalctl` and a syslog viewer utility. You can combine this in any way which suites you better.
+On many systems `syslog` (`rsyslog`) fetches data from `journald` (and vice versa), so both syslog or journald can be used and the messages be viewed with both `journalctl` and a syslog viewer utility. You can combine this in any way which suites you better.
 
 For `rsyslog` the messages from the bot can be redirected into a separate dedicated log file. To achieve this, add
 
@@ -228,13 +309,69 @@ For `syslog` (`rsyslog`), the reduction mode can be switched on. This will reduc
 $RepeatedMsgReduction on
 ```
 
+#### Syslog addressing
+
+The syslog address can be either a Unix domain socket (socket filename) or a UDP socket specification, consisting of IP address and UDP port, separated by the `:` character.
+
+
+So, the following are the examples of possible addresses:
+
+* `"address": "/dev/log"` -- log to syslog (rsyslog) using the `/dev/log` socket, suitable for most systems.
+* `"address": "/var/run/syslog"` -- log to syslog (rsyslog) using the `/var/run/syslog` socket. Use this on MacOS.
+* `"address": "localhost:514"` -- log to local syslog using UDP socket, if it listens on port 514.
+* `"address": "<ip>:514"` -- log to remote syslog at IP address and port 514. This may be used on Windows for remote logging to an external syslog server.
+
+
+??? Info "Deprecated - configure syslog via command line"
+
+  `--logfile syslog:<syslog_address>` -- send log messages to `syslog` service using the `<syslog_address>` as the syslog address.
+
+  The syslog address can be either a Unix domain socket (socket filename) or a UDP socket specification, consisting of IP address and UDP port, separated by the `:` character.
+
+  So, the following are the examples of possible usages:
+
+  * `--logfile syslog:/dev/log` -- log to syslog (rsyslog) using the `/dev/log` socket, suitable for most systems.
+  * `--logfile syslog` -- same as above, the shortcut for `/dev/log`.
+  * `--logfile syslog:/var/run/syslog` -- log to syslog (rsyslog) using the `/var/run/syslog` socket. Use this on MacOS.
+  * `--logfile syslog:localhost:514` -- log to local syslog using UDP socket, if it listens on port 514.
+  * `--logfile syslog:<ip>:514` -- log to remote syslog at IP address and port 514. This may be used on Windows for remote logging to an external syslog server.
+
 ### Logging to journald
 
 This needs the `cysystemd` python package installed as dependency (`pip install cysystemd`), which is not available on Windows. Hence, the whole journald logging functionality is not available for a bot running on Windows.
 
-To send Freqtrade log messages to `journald` system service use the `--logfile` command line option with the value in the following format:
+To send Freqtrade log messages to `journald` system service, add the following configuration snippet to your configuration.
 
-* `--logfile journald` -- send log messages to `journald`.
+``` json
+{
+  // ...
+  "log_config": {
+    "version": 1,
+    "formatters": {
+      "journald_fmt": {
+        "format": "%(name)s - %(levelname)s - %(message)s"
+      }
+    },
+    "handlers": {
+      // Other handlers? 
+      "journald": {
+         "class": "cysystemd.journal.JournaldLogHandler",
+          "formatter": "journald_fmt",
+      }
+    },
+    "root": {
+      "handlers": [
+        // .. 
+        "journald",
+        
+      ]
+    }
+
+  }
+}
+```
+
+[Additional log-handlers](#advanced-logging) may need to be configured to for example also have log output in the console.
 
 Log messages are send to `journald` with the `user` facility. So you can see them with the following commands:
 
@@ -244,3 +381,51 @@ Log messages are send to `journald` with the `user` facility. So you can see the
 There are many other options in the `journalctl` utility to filter the messages, see manual pages for this utility.
 
 On many systems `syslog` (`rsyslog`) fetches data from `journald` (and vice versa), so both `--logfile syslog` or `--logfile journald` can be used and the messages be viewed with both `journalctl` and a syslog viewer utility. You can combine this in any way which suites you better.
+
+??? Info "Deprecated - configure journald via command line"
+    To send Freqtrade log messages to `journald` system service use the `--logfile` command line option with the value in the following format:
+
+    `--logfile journald` -- send log messages to `journald`.
+
+### Log format as JSON
+
+You can also configure the default output stream to use JSON format instead.
+The "fmt_dict" attribute defines the keys for the json output - as well as the [python logging LogRecord attributes](https://docs.python.org/3/library/logging.html#logrecord-attributes).
+
+The below configuration will change the default output to JSON. The same formatter could however also be used in combination with the `RotatingFileHandler`.
+We recommend to keep one format in human readable form.
+
+``` json
+{
+  // ...
+  "log_config": {
+    "version": 1,
+    "formatters": {
+       "json": {
+          "()": "freqtrade.loggers.json_formatter.JsonFormatter",
+          "fmt_dict": {
+              "timestamp": "asctime",
+              "level": "levelname",
+              "logger": "name",
+              "message": "message"
+          }
+      }
+    },
+    "handlers": {
+      // Other handlers? 
+      "jsonStream": {
+          "class": "logging.StreamHandler",
+          "formatter": "json"
+      }
+    },
+    "root": {
+      "handlers": [
+        // .. 
+        "jsonStream",
+        
+      ]
+    }
+
+  }
+}
+```

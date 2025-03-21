@@ -30,6 +30,7 @@ from freqtrade.rpc.api_server.api_schemas import (
     FreqAIModelListResponse,
     Health,
     HyperoptLossListResponse,
+    ListCustomData,
     Locks,
     LocksPayload,
     Logs,
@@ -165,21 +166,33 @@ def stats(rpc: RPC = Depends(get_rpc)):
 
 
 @router.get("/daily", response_model=DailyWeeklyMonthly, tags=["info"])
-def daily(timescale: int = 7, rpc: RPC = Depends(get_rpc), config=Depends(get_config)):
+def daily(
+    timescale: int = Query(7, ge=1, description="Number of days to fetch data for"),
+    rpc: RPC = Depends(get_rpc),
+    config=Depends(get_config),
+):
     return rpc._rpc_timeunit_profit(
         timescale, config["stake_currency"], config.get("fiat_display_currency", "")
     )
 
 
 @router.get("/weekly", response_model=DailyWeeklyMonthly, tags=["info"])
-def weekly(timescale: int = 4, rpc: RPC = Depends(get_rpc), config=Depends(get_config)):
+def weekly(
+    timescale: int = Query(4, ge=1, description="Number of weeks to fetch data for"),
+    rpc: RPC = Depends(get_rpc),
+    config=Depends(get_config),
+):
     return rpc._rpc_timeunit_profit(
         timescale, config["stake_currency"], config.get("fiat_display_currency", ""), "weeks"
     )
 
 
 @router.get("/monthly", response_model=DailyWeeklyMonthly, tags=["info"])
-def monthly(timescale: int = 3, rpc: RPC = Depends(get_rpc), config=Depends(get_config)):
+def monthly(
+    timescale: int = Query(3, ge=1, description="Number of months to fetch data for"),
+    rpc: RPC = Depends(get_rpc),
+    config=Depends(get_config),
+):
     return rpc._rpc_timeunit_profit(
         timescale, config["stake_currency"], config.get("fiat_display_currency", ""), "months"
     )
@@ -222,7 +235,10 @@ def trade_detail(tradeid: int = 0, rpc: RPC = Depends(get_rpc)):
 # on big databases. Correct response model: response_model=TradeResponse,
 @router.get("/trades", tags=["info", "trading"])
 def trades(
-    limit: int = 500, offset: int = 0, order_by_id: bool = True, rpc: RPC = Depends(get_rpc)
+    limit: int = Query(500, ge=1, description="Maximum number of different trades to return data"),
+    offset: int = Query(0, ge=0, description="Number of trades to skip for pagination"),
+    order_by_id: bool = True,
+    rpc: RPC = Depends(get_rpc),
 ):
     return rpc._rpc_trade_history(limit, offset=offset, order_by_id=order_by_id)
 
@@ -250,6 +266,36 @@ def trade_cancel_open_order(tradeid: int, rpc: RPC = Depends(get_rpc)):
 def trade_reload(tradeid: int, rpc: RPC = Depends(get_rpc)):
     rpc._rpc_reload_trade_from_exchange(tradeid)
     return rpc._rpc_trade_status([tradeid])[0]
+
+
+@router.get("/trades/open/custom-data", response_model=list[ListCustomData], tags=["trading"])
+def list_open_trades_custom_data(
+    key: str | None = Query(None, description="Optional key to filter data"),
+    limit: int = Query(100, ge=1, description="Maximum number of different trades to return data"),
+    offset: int = Query(0, ge=0, description="Number of trades to skip for pagination"),
+    rpc: RPC = Depends(get_rpc),
+):
+    """
+    Fetch custom data for all open trades.
+    If a key is provided, it will be used to filter data accordingly.
+    Pagination is implemented via the `limit` and `offset` parameters.
+    """
+    try:
+        return rpc._rpc_list_custom_data(key=key, limit=limit, offset=offset)
+    except RPCException as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/trades/{trade_id}/custom-data", response_model=list[ListCustomData], tags=["trading"])
+def list_custom_data(trade_id: int, key: str | None = Query(None), rpc: RPC = Depends(get_rpc)):
+    """
+    Fetch custom data for a specific trade.
+    If a key is provided, it will be used to filter data accordingly.
+    """
+    try:
+        return rpc._rpc_list_custom_data(trade_id, key=key)
+    except RPCException as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 # TODO: Missing response model

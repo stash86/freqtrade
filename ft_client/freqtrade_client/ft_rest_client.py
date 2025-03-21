@@ -269,6 +269,36 @@ class FtRestClient:
             params["offset"] = offset
         return self._get("trades", params)
 
+    def list_open_trades_custom_data(self, key=None, limit=100, offset=0):
+        """List open trades custom-data of the running bot.
+
+        :param key: str, optional - Key of the custom-data
+        :param limit: limit of trades
+        :param offset: trades offset for pagination
+        :return: json object
+        """
+        params = {}
+        params["limit"] = limit
+        params["offset"] = offset
+        if key is not None:
+            params["key"] = key
+
+        return self._get("trades/open/custom-data", params=params)
+
+    def list_custom_data(self, trade_id, key=None):
+        """List custom-data of the running bot for a specific trade.
+
+        :param trade_id: ID of the trade
+        :param key: str, optional - Key of the custom-data
+        :return: JSON object
+        """
+        params = {}
+        params["trade_id"] = trade_id
+        if key is not None:
+            params["key"] = key
+
+        return self._get(f"trades/{trade_id}/custom-data", params=params)
+
     def trade(self, trade_id):
         """Return specific trade
 

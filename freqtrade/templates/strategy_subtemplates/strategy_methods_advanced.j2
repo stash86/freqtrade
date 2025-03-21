@@ -52,7 +52,7 @@ def adjust_order_price(
     side: str,
     is_entry: bool,
     **kwargs,
-) -> float:
+) -> float | None:
     """
     Exit and entry order price re-adjustment logic, returning the user desired limit price.
     This only executes when a order was already placed, still open (unfilled fully or partially)
@@ -74,8 +74,7 @@ def adjust_order_price(
     :param side: 'long' or 'short' - indicating the direction of the proposed trade
     :param is_entry: True if the order is an entry order, False if it's an exit order.
     :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
-    :return float: New entry price value if provided
-
+    :return float or None: New entry price value if provided
     """
     return current_order_rate
 

@@ -302,6 +302,19 @@ trades
         :param limit: Limits trades to the X last trades. Max 500 trades.
         :param offset: Offset by this amount of trades.
 
+list_open_trades_custom_data
+    Return a dict containing open trades custom-datas
+
+        :param key: str, optional - Key of the custom-data
+        :param limit: Limits trades to X trades.
+        :param offset: Offset by this amount of trades.
+
+list_custom_data
+    Return a dict containing custom-datas of a specified trade
+
+        :param trade_id: int - ID of the trade
+        :param key: str, optional - Key of the custom-data
+
 version
 	Return the version of the bot.
 

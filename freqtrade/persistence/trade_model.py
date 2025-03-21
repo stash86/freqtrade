@@ -1362,8 +1362,10 @@ class LocalTrade:
 
     def get_custom_data(self, key: str, default: Any = None) -> Any:
         """
-        Get custom data for this trade
+        Get custom data for this trade.
+
         :param key: key of the custom data
+        :param default: value to return if no data is found
         """
         data = CustomDataWrapper.get_custom_data(trade_id=self.id, key=key)
         if data:

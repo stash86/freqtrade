@@ -12,7 +12,6 @@ import pytest
 
 from freqtrade.enums import CandleType
 from freqtrade.exchange.exchange_utils import timeframe_to_prev_date
-from freqtrade.loggers.set_log_levels import set_loggers
 from freqtrade.util.datetime_helpers import dt_now
 from tests.conftest import log_has_re
 from tests.exchange_online.conftest import EXCHANGE_WS_FIXTURE_TYPE
@@ -50,7 +49,6 @@ class TestCCXTExchangeWs:
         assert res[pair_tf] is not None
         df1 = res[pair_tf]
         caplog.set_level(logging.DEBUG)
-        set_loggers(1)
         assert df1.iloc[-1]["date"] == curr_candle
 
         # Wait until the next candle (might be up to 1 minute).

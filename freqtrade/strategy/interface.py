@@ -664,7 +664,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         entry_tag: str | None,
         side: str,
         **kwargs,
-    ) -> float:
+    ) -> float | None:
         """
         Entry price re-adjustment logic, returning the user desired limit price.
         This only executes when a order was already placed, still open (unfilled fully or partially)
@@ -685,7 +685,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :param entry_tag: Optional entry_tag (buy_tag) if provided with the buy signal.
         :param side: 'long' or 'short' - indicating the direction of the proposed trade
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
-        :return float: New entry price value if provided
+        :return float or None: New entry price value if provided
 
         """
         return current_order_rate
@@ -701,7 +701,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         entry_tag: str | None,
         side: str,
         **kwargs,
-    ) -> float:
+    ) -> float | None:
         """
         Exit price re-adjustment logic, returning the user desired limit price.
         This only executes when a order was already placed, still open (unfilled fully or partially)
@@ -722,7 +722,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :param entry_tag: Optional entry_tag (buy_tag) if provided with the buy signal.
         :param side: 'long' or 'short' - indicating the direction of the proposed trade
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
-        :return float: New entry price value if provided
+        :return float or None: New exit price value if provided
 
         """
         return current_order_rate
@@ -739,7 +739,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         side: str,
         is_entry: bool,
         **kwargs,
-    ) -> float:
+    ) -> float | None:
         """
         Exit and entry order price re-adjustment logic, returning the user desired limit price.
         This only executes when a order was already placed, still open (unfilled fully or partially)
@@ -761,7 +761,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :param side: 'long' or 'short' - indicating the direction of the proposed trade
         :param is_entry: True if the order is an entry order, False if it's an exit order.
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
-        :return float: New entry price value if provided
+        :return float or None: New entry price value if provided
         """
         if is_entry:
             return self.adjust_entry_price(

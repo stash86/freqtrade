@@ -282,6 +282,7 @@ Mandatory parameters are marked as **Required**, which means that they are requi
 | `dataformat_ohlcv` | Data format to use to store historical candle (OHLCV) data. <br> *Defaults to `feather`*. <br> **Datatype:** String
 | `dataformat_trades` | Data format to use to store historical trades data. <br> *Defaults to `feather`*. <br> **Datatype:** String
 | `reduce_df_footprint` | Recast all numeric columns to float32/int32, with the objective of reducing ram/disk usage (and decreasing train/inference timing in FreqAI). (Currently only affects FreqAI use-cases) <br> **Datatype:** Boolean. <br> Default: `False`.
+| `log_config` | Dictionary containing the log config for python logging. [more info](advanced-setup.md#advanced-logging) <br> **Datatype:** dict. <br> Default: `FtRichHandler`
 
 ### Parameters in the strategy
 
