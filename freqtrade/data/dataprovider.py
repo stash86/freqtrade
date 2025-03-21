@@ -270,8 +270,6 @@ class DataProvider:
         _timeframe = self._default_timeframe if not timeframe else timeframe
         _candle_type = self._default_candle_type if not candle_type else candle_type
 
-        logger.info(f"Getting producer data for {pair} {_timeframe} {_candle_type}")
-
         pair_key = (pair, _timeframe, _candle_type)
 
         # If we have no data from this Producer yet
