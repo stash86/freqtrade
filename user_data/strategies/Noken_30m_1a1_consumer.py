@@ -55,7 +55,8 @@ class Noken_30m_1a1_consumer(IStrategy):
     use_custom_stoploss = True
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        pair = metadata['pair']
+        splitted_pair = metadata["pair"].split("/")
+        pair = f"{splitted_pair[0]}/USDT:USDT"
         timeframe = self.timeframe
 
         count_calls = 0
