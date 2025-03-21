@@ -1,14 +1,16 @@
 import logging
+import logging.config
+import os
+from copy import deepcopy
 from logging import Formatter
-from logging.handlers import RotatingFileHandler, SysLogHandler
 from pathlib import Path
+from typing import Any
 
 from freqtrade.constants import Config
 from freqtrade.exceptions import OperationalException
 from freqtrade.loggers.buffering_handler import FTBufferingHandler
 from freqtrade.loggers.ft_rich_handler import FtRichHandler
 from freqtrade.loggers.rich_console import get_rich_console
-from freqtrade.loggers.set_log_levels import set_loggers
 
 
 # from freqtrade.loggers.std_err_stream_handler import FTStdErrStreamHandler
@@ -53,63 +55,140 @@ def setup_logging_pre() -> None:
     )
 
 
-def setup_logging(config: Config) -> None:
-    """
-    Process -v/--verbose, --logfile options
-    """
-    # Log level
-    verbosity = config["verbosity"]
-    logging.root.addHandler(bufferHandler)
-    if config.get("print_colorized", True):
-        logger.info("Enabling colorized output.")
-        error_console._color_system = error_console._detect_color_system()
+FT_LOGGING_CONFIG = {
+    "version": 1,
+    # "incremental": True,
+    # "disable_existing_loggers": False,
+    "formatters": {
+        "basic": {"format": "%(message)s"},
+        "standard": {
+            "format": LOGFORMAT,
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "freqtrade.loggers.ft_rich_handler.FtRichHandler",
+            "formatter": "basic",
+        },
+    },
+    "root": {
+        "handlers": [
+            "console",
+            # "file",
+        ],
+        "level": "INFO",
+    },
+}
 
-    logfile = config.get("logfile")
 
-    if logfile:
+def _set_log_levels(
+    log_config: dict[str, Any], verbosity: int = 0, api_verbosity: str = "info"
+) -> None:
+    """
+    Set the logging level for the different loggers
+    """
+    if "loggers" not in log_config:
+        log_config["loggers"] = {}
+
+    # Set default levels for third party libraries
+    third_party_loggers = {
+        "freqtrade": logging.INFO if verbosity <= 1 else logging.DEBUG,
+        "requests": logging.INFO if verbosity <= 1 else logging.DEBUG,
+        "urllib3": logging.INFO if verbosity <= 1 else logging.DEBUG,
+        "httpcore": logging.INFO if verbosity <= 1 else logging.DEBUG,
+        "ccxt.base.exchange": logging.INFO if verbosity <= 2 else logging.DEBUG,
+        "telegram": logging.INFO,
+        "httpx": logging.WARNING,
+        "werkzeug": logging.ERROR if api_verbosity == "error" else logging.INFO,
+    }
+
+    # Add third party loggers to the configuration
+    for logger_name, level in third_party_loggers.items():
+        if logger_name not in log_config["loggers"]:
+            log_config["loggers"][logger_name] = {
+                "level": logging.getLevelName(level),
+                "propagate": True,
+            }
+
+
+def _add_root_handler(log_config: dict[str, Any], handler_name: str):
+    if handler_name not in log_config["root"]["handlers"]:
+        log_config["root"]["handlers"].append(handler_name)
+
+
+def _add_formatter(log_config: dict[str, Any], format_name: str, format_: str):
+    if format_name not in log_config["formatters"]:
+        log_config["formatters"][format_name] = {"format": format_}
+
+
+def _create_log_config(config: Config) -> dict[str, Any]:
+    # Get log_config from user config or use default
+    log_config = config.get("log_config", deepcopy(FT_LOGGING_CONFIG))
+
+    if logfile := config.get("logfile"):
         s = logfile.split(":")
         if s[0] == "syslog":
-            # Address can be either a string (socket filename) for Unix domain socket or
-            # a tuple (hostname, port) for UDP socket.
-            # Address can be omitted (i.e. simple 'syslog' used as the value of
-            # config['logfilename']), which defaults to '/dev/log', applicable for most
-            # of the systems.
-            address = (s[1], int(s[2])) if len(s) > 2 else s[1] if len(s) > 1 else "/dev/log"
-            if handler_sl := get_existing_handlers(SysLogHandler):
-                logging.root.removeHandler(handler_sl)
-            handler_sl = SysLogHandler(address=address)
-            # No datetime field for logging into syslog, to allow syslog
-            # to perform reduction of repeating messages if this is set in the
-            # syslog config. The messages should be equal for this.
-            handler_sl.setFormatter(Formatter("%(name)s - %(levelname)s - %(message)s"))
-            logging.root.addHandler(handler_sl)
+            logger.warning(
+                "DEPRECATED: Configuring syslog logging via command line is deprecated."
+                "Please use the log_config option in the configuration file instead."
+            )
+            # Add syslog handler to the config
+            log_config["handlers"]["syslog"] = {
+                "class": "logging.handlers.SysLogHandler",
+                "formatter": "syslog_format",
+                "address": (s[1], int(s[2])) if len(s) > 2 else s[1] if len(s) > 1 else "/dev/log",
+            }
+
+            _add_formatter(log_config, "syslog_format", "%(name)s - %(levelname)s - %(message)s")
+            _add_root_handler(log_config, "syslog")
+
         elif s[0] == "journald":  # pragma: no cover
+            # Check if we have the module available
+            logger.warning(
+                "DEPRECATED: Configuring Journald logging via command line is deprecated."
+                "Please use the log_config option in the configuration file instead."
+            )
             try:
-                from cysystemd.journal import JournaldLogHandler
+                from cysystemd.journal import JournaldLogHandler  # noqa: F401
             except ImportError:
                 raise OperationalException(
                     "You need the cysystemd python package be installed in "
                     "order to use logging to journald."
                 )
-            if handler_jd := get_existing_handlers(JournaldLogHandler):
-                logging.root.removeHandler(handler_jd)
-            handler_jd = JournaldLogHandler()
-            # No datetime field for logging into journald, to allow syslog
-            # to perform reduction of repeating messages if this is set in the
-            # syslog config. The messages should be equal for this.
-            handler_jd.setFormatter(Formatter("%(name)s - %(levelname)s - %(message)s"))
-            logging.root.addHandler(handler_jd)
+
+            # Add journald handler to the config
+            log_config["handlers"]["journald"] = {
+                "class": "cysystemd.journal.JournaldLogHandler",
+                "formatter": "journald_format",
+            }
+
+            _add_formatter(log_config, "journald_format", "%(name)s - %(levelname)s - %(message)s")
+            _add_root_handler(log_config, "journald")
+
         else:
-            if handler_rf := get_existing_handlers(RotatingFileHandler):
-                logging.root.removeHandler(handler_rf)
+            # Regular file logging
+            # Update existing file handler configuration
+            if "file" in log_config["handlers"]:
+                log_config["handlers"]["file"]["filename"] = logfile
+            else:
+                log_config["handlers"]["file"] = {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "formatter": "standard",
+                    "filename": logfile,
+                    "maxBytes": 1024 * 1024 * 10,  # 10Mb
+                    "backupCount": 10,
+                }
+            _add_root_handler(log_config, "file")
+
+    # Dynamically update some handlers
+    for handler_config in log_config.get("handlers", {}).values():
+        if handler_config.get("class") == "freqtrade.loggers.ft_rich_handler.FtRichHandler":
+            handler_config["console"] = error_console
+        elif handler_config.get("class") == "logging.handlers.RotatingFileHandler":
+            logfile_path = Path(handler_config["filename"])
             try:
-                logfile_path = Path(logfile)
+                # Create parent for filehandler
                 logfile_path.parent.mkdir(parents=True, exist_ok=True)
-                handler_rf = RotatingFileHandler(
-                    logfile_path,
-                    maxBytes=1024 * 1024 * 10,  # 10Mb
-                    backupCount=10,
-                )
             except PermissionError:
                 raise OperationalException(
                     f'Failed to create or access log file "{logfile_path.absolute()}". '
@@ -119,10 +198,34 @@ def setup_logging(config: Config) -> None:
                     "non-root user, delete and recreate the directories you need, and then try "
                     "again."
                 )
-            handler_rf.setFormatter(Formatter(LOGFORMAT))
-            logging.root.addHandler(handler_rf)
+    return log_config
 
+
+def setup_logging(config: Config) -> None:
+    """
+    Process -v/--verbose, --logfile options
+    """
+    verbosity = config["verbosity"]
+    if os.environ.get("PYTEST_VERSION") is None or config.get("ft_tests_force_logging"):
+        log_config = _create_log_config(config)
+        _set_log_levels(
+            log_config, verbosity, config.get("api_server", {}).get("verbosity", "info")
+        )
+
+        logging.config.dictConfig(log_config)
+
+    # Add buffer handler to root logger
+    if bufferHandler not in logging.root.handlers:
+        logging.root.addHandler(bufferHandler)
+
+    # Set color system for console output
+    if config.get("print_colorized", True):
+        logger.info("Enabling colorized output.")
+        error_console._color_system = error_console._detect_color_system()
+
+    logging.info("Logfile configured")
+
+    # Set verbosity levels
     logging.root.setLevel(logging.INFO if verbosity < 1 else logging.DEBUG)
-    set_loggers(verbosity, config.get("api_server", {}).get("verbosity", "info"))
 
     logger.info("Verbosity set to %s", verbosity)

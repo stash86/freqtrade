@@ -1987,16 +1987,17 @@ class Telegram(RPCHandler):
             results = self._rpc._rpc_list_custom_data(trade_id, key)
             messages = []
             if len(results) > 0:
-                messages.append("Found custom-data entr" + ("ies: " if len(results) > 1 else "y: "))
-                for result in results:
+                trade_custom_data = results[0]["custom_data"]
+                messages.append(
+                    "Found custom-data entr" + ("ies: " if len(trade_custom_data) > 1 else "y: ")
+                )
+                for custom_data in trade_custom_data:
                     lines = [
-                        f"*Key:* `{result['cd_key']}`",
-                        f"*ID:* `{result['id']}`",
-                        f"*Trade ID:* `{result['ft_trade_id']}`",
-                        f"*Type:* `{result['cd_type']}`",
-                        f"*Value:* `{result['cd_value']}`",
-                        f"*Create Date:* `{format_date(result['created_at'])}`",
-                        f"*Update Date:* `{format_date(result['updated_at'])}`",
+                        f"*Key:* `{custom_data['key']}`",
+                        f"*Type:* `{custom_data['type']}`",
+                        f"*Value:* `{custom_data['value']}`",
+                        f"*Create Date:* `{format_date(custom_data['created_at'])}`",
+                        f"*Update Date:* `{format_date(custom_data['updated_at'])}`",
                     ]
                     # Filter empty lines using list-comprehension
                     messages.append("\n".join([line for line in lines if line]))

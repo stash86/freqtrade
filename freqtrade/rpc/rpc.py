@@ -40,7 +40,7 @@ from freqtrade.exceptions import ExchangeError, PricingError
 from freqtrade.exchange import Exchange, timeframe_to_minutes, timeframe_to_msecs
 from freqtrade.exchange.exchange_utils import price_to_precision
 from freqtrade.loggers import bufferHandler
-from freqtrade.persistence import KeyStoreKeys, KeyValueStore, PairLocks, Trade
+from freqtrade.persistence import CustomDataWrapper, KeyStoreKeys, KeyValueStore, PairLocks, Trade
 from freqtrade.persistence.models import PairLock
 from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
 from freqtrade.rpc.fiat_convert import CryptoToFiatConverter
@@ -1135,31 +1135,70 @@ class RPC:
                 "cancel_order_count": c_count,
             }
 
-    def _rpc_list_custom_data(self, trade_id: int, key: str | None) -> list[dict[str, Any]]:
-        # Query for trade
-        trade = Trade.get_trades(trade_filter=[Trade.id == trade_id]).first()
-        if trade is None:
-            return []
-        # Query custom_data
-        custom_data = []
-        if key:
-            data = trade.get_custom_data(key=key)
-            if data:
-                custom_data = [data]
+    def _rpc_list_custom_data(
+        self, trade_id: int | None = None, key: str | None = None, limit: int = 100, offset: int = 0
+    ) -> list[dict[str, Any]]:
+        """
+        Fetch custom data for a specific trade, or all open trades if `trade_id` is not provided.
+        Pagination is applied via `limit` and `offset`.
+
+        Returns an array of dictionaries, each containing:
+        - "trade_id": the ID of the trade (int)
+        - "custom_data": a list of custom data dicts, each with the fields:
+                "id", "key", "type", "value", "created_at", "updated_at"
+        """
+        trades: Sequence[Trade]
+        if trade_id is None:
+            # Get all open trades
+            trades = Trade.session.scalars(
+                Trade.get_trades_query([Trade.is_open.is_(True)])
+                .order_by(Trade.id)
+                .limit(limit)
+                .offset(offset)
+            ).all()
         else:
-            custom_data = trade.get_all_custom_data()
-        return [
-            {
-                "id": data_entry.id,
-                "ft_trade_id": data_entry.ft_trade_id,
-                "cd_key": data_entry.cd_key,
-                "cd_type": data_entry.cd_type,
-                "cd_value": data_entry.cd_value,
-                "created_at": data_entry.created_at,
-                "updated_at": data_entry.updated_at,
-            }
-            for data_entry in custom_data
-        ]
+            trades = Trade.get_trades(trade_filter=[Trade.id == trade_id]).all()
+
+        if not trades:
+            raise RPCException(
+                f"No trade found for trade_id: {trade_id}" if trade_id else "No open trades found."
+            )
+
+        results = []
+        for trade in trades:
+            # Depending on whether a specific key is provided, retrieve custom data accordingly.
+            if key:
+                data = trade.get_custom_data_entry(key=key)
+                # If data exists, wrap it in a list so the output remains consistent.
+                custom_data = [data] if data else []
+            else:
+                custom_data = trade.get_all_custom_data()
+
+            # Format and Append result for the trade if any custom data was found.
+            if custom_data:
+                formatted_custom_data = [
+                    {
+                        "key": data_entry.cd_key,
+                        "type": data_entry.cd_type,
+                        "value": CustomDataWrapper._convert_custom_data(data_entry).value,
+                        "created_at": data_entry.created_at,
+                        "updated_at": data_entry.updated_at,
+                    }
+                    for data_entry in custom_data
+                ]
+                results.append({"trade_id": trade.id, "custom_data": formatted_custom_data})
+
+            # Handle case when there is no custom data found across trades.
+            if not results:
+                message_details = ""
+                if key:
+                    message_details += f"with key '{key}' "
+                message_details += (
+                    f"found for Trade ID: {trade_id}." if trade_id else "found for any open trades."
+                )
+                raise RPCException(f"No custom-data {message_details}")
+
+        return results
 
     def _rpc_performance(self) -> list[dict[str, Any]]:
         """

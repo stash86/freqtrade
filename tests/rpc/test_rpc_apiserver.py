@@ -24,7 +24,7 @@ from freqtrade.enums import CandleType, RunMode, State, TradingMode
 from freqtrade.exceptions import DependencyException, ExchangeError, OperationalException
 from freqtrade.loggers import setup_logging, setup_logging_pre
 from freqtrade.optimize.backtesting import Backtesting
-from freqtrade.persistence import Trade
+from freqtrade.persistence import CustomDataWrapper, Trade
 from freqtrade.rpc import RPC
 from freqtrade.rpc.api_server import ApiServer
 from freqtrade.rpc.api_server.api_auth import create_token, get_user_from_token
@@ -800,6 +800,211 @@ def test_api_trade_single(botclient, mocker, fee, ticker, markets, is_short):
     assert_response(rc)
     assert rc.json()["trade_id"] == 3
     assert rc.json()["is_short"] == is_short
+
+
+@pytest.mark.usefixtures("init_persistence")
+def test_api_custom_data_single_trade(botclient, fee):
+    Trade.reset_trades()
+    CustomDataWrapper.reset_custom_data()
+
+    create_mock_trades_usdt(fee, use_db=True)
+
+    trade1 = Trade.get_trades_proxy()[0]
+
+    assert trade1.get_all_custom_data() == []
+
+    trade1.set_custom_data("test_str", "test_value")
+    trade1.set_custom_data("test_int", 0)
+    trade1.set_custom_data("test_float", 1.54)
+    trade1.set_custom_data("test_bool", True)
+    trade1.set_custom_data("test_dict", {"test": "vl"})
+
+    trade1.set_custom_data("test_int", 1)
+
+    _, client = botclient
+
+    # CASE 1 Checking all custom data of trade 1
+    rc = client_get(client, f"{BASE_URI}/trades/1/custom-data")
+    assert_response(rc)
+
+    # Validate response JSON structure
+    response_json = rc.json()
+
+    assert len(response_json) == 1
+
+    res_cust_data = response_json[0]["custom_data"]
+    expected_data_td_1 = [
+        {"key": "test_str", "type": "str", "value": "test_value"},
+        {"key": "test_int", "type": "int", "value": 1},
+        {"key": "test_float", "type": "float", "value": 1.54},
+        {"key": "test_bool", "type": "bool", "value": True},
+        {"key": "test_dict", "type": "dict", "value": {"test": "vl"}},
+    ]
+
+    # Ensure response contains exactly the expected number of entries
+    assert len(res_cust_data) == len(expected_data_td_1), (
+        f"Expected {len(expected_data_td_1)} entries, but got {len(res_cust_data)}.\n"
+    )
+
+    # Validate each expected entry
+    for expected in expected_data_td_1:
+        matched_item = None
+        for item in res_cust_data:
+            if item["key"] == expected["key"]:
+                matched_item = item
+                break
+
+        assert matched_item is not None, (
+            f"Missing expected entry for key '{expected['key']}'\nExpected: {expected}\n"
+        )
+
+        # Validate individual fields and print only incorrect values
+        mismatches = []
+        for field in ["key", "type", "value"]:
+            if matched_item[field] != expected[field]:
+                mismatches.append(f"{field}: Expected {expected[field]}, Got {matched_item[field]}")
+
+        assert not mismatches, f"Error in entry '{expected['key']}':\n" + "\n".join(mismatches)
+
+    # CASE 2 Checking specific existing key custom data of trade 1
+    rc = client_get(client, f"{BASE_URI}/trades/1/custom-data?key=test_dict")
+    assert_response(rc, 200)
+
+    # CASE 3 Checking specific not existing key custom data of trade 1
+    rc = client_get(client, f"{BASE_URI}/trades/1/custom-data&key=test")
+    assert_response(rc, 404)
+
+    # CASE 4 Trying to get custom-data from not existing trade
+    rc = client_get(client, f"{BASE_URI}/trades/13/custom-data")
+    assert_response(rc, 404)
+    assert rc.json()["detail"] == "No trade found for trade_id: 13"
+
+
+@pytest.mark.usefixtures("init_persistence")
+def test_api_custom_data_multiple_open_trades(botclient, fee):
+    use_db = True
+    Trade.use_db = use_db
+    Trade.reset_trades()
+    CustomDataWrapper.reset_custom_data()
+    create_mock_trades(fee, False, use_db)
+    trades = Trade.get_trades_proxy()
+    assert len(trades) == 6
+
+    assert isinstance(trades[0], Trade)
+
+    trades = Trade.get_trades_proxy(is_open=True)
+    assert len(trades) == 4
+
+    create_mock_trades_usdt(fee, use_db=True)
+
+    trade1 = Trade.get_trades_proxy(is_open=True)[0]
+    trade2 = Trade.get_trades_proxy(is_open=True)[1]
+
+    # Initially, no custom data should be present.
+    assert trade1.get_all_custom_data() == []
+    assert trade2.get_all_custom_data() == []
+
+    # Set custom data for the two open trades.
+    trade1.set_custom_data("test_str", "test_value_t1")
+    trade1.set_custom_data("test_float", 1.54)
+    trade1.set_custom_data("test_dict", {"test_t1": "vl_t1"})
+
+    trade2.set_custom_data("test_str", "test_value_t2")
+    trade2.set_custom_data("test_float", 1.55)
+    trade2.set_custom_data("test_dict", {"test_t2": "vl_t2"})
+
+    _, client = botclient
+
+    # CASE 1: Checking all custom data for both trades.
+    rc = client_get(client, f"{BASE_URI}/trades/open/custom-data")
+    assert_response(rc)
+
+    response_json = rc.json()
+
+    # Expecting two trade entries in the response
+    assert len(response_json) == 2, f"Expected 2 trade entries, but got {len(response_json)}.\n"
+
+    # Define expected custom data for each trade.
+    # The keys now use the actual trade_ids from the custom data.
+    expected_custom_data = {
+        1: [
+            {
+                "key": "test_str",
+                "type": "str",
+                "value": "test_value_t1",
+            },
+            {
+                "key": "test_float",
+                "type": "float",
+                "value": 1.54,
+            },
+            {
+                "key": "test_dict",
+                "type": "dict",
+                "value": {"test_t1": "vl_t1"},
+            },
+        ],
+        4: [
+            {
+                "key": "test_str",
+                "type": "str",
+                "value": "test_value_t2",
+            },
+            {
+                "key": "test_float",
+                "type": "float",
+                "value": 1.55,
+            },
+            {
+                "key": "test_dict",
+                "type": "dict",
+                "value": {"test_t2": "vl_t2"},
+            },
+        ],
+    }
+
+    # Iterate over each trade's data in the response and validate entries.
+    for trade_entry in response_json:
+        trade_id = trade_entry.get("trade_id")
+        assert trade_id in expected_custom_data, f"\nUnexpected trade_id: {trade_id}"
+
+        custom_data_list = trade_entry.get("custom_data")
+        expected_data = expected_custom_data[trade_id]
+        assert len(custom_data_list) == len(expected_data), (
+            f"Error for trade_id {trade_id}: "
+            f"Expected {len(expected_data)} entries, but got {len(custom_data_list)}.\n"
+        )
+
+        # For each expected entry, check that the response contains the correct entry.
+        for expected in expected_data:
+            matched_item = None
+            for item in custom_data_list:
+                if item["key"] == expected["key"]:
+                    matched_item = item
+                    break
+
+            assert matched_item is not None, (
+                f"For trade_id {trade_id}, "
+                f"missing expected entry for key '{expected['key']}'\n"
+                f"Expected: {expected}\n"
+            )
+
+            # Validate key fields.
+            mismatches = []
+            for field in ["key", "type", "value"]:
+                if matched_item[field] != expected[field]:
+                    mismatches.append(
+                        f"{field}: Expected {expected[field]}, Got {matched_item[field]}"
+                    )
+            # Check for field presence of created_at and updated_at without comparing values.
+            for field in ["created_at", "updated_at"]:
+                if field not in matched_item:
+                    mismatches.append(f"Missing field: {field}")
+
+            assert not mismatches, (
+                f"Error in entry '{expected['key']}' for trade_id {trade_id}:\n"
+                + "\n".join(mismatches)
+            )
 
 
 @pytest.mark.parametrize("is_short", [True, False])

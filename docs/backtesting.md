@@ -209,6 +209,7 @@ A backtesting result will look like that:
 | Sortino                     | 1.88                |
 | Sharpe                      | 2.97                |
 | Calmar                      | 6.29                |
+| SQN                         | 2.45                |
 | Profit factor               | 1.11                |
 | Expectancy (Ratio)          | -0.15 (-0.05)       |
 | Avg. stake amount           | 0.001      BTC      |
