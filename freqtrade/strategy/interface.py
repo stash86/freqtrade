@@ -1282,7 +1282,9 @@ class IStrategy(ABC, HyperStrategyMixin):
         offset = self.config.get("exchange", {}).get("outdated_offset", 5)
         if latest_date < (dt_now() - timedelta(minutes=timeframe_minutes * 2 + offset)):
             msg = f"Outdated history for pair {pair}. Last tick is {int((dt_now() - latest_date).total_seconds() // 60)} minutes old"
-            self.dp.send_msg(msg)
+            warning_level = self.config.get("warning_level", "minimal")
+            if warning_level != "minimal":
+                self.dp.send_msg(msg)
             logger.warning(msg)
             return None, None
         return latest, latest_date
