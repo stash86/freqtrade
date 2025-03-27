@@ -5,7 +5,7 @@
         "train_period_days": 90,
         "backtest_period_days": 1,
         "live_retrain_hours": 24,
-        "identifier": "nangka-15m-90d",
+        "identifier": "coto-15m-90d",
         "save_backtest_models": true,
         "activate_tensorboard": false,
         "feature_parameters": {
