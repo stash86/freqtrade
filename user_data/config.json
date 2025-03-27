@@ -19,7 +19,7 @@
     "user_data_dir" : "user_data",
     "strategy": "SampleStrategy",
     "strategy_path": "freqtrade_strategies",
-    "warning_level": "normal",
+    "warning_level": "normal", // set to "minimal" to reduce custom RPC messages
     "add_config_files": [
         "config-pairlist-usdt-futures-mc-cg.json",
         "config-orders-futures-all-limit-same-15m.json",
