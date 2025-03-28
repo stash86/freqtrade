@@ -73,17 +73,17 @@ jobs:
         python build_helpers/freqtrade_client_version_align.py
 
     - name: Tests
-      if: (!(runner.os == 'Linux' && matrix.python-version == '3.12' && matrix.os == 'ubuntu-22.04'))
+      if: (!(runner.os == 'Linux' && matrix.python-version == '3.12' && matrix.os == 'ubuntu-24.04'))
       run: |
         pytest --random-order
 
     - name: Tests with Coveralls
-      if: (runner.os == 'Linux' && matrix.python-version == '3.12' && matrix.os == 'ubuntu-22.04')
+      if: (runner.os == 'Linux' && matrix.python-version == '3.12' && matrix.os == 'ubuntu-24.04')
       run: |
         pytest --random-order --cov=freqtrade --cov=freqtrade_client --cov-config=.coveragerc
 
     - name: Coveralls
-      if: (runner.os == 'Linux' && matrix.python-version == '3.12' && matrix.os == 'ubuntu-22.04')
+      if: (runner.os == 'Linux' && matrix.python-version == '3.12' && matrix.os == 'ubuntu-24.04')
       env:
         # Coveralls token. Not used as secret due to github not providing secrets to forked repositories
         COVERALLS_REPO_TOKEN: 6D1m0xupS3FgutfuGao8keFf9Hc0FpIXu
@@ -139,6 +139,7 @@ jobs:
         ruff format --check
 
     - name: Mypy
+      if: matrix.os == 'ubuntu-24.04'
       run: |
         mypy freqtrade scripts tests
 
@@ -264,6 +265,7 @@ jobs:
         ruff format --check
 
     - name: Mypy
+      if: matrix.os == 'macos-15'
       run: |
         mypy freqtrade scripts
 

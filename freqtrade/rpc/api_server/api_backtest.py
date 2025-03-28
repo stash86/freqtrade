@@ -108,6 +108,9 @@ def __run_backtest_bg(btconfig: Config):
                     ApiBG.bt["bt"].results,
                     datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
                     market_change_data=combined_res,
+                    strategy_files={
+                        s.get_strategy_name(): s.__file__ for s in ApiBG.bt["bt"].strategylist
+                    },
                 )
                 ApiBG.bt["bt"].results["metadata"][strategy_name]["filename"] = str(fn.stem)
                 ApiBG.bt["bt"].results["metadata"][strategy_name]["strategy"] = strategy_name

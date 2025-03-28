@@ -435,6 +435,20 @@ To save time, by default backtest will reuse a cached result from within the las
 To further analyze your backtest results, freqtrade will export the trades to file by default.
 You can then load the trades to perform further analysis as shown in the [data analysis](strategy_analysis_example.md#load-backtest-results-to-pandas-dataframe) backtesting section.
 
+### Backtest output file
+
+The output file freqtrade produces is a zip file containing the following files:
+
+- The backtest report in json format
+- the market change data in feather format
+- a copy of the strategy file
+- a copy of the strategy parameters (if a parameter file was used)
+- a sanitized copy of the config file
+
+This will ensure results are reproducible - under the assumption that the same data is available.
+
+Only the strategy file and the config file are included in the zip file, eventual dependencies are not included.
+
 ## Assumptions made by backtesting
 
 Since backtesting lacks some detailed information about what happens within a candle, it needs to take a few assumptions:

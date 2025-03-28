@@ -6,7 +6,7 @@ pandas-ta==0.3.14b
 finta>=1.3
 ta>=0.10.1
 
-ccxt==4.4.68
+ccxt==4.4.69
 cryptography==44.0.2
 aiohttp==3.9.5
 SQLAlchemy==2.0.39
@@ -39,7 +39,7 @@ orjson==3.10.15
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.115.11
+fastapi==0.115.12
 pydantic==2.10.6
 uvicorn==0.34.0
 pyjwt==2.10.1

@@ -652,6 +652,7 @@ def get_default_conf(testdatadir):
         "trading_mode": "spot",
         "margin_mode": "",
         "candle_type_def": CandleType.SPOT,
+        "original_config": {},
     }
     return configuration
 

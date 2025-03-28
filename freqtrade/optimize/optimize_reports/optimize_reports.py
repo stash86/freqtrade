@@ -18,7 +18,7 @@ from freqtrade.data.metrics import (
     calculate_sortino,
     calculate_sqn,
 )
-from freqtrade.ft_types import BacktestResultType
+from freqtrade.ft_types import BacktestResultType, get_BacktestResultType_default
 from freqtrade.util import decimals_per_coin, fmt_coin, get_dry_run_wallet
 
 
@@ -588,11 +588,7 @@ def generate_backtest_stats(
     :param max_date: Backtest end date
     :return: Dictionary containing results per strategy and a strategy summary.
     """
-    result: BacktestResultType = {
-        "metadata": {},
-        "strategy": {},
-        "strategy_comparison": [],
-    }
+    result: BacktestResultType = get_BacktestResultType_default()
     market_change = calculate_market_change(btdata, "close")
     metadata = {}
     pairlist = list(btdata.keys())
