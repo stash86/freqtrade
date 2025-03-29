@@ -10,7 +10,6 @@ from freqtrade.persistence import Trade
 from datetime import datetime, timedelta
 from freqtrade.exchange import timeframe_to_minutes
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class Noken_30m_1a1_consumer(IStrategy):
     # Stoploss:
     stoploss = -0.99
 
-    process_only_new_candles = True
+    process_only_new_candles = False
     _columns_to_expect = ['enter_long_prod', 'enter_tag_prod', 'exit_long_prod', 'exit_tag_prod', 'fastk_prod', 'mfi_prod']
 
     use_custom_stoploss = True
@@ -59,29 +58,21 @@ class Noken_30m_1a1_consumer(IStrategy):
         pair = f"{splitted_pair[0]}/USDT:USDT"
         timeframe = self.timeframe
 
-        count_calls = 0
-        max_calls = 5
+        producer_pairs = self.dp.get_producer_pairs("prod")
 
-        while (count_calls < max_calls):
-            count_calls += 1
+        producer_dataframe, _ = self.dp.get_producer_df(pair=pair, producer_name="prod")
 
-            producer_pairs = self.dp.get_producer_pairs("prod")
-
-            producer_dataframe, _ = self.dp.get_producer_df(pair=pair, producer_name="prod")
-
-            if not producer_dataframe.empty:
-                # If you plan on passing the producer's entry/exit signal directly,
-                # specify ffill=False or it will have unintended results
-                merged_dataframe = merge_informative_pair(dataframe, producer_dataframe,
-                                                        timeframe, timeframe,
-                                                        append_timeframe=False,
-                                                        ffill=False,
-                                                        suffix="prod")
-                return merged_dataframe
-            elif count_calls < max_calls:
-                time.sleep(0.25)
-            elif count_calls >= max_calls:
-                dataframe[self._columns_to_expect] = 0
+        if not producer_dataframe.empty:
+            # If you plan on passing the producer's entry/exit signal directly,
+            # specify ffill=False or it will have unintended results
+            merged_dataframe = merge_informative_pair(dataframe, producer_dataframe,
+                                                    timeframe, timeframe,
+                                                    append_timeframe=False,
+                                                    ffill=False,
+                                                    suffix="prod")
+            return merged_dataframe
+        else:
+            dataframe[self._columns_to_expect] = 0
 
         return dataframe
 
