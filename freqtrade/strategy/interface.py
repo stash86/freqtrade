@@ -132,6 +132,7 @@ class IStrategy(ABC, HyperStrategyMixin):
     stake_currency: str
     # container variable for strategy source code
     __source__: str = ""
+    __file__: str = ""
 
     # Definition of plot_config. See plotting documentation for more details.
     plot_config: dict = {}

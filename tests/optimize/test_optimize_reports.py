@@ -1,5 +1,6 @@
 import json
 import re
+import shutil
 from datetime import timedelta
 from pathlib import Path
 from shutil import copyfile
@@ -41,7 +42,7 @@ from freqtrade.optimize.optimize_reports.optimize_reports import (
 from freqtrade.resolvers.strategy_resolver import StrategyResolver
 from freqtrade.util import dt_ts
 from freqtrade.util.datetime_helpers import dt_from_ts, dt_utc
-from tests.conftest import CURRENT_TEST_STRATEGY
+from tests.conftest import CURRENT_TEST_STRATEGY, log_has_re
 from tests.data.test_history import _clean_test_file
 
 
@@ -253,8 +254,9 @@ def test_store_backtest_results(testdatadir, mocker):
     dump_mock = mocker.patch("freqtrade.optimize.optimize_reports.bt_storage.file_dump_json")
     zip_mock = mocker.patch("freqtrade.optimize.optimize_reports.bt_storage.ZipFile")
     data = {"metadata": {}, "strategy": {}, "strategy_comparison": []}
-
-    store_backtest_results({"exportfilename": testdatadir}, data, "2022_01_01_15_05_13")
+    store_backtest_results(
+        {"exportfilename": testdatadir, "original_config": {}}, data, "2022_01_01_15_05_13"
+    )
 
     assert dump_mock.call_count == 2
     assert zip_mock.call_count == 1
@@ -264,7 +266,9 @@ def test_store_backtest_results(testdatadir, mocker):
     dump_mock.reset_mock()
     zip_mock.reset_mock()
     filename = testdatadir / "testresult.json"
-    store_backtest_results({"exportfilename": filename}, data, "2022_01_01_15_05_13")
+    store_backtest_results(
+        {"exportfilename": filename, "original_config": {}}, data, "2022_01_01_15_05_13"
+    )
     assert dump_mock.call_count == 2
     assert zip_mock.call_count == 1
     assert isinstance(dump_mock.call_args_list[0][0][0], Path)
@@ -272,9 +276,16 @@ def test_store_backtest_results(testdatadir, mocker):
     assert str(dump_mock.call_args_list[0][0][0]).startswith(str(testdatadir / "testresult"))
 
 
-def test_store_backtest_results_real(tmp_path):
+def test_store_backtest_results_real(tmp_path, caplog):
     data = {"metadata": {}, "strategy": {}, "strategy_comparison": []}
-    store_backtest_results({"exportfilename": tmp_path}, data, "2022_01_01_15_05_13")
+    config = {
+        "exportfilename": tmp_path,
+        "original_config": {},
+    }
+    store_backtest_results(
+        config, data, "2022_01_01_15_05_13", strategy_files={"DefStrat": "NoFile"}
+    )
+    assert log_has_re(r"Strategy file .* does not exist\. Skipping\.", caplog)
 
     zip_file = tmp_path / "backtest-result-2022_01_01_15_05_13.zip"
     assert zip_file.is_file()
@@ -287,8 +298,19 @@ def test_store_backtest_results_real(tmp_path):
     fn = get_latest_backtest_filename(tmp_path)
     assert fn == "backtest-result-2022_01_01_15_05_13.zip"
 
+    strategy_test_dir = Path(__file__).parent.parent / "strategy" / "strats"
+
+    shutil.copy(strategy_test_dir / "strategy_test_v3.py", tmp_path)
+    params_file = tmp_path / "strategy_test_v3.json"
+    with params_file.open("w") as f:
+        f.write("""{"strategy_name": "TurtleStrategyX5","params":{}}""")
+
     store_backtest_results(
-        {"exportfilename": tmp_path}, data, "2024_01_01_15_05_25", market_change_data=pd.DataFrame()
+        config,
+        data,
+        "2024_01_01_15_05_25",
+        market_change_data=pd.DataFrame(),
+        strategy_files={"DefStrat": str(tmp_path / "strategy_test_v3.py")},
     )
     zip_file = tmp_path / "backtest-result-2024_01_01_15_05_25.zip"
     assert zip_file.is_file()
@@ -298,6 +320,22 @@ def test_store_backtest_results_real(tmp_path):
     with ZipFile(zip_file, "r") as zipf:
         assert "backtest-result-2024_01_01_15_05_25.json" in zipf.namelist()
         assert "backtest-result-2024_01_01_15_05_25_market_change.feather" in zipf.namelist()
+        assert "backtest-result-2024_01_01_15_05_25_config.json" in zipf.namelist()
+        # strategy file is copied to the zip file
+        assert "backtest-result-2024_01_01_15_05_25_DefStrat.py" in zipf.namelist()
+        # compare the content of the strategy file
+        with zipf.open("backtest-result-2024_01_01_15_05_25_DefStrat.py") as strategy_file:
+            strategy_content = strategy_file.read()
+            with (strategy_test_dir / "strategy_test_v3.py").open("rb") as original_file:
+                original_content = original_file.read()
+                assert strategy_content == original_content
+        assert "backtest-result-2024_01_01_15_05_25_DefStrat.py" in zipf.namelist()
+        with zipf.open("backtest-result-2024_01_01_15_05_25_DefStrat.json") as pf:
+            params_content = pf.read()
+            with params_file.open("rb") as original_file:
+                original_content = original_file.read()
+                assert params_content == original_content
+
     assert (tmp_path / LAST_BT_RESULT_FN).is_file()
 
     # Last file reference should be updated
@@ -313,6 +351,7 @@ def test_write_read_backtest_candles(tmp_path):
         "exportfilename": tmp_path,
         "export": "signals",
         "runmode": "backtest",
+        "original_config": {},
     }
     # test directory exporting
     sample_date = "2022_01_01_15_05_13"
