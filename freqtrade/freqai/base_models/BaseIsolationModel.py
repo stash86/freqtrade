@@ -1,10 +1,12 @@
 import logging
 from time import time
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from pandas import DataFrame
+
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import MinMaxScaler
 
@@ -83,7 +85,7 @@ class BaseIsolationModel(IFreqaiModel):
         return model
     
 
-    def predict(self, unfiltered_df: DataFrame, dk: FreqaiDataKitchen, **kwargs) -> Tuple[DataFrame, np.ndarray]:
+    def predict(self, unfiltered_df: DataFrame, dk: FreqaiDataKitchen, **kwargs) -> tuple[DataFrame, npt.NDArray[np.int_]]:
         """
         Use the fitted model to predict anomalies.
         :param unfiltered_df: Full dataframe.
