@@ -18,7 +18,7 @@
             // "principal_component_analysis": true,
             // "use_SVM_to_remove_outliers": true,
             // "plot_feature_importances": 0,
-            // "indicator_periods_candles": [10, 20]
+            "indicator_periods_candles": [10]
         },
         "data_split_parameters": {},
         "model_training_parameters": {
