@@ -8,7 +8,18 @@
         "identifier": "rambutan-30m",
         "save_backtest_models": true,
         "activate_tensorboard": false,
-        "feature_parameters": {},
+        "feature_parameters": {
+            // "DI_threshold": 2.5,
+            // "noise_standard_deviation": 0.02,
+            "include_timeframes": ["30m"],
+            "include_corr_pairlist": [],
+            // "label_period_candles": 24,
+            // "weight_factor": 0.9,
+            // "principal_component_analysis": true,
+            // "use_SVM_to_remove_outliers": true,
+            // "plot_feature_importances": 0,
+            // "indicator_periods_candles": [10, 20]
+        },
         "data_split_parameters": {},
         "model_training_parameters": {
             "n_estimators": 5000,
