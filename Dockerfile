@@ -20,6 +20,9 @@ RUN mkdir /freqtrade \
 
 WORKDIR /freqtrade
 
+# Update PIP
+RUN pip install --upgrade pip
+
 # Install dependencies
 FROM base as python-deps
 RUN  apt-get update \
