@@ -7,7 +7,6 @@ import numpy.typing as npt
 import pandas as pd
 from pandas import DataFrame
 
-from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import MinMaxScaler
 
 from freqtrade.freqai.data_kitchen import FreqaiDataKitchen

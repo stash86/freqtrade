@@ -1,5 +1,4 @@
 import logging
-from time import time
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -7,16 +6,9 @@ import numpy.typing as npt
 import pandas as pd
 from pandas import DataFrame
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import LabelEncoder
 
 from freqtrade.freqai.base_models.BaseIsolationModel import BaseIsolationModel
 from freqtrade.freqai.data_kitchen import FreqaiDataKitchen
-
-from freqtrade.plot.plotting import go, make_subplots, store_plot_file
-
-import shap
-import matplotlib.pyplot as plt
-import os
 
 
 logger = logging.getLogger(__name__)
