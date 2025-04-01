@@ -8,6 +8,8 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
       - "./freqtrade_strategies:/freqtrade/freqtrade_strategies"
+      - "/extra/data:/freqtrade/user_data/data"
+      - "/extra/models:/freqtrade/user_data/models"
     ports:
       - "127.0.0.1:8081:8081"
     command: >
@@ -15,6 +17,22 @@ services:
       --logfile /freqtrade/user_data/logs/freqai1.log
       --config /freqtrade/user_data/config-freqai.json
       --freqaimodel CatboostRegressorMultiTarget
+  freqai3:
+    image: stash86/freqtrade:linux-arm64-v8-freqai
+    restart: unless-stopped
+    container_name: freqai3
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+      - "./freqtrade_strategies:/freqtrade/freqtrade_strategies"
+      - "/extra/data:/freqtrade/user_data/data"
+      - "/extra/models:/freqtrade/user_data/models"
+    ports:
+      - "127.0.0.1:8083:8081"
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqai3.log
+      --config /freqtrade/user_data/config-freqai3.json
+      --freqaimodel SKLearnIsolationForest
 
   binance_proxy:
     image: nightshift2k/binance-proxy:latest

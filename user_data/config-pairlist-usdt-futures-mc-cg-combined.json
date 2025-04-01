@@ -12,7 +12,7 @@
             "FET/USDT:USDT", "STX/USDT:USDT", "ARB/USDT:USDT", "WIF/USDT:USDT","FTM/USDT:USDT",
             "S/USDT:USDT", "ONDO/USDT:USDT"
         ],
-        "pair_blacklist": ["SOL/USDT:USDT"]
+        "pair_blacklist": []
     },
     "pairlists": [
         {"method": "StaticPairList"},
