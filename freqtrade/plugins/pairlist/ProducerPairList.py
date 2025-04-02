@@ -37,6 +37,7 @@ class ProducerPairList(IPairList):
 
         self._num_assets: int = self._pairlistconfig.get("number_assets", 0)
         self._producer_name = self._pairlistconfig.get("producer_name", "default")
+        self._convert_to_spot = self._pairlistconfig.get("convert_to_spot", False)
         if not self._config.get("external_message_consumer", {}).get("enabled"):
             raise OperationalException(
                 "ProducerPairList requires external_message_consumer to be enabled."
@@ -80,6 +81,15 @@ class ProducerPairList(IPairList):
                     "external_message_consumer configuration."
                 ),
             },
+            "convert_to_spot": {
+                "type": "boolean",
+                "default": False,
+                "description": "Convert to spot pairs",
+                "help": (
+                    "Convert the pairlist to spot pairs. "
+                    "This will convert futures pairs to spot pairs."
+                ),
+            }
         }
 
     def _filter_pairlist(self, pairlist: list[str] | None):
@@ -93,6 +103,9 @@ class ProducerPairList(IPairList):
         pairs = list(dict.fromkeys(pairlist + upstream_pairlist))
         if self._num_assets:
             pairs = pairs[: self._num_assets]
+
+        if self._convert_to_spot:
+            pairs = [pair.replace("/USDT:USDT", "/USDT") for pair in pairs]
 
         return pairs
 
