@@ -9,7 +9,7 @@
             "TAO/USDT", "FIL/USDT", "TIA/USDT", "INJ/USDT", "THETA/USDT", "SEI/USDT", 
             "GALA/USDT", "KAIA/USDT", "XTZ/USDT", "IOTA/USDT", "FLOW/USDT", "AR/USDT", 
             "EGLD/USDT", "DYDX/USDT", "CHZ/USDT", "KAVA/USDT", "ROSE/USDT", "ASTR/USDT", 
-            "FET/USDT", "STX/USDT", "ARB/USDT", "WIF/USDT","FTM/USDT",
+            "FET/USDT", "STX/USDT", "ARB/USDT","FTM/USDT",
             "S/USDT", "ONDO/USDT"
         ],
         "pair_blacklist": []
