@@ -1,0 +1,26 @@
+{
+    "exchange": {
+        "pair_whitelist": [
+            "BTC/USDT", "ETH/USDT", "BNB/USDT", "SOL/USDT", "XRP/USDT", "ADA/USDT", 
+            "AVAX/USDT", "LINK/USDT", "TRX/USDT", "DOT/USDT", "ICP/USDT", 
+            "LTC/USDT", "UNI/USDT", "BCH/USDT", "ETC/USDT", "ATOM/USDT", "OP/USDT", 
+            "XLM/USDT", "IMX/USDT", "SUI/USDT", "TON/USDT", "HBAR/USDT", "NEAR/USDT", 
+            "APT/USDT", "XMR/USDT", "VET/USDT", "OM/USDT", "ALGO/USDT", "KAS/USDT", 
+            "TAO/USDT", "FIL/USDT", "TIA/USDT", "INJ/USDT", "THETA/USDT", "SEI/USDT", 
+            "GALA/USDT", "KAIA/USDT", "XTZ/USDT", "IOTA/USDT", "FLOW/USDT", "AR/USDT", 
+            "EGLD/USDT", "DYDX/USDT", "CHZ/USDT", "KAVA/USDT", "ROSE/USDT", "ASTR/USDT", 
+            "FET/USDT", "STX/USDT", "ARB/USDT", "WIF/USDT","FTM/USDT",
+            "S/USDT", "ONDO/USDT"
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {"method": "StaticPairList"},
+        {
+            "method": "VolumePairList",
+            "number_assets": 15,
+            "sort_key": "quoteVolume",
+        },
+        {"method": "FullTradesFilter"},
+    ],
+}
