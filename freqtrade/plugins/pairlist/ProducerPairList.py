@@ -42,7 +42,8 @@ class ProducerPairList(IPairList):
             raise OperationalException(
                 "ProducerPairList requires external_message_consumer to be enabled."
             )
-
+        
+        self._stake_consumer = self._config.get("stake_currency", "USDT")
     @property
     def needstickers(self) -> bool:
         """
@@ -104,8 +105,12 @@ class ProducerPairList(IPairList):
         if self._num_assets:
             pairs = pairs[: self._num_assets]
 
-        if self._convert_to_spot:
-            pairs = [pair.replace("/USDT:USDT", "/USDT") for pair in pairs]
+        format_replace = f"/{self._stake_consumer}"
+        if not self._convert_to_spot:
+            format_replace += f":{self._stake_consumer}"
+
+        if self._convert_to_spot or (self._stake_consumer != "USDT"):
+            pairs = [pair.replace("/USDT:USDT", format_replace) for pair in pairs]
 
         return pairs
 
