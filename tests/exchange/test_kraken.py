@@ -71,7 +71,7 @@ def test_get_balances_prod_kraken(default_conf, mocker):
             "4TH": balance_item.copy(),
             "EUR": balance_item.copy(),
             "BTC": {"free": 0.0, "total": 0.0, "used": 0.0},
-            "XBT.F": balance_item.copy(),
+            "BTC.F": balance_item.copy(),
             "timestamp": 123123,
         }
     )

@@ -376,7 +376,7 @@ def load_backtest_data(filename: Path | str, strategy: str | None = None) -> pd.
 
         if not strategy:
             if len(data["strategy"]) == 1:
-                strategy = list(data["strategy"].keys())[0]
+                strategy = next(iter(data["strategy"].keys()))
             else:
                 raise ValueError(
                     "Detected backtest result with more than one strategy. "

@@ -79,6 +79,7 @@ options:
                         SortinoHyperOptLoss, SortinoHyperOptLossDaily,
                         CalmarHyperOptLoss, MaxDrawDownHyperOptLoss,
                         MaxDrawDownRelativeHyperOptLoss,
+                        MaxDrawDownPerPairHyperOptLoss,
                         ProfitDrawDownHyperOptLoss, MultiMetricHyperOptLoss
   --disable-param-export
                         Disable automatic hyperopt parameter export.

@@ -251,6 +251,7 @@ class IPairList(LoggingMixin, ABC):
                     f"Pair {pair} is not compatible with exchange "
                     f"{self._exchange.name}. Removing it from whitelist..",
                     logger.warning,
+                    True,
                 )
                 continue
 
@@ -258,6 +259,7 @@ class IPairList(LoggingMixin, ABC):
                 self.log_once(
                     f"Pair {pair} is not tradable with Freqtrade. Removing it from whitelist..",
                     logger.warning,
+                    True,
                 )
                 continue
 
@@ -266,13 +268,18 @@ class IPairList(LoggingMixin, ABC):
                     f"Pair {pair} is not compatible with your stake currency "
                     f"{self._config['stake_currency']}. Removing it from whitelist..",
                     logger.warning,
+                    True,
                 )
                 continue
 
             # Check if market is active
             market = markets[pair]
             if not market_is_active(market):
-                self.log_once(f"Ignoring {pair} from whitelist. Market is not active.", logger.info)
+                self.log_once(
+                    f"Ignoring {pair} from whitelist. Market is not active.",
+                    logger.info,
+                    True,
+                )
                 continue
             if pair not in sanitized_whitelist:
                 sanitized_whitelist.append(pair)

@@ -319,6 +319,7 @@ class FreqtradeBot(LoggingMixin):
             trades = Trade.get_open_trades()
             # First process current opened trades (positions)
             self.exit_positions(trades)
+            Trade.commit()
 
         # Check if we need to adjust our current positions before attempting to enter new trades.
         if self.strategy.position_adjustment_enable:
@@ -326,7 +327,7 @@ class FreqtradeBot(LoggingMixin):
                 self.process_open_trade_positions()
 
         # Then looking for entry opportunities
-        if self.get_free_open_trades():
+        if self.state == State.RUNNING and self.get_free_open_trades():
             self.enter_positions()
         self._schedule.run_pending()
         Trade.commit()
@@ -811,6 +812,10 @@ class FreqtradeBot(LoggingMixin):
         )
 
         if stake_amount is not None and stake_amount > 0.0:
+            if self.state == State.PAUSED:
+                logger.debug("Position adjustment aborted because the bot is in PAUSED state")
+                return
+
             # We should increase our position
             if self.strategy.max_entry_position_adjustment > -1:
                 count_of_entries = trade.nr_of_successful_entries

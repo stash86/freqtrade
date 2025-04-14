@@ -5,9 +5,52 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from freqtrade.commands import Arguments
-from freqtrade.commands.cli_options import check_int_nonzero, check_int_positive
+from freqtrade.commands import Arguments, arguments
+from freqtrade.commands.cli_options import (
+    AVAILABLE_CLI_OPTIONS,
+    check_int_nonzero,
+    check_int_positive,
+)
 from tests.conftest import CURRENT_TEST_STRATEGY
+
+
+def test_available_cli_options():
+    """
+    AVAILABLE_CLI_OPTIONS has keys that are the union of the values in all ARGS_* - required by CLI
+    each of the ARGS_* lists has a list of members which is assumed to also
+    be in AVAILABLE_CLI_OPTIONS
+    """
+    args_union = {
+        arg
+        for variable, value in vars(arguments).items()
+        if variable.startswith("ARGS_")
+        for arg in value
+    }
+    expected_options = set(AVAILABLE_CLI_OPTIONS)
+    only_in_command_args = expected_options.difference(args_union)
+    only_in_all_args = args_union.difference(expected_options)
+    if only_in_all_args or only_in_command_args:
+        pytest.fail(
+            "variables around command line arguments not kept in sync:\n"
+            f" * args only in some ARGS_* list but not AVAILABLE_CLI_OPTIONS: {only_in_all_args}\n"
+            " * args only in AVAILABLE_CLI_OPTIONS but not some ARGS_* list: "
+            f"{only_in_command_args}"
+        )
+
+
+def test_arguments_match_available_cli_options(monkeypatch):
+    """All entries in AVAILABLE_CLI_OPTIONS are used in argument parsing."""
+    parsed_options = set()
+    actual_build_args = Arguments._build_args
+
+    def build_args_monitor(self, optionlist, parser):
+        parsed_options.update(optionlist)
+        return actual_build_args(self, optionlist=optionlist, parser=parser)
+
+    monkeypatch.setattr(Arguments, "_build_args", build_args_monitor)
+    # this will result in a parser being built so we can check the arguments used
+    Arguments([]).get_parsed_arg()
+    assert parsed_options == set(AVAILABLE_CLI_OPTIONS)
 
 
 # Parse common command-line-arguments. Used for all tools

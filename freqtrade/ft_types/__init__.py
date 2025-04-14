@@ -1,5 +1,7 @@
 # flake8: noqa: F401
 from freqtrade.ft_types.backtest_result_type import (
+    BacktestContentType,
+    BacktestContentTypeIcomplete,
     BacktestHistoryEntryType,
     BacktestMetadataType,
     BacktestResultType,

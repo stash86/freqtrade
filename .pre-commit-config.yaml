@@ -1,8 +1,20 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
+
+  - repo: local
+    # Keep json schema in sync with the config schema
+    # This will write the files - and fail pre-commit if a file has been changed.
+    hooks:
+      - id: Extract config json schema
+        name: extract-config-json-schema
+        entry: "python build_helpers/extract_config_json_schema.py"
+        language: python
+        pass_filenames: false
+        additional_dependencies: ["python-rapidjson", "jsonschema"]
+
   - repo: https://github.com/pycqa/flake8
-    rev: "7.1.2"
+    rev: "7.2.0"
     hooks:
       - id: flake8
         additional_dependencies: [Flake8-pyproject]
@@ -16,10 +28,10 @@ repos:
         additional_dependencies:
           - types-cachetools==5.5.0.20240820
           - types-filelock==3.2.7
-          - types-requests==2.32.0.20250306
+          - types-requests==2.32.0.20250328
           - types-tabulate==0.9.0.20241207
           - types-python-dateutil==2.9.0.20241206
-          - SQLAlchemy==2.0.39
+          - SQLAlchemy==2.0.40
         # stages: [push]
 
   - repo: https://github.com/pycqa/isort
@@ -31,7 +43,7 @@ repos:
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.11.2'
+    rev: 'v0.11.4'
     hooks:
       - id: ruff
       - id: ruff-format

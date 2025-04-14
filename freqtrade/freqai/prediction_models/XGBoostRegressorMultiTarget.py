@@ -4,8 +4,8 @@ from typing import Any
 from xgboost import XGBRegressor
 
 from freqtrade.freqai.base_models.BaseRegressionModel import BaseRegressionModel
-from freqtrade.freqai.base_models.FreqaiMultiOutputRegressor import FreqaiMultiOutputRegressor
 from freqtrade.freqai.data_kitchen import FreqaiDataKitchen
+from freqtrade.freqai.tensorboard import TBCallback
 
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,7 @@ class XGBoostRegressorMultiTarget(BaseRegressionModel):
     `predict()` methods to add their custom data handling tools or change
     various aspects of the training that cannot be configured via the
     top level config.json file.
+    This is an exact copy of XGBoostRegressor kept for compatibility reasons.
     """
 
     def fit(self, data_dictionary: dict, dk: FreqaiDataKitchen, **kwargs) -> Any:
@@ -29,45 +30,32 @@ class XGBoostRegressorMultiTarget(BaseRegressionModel):
         :param dk: The datakitchen object for the current coin/model
         """
 
-        xgb = XGBRegressor(**self.model_training_parameters)
-
         X = data_dictionary["train_features"]
         y = data_dictionary["train_labels"]
+
+        if self.freqai_info.get("data_split_parameters", {}).get("test_size", 0.1) == 0:
+            eval_set = None
+            eval_weights = None
+        else:
+            eval_set = [(data_dictionary["test_features"], data_dictionary["test_labels"]), (X, y)]
+            eval_weights = [data_dictionary["test_weights"], data_dictionary["train_weights"]]
+
         sample_weight = data_dictionary["train_weights"]
 
-        eval_weights = None
-        eval_sets = [None] * y.shape[1]
+        xgb_model = self.get_init_model(dk.pair)
 
-        if self.freqai_info.get("data_split_parameters", {}).get("test_size", 0.1) != 0:
-            eval_weights = [data_dictionary["test_weights"]]
-            for i in range(data_dictionary["test_labels"].shape[1]):
-                eval_sets[i] = [  # type: ignore
-                    (
-                        data_dictionary["test_features"],
-                        data_dictionary["test_labels"].iloc[:, i],
-                    )
-                ]
+        model = XGBRegressor(**self.model_training_parameters)
 
-        init_model = self.get_init_model(dk.pair)
-        if init_model:
-            init_models = init_model.estimators_
-        else:
-            init_models = [None] * y.shape[1]
-
-        fit_params = []
-        for i in range(len(eval_sets)):
-            fit_params.append(
-                {
-                    "eval_set": eval_sets[i],
-                    "sample_weight_eval_set": eval_weights,
-                    "xgb_model": init_models[i],
-                }
-            )
-
-        model = FreqaiMultiOutputRegressor(estimator=xgb)
-        thread_training = self.freqai_info.get("multitarget_parallel_training", False)
-        if thread_training:
-            model.n_jobs = y.shape[1]
-        model.fit(X=X, y=y, sample_weight=sample_weight, fit_params=fit_params)
+        model.set_params(callbacks=[TBCallback(dk.data_path)])
+        model.fit(
+            X=X,
+            y=y,
+            sample_weight=sample_weight,
+            eval_set=eval_set,
+            sample_weight_eval_set=eval_weights,
+            xgb_model=xgb_model,
+        )
+        # set the callbacks to empty so that we can serialize to disk later
+        model.set_params(callbacks=[])
 
         return model

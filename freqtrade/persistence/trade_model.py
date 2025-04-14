@@ -1157,18 +1157,21 @@ class LocalTrade:
             profit_ratio = 0.0
 
         total_profit_abs = profit_abs + self.realized_profit
-        total_profit_ratio = (
-            (total_profit_abs / self.max_stake_amount) * self.leverage
-            if self.max_stake_amount
-            else 0.0
-        )
-        total_profit_ratio = float(f"{total_profit_ratio:.8f}")
+        if self.max_stake_amount:
+            max_stake = self.max_stake_amount * (
+                (1 - self.fee_open) if self.is_short else (1 + self.fee_open)
+            )
+            total_profit_ratio = total_profit_abs / max_stake
+            total_profit_ratio = float(f"{total_profit_ratio:.8f}")
+        else:
+            total_profit_ratio = 0.0
         profit_abs = float(f"{profit_abs:.8f}")
+        total_profit_abs = float(f"{total_profit_abs:.8f}")
 
         return ProfitStruct(
             profit_abs=profit_abs,
             profit_ratio=profit_ratio,
-            total_profit=profit_abs + self.realized_profit,
+            total_profit=total_profit_abs,
             total_profit_ratio=total_profit_ratio,
         )
 

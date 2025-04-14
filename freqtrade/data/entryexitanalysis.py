@@ -281,7 +281,7 @@ def _merge_dfs(
 ):
     merge_on = ["pair", "open_date"]
     signal_wide_indicators = list(set(available_inds) - set(BT_DATA_COLUMNS))
-    columns_to_keep = merge_on + ["enter_reason", "exit_reason"]
+    columns_to_keep = [*merge_on, "enter_reason", "exit_reason"]
 
     if exit_df is None or exit_df.empty or entry_only is True:
         return entry_df[columns_to_keep + available_inds]

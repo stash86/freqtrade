@@ -148,6 +148,7 @@ class Exchange:
         "trades_has_history": False,
         "l2_limit_range": None,
         "l2_limit_range_required": True,  # Allow Empty L2 limit (kucoin)
+        "l2_limit_upper": None,  # Upper limit for L2 limit
         "mark_ohlcv_price": "mark",
         "mark_ohlcv_timeframe": "8h",
         "funding_fee_timeframe": "8h",
@@ -1365,8 +1366,8 @@ class Exchange:
             ordertype = available_order_Types[user_order_type]
         else:
             # Otherwise pick only one available
-            ordertype = list(available_order_Types.values())[0]
-            user_order_type = list(available_order_Types.keys())[0]
+            ordertype = next(iter(available_order_Types.values()))
+            user_order_type = next(iter(available_order_Types.keys()))
         return ordertype, user_order_type
 
     def _get_stop_limit_rate(self, stop_price: float, order_types: dict, side: str) -> float:
@@ -1955,14 +1956,18 @@ class Exchange:
 
     @staticmethod
     def get_next_limit_in_list(
-        limit: int, limit_range: list[int] | None, range_required: bool = True
+        limit: int,
+        limit_range: list[int] | None,
+        range_required: bool = True,
+        upper_limit: int | None = None,
     ):
         """
         Get next greater value in the list.
         Used by fetch_l2_order_book if the api only supports a limited range
+        if both limit_range and upper_limit is provided, limit_range wins.
         """
         if not limit_range:
-            return limit
+            return min(limit, upper_limit) if upper_limit else limit
 
         result = min([x for x in limit_range if limit <= x] + [max(limit_range)])
         if not range_required and limit > result:
@@ -1979,7 +1984,10 @@ class Exchange:
         {'asks': [price, volume], 'bids': [price, volume]}
         """
         limit1 = self.get_next_limit_in_list(
-            limit, self._ft_has["l2_limit_range"], self._ft_has["l2_limit_range_required"]
+            limit,
+            self._ft_has["l2_limit_range"],
+            self._ft_has["l2_limit_range_required"],
+            self._ft_has["l2_limit_upper"],
         )
         try:
             return self._api.fetch_l2_order_book(pair, limit1)
@@ -2790,7 +2798,7 @@ class Exchange:
         pair, timeframe, candle_type = pairwt
         since_ms = None
         new_ticks: list = []
-        all_stored_ticks_df = DataFrame(columns=DEFAULT_TRADES_COLUMNS + ["date"])
+        all_stored_ticks_df = DataFrame(columns=[*DEFAULT_TRADES_COLUMNS, "date"])
         first_candle_ms = self.needed_candle_for_trades_ms(timeframe, candle_type)
         # refresh, if
         # a. not in _trades
@@ -2835,7 +2843,7 @@ class Exchange:
                         else:
                             # Skip cache, it's too old
                             all_stored_ticks_df = DataFrame(
-                                columns=DEFAULT_TRADES_COLUMNS + ["date"]
+                                columns=[*DEFAULT_TRADES_COLUMNS, "date"]
                             )
 
                 # from_id overrules with exchange set to id paginate

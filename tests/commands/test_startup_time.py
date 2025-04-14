@@ -1,4 +1,4 @@
-import subprocess
+import subprocess  # noqa: S404, RUF100
 import time
 
 from tests.conftest import is_arm, is_mac

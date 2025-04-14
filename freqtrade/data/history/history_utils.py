@@ -116,7 +116,7 @@ def load_data(
             result[pair] = hist
         else:
             if candle_type is CandleType.FUNDING_RATE and user_futures_funding_rate is not None:
-                logger.warn(f"{pair} using user specified [{user_futures_funding_rate}]")
+                logger.warning(f"{pair} using user specified [{user_futures_funding_rate}]")
             elif candle_type not in (CandleType.SPOT, CandleType.FUTURES):
                 result[pair] = DataFrame(columns=["date", "open", "close", "high", "low", "volume"])
 

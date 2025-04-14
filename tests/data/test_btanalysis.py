@@ -562,14 +562,15 @@ def test_calculate_max_drawdown2():
     assert pytest.approx(drawdown.relative_account_drawdown) == 0.32129575
 
     df = DataFrame(zip(values[:5], dates[:5], strict=False), columns=["profit", "open_date"])
-    with pytest.raises(ValueError, match="No losing trade, therefore no drawdown."):
-        calculate_max_drawdown(df, date_col="open_date", value_col="profit")
+    # No losing trade ...
+    drawdown = calculate_max_drawdown(df, date_col="open_date", value_col="profit")
+    assert drawdown.drawdown_abs == 0.0
 
     df1 = DataFrame(zip(values[:5], dates[:5], strict=False), columns=["profit", "open_date"])
     df1.loc[:, "profit"] = df1["profit"] * -1
     # No winning trade ...
     drawdown = calculate_max_drawdown(df1, date_col="open_date", value_col="profit")
-    assert drawdown.drawdown_abs == 0.043965
+    assert drawdown.drawdown_abs == 0.055545
 
 
 @pytest.mark.parametrize(

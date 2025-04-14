@@ -139,7 +139,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
 
     # test group 0 and indicator list
     args = get_args(
-        base_args + ["--analysis-groups", "0", "--indicator-list", "close", "rsi", "profit_abs"]
+        [*base_args, "--analysis-groups", "0", "--indicator-list", "close", "rsi", "profit_abs"]
     )
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
@@ -172,7 +172,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
     assert "profit_abs" in captured.out
 
     # test group 1
-    args = get_args(base_args + ["--analysis-groups", "1"])
+    args = get_args([*base_args, "--analysis-groups", "1"])
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
     assert "enter_tag_long_a" in captured.out
@@ -185,7 +185,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
     assert "0" in captured.out
 
     # test group 2
-    args = get_args(base_args + ["--analysis-groups", "2"])
+    args = get_args([*base_args, "--analysis-groups", "2"])
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
     assert "enter_tag_long_a" in captured.out
@@ -200,7 +200,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
     assert "2.5" in captured.out
 
     # test group 3
-    args = get_args(base_args + ["--analysis-groups", "3"])
+    args = get_args([*base_args, "--analysis-groups", "3"])
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
     assert "LTC/BTC" in captured.out
@@ -215,7 +215,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
     assert "2" in captured.out
 
     # test group 4
-    args = get_args(base_args + ["--analysis-groups", "4"])
+    args = get_args([*base_args, "--analysis-groups", "4"])
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
     assert "LTC/BTC" in captured.out
@@ -235,7 +235,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
     assert "2.5" in captured.out
 
     # test group 5
-    args = get_args(base_args + ["--analysis-groups", "5"])
+    args = get_args([*base_args, "--analysis-groups", "5"])
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
     assert "exit_signal" in captured.out
@@ -245,7 +245,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
 
     # test date filtering
     args = get_args(
-        base_args + ["--analysis-groups", "0", "1", "2", "--timerange", "20180129-20180130"]
+        [*base_args, "--analysis-groups", "0", "1", "2", "--timerange", "20180129-20180130"]
     )
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
@@ -253,7 +253,7 @@ def test_backtest_analysis_on_entry_and_rejected_signals_nomock(
     assert "enter_tag_long_b" not in captured.out
 
     # Due to the backtest mock, there's no rejected signals generated.
-    args = get_args(base_args + ["--rejected-signals"])
+    args = get_args([*base_args, "--rejected-signals"])
     start_analysis_entries_exits(args)
     captured = capsys.readouterr()
     assert "no rejected signals" in captured.out
@@ -379,8 +379,8 @@ def test_backtest_analysis_with_invalid_config(
 
     # test with both entry and exit only arguments
     args = get_args(
-        base_args
-        + [
+        [
+            *base_args,
             "--analysis-groups",
             "0",
             "--indicator-list",
@@ -518,8 +518,8 @@ def test_backtest_analysis_on_entry_and_rejected_signals_only_entry_signals(
 
     # test group 0 and indicator list
     args = get_args(
-        base_args
-        + [
+        [
+            *base_args,
             "--analysis-groups",
             "0",
             "--indicator-list",

@@ -23,8 +23,8 @@ def start_create_userdir(args: dict[str, Any]) -> None:
     """
     from freqtrade.configuration.directory_operations import copy_sample_files, create_userdata_dir
 
-    if "user_data_dir" in args and args["user_data_dir"]:
-        userdir = create_userdata_dir(args["user_data_dir"], create_dir=True)
+    if user_data_dir := args.get("user_data_dir"):
+        userdir = create_userdata_dir(user_data_dir, create_dir=True)
         copy_sample_files(userdir, overwrite=args["reset"])
     else:
         logger.warning("`create-userdir` requires --userdir to be set.")
@@ -85,22 +85,22 @@ def start_new_strategy(args: dict[str, Any]) -> None:
 
     config = setup_utils_configuration(args, RunMode.UTIL_NO_EXCHANGE)
 
-    if "strategy" in args and args["strategy"]:
-        if "strategy_path" in args and args["strategy_path"]:
-            strategy_dir = Path(args["strategy_path"])
+    if strategy := args.get("strategy"):
+        if strategy_path := args.get("strategy_path"):
+            strategy_dir = Path(strategy_path)
         else:
             strategy_dir = config["user_data_dir"] / USERPATH_STRATEGIES
         if not strategy_dir.is_dir():
             logger.info(f"Creating strategy directory {strategy_dir}")
             strategy_dir.mkdir(parents=True)
-        new_path = strategy_dir / (args["strategy"] + ".py")
+        new_path = strategy_dir / (strategy + ".py")
 
         if new_path.exists():
             raise OperationalException(
                 f"`{new_path}` already exists. Please choose another Strategy Name."
             )
 
-        deploy_new_strategy(args["strategy"], new_path, args["template"])
+        deploy_new_strategy(strategy, new_path, args["template"])
 
     else:
         raise ConfigurationError("`new-strategy` requires --strategy to be set.")
@@ -116,7 +116,9 @@ def start_install_ui(args: dict[str, Any]) -> None:
 
     dest_folder = Path(__file__).parents[1] / "rpc/api_server/ui/installed/"
     # First make sure the assets are removed.
-    dl_url, latest_version = get_ui_download_url(args.get("ui_version"))
+    dl_url, latest_version = get_ui_download_url(
+        args.get("ui_version"), args.get("ui_prerelease", False)
+    )
 
     curr_version = read_ui_version(dest_folder)
     if curr_version == latest_version and not args.get("erase_ui_only"):

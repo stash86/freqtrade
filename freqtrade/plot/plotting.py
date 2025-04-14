@@ -460,7 +460,7 @@ def generate_candlestick_graph(
         rows=rows,
         cols=1,
         shared_xaxes=True,
-        row_width=row_widths + [1, 4],
+        row_width=[*row_widths, 1, 4],
         vertical_spacing=0.0001,
     )
     fig["layout"].update(title=pair)

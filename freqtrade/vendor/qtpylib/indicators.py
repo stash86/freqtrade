@@ -32,7 +32,7 @@ warnings.simplefilter(action="ignore", category=RuntimeWarning)
 
 def numpy_rolling_window(data, window):
     shape = data.shape[:-1] + (data.shape[-1] - window + 1, window)
-    strides = data.strides + (data.strides[-1],)
+    strides = (*data.strides, data.strides[-1])
     return np.lib.stride_tricks.as_strided(data, shape=shape, strides=strides)
 
 
