@@ -268,6 +268,9 @@ show_config
 start
 	Start the bot if it's in the stopped state.
 
+pause
+	Pause the bot if it's in the running state. If triggered on stopped state will handle open positions.
+
 stats
 	Return the stats report (durations, sell-reasons).
 
@@ -333,6 +336,7 @@ All endpoints in the below table need to be prefixed with the base URL of the AP
 |-----------|--------|--------------------------|
 | `/ping` | GET | Simple command testing the API Readiness - requires no authentication.
 | `/start` | POST | Starts the trader.
+| `/pause` | POST | Pause the trader. Gracefully handle open trades according to their rules. Do not enter new positions.
 | `/stop` | POST | Stops the trader.
 | `/stopbuy` | POST | Stops the trader from opening new trades. Gracefully closes open trades according to their rules.
 | `/reload_config` | POST | Reloads the configuration file.

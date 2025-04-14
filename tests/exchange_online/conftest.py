@@ -156,7 +156,7 @@ EXCHANGES = {
                 "ADA.F": {"free": 2.0, "total": 2.0, "used": 0.0},
                 "BTC": {"free": 0.0006, "total": 0.0006, "used": 0.0},
                 # XBT.F should be mapped to BTC.F
-                "XBT.F": {"free": 0.001, "total": 0.001, "used": 0.0},
+                "BTC.F": {"free": 0.001, "total": 0.001, "used": 0.0},
             },
         },
     },

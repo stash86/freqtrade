@@ -83,7 +83,7 @@ class StrategyUpdater:
         return updated_code
 
     # function that uses the ast module to update the code
-    def modify_ast(self, tree):  # noqa
+    def modify_ast(self, tree):
         # use the visitor to update the names and functions in the AST
         NameUpdater().visit(tree)
 

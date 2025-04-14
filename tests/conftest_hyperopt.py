@@ -34,7 +34,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.12508730043628782,
                 "roi_p3": 0.27766427921605896,
                 "stoploss": -0.2562930402099556,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 15,
@@ -65,7 +65,7 @@ def hyperopt_test_result():
                     2139: 0,
                 },
                 "stoploss": {"stoploss": -0.2562930402099556},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 2,
                 "trade_count_long": 2,
@@ -82,7 +82,7 @@ def hyperopt_test_result():
                 "holding_avg": timedelta(minutes=3930.0),
                 "stake_currency": "BTC",
                 "strategy_name": "SampleStrategy",
-            },  # noqa: E501
+            },
             "results_explanation": "     2 trades. Avg profit  -1.25%. Total profit -0.00125625 BTC (  -2.51Σ%). Avg duration 3930.0 min.",  # noqa: E501
             "total_profit": -0.00125625,
             "current_epoch": 1,
@@ -118,7 +118,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.055519840060645045,
                 "roi_p3": 0.3253712811342459,
                 "stoploss": -0.338070047333259,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 17,
@@ -130,7 +130,7 @@ def hyperopt_test_result():
                     "adx-enabled": True,
                     "rsi-enabled": True,
                     "trigger": "macd_cross_signal",
-                },  # noqa: E501
+                },
                 "sell": {
                     "sell-mfi-value": 96,
                     "sell-fastd-value": 68,
@@ -141,13 +141,13 @@ def hyperopt_test_result():
                     "sell-adx-enabled": True,
                     "sell-rsi-enabled": True,
                     "sell-trigger": "sell-sar_reversal",
-                },  # noqa: E501
+                },
                 "roi": {
                     0: 0.4449309386008759,
                     140: 0.11955965746663,
                     823: 0.06403981740598495,
                     1157: 0,
-                },  # noqa: E501
+                },
                 "stoploss": {"stoploss": -0.338070047333259},
             },
             "results_metrics": {
@@ -164,7 +164,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.23,
                 "max_drawdown_abs": -0.00125625,
                 "holding_avg": timedelta(minutes=1200.0),
-            },  # noqa: E501
+            },
             "results_explanation": "     1 trades. Avg profit   0.12%. Total profit  0.00006185 BTC (   0.12Σ%). Avg duration 1200.0 min.",  # noqa: E501
             "total_profit": 6.185e-05,
             "current_epoch": 2,
@@ -200,7 +200,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.1488819964638463,
                 "roi_p3": 0.4102801822104605,
                 "stoploss": -0.05394588767607611,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 25,
@@ -231,7 +231,7 @@ def hyperopt_test_result():
                     1685: 0,
                 },
                 "stoploss": {"stoploss": -0.05394588767607611},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 621,
                 "trade_count_long": 621,
@@ -246,7 +246,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.25,
                 "max_drawdown_abs": -272.515306,
                 "holding_avg": timedelta(minutes=1691.207729468599),
-            },  # noqa: E501
+            },
             "results_explanation": "   621 trades. Avg profit  -0.44%. Total profit -0.13639474 BTC (-272.52Σ%). Avg duration 1691.2 min.",  # noqa: E501
             "total_profit": -0.13639474,
             "current_epoch": 3,
@@ -282,7 +282,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.14258587851894644,
                 "roi_p3": 0.20671291201040828,
                 "stoploss": -0.11818343570194478,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 13,
@@ -313,7 +313,7 @@ def hyperopt_test_result():
                     2293: 0,
                 },
                 "stoploss": {"stoploss": -0.11818343570194478},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 0,
                 "trade_count_long": 0,
@@ -327,13 +327,13 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.0,
                 "max_drawdown_abs": 0.0,
                 "holding_avg": timedelta(),
-            },  # noqa: E501
+            },
             "results_explanation": "     0 trades. Avg profit    nan%. Total profit  0.00000000 BTC (   0.00Σ%). Avg duration   nan min.",  # noqa: E501
             "total_profit": 0,
             "current_epoch": 4,
             "is_initial_point": True,
             "is_random": False,
-            "is_best": False,  # noqa: E501
+            "is_best": False,
         },
         {
             "loss": 0.22195522184191518,
@@ -363,7 +363,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.08946698095898986,
                 "roi_p3": 0.1454876733325284,
                 "stoploss": -0.18181041180901014,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 17,
@@ -394,7 +394,7 @@ def hyperopt_test_result():
                     2314: 0,
                 },
                 "stoploss": {"stoploss": -0.18181041180901014},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 14,
                 "trade_count_long": 14,
@@ -409,7 +409,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.34,
                 "max_drawdown_abs": -4.955321,
                 "holding_avg": timedelta(minutes=3402.8571428571427),
-            },  # noqa: E501
+            },
             "results_explanation": "    14 trades. Avg profit  -0.35%. Total profit -0.00248014 BTC (  -4.96Σ%). Avg duration 3402.9 min.",  # noqa: E501
             "total_profit": -0.002480140000000001,
             "current_epoch": 5,
@@ -445,7 +445,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.11659519602202795,
                 "roi_p3": 0.0953744132197762,
                 "stoploss": -0.024551752215582423,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 22,
@@ -476,7 +476,7 @@ def hyperopt_test_result():
                     1091: 0,
                 },
                 "stoploss": {"stoploss": -0.024551752215582423},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 39,
                 "trade_count_long": 39,
@@ -491,7 +491,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.45,
                 "max_drawdown_abs": -4.955321,
                 "holding_avg": timedelta(minutes=636.9230769230769),
-            },  # noqa: E501
+            },
             "results_explanation": "    39 trades. Avg profit  -0.21%. Total profit -0.00417730 BTC (  -8.35Σ%). Avg duration 636.9 min.",  # noqa: E501
             "total_profit": -0.0041773,
             "current_epoch": 6,
@@ -527,7 +527,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.04984118697312542,
                 "roi_p3": 0.37521058680247044,
                 "stoploss": -0.14613268022709905,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 13,
@@ -556,9 +556,9 @@ def hyperopt_test_result():
                     145: 0.10853310701097472,
                     765: 0.0586919200378493,
                     1536: 0,
-                },  # noqa: E501
+                },
                 "stoploss": {"stoploss": -0.14613268022709905},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 318,
                 "trade_count_long": 318,
@@ -573,7 +573,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.50,
                 "max_drawdown_abs": -200.955321,
                 "holding_avg": timedelta(minutes=3140.377358490566),
-            },  # noqa: E501
+            },
             "results_explanation": "   318 trades. Avg profit  -0.40%. Total profit -0.06339929 BTC (-126.67Σ%). Avg duration 3140.4 min.",  # noqa: E501
             "total_profit": -0.06339929,
             "current_epoch": 7,
@@ -582,7 +582,7 @@ def hyperopt_test_result():
             "is_best": False,
         },
         {
-            "loss": 20.0,  # noqa: E501
+            "loss": 20.0,
             "params_dict": {
                 "mfi-value": 24,
                 "fastd-value": 43,
@@ -609,7 +609,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.0606240398618907,
                 "roi_p3": 0.1729012220156157,
                 "stoploss": -0.1588514289110401,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 24,
@@ -640,7 +640,7 @@ def hyperopt_test_result():
                     1813: 0,
                 },
                 "stoploss": {"stoploss": -0.1588514289110401},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 1,
                 "trade_count_long": 1,
@@ -655,7 +655,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.0,
                 "max_drawdown_abs": 0.52,
                 "holding_avg": timedelta(minutes=5340.0),
-            },  # noqa: E501
+            },
             "results_explanation": "     1 trades. Avg profit   0.00%. Total profit  0.00000000 BTC (   0.00Σ%). Avg duration 5340.0 min.",  # noqa: E501
             "total_profit": 0.0,
             "current_epoch": 8,
@@ -691,7 +691,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.10335480573205287,
                 "roi_p3": 0.10322347377503042,
                 "stoploss": -0.2780610808108503,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 22,
@@ -722,7 +722,7 @@ def hyperopt_test_result():
                     2018: 0,
                 },
                 "stoploss": {"stoploss": -0.2780610808108503},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 229,
                 "trade_count_long": 229,
@@ -737,16 +737,16 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.41,
                 "max_drawdown_abs": -150.955321,
                 "holding_avg": timedelta(minutes=6505.676855895196),
-            },  # noqa: E501
+            },
             "results_explanation": "   229 trades. Avg profit  -0.38%. Total profit -0.04405007 BTC ( -88.01Σ%). Avg duration 6505.7 min.",  # noqa: E501
-            "total_profit": -0.044050070000000004,  # noqa: E501
+            "total_profit": -0.044050070000000004,
             "current_epoch": 9,
             "is_initial_point": True,
             "is_random": False,
             "is_best": False,
         },
         {
-            "loss": -0.2604606005845212,  # noqa: E501
+            "loss": -0.2604606005845212,
             "params_dict": {
                 "mfi-value": 23,
                 "fastd-value": 24,
@@ -773,7 +773,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.09623192684243963,
                 "roi_p3": 0.04428219070850663,
                 "stoploss": -0.16992287161634415,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 23,
@@ -804,7 +804,7 @@ def hyperopt_test_result():
                     1471: 0,
                 },
                 "stoploss": {"stoploss": -0.16992287161634415},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 4,
                 "trade_count_long": 4,
@@ -819,7 +819,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.13,
                 "max_drawdown_abs": -4.955321,
                 "holding_avg": timedelta(minutes=2850.0),
-            },  # noqa: E501
+            },
             "results_explanation": "     4 trades. Avg profit   0.11%. Total profit  0.00021629 BTC (   0.43Σ%). Avg duration 2850.0 min.",  # noqa: E501
             "total_profit": 0.00021629,
             "current_epoch": 10,
@@ -828,7 +828,7 @@ def hyperopt_test_result():
             "is_best": True,
         },
         {
-            "loss": 4.876465945994304,  # noqa: E501
+            "loss": 4.876465945994304,
             "params_dict": {
                 "mfi-value": 20,
                 "fastd-value": 32,
@@ -855,7 +855,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.1352282078262871,
                 "roi_p3": 0.1913307406325751,
                 "stoploss": -0.25728526022513887,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 20,
@@ -886,7 +886,7 @@ def hyperopt_test_result():
                     1466: 0,
                 },
                 "stoploss": {"stoploss": -0.25728526022513887},
-            },  # noqa: E501
+            },
             # New Hyperopt mode!
             "results_metrics": {
                 "total_trades": 117,
@@ -902,7 +902,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.52,
                 "max_drawdown_abs": -224.955321,
                 "holding_avg": timedelta(minutes=4282.5641025641025),
-            },  # noqa: E501
+            },
             "results_explanation": "   117 trades. Avg profit  -1.27%. Total profit -0.07436117 BTC (-148.57Σ%). Avg duration 4282.6 min.",  # noqa: E501
             "total_profit": -0.07436117,
             "current_epoch": 11,
@@ -938,7 +938,7 @@ def hyperopt_test_result():
                 "roi_p2": 0.12473718444931989,
                 "roi_p3": 0.2896360635226823,
                 "stoploss": -0.30889015124682806,
-            },  # noqa: E501
+            },
             "params_details": {
                 "buy": {
                     "mfi-value": 10,
@@ -969,7 +969,7 @@ def hyperopt_test_result():
                     2145: 0,
                 },
                 "stoploss": {"stoploss": -0.30889015124682806},
-            },  # noqa: E501
+            },
             "results_metrics": {
                 "total_trades": 0,
                 "trade_count_long": 0,
@@ -984,7 +984,7 @@ def hyperopt_test_result():
                 "max_drawdown_account": 0.0,
                 "max_drawdown_abs": 0.0,
                 "holding_avg": timedelta(),
-            },  # noqa: E501
+            },
             "results_explanation": "     0 trades. Avg profit    nan%. Total profit  0.00000000 BTC (   0.00Σ%). Avg duration   nan min.",  # noqa: E501
             "total_profit": 0,
             "current_epoch": 12,

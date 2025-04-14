@@ -169,7 +169,7 @@ def test_telegram_init(default_conf, mocker, caplog) -> None:
         "['stats'], ['daily'], ['weekly'], ['monthly'], "
         "['count'], ['locks'], ['delete_locks', 'unlock'], "
         "['reload_conf', 'reload_config'], ['show_conf', 'show_config'], "
-        "['stopbuy', 'stopentry'], ['whitelist'], ['blacklist'], "
+        "['pause', 'stopbuy', 'stopentry'], ['whitelist'], ['blacklist'], "
         "['bl_delete', 'blacklist_delete'], "
         "['logs'], ['edge'], ['health'], ['help'], ['version'], ['marketdir'], "
         "['order'], ['list_custom_data'], ['tg_info']]"
@@ -1222,15 +1222,15 @@ async def test_stop_handle_already_stopped(default_conf, update, mocker) -> None
     assert "already stopped" in msg_mock.call_args_list[0][0][0]
 
 
-async def test_stopbuy_handle(default_conf, update, mocker) -> None:
+async def test_pause_handle(default_conf, update, mocker) -> None:
     telegram, freqtradebot, msg_mock = get_telegram_testobject(mocker, default_conf)
 
-    assert freqtradebot.config["max_open_trades"] != 0
-    await telegram._stopentry(update=update, context=MagicMock())
-    assert freqtradebot.config["max_open_trades"] == 0
+    assert freqtradebot.state == State.RUNNING
+    await telegram._pause(update=update, context=MagicMock())
+    assert freqtradebot.state == State.PAUSED
     assert msg_mock.call_count == 1
     assert (
-        "No more entries will occur from now. Run /reload_config to reset."
+        "paused, no more entries will occur from now. Run /start to enable entries."
         in msg_mock.call_args_list[0][0][0]
     )
 

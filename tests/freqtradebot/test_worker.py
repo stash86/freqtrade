@@ -3,6 +3,7 @@ import time
 from datetime import timedelta
 from unittest.mock import MagicMock, PropertyMock
 
+import pytest
 import time_machine
 
 from freqtrade.data.dataprovider import DataProvider
@@ -38,6 +39,25 @@ def test_worker_running(mocker, default_conf, caplog) -> None:
     assert isinstance(worker.freqtrade.strategy.dp, DataProvider)
 
 
+def test_worker_paused(mocker, default_conf, caplog) -> None:
+    mock_throttle = MagicMock()
+    mocker.patch("freqtrade.worker.Worker._throttle", mock_throttle)
+    mocker.patch("freqtrade.persistence.Trade.stoploss_reinitialization", MagicMock())
+
+    worker = get_patched_worker(mocker, default_conf)
+
+    worker.freqtrade.state = State.PAUSED
+    state = worker._worker(old_state=State.RUNNING)
+
+    assert state is State.PAUSED
+    assert log_has("Changing state from RUNNING to: PAUSED", caplog)
+    assert mock_throttle.call_count == 1
+    # Check strategy is loaded, and received a dataprovider object
+    assert worker.freqtrade.strategy
+    assert worker.freqtrade.strategy.dp
+    assert isinstance(worker.freqtrade.strategy.dp, DataProvider)
+
+
 def test_worker_stopped(mocker, default_conf, caplog) -> None:
     mock_throttle = MagicMock()
     mocker.patch("freqtrade.worker.Worker._throttle", mock_throttle)
@@ -48,6 +68,54 @@ def test_worker_stopped(mocker, default_conf, caplog) -> None:
     assert state is State.STOPPED
     assert log_has("Changing state from RUNNING to: STOPPED", caplog)
     assert mock_throttle.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "old_state,target_state,startup_call,log_fragment",
+    [
+        (State.STOPPED, State.PAUSED, True, "Changing state from STOPPED to: PAUSED"),
+        (State.RUNNING, State.PAUSED, False, "Changing state from RUNNING to: PAUSED"),
+        (State.PAUSED, State.RUNNING, False, "Changing state from PAUSED to: RUNNING"),
+        (State.PAUSED, State.STOPPED, False, "Changing state from PAUSED to: STOPPED"),
+        (State.RELOAD_CONFIG, State.RUNNING, True, "Changing state from RELOAD_CONFIG to: RUNNING"),
+        (
+            State.RELOAD_CONFIG,
+            State.STOPPED,
+            False,
+            "Changing state from RELOAD_CONFIG to: STOPPED",
+        ),
+    ],
+)
+def test_worker_lifecycle(
+    mocker,
+    default_conf,
+    caplog,
+    old_state,
+    target_state,
+    startup_call,
+    log_fragment,
+):
+    mock_throttle = mocker.MagicMock()
+    mocker.patch("freqtrade.worker.Worker._throttle", mock_throttle)
+    mocker.patch("freqtrade.persistence.Trade.stoploss_reinitialization")
+    startup = mocker.patch("freqtrade.freqtradebot.FreqtradeBot.startup")
+
+    worker = get_patched_worker(mocker, default_conf)
+    worker.freqtrade.state = target_state
+
+    new_state = worker._worker(old_state=old_state)
+
+    assert new_state is target_state
+    assert log_has(log_fragment, caplog)
+    assert mock_throttle.call_count == 1
+    assert startup.call_count == (1 if startup_call else 0)
+
+    # For any state where the strategy should be initialized
+    if target_state in (State.RUNNING, State.PAUSED):
+        assert worker.freqtrade.strategy
+        assert isinstance(worker.freqtrade.strategy.dp, DataProvider)
+    else:
+        assert new_state is State.STOPPED
 
 
 def test_throttle(mocker, default_conf, caplog) -> None:

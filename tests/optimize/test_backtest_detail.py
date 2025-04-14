@@ -102,7 +102,7 @@ tc3 = BTContainer(
 )
 
 # Test 4: Minus 3% / recovery +15%
-# Candle Data for test 3 – Candle drops 3% Closed 15% up
+# Candle Data for test 3 - Candle drops 3% Closed 15% up
 # Test with Stop-loss at 2% ROI 6%
 # Stop-Loss Triggered 2% Loss
 tc4 = BTContainer(

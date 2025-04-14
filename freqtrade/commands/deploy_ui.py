@@ -51,7 +51,7 @@ def download_and_install_ui(dest_folder: Path, dl_url: str, version: str):
         f.write(version)
 
 
-def get_ui_download_url(version: str | None = None) -> tuple[str, str]:
+def get_ui_download_url(version: str | None, prerelease: bool) -> tuple[str, str]:
     base_url = "https://api.github.com/repos/freqtrade/frequi/"
     # Get base UI Repo path
 
@@ -61,14 +61,18 @@ def get_ui_download_url(version: str | None = None) -> tuple[str, str]:
 
     if version:
         tmp = [x for x in r if x["name"] == version]
-        if tmp:
-            latest_version = tmp[0]["name"]
-            assets = tmp[0].get("assets", [])
-        else:
-            raise ValueError("UI-Version not found.")
     else:
-        latest_version = r[0]["name"]
-        assets = r[0].get("assets", [])
+        tmp = [x for x in r if prerelease or not x.get("prerelease")]
+
+    if tmp:
+        # Ensure we have the latest version
+        if version is None:
+            tmp.sort(key=lambda x: x["created_at"], reverse=True)
+        latest_version = tmp[0]["name"]
+        assets = tmp[0].get("assets", [])
+    else:
+        raise ValueError("UI-Version not found.")
+
     dl_url = ""
     if assets and len(assets) > 0:
         dl_url = assets[0]["browser_download_url"]

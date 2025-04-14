@@ -688,7 +688,7 @@ def test_print_json_spaces_all(mocker, hyperopt_conf, capsys) -> None:
         '{"params":{"mfi-value":null,"sell-mfi-value":null},"minimal_roi"'
         ':{},"stoploss":null,"trailing_stop":null,"max_open_trades":null}'
     )
-    assert result_str in out  # noqa: E501
+    assert result_str in out
     # Should be called for historical candle data
     assert dumper.call_count == 1
     assert dumper2.call_count == 1
@@ -745,7 +745,7 @@ def test_print_json_spaces_default(mocker, hyperopt_conf, capsys) -> None:
     assert (
         '{"params":{"mfi-value":null,"sell-mfi-value":null},"minimal_roi":{},"stoploss":null}'
         in out
-    )  # noqa: E501
+    )
     # Should be called for historical candle data
     assert dumper.call_count == 1
     assert dumper2.call_count == 1

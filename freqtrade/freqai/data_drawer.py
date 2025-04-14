@@ -569,7 +569,7 @@ class FreqaiDataDrawer:
             dk.training_features_list = dk.data["training_features_list"]
             dk.label_list = dk.data["label_list"]
 
-    def load_data(self, coin: str, dk: FreqaiDataKitchen) -> Any:  # noqa: C901
+    def load_data(self, coin: str, dk: FreqaiDataKitchen) -> Any:
         """
         loads all data required to make a prediction on a sub-train time range
         :returns:

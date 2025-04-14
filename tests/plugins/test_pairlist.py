@@ -281,7 +281,7 @@ def test_remove_logs_for_pairs_already_in_blacklist(mocker, markets, static_pl_c
 
     for _ in range(3):
         new_whitelist = freqtrade.pairlists.verify_blacklist(
-            whitelist + ["BLK/BTC"], logger.warning
+            [*whitelist, "BLK/BTC"], logger.warning
         )
         # Ensure that the pair is removed from the white list, and properly logged.
         assert set(whitelist) == set(new_whitelist)
@@ -2032,11 +2032,7 @@ def test_expand_pairlist(wildcardlist, pairs, expected):
             },
         }
         assert sorted(dynamic_expand_pairlist(conf, pairs)) == sorted(
-            expected
-            + [
-                "BTC/USDT:USDT",
-                "XRP/BUSD",
-            ]
+            [*expected, "BTC/USDT:USDT", "XRP/BUSD"]
         )
 
 
@@ -2138,7 +2134,7 @@ def test_ProducerPairlist(mocker, whitelist_conf, markets):
     dp = DataProvider(whitelist_conf, exchange, None)
     pairs = ["ETH/BTC", "LTC/BTC", "XRP/BTC"]
     # different producer
-    dp._set_producer_pairs(pairs + ["MEEP/USDT"], "default")
+    dp._set_producer_pairs([*pairs, "MEEP/USDT"], "default")
     pm = PairListManager(exchange, whitelist_conf, dp)
     pm.refresh_pairlist()
     assert pm.whitelist == []
@@ -2161,7 +2157,7 @@ def test_ProducerPairlist(mocker, whitelist_conf, markets):
     pm = PairListManager(exchange, whitelist_conf, dp)
     pm.refresh_pairlist()
     assert len(pm.whitelist) == 4
-    assert pm.whitelist == ["TKN/BTC"] + pairs
+    assert pm.whitelist == ["TKN/BTC", *pairs]
 
 
 @pytest.mark.usefixtures("init_persistence")

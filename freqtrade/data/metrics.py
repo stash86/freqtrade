@@ -118,7 +118,7 @@ def _calc_drawdown_series(
 ) -> pd.DataFrame:
     max_drawdown_df = pd.DataFrame()
     max_drawdown_df["cumulative"] = profit_results[value_col].cumsum()
-    max_drawdown_df["high_value"] = max_drawdown_df["cumulative"].cummax()
+    max_drawdown_df["high_value"] = np.maximum(0, max_drawdown_df["cumulative"].cummax())
     max_drawdown_df["drawdown"] = max_drawdown_df["cumulative"] - max_drawdown_df["high_value"]
     max_drawdown_df["date"] = profit_results.loc[:, date_col]
     if starting_balance:
@@ -201,13 +201,11 @@ def calculate_max_drawdown(
         if relative
         else max_drawdown_df["drawdown"].idxmin()
     )
-    if idxmin == 0:
-        raise ValueError("No losing trade, therefore no drawdown.")
-    high_date = profit_results.loc[max_drawdown_df.iloc[:idxmin]["high_value"].idxmax(), date_col]
+
+    high_idx = max_drawdown_df.iloc[: idxmin + 1]["high_value"].idxmax()
+    high_date = profit_results.loc[high_idx, date_col]
     low_date = profit_results.loc[idxmin, date_col]
-    high_val = max_drawdown_df.loc[
-        max_drawdown_df.iloc[:idxmin]["high_value"].idxmax(), "cumulative"
-    ]
+    high_val = max_drawdown_df.loc[high_idx, "cumulative"]
     low_val = max_drawdown_df.loc[idxmin, "cumulative"]
     max_drawdown_rel = max_drawdown_df.loc[idxmin, "drawdown_relative"]
 

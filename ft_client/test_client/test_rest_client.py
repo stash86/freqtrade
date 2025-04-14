@@ -85,6 +85,8 @@ def test_FtRestClient_call_invalid(caplog):
         ("trades", [], {}),
         ("trades", [5], {}),
         ("trades", [5, 5], {}),  # With offset
+        ("trades", [5, 5, True], {}),  # Explicit order_by_id=True
+        ("trades", [5, 5, False], {}),  # order_by_id=False
         ("trade", [1], {}),
         ("delete_trade", [1], {}),
         ("cancel_open_order", [1], {}),
@@ -127,6 +129,10 @@ def test_FtRestClient_call_invalid(caplog):
         ("pair_candles", ["XRP/USDT", "5m", 500], {"columns": ["close_time,close"]}),
         ("pair_history", ["XRP/USDT", "5m", "SampleStrategy"], {}),
         ("pair_history", ["XRP/USDT", "5m"], {"strategy": "SampleStrategy"}),
+        ("trades", [], {"order_by_id": True}),
+        ("trades", [], {"order_by_id": False}),
+        ("trades", [5], {"order_by_id": False}),
+        ("trades", [5, 5], {"order_by_id": True}),
         ("sysinfo", [], {}),
         ("health", [], {}),
     ],

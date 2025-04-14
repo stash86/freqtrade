@@ -1,4 +1,4 @@
-import subprocess
+import subprocess  # noqa: S404, RUF100
 from pathlib import Path
 
 

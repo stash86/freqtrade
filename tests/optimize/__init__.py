@@ -69,8 +69,8 @@ def _build_backtest_dataframe(data):
     ]
     if len(data[0]) == 8:
         # No short columns
-        data = [d + [0, 0] for d in data]
-    columns = columns + ["enter_tag"] if len(data[0]) == 11 else columns
+        data = [[*d, 0, 0] for d in data]
+    columns = [*columns, "enter_tag"] if len(data[0]) == 11 else columns
 
     frame = DataFrame.from_records(data, columns=columns)
     frame["date"] = frame["date"].apply(_get_frame_time_from_offset)

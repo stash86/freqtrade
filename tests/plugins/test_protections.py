@@ -19,8 +19,8 @@ def generate_mock_trade(
     fee: float,
     is_open: bool,
     exit_reason: str = ExitType.EXIT_SIGNAL,
-    min_ago_open: int = None,
-    min_ago_close: int = None,
+    min_ago_open: int | None = None,
+    min_ago_close: int | None = None,
     profit_rate: float = 0.9,
     is_short: bool = False,
 ):

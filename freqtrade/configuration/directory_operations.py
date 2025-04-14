@@ -37,7 +37,7 @@ def chown_user_directory(directory: Path) -> None:
     """
     if running_in_docker():
         try:
-            import subprocess  # noqa: S404
+            import subprocess  # noqa: S404, RUF100
 
             subprocess.check_output(["sudo", "chown", "-R", "ftuser:", str(directory.resolve())])
         except Exception:

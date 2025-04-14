@@ -35,6 +35,7 @@ class Gate(Exchange):
         "stoploss_order_types": {"limit": "limit"},
         "stop_price_param": "stopPrice",
         "stop_price_prop": "stopPrice",
+        "l2_limit_upper": 1000,
         "marketOrderRequiresPrice": True,
         "trades_has_history": False,  # Endpoint would support this - but ccxt doesn't.
     }
@@ -44,6 +45,7 @@ class Gate(Exchange):
         "marketOrderRequiresPrice": False,
         "funding_fee_candle_limit": 90,
         "stop_price_type_field": "price_type",
+        "l2_limit_upper": 300,
         "stop_price_type_value_mapping": {
             PriceType.LAST: 0,
             PriceType.MARK: 1,

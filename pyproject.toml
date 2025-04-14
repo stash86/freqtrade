@@ -264,7 +264,7 @@ extend-select = [
   # "RSE",  # flake8-raise
   # "TCH",  # flake8-type-checking
   "PTH",    # flake8-use-pathlib
-  # "RUF",    # ruff
+  "RUF",    # ruff
   "ASYNC",  # flake8-async
   "NPY",    # numpy
 ]
@@ -279,6 +279,9 @@ extend-ignore = [
   "S607",  # Starting a process with a partial executable path
   "S608",  # Possible SQL injection vector through string-based query construction
   "NPY002",  # Numpy legacy random generator
+  "RUF010",  # Use explicit conversion flag
+  "RUF012",  # mutable-class-default
+  "RUF022",  # unsorted-dunder-all
 ]
 
 [tool.ruff.lint.mccabe]
@@ -288,7 +291,7 @@ max-complexity = 12
 "freqtrade/freqai/**/*.py" = [
   "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
 ]
-"tests/**/*.py" = [
+"tests/**.py" = [
   "S101",  # allow assert in tests
   "S104",  #  Possible binding to all interfaces
   "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
@@ -297,7 +300,11 @@ max-complexity = 12
   "S110",  # `try`-`except`-`pass` detected, consider logging the exception
   ]
 
-"ft_client/test_client/**/*.py" = [
+"freqtrade/templates/**.py" = [
+  "RUF100",  # Allow unused noqa
+]
+
+"ft_client/test_client/**.py" = [
   "S101",  # allow assert in tests
 ]
 

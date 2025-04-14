@@ -5,7 +5,6 @@ from typing import Any
 
 from freqtrade.enums import RunMode
 from freqtrade.exceptions import ConfigurationError, OperationalException
-from freqtrade.ft_types import ValidExchangesType
 
 
 logger = logging.getLogger(__name__)
@@ -21,6 +20,7 @@ def start_list_exchanges(args: dict[str, Any]) -> None:
     from rich.text import Text
 
     from freqtrade.exchange import list_available_exchanges
+    from freqtrade.ft_types import ValidExchangesType
     from freqtrade.loggers.rich_console import get_rich_console
 
     available_exchanges: list[ValidExchangesType] = list_available_exchanges(

@@ -37,6 +37,7 @@ class FtHas(TypedDict, total=False):
     # Orderbook
     l2_limit_range: list[int] | None
     l2_limit_range_required: bool
+    l2_limit_upper: int | None
     # Futures
     ccxt_futures_name: str  # usually swap
     mark_ohlcv_price: str
@@ -44,6 +45,7 @@ class FtHas(TypedDict, total=False):
     funding_fee_timeframe: str
     funding_fee_candle_limit: int
     floor_leverage: bool
+    uses_leverage_tiers: bool
     needs_trading_fees: bool
     order_props_in_contracts: list[Literal["amount", "cost", "filled", "remaining"]]
 

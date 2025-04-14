@@ -41,7 +41,7 @@ class UvicornServer(uvicorn.Server):
             but we need to create uvloop event loop manually
         """
         try:
-            import uvloop  # noqa
+            import uvloop
         except ImportError:  # pragma: no cover
             asyncio_setup()
         else:

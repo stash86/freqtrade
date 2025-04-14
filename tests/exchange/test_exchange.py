@@ -2838,6 +2838,11 @@ def test_get_next_limit_in_list():
     assert Exchange.get_next_limit_in_list(21, None) == 21
     assert Exchange.get_next_limit_in_list(100, None) == 100
     assert Exchange.get_next_limit_in_list(1000, None) == 1000
+    # With upper limit
+    assert Exchange.get_next_limit_in_list(1000, None, upper_limit=None) == 1000
+    assert Exchange.get_next_limit_in_list(1000, None, upper_limit=500) == 500
+    # with upper limit and range, limit_range wins
+    assert Exchange.get_next_limit_in_list(1000, limit_range, upper_limit=500) == 1000
 
 
 @pytest.mark.parametrize("exchange_name", EXCHANGES)

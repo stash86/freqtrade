@@ -48,7 +48,7 @@ from tests.conftest_trades_usdt import (
 logging.getLogger("").setLevel(logging.INFO)
 
 
-# Do not mask numpy errors as warnings that no one read, raise the exсeption
+# Do not mask numpy errors as warnings that no one read, raise the exception
 np.seterr(all="raise")
 
 CURRENT_TEST_STRATEGY = "StrategyTestV3"
@@ -165,7 +165,7 @@ def generate_trades_history(n_rows, start_date: datetime | None = None, days=5):
     )
     df["date"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
     df = df.sort_values("timestamp").reset_index(drop=True)
-    assert list(df.columns) == constants.DEFAULT_TRADES_COLUMNS + ["date"]
+    assert list(df.columns) == [*constants.DEFAULT_TRADES_COLUMNS, "date"]
     return df
 
 
