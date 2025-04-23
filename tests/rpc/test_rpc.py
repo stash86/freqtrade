@@ -228,7 +228,8 @@ def test_rpc_trade_status(default_conf, ticker, fee, mocker) -> None:
     assert results[0] == response_norate
 
 
-def test_rpc_status_table(default_conf, ticker, fee, mocker) -> None:
+def test_rpc_status_table(default_conf, ticker, fee, mocker, time_machine) -> None:
+    time_machine.move_to("2024-05-10 11:15:00 +00:00", tick=False)
     mocker.patch.multiple(
         "freqtrade.rpc.fiat_convert.FtCoinGeckoApi",
         get_price=MagicMock(return_value={"bitcoin": {"usd": 15000.0}}),

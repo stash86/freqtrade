@@ -25,6 +25,7 @@ The following attributes / properties are available for each individual trade - 
 | `close_date_utc` | datetime | Timestamp when trade was closed - in UTC. |
 | `close_profit` | float | Relative profit at the time of trade closure. `0.01` == 1% |
 | `close_profit_abs` | float | Absolute profit (in stake currency) at the time of trade closure. |
+| `realized_profit` | float | Absolute already realized profit (in stake currency) while the trade is still open. |
 | `leverage` | float | Leverage used for this trade - defaults to 1.0 in spot markets. |
 | `enter_tag` | string | Tag provided on entry via the `enter_tag` column in the dataframe. |
 | `is_short` | boolean | True for short trades, False otherwise. |
