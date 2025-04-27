@@ -41,14 +41,14 @@ sdnotify==0.3.2
 # API Server
 fastapi==0.115.12
 pydantic==2.11.3
-uvicorn==0.34.1
+uvicorn==0.34.2
 pyjwt==2.10.1
 aiofiles==24.1.0
 psutil==7.0.0
 
 # Building config files interactively
 questionary==2.1.0
-prompt-toolkit==3.0.50
+prompt-toolkit==3.0.51
 # Extensions to datetime library
 python-dateutil==2.9.0.post0
 pytz==2025.2
@@ -61,4 +61,4 @@ websockets==15.0.1
 janus==2.0.0
 
 ast-comments==1.2.2
-packaging==24.2
+packaging==25.0
