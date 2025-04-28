@@ -36,6 +36,10 @@ class HyperoptOutput:
         self.table.add_column("Avg duration", justify="right")
         self.table.add_column("Objective", justify="right")
         self.table.add_column("Expectancy (Ratio)", justify="right")
+        self.table.add_column("Sharpe", justify="right")
+        self.table.add_column("Sortino", justify="right")
+        self.table.add_column("Calmar", justify="right")
+        self.table.add_column("SQN", justify="right")
         self.table.add_column("Max Drawdown (Acct)", justify="right")
 
     def print(self, console: Console | None = None, *, print_colorized=True):
@@ -125,6 +129,14 @@ class HyperoptOutput:
                     f"{r['loss']:,.5f}" if r["loss"] != 100000 else "N/A",
                     # "Expectancy Ratio":
                     f"{r['results_metrics']['expectancy']:,.3f} ({r['results_metrics']['expectancy_ratio']:,.3f})",
+                    # "Sharpe":
+                    f"{r['results_metrics']['sharpe']:,.4f}",
+                    # "Sortino":
+                    f"{r['results_metrics']['sortino']:,.4f}",
+                    # "Calmar":
+                    f"{r['results_metrics']['calmar']:,.4f}",
+                    # "SQN":
+                    f"{r['results_metrics']['sqn']:,.4f}",
                     # "Max Drawdown (Acct)":
                     "{} {}".format(
                         fmt_coin(
