@@ -4,6 +4,9 @@ from freqtrade.util.migrations.funding_rate_mig import migrate_funding_fee_timef
 
 
 def migrate_data(config, exchange: Exchange | None = None):
+    """
+    Migrate persisted data from old formats to new formats
+    """
     migrate_binance_futures_data(config)
 
     migrate_funding_fee_timeframe(config, exchange)

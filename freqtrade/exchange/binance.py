@@ -148,7 +148,7 @@ class Binance(Exchange):
         Does not work for other exchanges, which don't return the earliest data when called with "0"
         :param candle_type: Any of the enum CandleType (must match trading mode!)
         """
-        if is_new_pair:
+        if is_new_pair and candle_type in (CandleType.SPOT, CandleType.FUTURES, CandleType.MARK):
             with self._loop_lock:
                 x = self.loop.run_until_complete(
                     self._async_get_candle_history(pair, timeframe, candle_type, 0)

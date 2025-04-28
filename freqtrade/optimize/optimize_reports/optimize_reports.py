@@ -650,7 +650,7 @@ def generate_backtest_stats(
     :return: Dictionary containing results per strategy and a strategy summary.
     """
     result: BacktestResultType = get_BacktestResultType_default()
-    market_change = calculate_market_change(btdata, "close")
+    market_change = calculate_market_change(btdata, "close", min_date=min_date)
     metadata = {}
     pairlist = list(btdata.keys())
     for strategy, content in all_results.items():

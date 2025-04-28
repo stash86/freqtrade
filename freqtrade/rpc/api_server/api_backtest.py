@@ -96,7 +96,10 @@ def __run_backtest_bg(btconfig: Config):
             )
 
             ApiBG.bt["bt"].results = generate_backtest_stats(
-                ApiBG.bt["data"], ApiBG.bt["bt"].all_results, min_date=min_date, max_date=max_date
+                ApiBG.bt["data"],
+                ApiBG.bt["bt"].all_bt_content,
+                min_date=min_date,
+                max_date=max_date,
             )
 
             if btconfig.get("export", "none") == "trades":

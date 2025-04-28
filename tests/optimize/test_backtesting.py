@@ -2576,7 +2576,7 @@ def test_backtest_start_multi_strat_caching(
         ],
     )
     mocker.patch.multiple(
-        "freqtrade.data.btanalysis",
+        "freqtrade.data.btanalysis.bt_fileutils",
         load_backtest_metadata=load_backtest_metadata,
         load_backtest_stats=load_backtest_stats,
     )
