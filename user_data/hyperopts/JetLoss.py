@@ -19,6 +19,8 @@ from freqtrade.optimize.hyperopt import IHyperOptLoss
 max_expectancy = 4
 max_profit_ratio = 10
 max_avg_profit = 50
+max_sharpe_ratio = 5
+max_sqn = 5
 
 
 class JetLoss(IHyperOptLoss):
@@ -92,9 +94,9 @@ class JetLoss(IHyperOptLoss):
             * min(profit_factor, max_profit_ratio)
             * min(expectancy_ratio, max_expectancy)
             * average_trades_per_day
-            * sharpe_ratio
+            * min(sharpe_ratio, max_sharpe_ratio)
             * sortino_ratio
-            * sqn_ratio
+            * min(sqn_ratio, max_sqn)
         )
 
         if (total_profit < 0) and (loss_value > 0):
