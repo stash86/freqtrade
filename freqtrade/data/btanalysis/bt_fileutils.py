@@ -13,7 +13,7 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from freqtrade.constants import LAST_BT_RESULT_FN, IntOrInf
+from freqtrade.constants import LAST_BT_RESULT_FN
 from freqtrade.exceptions import ConfigurationError, OperationalException
 from freqtrade.ft_types import BacktestHistoryEntryType, BacktestResultType
 from freqtrade.misc import file_dump_json, json_load
@@ -489,55 +489,6 @@ def load_exit_signal_candles(backtest_dir: Path) -> dict[str, dict[str, pd.DataF
     Load exit signal candles from backtest directory
     """
     return load_backtest_analysis_data(backtest_dir, "exited")
-
-
-def analyze_trade_parallelism(results: pd.DataFrame, timeframe: str) -> pd.DataFrame:
-    """
-    Find overlapping trades by expanding each trade once per period it was open
-    and then counting overlaps.
-    :param results: Results Dataframe - can be loaded
-    :param timeframe: Timeframe used for backtest
-    :return: dataframe with open-counts per time-period in timeframe
-    """
-    from freqtrade.exchange import timeframe_to_resample_freq
-
-    timeframe_freq = timeframe_to_resample_freq(timeframe)
-    dates = [
-        pd.Series(
-            pd.date_range(
-                row[1]["open_date"],
-                row[1]["close_date"],
-                freq=timeframe_freq,
-                # Exclude right boundary - the date is the candle open date.
-                inclusive="left",
-            )
-        )
-        for row in results[["open_date", "close_date"]].iterrows()
-    ]
-    deltas = [len(x) for x in dates]
-    dates = pd.Series(pd.concat(dates).values, name="date")
-    df2 = pd.DataFrame(np.repeat(results.values, deltas, axis=0), columns=results.columns)
-
-    df2 = pd.concat([dates, df2], axis=1)
-    df2 = df2.set_index("date")
-    df_final = df2.resample(timeframe_freq)[["pair"]].count()
-    df_final = df_final.rename({"pair": "open_trades"}, axis=1)
-    return df_final
-
-
-def evaluate_result_multi(
-    results: pd.DataFrame, timeframe: str, max_open_trades: IntOrInf
-) -> pd.DataFrame:
-    """
-    Find overlapping trades by expanding each trade once per period it was open
-    and then counting overlaps
-    :param results: Results Dataframe - can be loaded
-    :param timeframe: Frequency used for the backtest
-    :param max_open_trades: parameter max_open_trades used during backtest run
-    :return: dataframe with open-counts per time-period in freq
-    """
-    df_final = analyze_trade_parallelism(results, timeframe)
-    return df_final[df_final["open_trades"] > max_open_trades]
 
 
 def trade_list_to_dataframe(trades: list[Trade] | list[LocalTrade]) -> pd.DataFrame:

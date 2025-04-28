@@ -2869,7 +2869,7 @@ def test_api_backtesting(botclient, mocker, fee, caplog, tmp_path):
 def test_api_backtest_history(botclient, mocker, testdatadir):
     ftbot, client = botclient
     mocker.patch(
-        "freqtrade.data.btanalysis._get_backtest_files",
+        "freqtrade.data.btanalysis.bt_fileutils._get_backtest_files",
         return_value=[
             testdatadir / "backtest_results/backtest-result_multistrat.json",
             testdatadir / "backtest_results/backtest-result.json",

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -18,9 +18,11 @@ class ValueTypesEnum(str, Enum):
     INT = "int"
 
 
-class KeyStoreKeys(str, Enum):
-    BOT_START_TIME = "bot_start_time"
-    STARTUP_TIME = "startup_time"
+KeyStoreKeys = Literal[
+    "bot_start_time",
+    "startup_time",
+    "binance_migration",
+]
 
 
 class _KeyValueStoreModel(ModelBase):
@@ -192,7 +194,7 @@ class KeyValueStore:
         return kv.int_value
 
 
-def set_startup_time():
+def set_startup_time() -> None:
     """
     sets bot_start_time to the first trade open date - or "now" on new databases.
     sets startup_time to "now"

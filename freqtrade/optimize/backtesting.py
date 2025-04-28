@@ -123,7 +123,7 @@ class Backtesting:
         config["dry_run"] = True
         self.run_ids: dict[str, str] = {}
         self.strategylist: list[IStrategy] = []
-        self.all_results: dict[str, BacktestContentType] = {}
+        self.all_bt_content: dict[str, BacktestContentType] = {}
         self.analysis_results: dict[str, dict[str, DataFrame]] = {
             "signals": {},
             "rejected": {},
@@ -1717,7 +1717,7 @@ class Backtesting:
                 "backtest_end_time": int(backtest_end_time.timestamp()),
             }
         )
-        self.all_results[strategy_name] = results
+        self.all_bt_content[strategy_name] = results
 
         if (
             self.config.get("export", "none") == "signals"
@@ -1780,9 +1780,9 @@ class Backtesting:
             min_date, max_date = self.backtest_one_strategy(strat, data, timerange)
 
         # Update old results with new ones.
-        if len(self.all_results) > 0:
+        if len(self.all_bt_content) > 0:
             results = generate_backtest_stats(
-                data, self.all_results, min_date=min_date, max_date=max_date
+                data, self.all_bt_content, min_date=min_date, max_date=max_date
             )
             if self.results:
                 self.results["metadata"].update(results["metadata"])

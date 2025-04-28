@@ -10,7 +10,9 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def calculate_market_change(data: dict[str, pd.DataFrame], column: str = "close") -> float:
+def calculate_market_change(
+    data: dict[str, pd.DataFrame], column: str = "close", min_date: datetime | None = None
+) -> float:
     """
     Calculate market change based on "column".
     Calculation is done by taking the first non-null and the last non-null element of each column
@@ -19,14 +21,24 @@ def calculate_market_change(data: dict[str, pd.DataFrame], column: str = "close"
 
     :param data: Dict of Dataframes, dict key should be pair.
     :param column: Column in the original dataframes to use
+    :param min_date: Minimum date to consider for calculations. Market change should only be
+        calculated for data actually backtested, excluding startup periods.
     :return:
     """
     tmp_means = []
     for pair, df in data.items():
-        start = df[column].dropna().iloc[0]
-        end = df[column].dropna().iloc[-1]
+        df1 = df
+        if min_date is not None:
+            df1 = df1[df1["date"] >= min_date]
+        if df1.empty:
+            logger.warning(f"Pair {pair} has no data after {min_date}.")
+            continue
+        start = df1[column].dropna().iloc[0]
+        end = df1[column].dropna().iloc[-1]
         tmp_means.append((end - start) / start)
 
+    if not tmp_means:
+        return 0.0
     return float(np.mean(tmp_means))
 
 

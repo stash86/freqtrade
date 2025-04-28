@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import inspect, select, text, update
+from sqlalchemy import Engine, inspect, select, text, update
 
 from freqtrade.exceptions import OperationalException
 from freqtrade.persistence.trade_model import Order, Trade
@@ -9,7 +9,7 @@ from freqtrade.persistence.trade_model import Order, Trade
 logger = logging.getLogger(__name__)
 
 
-def get_table_names_for_table(inspector, tabletype) -> list[str]:
+def get_table_names_for_table(inspector, tabletype: str) -> list[str]:
     return [t for t in inspector.get_table_names() if t.startswith(tabletype)]
 
 
@@ -350,7 +350,7 @@ def fix_wrong_max_stake_amount(engine):
         connection.execute(stmt)
 
 
-def check_migrate(engine, decl_base, previous_tables) -> None:
+def check_migrate(engine: Engine, decl_base, previous_tables: list[str]) -> None:
     """
     Checks if migration is necessary and migrates if necessary
     """

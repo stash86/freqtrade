@@ -102,7 +102,9 @@ def text_table_tags(
         [
             *(
                 (
-                    (t["key"] if isinstance(t["key"], list) else [t["key"], ""])
+                    list(t["key"])
+                    if isinstance(t["key"], list | tuple)
+                    else [t["key"], ""]
                     if is_list
                     else [t["key"]]
                 )
