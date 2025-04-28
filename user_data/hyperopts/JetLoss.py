@@ -72,16 +72,16 @@ class JetLoss(IHyperOptLoss):
         sqn_ratio = calculate_sqn(results, starting_balance)
 
         if sharpe_ratio == -100:
-            sharpe_ratio = 2
+            sharpe_ratio = 5
 
         if sortino_ratio == -100:
-            sortino_ratio = 2
+            sortino_ratio = 5
 
         if calmar_ratio == -100:
-            calmar_ratio = 2
+            calmar_ratio = 5
 
         if sqn_ratio == -100:
-            sqn_ratio = 2
+            sqn_ratio = 5
 
         total_trades = len(results)
 
