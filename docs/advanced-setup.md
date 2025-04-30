@@ -189,13 +189,15 @@ as the watchdog.
 ## Advanced Logging
 
 Freqtrade uses the default logging module provided by python.
-Python allows for extensive [logging configuration](https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig) in this regards - way more than what can be covered here.
+Python allows for extensive [logging configuration](https://docs.python.org/3/library/logging.config.html#logging.config.dictConfig) in this regard - way more than what can be covered here.
 
-Default logging (Colored terminal output) is setup by default if no `log_config` is provided.
+Default logging format (coloured terminal output) is set up by default if no `log_config` is provided in your freqtrade configuration.
 Using `--logfile logfile.log` will enable the RotatingFileHandler.
-If you're not content with the log format - or with the default settings provided for the RotatingFileHandler, you can customize logging to your liking.
 
-The default configuration looks roughly like the below - with the file handler being provided - but not enabled.
+If you're not content with the log format, or with the default settings provided for the RotatingFileHandler, you can customize logging to your liking by adding the `log_config` configuration to your freqtrade configuration file(s).
+
+The default configuration looks roughly like the below, with the file handler being provided but not enabled as the `filename` is commented out.
+Uncomment this line and supply a valid path/filename to enable it.
 
 ``` json hl_lines="5-7 13-16 27"
 {
@@ -237,12 +239,12 @@ The default configuration looks roughly like the below - with the file handler b
     Highlighted lines in the above code-block define the Rich handler and belong together.
     The formatter "standard" and "file" will belong to the FileHandler.
 
-Each handler must use one of the defined formatters (by name) - and it's class must be available and a valid logging class.
-To actually use a handler - it must be in the "handlers" section inside the "root" segment.
+Each handler must use one of the defined formatters (by name), its class must be available, and must be a valid logging class.
+To actually use a handler, it must be in the "handlers" section inside the "root" segment.
 If this section is left out, freqtrade will provide no output (in the non-configured handler, anyway).
 
 !!! Tip "Explicit log configuration"
-    We recommend to extract the logging configuration from your main configuration, and provide it to your bot via [multiple configuration files](configuration.md#multiple-configuration-files) functionality. This will avoid unnecessary code duplication.
+    We recommend to extract the logging configuration from your main freqtrade configuration file, and provide it to your bot via [multiple configuration files](configuration.md#multiple-configuration-files) functionality. This will avoid unnecessary code duplication.
 
 ---
 

@@ -38,8 +38,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       with:
+        activate-environment: true
         enable-cache: true
         python-version: ${{ matrix.python-version }}
         cache-dependency-glob: "requirements**.txt"
@@ -144,7 +145,7 @@ jobs:
         mypy freqtrade scripts tests
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112 #v1.0.4
+      uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993 #v1.1.1
       if: failure() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
       with:
           severity: error
@@ -170,8 +171,9 @@ jobs:
         check-latest: true
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       with:
+        activate-environment: true
         enable-cache: true
         python-version: ${{ matrix.python-version }}
         cache-dependency-glob: "requirements**.txt"
@@ -270,7 +272,7 @@ jobs:
         mypy freqtrade scripts
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112 #v1.0.4
+      uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993 #v1.1.1
       if: failure() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
       with:
           severity: info
@@ -296,8 +298,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       with:
+        activate-environment: true
         enable-cache: true
         python-version: ${{ matrix.python-version }}
         cache-dependency-glob: "requirements**.txt"
@@ -363,7 +366,7 @@ jobs:
       shell: powershell
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112 #v1.0.4
+      uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993 #v1.1.1
       if: failure() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
       with:
           severity: error
@@ -421,7 +424,7 @@ jobs:
         mkdocs build
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112 #v1.0.4
+      uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993 #v1.1.1
       if: failure() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
       with:
           severity: error
@@ -443,8 +446,9 @@ jobs:
         python-version: "3.12"
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5.4.2
+      uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
       with:
+        activate-environment: true
         enable-cache: true
         python-version: "3.12"
         cache-dependency-glob: "requirements**.txt"
@@ -508,7 +512,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112 #v1.0.4
+      uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993 #v1.1.1
       if: always() && steps.check.outputs.has-permission && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
       with:
           severity: info
@@ -703,7 +707,7 @@ jobs:
         build_helpers/publish_docker_arm64.sh
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112 #v1.0.4
+      uses: rjstone/discord-webhook-notify@1399c1b2d57cc05894d506d2cfdc33c5f012b993 #v1.1.1
       if: always() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) && (github.event_name != 'schedule')
       with:
           severity: info

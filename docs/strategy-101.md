@@ -165,17 +165,22 @@ If there is any significant difference, verify that your entry and exit signals 
 
 ## Controlling or monitoring a running bot
 
-Once your bot is running in dry or live mode, Freqtrade has five mechanisms to control or monitor a running bot:
+Once your bot is running in dry or live mode, Freqtrade has six mechanisms to control or monitor a running bot:
 
 - **[FreqUI](freq-ui.md)**: The easiest to get started with, FreqUI is a web interface to see and control current activity of your bot.
 - **[Telegram](telegram-usage.md)**: On mobile devices, Telegram integration is available to get alerts about your bot activity and to control certain aspects.
 - **[FTUI](https://github.com/freqtrade/ftui)**: FTUI is a terminal (command line) interface to Freqtrade, and allows monitoring of a running bot only.
-- **[REST API](rest-api.md)**: The REST API allows programmers to develop their own tools to interact with a Freqtrade bot.
+- **[freqtrade-client](rest-api.md#consuming-the-api)**: A python implementation of the REST API, making it easy to make requests and consume bot responses from your python apps or the command line.
+- **[REST API endpoints](rest-api.md#available-endpoints)**: The REST API allows programmers to develop their own tools to interact with a Freqtrade bot.
 - **[Webhooks](webhook-config.md)**: Freqtrade can send information to other services, e.g. discord, by webhooks.
 
 ### Logs
 
 Freqtrade generates extensive debugging logs to help you understand what's happening. Please familiarise yourself with the information and error messages you might see in your bot logs.
+
+Logging by default occurs on standard out (the command line). If you want to write out to a file instead, many freqtrade commands, including the `trade` command, accept the `--logfile` option to write to a file.
+
+Check the [FAQ](faq.md#how-do-i-search-the-bot-logs-for-something) for examples.
 
 ## Final Thoughts
 
