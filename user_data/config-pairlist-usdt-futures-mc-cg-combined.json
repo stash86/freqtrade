@@ -16,6 +16,11 @@
     },
     "pairlists": [
         {"method": "StaticPairList"},
+        {
+            "method": "VolumePairList",
+            "number_assets": 15,
+            "sort_key": "quoteVolume",
+        },
         {"method": "FullTradesFilter"},
     ],
 }
