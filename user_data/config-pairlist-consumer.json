@@ -3,7 +3,7 @@
         {
             "method": "ProducerPairList",
             // "number_assets": 5,
-            "producer_name": "prod",
+            "producer_name": "pairlist",
         },
         {"method": "FullTradesFilter"},
     ],
