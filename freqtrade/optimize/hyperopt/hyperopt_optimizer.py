@@ -423,7 +423,6 @@ class HyperOptimizer:
     def prepare_hyperopt_data(self) -> None:
         HyperoptStateContainer.set_state(HyperoptState.DATALOAD)
         data, self.timerange = self.backtesting.load_bt_data()
-        self.backtesting.load_bt_data_detail()
         logger.info("Dataload complete. Calculating indicators")
 
         if not self.analyze_per_epoch:

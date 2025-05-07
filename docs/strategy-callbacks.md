@@ -1107,3 +1107,119 @@ class AwesomeStrategy(IStrategy):
         return None
 
 ```
+
+## Plot annotations callback
+
+The plot annotations callback is called whenever freqUI requests data to display a chart.
+This callback has no meaning in the trade cycle context and is only used for charting purposes.
+
+The strategy can then return a list of `AnnotationType` objects to be displayed on the chart.
+Depending on the content returned - the chart can display horizontal areas, vertical areas, or boxes.
+
+The full object looks like this:
+
+``` json
+{
+    "type": "area", // Type of the annotation, currently only "area" is supported
+    "start": "2024-01-01 15:00:00", // Start date of the area
+    "end": "2024-01-01 16:00:00",  // End date of the area
+    "y_start": 94000.2,  // Price / y axis value
+    "y_end": 98000, // Price / y axis value
+    "color": "",
+    "label": "some label"
+}
+```
+
+The below example will mark the chart with areas for the hours 8 and 15, with a grey color, highlighting the market open and close hours.
+This is obviously a very basic example.
+
+``` python
+# Default imports
+
+class AwesomeStrategy(IStrategy):
+    def plot_annotations(
+        self, pair: str, start_date: datetime, end_date: datetime, dataframe: DataFrame, **kwargs
+    ) -> list[AnnotationType]:
+        """
+        Retrieve area annotations for a chart.
+        Must be returned as array, with type, label, color, start, end, y_start, y_end.
+        All settings except for type are optional - though it usually makes sense to include either
+        "start and end" or "y_start and y_end" for either horizontal or vertical plots
+        (or all 4 for boxes).
+        :param pair: Pair that's currently analyzed
+        :param start_date: Start date of the chart data being requested
+        :param end_date: End date of the chart data being requested
+        :param dataframe: DataFrame with the analyzed data for the chart
+        :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
+        :return: List of AnnotationType objects
+        """
+        annotations = []
+        while start_dt < end_date:
+            start_dt += timedelta(hours=1)
+            if start_dt.hour in (8, 15):
+                annotations.append(
+                    {
+                        "type": "area",
+                        "label": "Trade open and close hours",
+                        "start": start_dt,
+                        "end": start_dt + timedelta(hours=1),
+                        # Omitting y_start and y_end will result in a vertical area spanning the whole height of the main Chart
+                        "color": "rgba(133, 133, 133, 0.4)",
+                    }
+                )
+
+        return annotations
+
+```
+
+Entries will be validated, and won't be passed to the UI if they don't correspond to the expected schema and will log an error if they don't.
+
+!!! Warning "Many annotations"
+    Using too many annotations can cause the UI to hang, especially when plotting large amounts of historic data.
+    Use the annotation feature with care.
+
+### Plot annotations example
+
+![FreqUI - plot Annotations](assets/freqUI-chart-annotations-dark.png#only-dark)
+![FreqUI - plot Annotations](assets/freqUI-chart-annotations-light.png#only-light)
+
+??? Info "Code used for the plot above"
+    This is an example code and should be treated as such.
+
+    ``` python
+    # Default imports
+
+    class AwesomeStrategy(IStrategy):
+        def plot_annotations(
+            self, pair: str, start_date: datetime, end_date: datetime, dataframe: DataFrame, **kwargs
+        ) -> list[AnnotationType]:
+            annotations = []
+            while start_dt < end_date:
+                start_dt += timedelta(hours=1)
+                if (start_dt.hour % 4) == 0:
+                    mark_areas.append(
+                        {
+                            "type": "area",
+                            "label": "4h",
+                            "start": start_dt,
+                            "end": start_dt + timedelta(hours=1),
+                            "color": "rgba(133, 133, 133, 0.4)",
+                        }
+                    )
+                elif (start_dt.hour % 2) == 0:
+                price = dataframe.loc[dataframe["date"] == start_dt, ["close"]].mean()
+                    mark_areas.append(
+                        {
+                            "type": "area",
+                            "label": "2h",
+                            "start": start_dt,
+                            "end": start_dt + timedelta(hours=1),
+                            "y_end": price * 1.01,
+                            "y_start": price * 0.99,
+                            "color": "rgba(0, 255, 0, 0.4)",
+                        }
+                    )
+
+            return annotations
+
+    ```

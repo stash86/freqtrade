@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from math import isinf, isnan
 
 from pandas import DataFrame
+from pydantic import ValidationError
 
 from freqtrade.constants import CUSTOM_TAG_MAX_LENGTH, Config, IntOrInf, ListPairsWithTimeframes
 from freqtrade.data.converter import populate_dataframe_with_trades
@@ -27,6 +28,7 @@ from freqtrade.enums import (
 )
 from freqtrade.exceptions import OperationalException, StrategyError
 from freqtrade.exchange import timeframe_to_minutes, timeframe_to_next_date, timeframe_to_seconds
+from freqtrade.ft_types import AnnotationType
 from freqtrade.misc import remove_entry_exit_signals
 from freqtrade.persistence import Order, PairLocks, Trade
 from freqtrade.strategy.hyper import HyperStrategyMixin
@@ -833,6 +835,24 @@ class IStrategy(ABC, HyperStrategyMixin):
         Returns version of the strategy.
         """
         return None
+
+    def plot_annotations(
+        self, pair: str, start_date: datetime, end_date: datetime, dataframe: DataFrame, **kwargs
+    ) -> list[AnnotationType]:
+        """
+        Retrieve area annotations for a chart.
+        Must be returned as array, with type, label, color, start, end, y_start, y_end.
+        All settings except for type are optional - though it usually makes sense to include either
+        "start and end" or "y_start and y_end" for either horizontal or vertical plots
+        (or all 4 for boxes).
+        :param pair: Pair that's currently analyzed
+        :param start_date: Start date of the chart data being requested
+        :param end_date: End date of the chart data being requested
+        :param dataframe: DataFrame with the analyzed data for the chart
+        :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
+        :return: List of AnnotationType objects
+        """
+        return []
 
     def populate_any_indicators(
         self,
@@ -1790,3 +1810,33 @@ class IStrategy(ABC, HyperStrategyMixin):
         if "exit_long" not in df.columns:
             df = df.rename({"sell": "exit_long"}, axis="columns")
         return df
+
+    def ft_plot_annotations(self, pair: str, dataframe: DataFrame) -> list[AnnotationType]:
+        """
+        Internal wrapper around plot_dataframe
+        """
+        if len(dataframe) > 0:
+            annotations = strategy_safe_wrapper(self.plot_annotations)(
+                pair=pair,
+                dataframe=dataframe,
+                start_date=dataframe.iloc[0]["date"].to_pydatetime(),
+                end_date=dataframe.iloc[-1]["date"].to_pydatetime(),
+            )
+
+            from freqtrade.ft_types.plot_annotation_type import AnnotationTypeTA
+
+            annotations_new: list[AnnotationType] = []
+            for annotation in annotations:
+                if isinstance(annotation, dict):
+                    # Convert to AnnotationType
+                    try:
+                        AnnotationTypeTA.validate_python(annotation)
+                        annotations_new.append(annotation)
+                    except ValidationError as e:
+                        logger.error(f"Invalid annotation data: {annotation}. Error: {e}")
+                else:
+                    # Already an AnnotationType
+                    annotations_new.append(annotation)
+
+            return annotations_new
+        return []
