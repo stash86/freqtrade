@@ -1864,7 +1864,21 @@ def test_api_pair_candles(botclient, ohlcv_history):
     ohlcv_history["exit_short"] = 0
 
     ftbot.dataprovider._set_cached_df("XRP/BTC", timeframe, ohlcv_history, CandleType.SPOT)
+    fake_plot_annotations = [
+        {
+            "type": "area",
+            "start": "2024-01-01 15:00:00",
+            "end": "2024-01-01 16:00:00",
+            "y_start": 94000.2,
+            "y_end": 98000,
+            "color": "",
+            "label": "some label",
+        }
+    ]
+    plot_annotations_mock = MagicMock(return_value=fake_plot_annotations)
+    ftbot.strategy.plot_annotations = plot_annotations_mock
     for call in ("get", "post"):
+        plot_annotations_mock.reset_mock()
         if call == "get":
             rc = client_get(
                 client,
@@ -1894,6 +1908,8 @@ def test_api_pair_candles(botclient, ohlcv_history):
         assert resp["data_start_ts"] == 1511686200000
         assert resp["data_stop"] == "2017-11-26 09:00:00+00:00"
         assert resp["data_stop_ts"] == 1511686800000
+        assert resp["annotations"] == fake_plot_annotations
+        assert plot_annotations_mock.call_count == 1
         assert isinstance(resp["columns"], list)
         base_cols = {
             "date",
@@ -2235,6 +2251,7 @@ def test_api_pair_history(botclient, tmp_path, mocker):
         assert result["data_start_ts"] == 1515628800000
         assert result["data_stop"] == "2018-01-12 00:00:00+00:00"
         assert result["data_stop_ts"] == 1515715200000
+        assert result["annotations"] == []
         lfm.reset_mock()
 
         # No data found

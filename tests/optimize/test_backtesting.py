@@ -828,6 +828,7 @@ def test_backtest_one(default_conf, mocker, testdatadir) -> None:
                     },
                 ],
             ],
+            "funding_fees": [0.0, 0.0],
         }
     )
     pd.testing.assert_frame_equal(results, expected)
@@ -991,7 +992,7 @@ def test_backtest_one_detail_futures(
         timerange=timerange,
         candle_type=CandleType.FUTURES,
     )
-    backtesting.load_bt_data_detail()
+    backtesting._load_bt_data_detail()
     processed = backtesting.strategy.advise_all_indicators(data)
     min_date, max_date = get_timerange(processed)
 
@@ -1119,7 +1120,7 @@ def test_backtest_one_detail_futures_funding_fees(
         timerange=timerange,
         candle_type=CandleType.FUTURES,
     )
-    backtesting.load_bt_data_detail()
+    backtesting._load_bt_data_detail()
     processed = backtesting.strategy.advise_all_indicators(data)
     min_date, max_date = get_timerange(processed)
 

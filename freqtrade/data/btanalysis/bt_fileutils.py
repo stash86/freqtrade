@@ -52,6 +52,7 @@ BT_DATA_COLUMNS = [
     "open_timestamp",
     "close_timestamp",
     "orders",
+    "funding_fees",
 ]
 
 
@@ -356,6 +357,8 @@ def _load_backtest_data_df_compatibility(df: pd.DataFrame) -> pd.DataFrame:
         df["max_stake_amount"] = df["stake_amount"]
     if "orders" not in df.columns:
         df["orders"] = None
+    if "funding_fees" not in df.columns:
+        df["funding_fees"] = 0.0
     return df
 
 

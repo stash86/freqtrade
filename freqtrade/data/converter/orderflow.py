@@ -9,25 +9,11 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from freqtrade.constants import DEFAULT_ORDERFLOW_COLUMNS, Config
+from freqtrade.constants import DEFAULT_ORDERFLOW_COLUMNS, ORDERFLOW_ADDED_COLUMNS, Config
 from freqtrade.exceptions import DependencyException
 
 
 logger = logging.getLogger(__name__)
-
-ORDERFLOW_ADDED_COLUMNS = [
-    "trades",
-    "orderflow",
-    "imbalances",
-    "stacked_imbalances_bid",
-    "stacked_imbalances_ask",
-    "max_delta",
-    "min_delta",
-    "bid",
-    "ask",
-    "delta",
-    "total_trades",
-]
 
 
 def _init_dataframe_with_trades_columns(dataframe: pd.DataFrame):

@@ -62,7 +62,6 @@ def __run_backtest_bg(btconfig: Config):
             from freqtrade.optimize.backtesting import Backtesting
 
             ApiBG.bt["bt"] = Backtesting(btconfig)
-            ApiBG.bt["bt"].load_bt_data_detail()
         else:
             ApiBG.bt["bt"].config = btconfig
             ApiBG.bt["bt"].init_backtest()

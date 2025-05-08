@@ -149,7 +149,6 @@ class RecursiveAnalysis(BaseAnalysis):
         backtesting._set_strategy(backtesting.strategylist[0])
 
         varholder.data, varholder.timerange = backtesting.load_bt_data()
-        backtesting.load_bt_data_detail()
         varholder.timeframe = backtesting.timeframe
 
         varholder.indicators = backtesting.strategy.advise_all_indicators(varholder.data)

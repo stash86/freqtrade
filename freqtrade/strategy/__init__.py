@@ -6,6 +6,7 @@ from freqtrade.exchange import (
     timeframe_to_prev_date,
     timeframe_to_seconds,
 )
+from freqtrade.ft_types import AnnotationType
 from freqtrade.persistence import Order, PairLocks, Trade
 from freqtrade.strategy.informative_decorator import informative
 from freqtrade.strategy.interface import IStrategy
@@ -44,4 +45,5 @@ __all__ = [
     "merge_informative_pair",
     "stoploss_from_absolute",
     "stoploss_from_open",
+    "AnnotationType",
 ]
