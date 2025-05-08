@@ -4,7 +4,6 @@
     "stake_amount" : 45,
     "amend_last_stake_amount ": true,
     "tradable_balance_ratio": 0.99,
-    "fiat_display_currency": "USD",
     "dry_run": true,
     "dry_run_wallet": 11500,
     "trading_mode": "futures",
@@ -51,11 +50,6 @@
         "name": "binance",
         "key": "1",
         "secret": "2",
-        "ccxt_config": {"enableRateLimit": true},
-        "ccxt_async_config": {
-            "enableRateLimit": true,
-            "rateLimit": 200
-        },
         "pair_whitelist": [
             "BTC/USDT:USDT", "ETH/USDT:USDT", "BNB/USDT:USDT", "SOL/USDT:USDT", "XRP/USDT:USDT", "ADA/USDT:USDT", 
             "AVAX/USDT:USDT", "LINK/USDT:USDT", "TRX/USDT:USDT", "DOT/USDT:USDT", "ICP/USDT:USDT", 
@@ -69,30 +63,6 @@
             "S/USDT:USDT", "ONDO/USDT:USDT"
         ],
         "pair_blacklist": []
-    },
-    "edge": {
-        "enabled": false,
-        "process_throttle_secs": 3600,
-        "calculate_since_number_of_days": 7,
-        "allowed_risk": 0.01,
-        "stoploss_range_min": -0.01,
-        "stoploss_range_max": -0.1,
-        "stoploss_range_step": -0.01,
-        "minimum_winrate": 0.60,
-        "minimum_expectancy": 0.10,
-        "min_trade_number": 10,
-        "max_trade_duration_minute": 1440,
-        "remove_pumps": false
-    },
-    "api_server": {
-        "enabled": false,
-        "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080,
-        "verbosity": "error",
-        "jwt_secret_key": "00",
-        "CORS_origins": [],
-        "username": "11",
-        "password": "22"
     },
     "bot_name": "freqtrade_bot",
     "initial_state": "running",

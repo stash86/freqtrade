@@ -1,10 +1,3 @@
-"""
-MaxDrawDownHyperOptLoss
-
-This module defines the alternative HyperOptLoss class which can be used for
-Hyperoptimization.
-"""
-
 from datetime import datetime
 
 import numpy as np
@@ -15,20 +8,17 @@ from freqtrade.data.metrics import calculate_expectancy, calculate_sharpe, calcu
 from freqtrade.optimize.hyperopt import IHyperOptLoss
 
 
-# Set maximum expectancy used in the calculation
+# Set maximum values for metrics used in the calculation
 max_expectancy = 4
 max_profit_ratio = 10
 max_avg_profit = 50
 max_sharpe_ratio = 5
+max_sortino_ratio = 5
+# max_calmar_ratio = 5
 max_sqn = 5
 
 
 class JetLoss(IHyperOptLoss):
-    """
-    Defines the loss function for hyperopt.
-
-    Important params: expectancy ratio, profit factor, avg profit % and avg trades per day
-    """
 
     @staticmethod
     def hyperopt_loss_function(
@@ -40,14 +30,7 @@ class JetLoss(IHyperOptLoss):
         *args,
         **kwargs,
     ) -> float:
-        """
-        Objective function.
-
-        Uses profit ratio weighted max_drawdown when drawdown is available.
-        Otherwise directly optimizes profit ratio.
-        """
-        # total_profit = results['profit_abs'].sum()
-
+        
         starting_balance = config["dry_run_wallet"]
         max_profit_abs = (max_avg_profit / 100) * results["stake_amount"]
 
@@ -68,20 +51,20 @@ class JetLoss(IHyperOptLoss):
 
         sharpe_ratio = calculate_sharpe(results, min_date, max_date, starting_balance)
         sortino_ratio = calculate_sortino(results, min_date, max_date, starting_balance)
-        calmar_ratio = calculate_calmar(results, min_date, max_date, starting_balance)
+        # calmar_ratio = calculate_calmar(results, min_date, max_date, starting_balance)
         sqn_ratio = calculate_sqn(results, starting_balance)
 
         if sharpe_ratio == -100:
-            sharpe_ratio = 5
+            sharpe_ratio = max_sharpe_ratio
 
         if sortino_ratio == -100:
-            sortino_ratio = 5
+            sortino_ratio = max_sortino_ratio
 
-        if calmar_ratio == -100:
-            calmar_ratio = 5
+        # if calmar_ratio == -100:
+        #     calmar_ratio = max_calmar_ratio
 
         if sqn_ratio == -100:
-            sqn_ratio = 5
+            sqn_ratio = max_sqn
 
         total_trades = len(results)
 
@@ -95,7 +78,7 @@ class JetLoss(IHyperOptLoss):
             * min(expectancy_ratio, max_expectancy)
             * average_trades_per_day
             * min(sharpe_ratio, max_sharpe_ratio)
-            * sortino_ratio
+            * min(sortino_ratio, max_sortino_ratio)
             * min(sqn_ratio, max_sqn)
         )
 

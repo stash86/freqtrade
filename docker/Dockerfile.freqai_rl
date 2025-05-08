@@ -1,5 +1,5 @@
-ARG sourceimage=freqtradeorg/freqtrade
-ARG sourcetag=develop_freqai
+ARG sourceimage=stash86/freqtrade
+ARG sourcetag=linux-arm64-v8
 FROM ${sourceimage}:${sourcetag}
 
 # Install dependencies
