@@ -1,47 +1,35 @@
-import numpy as np
-from skopt.space import Integer
+from optuna.distributions import FloatDistribution
 
 
-class SKDecimal(Integer):
+class SKDecimal(FloatDistribution):
     def __init__(
         self,
-        low,
-        high,
-        decimals=3,
-        prior="uniform",
-        base=10,
-        transform=None,
+        low: float,
+        high: float,
+        *,
+        step: float | None = None,
+        decimals: int | None = None,
         name=None,
-        dtype=np.int64,
     ):
-        self.decimals = decimals
+        """
+        FloatDistribution with a fixed step size.
+        Only one of step or decimals can be set.
+        :param low: lower bound
+        :param high: upper bound
+        :param step: step size (e.g. 0.001)
+        :param decimals: number of decimal places to round to (e.g. 3)
+        :param name: name of the distribution
+        """
+        if decimals is not None and step is not None:
+            raise ValueError("You can only set one of decimals or step")
+        if decimals is None and step is None:
+            raise ValueError("You must set one of decimals or step")
+        # Convert decimals to step
+        self.step = step or (1 / 10**decimals if decimals else 1)
+        self.name = name
 
-        self.pow_dot_one = pow(0.1, self.decimals)
-        self.pow_ten = pow(10, self.decimals)
-
-        _low = int(low * self.pow_ten)
-        _high = int(high * self.pow_ten)
-        # trunc to precision to avoid points out of space
-        self.low_orig = round(_low * self.pow_dot_one, self.decimals)
-        self.high_orig = round(_high * self.pow_dot_one, self.decimals)
-
-        super().__init__(_low, _high, prior, base, transform, name, dtype)
-
-    def __repr__(self):
-        return (
-            f"Decimal(low={self.low_orig}, high={self.high_orig}, decimals={self.decimals}, "
-            f"prior='{self.prior}', transform='{self.transform_}')"
+        super().__init__(
+            low=round(low, decimals) if decimals else low,
+            high=round(high, decimals) if decimals else high,
+            step=self.step,
         )
-
-    def __contains__(self, point):
-        if isinstance(point, list):
-            point = np.array(point)
-        return self.low_orig <= point <= self.high_orig
-
-    def transform(self, Xt):
-        return super().transform([int(v * self.pow_ten) for v in Xt])
-
-    def inverse_transform(self, Xt):
-        res = super().inverse_transform(Xt)
-        # equivalent to [round(x * pow(0.1, self.decimals), self.decimals) for x in res]
-        return [int(v) / self.pow_ten for v in res]

@@ -134,15 +134,17 @@ Most properties here can be None as they are dependent on the exchange response.
 |------------|-------------|-------------|
 | `trade` | Trade | Trade object this order is attached to |
 | `ft_pair` | string | Pair this order is for |
-| `ft_is_open` | boolean | is the order filled? |
+| `ft_is_open` | boolean | is the order still open? |
 | `order_type` | string | Order type as defined on the exchange - usually market, limit or stoploss |
-| `status` | string | Status as defined by ccxt. Usually open, closed, expired or canceled |
-| `side` | string | Buy or Sell |
+| `status` | string | Status as defined by [ccxt's order structure](https://docs.ccxt.com/#/README?id=order-structure). Usually open, closed, expired, canceled or rejected |
+| `side` | string | buy or sell |
 | `price` | float | Price the order was placed at |
 | `average` | float | Average price the order filled at |
 | `amount` | float | Amount in base currency |
-| `filled` | float | Filled amount (in base currency) |
-| `remaining` | float | Remaining amount |
+| `filled` | float | Filled amount (in base currency) (use `safe_filled` instead) |
+| `safe_filled` | float | Filled amount (in base currency) - guaranteed to not be None |
+| `remaining` | float | Remaining amount (use `safe_remaining` instead) |
+| `safe_remaining` | float | Remaining amount - either taken from the exchange or calculated. |
 | `cost` | float | Cost of the order - usually average * filled (*Exchange dependent on futures, may contain the cost with or without leverage and may be in contracts.*) |
 | `stake_amount` | float | Stake amount used for this order. *Added in 2023.7.* |
 | `stake_amount_filled` | float | Filled Stake amount used for this order. *Added in 2024.11.* |

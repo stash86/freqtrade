@@ -12,7 +12,7 @@ from freqtrade.exceptions import OperationalException
 
 
 with suppress(ImportError):
-    from skopt.space import Dimension
+    from freqtrade.optimize.space import Dimension
 
 from freqtrade.optimize.hyperopt.hyperopt_interface import EstimatorType, IHyperOpt
 

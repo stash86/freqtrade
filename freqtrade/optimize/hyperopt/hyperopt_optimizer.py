@@ -7,10 +7,13 @@ import logging
 import sys
 import warnings
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
-from joblib import dump, load
+import optuna
+from joblib import delayed, dump, load, wrap_non_picklable_objects
 from joblib.externals import cloudpickle
+from optuna.exceptions import ExperimentalWarning
 from pandas import DataFrame
 
 from freqtrade.constants import DATETIME_PRINT_FORMAT, Config
@@ -20,7 +23,7 @@ from freqtrade.data.metrics import calculate_market_change
 from freqtrade.enums import HyperoptState
 from freqtrade.exceptions import OperationalException
 from freqtrade.ft_types import BacktestContentType
-from freqtrade.misc import deep_merge_dicts
+from freqtrade.misc import deep_merge_dicts, round_dict
 from freqtrade.optimize.backtesting import Backtesting
 
 # Import IHyperOptLoss to allow unpickling classes from these modules
@@ -28,20 +31,30 @@ from freqtrade.optimize.hyperopt.hyperopt_auto import HyperOptAuto
 from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
 from freqtrade.optimize.hyperopt_tools import HyperoptStateContainer, HyperoptTools
 from freqtrade.optimize.optimize_reports import generate_strategy_stats
+from freqtrade.optimize.space import (
+    DimensionProtocol,
+    SKDecimal,
+    ft_CategoricalDistribution,
+    ft_FloatDistribution,
+    ft_IntDistribution,
+)
 from freqtrade.resolvers.hyperopt_resolver import HyperOptLossResolver
 from freqtrade.util.dry_run_wallet import get_dry_run_wallet
 
-
-# Suppress scikit-learn FutureWarnings from skopt
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=FutureWarning)
-    from skopt import Optimizer
-    from skopt.space import Dimension
 
 logger = logging.getLogger(__name__)
 
 
 MAX_LOSS = 100000  # just a big enough number to be bad result in loss optimization
+
+optuna_samplers_dict = {
+    "TPESampler": optuna.samplers.TPESampler,
+    "GPSampler": optuna.samplers.GPSampler,
+    "CmaEsSampler": optuna.samplers.CmaEsSampler,
+    "NSGAIISampler": optuna.samplers.NSGAIISampler,
+    "NSGAIIISampler": optuna.samplers.NSGAIIISampler,
+    "QMCSampler": optuna.samplers.QMCSampler,
+}
 
 
 class HyperOptimizer:
@@ -50,15 +63,16 @@ class HyperOptimizer:
     This class is sent to the hyperopt worker processes.
     """
 
-    def __init__(self, config: Config) -> None:
-        self.buy_space: list[Dimension] = []
-        self.sell_space: list[Dimension] = []
-        self.protection_space: list[Dimension] = []
-        self.roi_space: list[Dimension] = []
-        self.stoploss_space: list[Dimension] = []
-        self.trailing_space: list[Dimension] = []
-        self.max_open_trades_space: list[Dimension] = []
-        self.dimensions: list[Dimension] = []
+    def __init__(self, config: Config, data_pickle_file: Path) -> None:
+        self.buy_space: list[DimensionProtocol] = []
+        self.sell_space: list[DimensionProtocol] = []
+        self.protection_space: list[DimensionProtocol] = []
+        self.roi_space: list[DimensionProtocol] = []
+        self.stoploss_space: list[DimensionProtocol] = []
+        self.trailing_space: list[DimensionProtocol] = []
+        self.max_open_trades_space: list[DimensionProtocol] = []
+        self.dimensions: list[DimensionProtocol] = []
+        self.o_dimensions: dict = {}
 
         self.config = config
         self.min_date: datetime
@@ -86,9 +100,7 @@ class HyperOptimizer:
         )
         self.calculate_loss = self.custom_hyperoptloss.hyperopt_loss_function
 
-        self.data_pickle_file = (
-            self.config["user_data_dir"] / "hyperopt_results" / "hyperopt_tickerdata.pkl"
-        )
+        self.data_pickle_file = data_pickle_file
 
         self.market_change = 0.0
 
@@ -127,18 +139,6 @@ class HyperOptimizer:
                     cloudpickle.register_pickle_by_value(mod)
                 self.hyperopt_pickle_magic(modules.__bases__)
 
-    def _get_params_dict(
-        self, dimensions: list[Dimension], raw_params: list[Any]
-    ) -> dict[str, Any]:
-        # Ensure the number of dimensions match
-        # the number of parameters in the list.
-        if len(raw_params) != len(dimensions):
-            raise ValueError("Mismatch in number of search-space dimensions.")
-
-        # Return a dict where the keys are the names of the dimensions
-        # and the values are taken from the list of parameters.
-        return {d.name: v for d, v in zip(dimensions, raw_params, strict=False)}
-
     def _get_params_details(self, params: dict) -> dict:
         """
         Return the params for each space
@@ -146,27 +146,36 @@ class HyperOptimizer:
         result: dict = {}
 
         if HyperoptTools.has_space(self.config, "buy"):
-            result["buy"] = {p.name: params.get(p.name) for p in self.buy_space}
+            result["buy"] = round_dict({p.name: params.get(p.name) for p in self.buy_space}, 13)
         if HyperoptTools.has_space(self.config, "sell"):
-            result["sell"] = {p.name: params.get(p.name) for p in self.sell_space}
+            result["sell"] = round_dict({p.name: params.get(p.name) for p in self.sell_space}, 13)
         if HyperoptTools.has_space(self.config, "protection"):
-            result["protection"] = {p.name: params.get(p.name) for p in self.protection_space}
+            result["protection"] = round_dict(
+                {p.name: params.get(p.name) for p in self.protection_space}, 13
+            )
         if HyperoptTools.has_space(self.config, "roi"):
-            result["roi"] = {
-                str(k): v for k, v in self.custom_hyperopt.generate_roi_table(params).items()
-            }
+            result["roi"] = round_dict(
+                {str(k): v for k, v in self.custom_hyperopt.generate_roi_table(params).items()}, 13
+            )
         if HyperoptTools.has_space(self.config, "stoploss"):
-            result["stoploss"] = {p.name: params.get(p.name) for p in self.stoploss_space}
+            result["stoploss"] = round_dict(
+                {p.name: params.get(p.name) for p in self.stoploss_space}, 13
+            )
         if HyperoptTools.has_space(self.config, "trailing"):
-            result["trailing"] = self.custom_hyperopt.generate_trailing_params(params)
+            result["trailing"] = round_dict(
+                self.custom_hyperopt.generate_trailing_params(params), 13
+            )
         if HyperoptTools.has_space(self.config, "trades"):
-            result["max_open_trades"] = {
-                "max_open_trades": (
-                    self.backtesting.strategy.max_open_trades
-                    if self.backtesting.strategy.max_open_trades != float("inf")
-                    else -1
-                )
-            }
+            result["max_open_trades"] = round_dict(
+                {
+                    "max_open_trades": (
+                        self.backtesting.strategy.max_open_trades
+                        if self.backtesting.strategy.max_open_trades != float("inf")
+                        else -1
+                    )
+                },
+                13,
+            )
 
         return result
 
@@ -246,7 +255,12 @@ class HyperOptimizer:
                 # noinspection PyProtectedMember
                 attr.value = params_dict[attr_name]
 
-    def generate_optimizer(self, raw_params: list[Any]) -> dict[str, Any]:
+    @delayed
+    @wrap_non_picklable_objects
+    def generate_optimizer_wrapped(self, params_dict: dict[str, Any]) -> dict[str, Any]:
+        return self.generate_optimizer(params_dict)
+
+    def generate_optimizer(self, params_dict: dict[str, Any]) -> dict[str, Any]:
         """
         Used Optimize function.
         Called once per epoch to optimize whatever is configured.
@@ -254,7 +268,6 @@ class HyperOptimizer:
         """
         HyperoptStateContainer.set_state(HyperoptState.OPTIMIZE)
         backtest_start_time = datetime.now(timezone.utc)
-        params_dict = self._get_params_dict(self.dimensions, raw_params)
 
         # Apply parameters
         if HyperoptTools.has_space(self.config, "buy"):
@@ -304,9 +317,9 @@ class HyperOptimizer:
 
         with self.data_pickle_file.open("rb") as f:
             processed = load(f, mmap_mode="r")
-            if self.analyze_per_epoch:
-                # Data is not yet analyzed, rerun populate_indicators.
-                processed = self.advise_and_trim(processed)
+        if self.analyze_per_epoch:
+            # Data is not yet analyzed, rerun populate_indicators.
+            processed = self.advise_and_trim(processed)
 
         bt_results = self.backtesting.backtest(
             processed=processed, start_date=self.min_date, end_date=self.max_date
@@ -318,10 +331,10 @@ class HyperOptimizer:
                 "backtest_end_time": int(backtest_end_time.timestamp()),
             }
         )
-
-        return self._get_results_dict(
+        result = self._get_results_dict(
             bt_results, self.min_date, self.max_date, params_dict, processed=processed
         )
+        return result
 
     def _get_results_dict(
         self,
@@ -378,33 +391,41 @@ class HyperOptimizer:
             "total_profit": total_profit,
         }
 
+    def convert_dimensions_to_optuna_space(self, s_dimensions: list[DimensionProtocol]) -> dict:
+        o_dimensions: dict[str, optuna.distributions.BaseDistribution] = {}
+        for original_dim in s_dimensions:
+            if isinstance(
+                original_dim,
+                ft_CategoricalDistribution | ft_IntDistribution | ft_FloatDistribution | SKDecimal,
+            ):
+                o_dimensions[original_dim.name] = original_dim
+            else:
+                raise OperationalException(
+                    f"Unknown search space {original_dim.name} - {original_dim} / \
+                        {type(original_dim)}"
+                )
+        return o_dimensions
+
     def get_optimizer(
         self,
-        cpu_count: int,
         random_state: int,
-        initial_points: int,
-        model_queue_size: int,
-    ) -> Optimizer:
-        dimensions = self.dimensions
-        estimator = self.custom_hyperopt.generate_estimator(dimensions=dimensions)
-
-        acq_optimizer = "sampling"
-        if isinstance(estimator, str):
-            if estimator not in ("GP", "RF", "ET", "GBRT"):
-                raise OperationalException(f"Estimator {estimator} not supported.")
-            else:
-                acq_optimizer = "auto"
-
-        logger.info(f"Using estimator {estimator}.")
-        return Optimizer(
-            dimensions,
-            base_estimator=estimator,
-            acq_optimizer=acq_optimizer,
-            n_initial_points=initial_points,
-            acq_optimizer_kwargs={"n_jobs": cpu_count},
-            random_state=random_state,
-            model_queue_size=model_queue_size,
+    ):
+        o_sampler = self.custom_hyperopt.generate_estimator(
+            dimensions=self.dimensions, random_state=random_state
         )
+        self.o_dimensions = self.convert_dimensions_to_optuna_space(self.dimensions)
+
+        if isinstance(o_sampler, str):
+            if o_sampler not in optuna_samplers_dict.keys():
+                raise OperationalException(f"Optuna Sampler {o_sampler} not supported.")
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore", category=ExperimentalWarning)
+                sampler = optuna_samplers_dict[o_sampler](seed=random_state)
+        else:
+            sampler = o_sampler
+
+        logger.info(f"Using optuna sampler {o_sampler}.")
+        return optuna.create_study(sampler=sampler, direction="minimize")
 
     def advise_and_trim(self, data: dict[str, DataFrame]) -> dict[str, DataFrame]:
         preprocessed = self.backtesting.strategy.advise_all_indicators(data)

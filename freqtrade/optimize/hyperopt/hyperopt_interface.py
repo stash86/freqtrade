@@ -8,19 +8,18 @@ import math
 from abc import ABC
 from typing import TypeAlias
 
-from sklearn.base import RegressorMixin
-from skopt.space import Categorical, Dimension, Integer
+from optuna.samplers import BaseSampler
 
 from freqtrade.constants import Config
 from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.misc import round_dict
-from freqtrade.optimize.space import SKDecimal
+from freqtrade.optimize.space import Categorical, Dimension, Integer, SKDecimal
 from freqtrade.strategy import IStrategy
 
 
 logger = logging.getLogger(__name__)
 
-EstimatorType: TypeAlias = RegressorMixin | str
+EstimatorType: TypeAlias = BaseSampler | str
 
 
 class IHyperOpt(ABC):
@@ -44,10 +43,11 @@ class IHyperOpt(ABC):
     def generate_estimator(self, dimensions: list[Dimension], **kwargs) -> EstimatorType:
         """
         Return base_estimator.
-        Can be any of "GP", "RF", "ET", "GBRT" or an instance of a class
-        inheriting from RegressorMixin (from sklearn).
+        Can be any of "TPESampler", "GPSampler", "CmaEsSampler", "NSGAIISampler"
+        "NSGAIIISampler", "QMCSampler" or an instance of a class
+        inheriting from BaseSampler (from optuna.samplers).
         """
-        return "ET"
+        return "NSGAIIISampler"
 
     def generate_roi_table(self, params: dict) -> dict[int, float]:
         """

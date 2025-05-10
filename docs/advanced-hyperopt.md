@@ -161,56 +161,53 @@ class MyAwesomeStrategy(IStrategy):
 
 ### Overriding Base estimator
 
-You can define your own estimator for Hyperopt by implementing `generate_estimator()` in the Hyperopt subclass.
+You can define your own optuna sampler for Hyperopt by implementing `generate_estimator()` in the Hyperopt subclass.
 
 ```python
 class MyAwesomeStrategy(IStrategy):
     class HyperOpt:
         def generate_estimator(dimensions: List['Dimension'], **kwargs):
-            return "RF"
+            return "NSGAIIISampler"
 
 ```
 
-Possible values are either one of "GP", "RF", "ET", "GBRT" (Details can be found in the [scikit-optimize documentation](https://scikit-optimize.github.io/)), or "an instance of a class that inherits from `RegressorMixin` (from sklearn) and where the `predict` method has an optional `return_std` argument, which returns `std(Y | x)` along with `E[Y | x]`".
+Possible values are either one of "NSGAIISampler", "TPESampler", "GPSampler", "CmaEsSampler", "NSGAIIISampler", "QMCSampler" (Details can be found in the [optuna-samplers documentation](https://optuna.readthedocs.io/en/stable/reference/samplers/index.html)), or "an instance of a class that inherits from `optuna.samplers.BaseSampler`".
 
-Some research will be necessary to find additional Regressors.
-
-Example for `ExtraTreesRegressor` ("ET") with additional parameters:
-
-```python
-class MyAwesomeStrategy(IStrategy):
-    class HyperOpt:
-        def generate_estimator(dimensions: List['Dimension'], **kwargs):
-            from skopt.learning import ExtraTreesRegressor
-            # Corresponds to "ET" - but allows additional parameters.
-            return ExtraTreesRegressor(n_estimators=100)
-
-```
-
-The `dimensions` parameter is the list of `skopt.space.Dimension` objects corresponding to the parameters to be optimized. It can be used to create isotropic kernels for the `skopt.learning.GaussianProcessRegressor` estimator. Here's an example:
-
-```python
-class MyAwesomeStrategy(IStrategy):
-    class HyperOpt:
-        def generate_estimator(dimensions: List['Dimension'], **kwargs):
-            from skopt.utils import cook_estimator
-            from skopt.learning.gaussian_process.kernels import (Matern, ConstantKernel)
-            kernel_bounds = (0.0001, 10000)
-            kernel = (
-                ConstantKernel(1.0, kernel_bounds) * 
-                Matern(length_scale=np.ones(len(dimensions)), length_scale_bounds=[kernel_bounds for d in dimensions], nu=2.5)
-            )
-            kernel += (
-                ConstantKernel(1.0, kernel_bounds) * 
-                Matern(length_scale=np.ones(len(dimensions)), length_scale_bounds=[kernel_bounds for d in dimensions], nu=1.5)
-            )
-
-            return cook_estimator("GP", space=dimensions, kernel=kernel, n_restarts_optimizer=2)
-```
+Some research will be necessary to find additional Samplers (from optunahub) for example.
 
 !!! Note
     While custom estimators can be provided, it's up to you as User to do research on possible parameters and analyze / understand which ones should be used.
-    If you're unsure about this, best use one of the Defaults (`"ET"` has proven to be the most versatile) without further parameters.
+    If you're unsure about this, best use one of the Defaults (`"NSGAIIISampler"` has proven to be the most versatile) without further parameters.
+
+??? Example "Using `AutoSampler` from Optunahub"
+
+    [AutoSampler docs](https://hub.optuna.org/samplers/auto_sampler/)
+    
+    Install the necessary dependencies 
+    ``` bash
+    pip install optunahub cmaes torch scipy
+    ```
+    Implement `generate_estimator()`  in your strategy
+
+    ``` python
+    # ...
+    from freqtrade.strategy.interface import IStrategy
+    from typing import List
+    import optunahub
+    # ... 
+
+    class my_strategy(IStrategy):
+        class HyperOpt:
+            def generate_estimator(dimensions: List["Dimension"], **kwargs):
+                if "random_state" in kwargs.keys():
+                    return optunahub.load_module("samplers/auto_sampler").AutoSampler(seed=kwargs["random_state"])
+                else:
+                    return optunahub.load_module("samplers/auto_sampler").AutoSampler()
+
+    ```
+
+    Obviously the same approach will work for all other Samplers optuna supports.
+
 
 ## Space options
 

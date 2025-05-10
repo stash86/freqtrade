@@ -1,13 +1,12 @@
 # pragma pylint: disable=missing-docstring,W0212,C0103
 from datetime import datetime, timedelta
-from functools import wraps
+from functools import partial, wraps
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, PropertyMock
 
 import pandas as pd
 import pytest
 from filelock import Timeout
-from skopt.space import Integer
 
 from freqtrade.commands.optimize_commands import setup_optimize_configuration, start_hyperopt
 from freqtrade.data.history import load_data
@@ -17,7 +16,7 @@ from freqtrade.optimize.hyperopt import Hyperopt
 from freqtrade.optimize.hyperopt.hyperopt_auto import HyperOptAuto
 from freqtrade.optimize.hyperopt_tools import HyperoptTools
 from freqtrade.optimize.optimize_reports import generate_strategy_stats
-from freqtrade.optimize.space import SKDecimal
+from freqtrade.optimize.space import SKDecimal, ft_IntDistribution
 from freqtrade.strategy import IntParameter
 from freqtrade.util import dt_utc
 from tests.conftest import (
@@ -578,7 +577,7 @@ def test_generate_optimizer(mocker, hyperopt_conf) -> None:
                 "buy_plusdi": 0.02,
                 "buy_rsi": 35,
             },
-            "roi": {"0": 0.12000000000000001, "20.0": 0.02, "50.0": 0.01, "110.0": 0},
+            "roi": {"0": 0.12, "20.0": 0.02, "50.0": 0.01, "110.0": 0},
             "protection": {
                 "protection_cooldown_lookback": 20,
                 "protection_enabled": True,
@@ -606,9 +605,7 @@ def test_generate_optimizer(mocker, hyperopt_conf) -> None:
     hyperopt.hyperopter.min_date = dt_utc(2017, 12, 10)
     hyperopt.hyperopter.max_date = dt_utc(2017, 12, 13)
     hyperopt.hyperopter.init_spaces()
-    generate_optimizer_value = hyperopt.hyperopter.generate_optimizer(
-        list(optimizer_param.values())
-    )
+    generate_optimizer_value = hyperopt.hyperopter.generate_optimizer(optimizer_param)
     assert generate_optimizer_value == response_expected
 
 
@@ -1088,8 +1085,8 @@ def test_in_strategy_auto_hyperopt(mocker, hyperopt_conf, tmp_path, fee) -> None
     assert opt.backtesting.strategy.max_open_trades != 1
 
     opt.custom_hyperopt.generate_estimator = lambda *args, **kwargs: "ET1"
-    with pytest.raises(OperationalException, match="Estimator ET1 not supported."):
-        opt.get_optimizer(2, 42, 2, 2)
+    with pytest.raises(OperationalException, match="Optuna Sampler ET1 not supported."):
+        opt.get_optimizer(42)
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
@@ -1186,19 +1183,27 @@ def test_in_strategy_auto_hyperopt_per_epoch(mocker, hyperopt_conf, tmp_path, fe
 
 def test_SKDecimal():
     space = SKDecimal(1, 2, decimals=2)
-    assert 1.5 in space
-    assert 2.5 not in space
-    assert space.low == 100
-    assert space.high == 200
+    assert space._contains(1.5)
+    assert not space._contains(2.5)
+    assert space.low == 1
+    assert space.high == 2
 
-    assert space.inverse_transform([200]) == [2.0]
-    assert space.inverse_transform([100]) == [1.0]
-    assert space.inverse_transform([150, 160]) == [1.5, 1.6]
+    assert space._contains(1.51)
+    assert space._contains(1.01)
+    # Falls out of the space with 2 decimals
+    assert not space._contains(1.511)
+    assert not space._contains(1.111222)
 
-    assert space.transform([1.5]) == [150]
-    assert space.transform([2.0]) == [200]
-    assert space.transform([1.0]) == [100]
-    assert space.transform([1.5, 1.6]) == [150, 160]
+    with pytest.raises(ValueError):
+        SKDecimal(1, 2, step=5, decimals=0.2)
+
+    with pytest.raises(ValueError):
+        SKDecimal(1, 2, step=None, decimals=None)
+
+    s = SKDecimal(1, 2, step=0.1, decimals=None)
+    assert s.step == 0.1
+    assert s._contains(1.1)
+    assert not s._contains(1.11)
 
 
 def test_stake_amount_unlimited_max_open_trades(mocker, hyperopt_conf, tmp_path, fee) -> None:
@@ -1217,10 +1222,6 @@ def test_stake_amount_unlimited_max_open_trades(mocker, hyperopt_conf, tmp_path,
         }
     )
     hyperopt = Hyperopt(hyperopt_conf)
-    mocker.patch(
-        "freqtrade.optimize.hyperopt.hyperopt_optimizer.HyperOptimizer._get_params_dict",
-        return_value={"max_open_trades": -1},
-    )
 
     assert isinstance(hyperopt.hyperopter.custom_hyperopt, HyperOptAuto)
 
@@ -1228,7 +1229,7 @@ def test_stake_amount_unlimited_max_open_trades(mocker, hyperopt_conf, tmp_path,
 
     hyperopt.start()
 
-    assert hyperopt.hyperopter.backtesting.strategy.max_open_trades == 1
+    assert hyperopt.hyperopter.backtesting.strategy.max_open_trades == 3
 
 
 def test_max_open_trades_dump(mocker, hyperopt_conf, tmp_path, fee, capsys) -> None:
@@ -1246,9 +1247,15 @@ def test_max_open_trades_dump(mocker, hyperopt_conf, tmp_path, fee, capsys) -> N
         }
     )
     hyperopt = Hyperopt(hyperopt_conf)
+
+    def optuna_mock(hyperopt, *args, **kwargs):
+        a = hyperopt.get_optuna_asked_points(*args, **kwargs)
+        a[0]._cached_frozen_trial.params["max_open_trades"] = -1
+        return a, [True]
+
     mocker.patch(
-        "freqtrade.optimize.hyperopt.hyperopt_optimizer.HyperOptimizer._get_params_dict",
-        return_value={"max_open_trades": -1},
+        "freqtrade.optimize.hyperopt.Hyperopt.get_asked_points",
+        side_effect=partial(optuna_mock, hyperopt),
     )
 
     assert isinstance(hyperopt.hyperopter.custom_hyperopt, HyperOptAuto)
@@ -1266,8 +1273,8 @@ def test_max_open_trades_dump(mocker, hyperopt_conf, tmp_path, fee, capsys) -> N
 
     hyperopt = Hyperopt(hyperopt_conf)
     mocker.patch(
-        "freqtrade.optimize.hyperopt.hyperopt_optimizer.HyperOptimizer._get_params_dict",
-        return_value={"max_open_trades": -1},
+        "freqtrade.optimize.hyperopt.Hyperopt.get_asked_points",
+        side_effect=partial(optuna_mock, hyperopt),
     )
 
     assert isinstance(hyperopt.hyperopter.custom_hyperopt, HyperOptAuto)
@@ -1304,7 +1311,7 @@ def test_max_open_trades_consistency(mocker, hyperopt_conf, tmp_path, fee) -> No
     assert isinstance(hyperopt.hyperopter.custom_hyperopt, HyperOptAuto)
 
     hyperopt.hyperopter.custom_hyperopt.max_open_trades_space = lambda: [
-        Integer(1, 10, name="max_open_trades")
+        ft_IntDistribution(1, 10, "max_open_trades")
     ]
 
     first_time_evaluated = False
@@ -1313,9 +1320,10 @@ def test_max_open_trades_consistency(mocker, hyperopt_conf, tmp_path, fee) -> No
         @wraps(func)
         def wrapper(*args, **kwargs):
             nonlocal first_time_evaluated
+
             stake_amount = func(*args, **kwargs)
             if first_time_evaluated is False:
-                assert stake_amount == 1
+                assert stake_amount == 2
                 first_time_evaluated = True
             return stake_amount
 
@@ -1329,5 +1337,5 @@ def test_max_open_trades_consistency(mocker, hyperopt_conf, tmp_path, fee) -> No
 
     hyperopt.start()
 
-    assert hyperopt.hyperopter.backtesting.strategy.max_open_trades == 8
-    assert hyperopt.config["max_open_trades"] == 8
+    assert hyperopt.hyperopter.backtesting.strategy.max_open_trades == 4
+    assert hyperopt.config["max_open_trades"] == 4

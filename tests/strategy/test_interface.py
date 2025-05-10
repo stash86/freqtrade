@@ -895,7 +895,7 @@ def test_is_informative_pairs_callback(default_conf):
 
 def test_hyperopt_parameters():
     HyperoptStateContainer.set_state(HyperoptState.INDICATORS)
-    from skopt.space import Categorical, Integer, Real
+    from optuna.distributions import CategoricalDistribution, FloatDistribution, IntDistribution
 
     with pytest.raises(OperationalException, match=r"Name is determined.*"):
         IntParameter(low=0, high=5, default=1, name="hello")
@@ -926,7 +926,7 @@ def test_hyperopt_parameters():
 
     intpar = IntParameter(low=0, high=5, default=1, space="buy")
     assert intpar.value == 1
-    assert isinstance(intpar.get_space(""), Integer)
+    assert isinstance(intpar.get_space(""), IntDistribution)
     assert isinstance(intpar.range, range)
     assert len(list(intpar.range)) == 1
     # Range contains ONLY the default / value.
@@ -938,7 +938,7 @@ def test_hyperopt_parameters():
 
     fltpar = RealParameter(low=0.0, high=5.5, default=1.0, space="buy")
     assert fltpar.value == 1
-    assert isinstance(fltpar.get_space(""), Real)
+    assert isinstance(fltpar.get_space(""), FloatDistribution)
 
     fltpar = DecimalParameter(low=0.0, high=0.5, default=0.14, decimals=1, space="buy")
     assert fltpar.value == 0.1
@@ -955,7 +955,7 @@ def test_hyperopt_parameters():
         ["buy_rsi", "buy_macd", "buy_none"], default="buy_macd", space="buy"
     )
     assert catpar.value == "buy_macd"
-    assert isinstance(catpar.get_space(""), Categorical)
+    assert isinstance(catpar.get_space(""), CategoricalDistribution)
     assert isinstance(catpar.range, list)
     assert len(list(catpar.range)) == 1
     # Range contains ONLY the default / value.
@@ -966,7 +966,7 @@ def test_hyperopt_parameters():
 
     boolpar = BooleanParameter(default=True, space="buy")
     assert boolpar.value is True
-    assert isinstance(boolpar.get_space(""), Categorical)
+    assert isinstance(boolpar.get_space(""), CategoricalDistribution)
     assert isinstance(boolpar.range, list)
     assert len(list(boolpar.range)) == 1
 
