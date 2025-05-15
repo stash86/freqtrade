@@ -25,6 +25,7 @@ from .bt_fileutils import (
     trade_list_to_dataframe,
     update_backtest_metadata,
 )
+from .historic_precision import get_tick_size_over_time
 from .trade_parallelism import (
     analyze_trade_parallelism,
     evaluate_result_multi,

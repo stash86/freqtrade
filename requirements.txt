@@ -6,7 +6,7 @@ pandas-ta==0.3.14b
 finta>=1.3
 ta>=0.10.1
 
-ccxt==4.4.78
+ccxt==4.4.80
 cryptography==44.0.3
 aiohttp==3.9.5
 SQLAlchemy==2.0.40
