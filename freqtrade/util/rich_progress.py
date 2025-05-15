@@ -20,7 +20,7 @@ class CustomProgress(Progress):
         if self._ft_callback:
             kwargs["disable"] = True
 
-        super().__init__(*args, refresh_per_second=5, **kwargs)
+        super().__init__(*args, refresh_per_second=3, **kwargs)
 
     def update(
         self,
