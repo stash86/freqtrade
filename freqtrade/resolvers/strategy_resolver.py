@@ -79,7 +79,7 @@ class StrategyResolver(IResolver):
             ("ignore_buying_expired_candle_after", 0),
             ("position_adjustment_enable", False),
             ("max_entry_position_adjustment", -1),
-            ("max_open_trades", -1),
+            ("max_open_trades", float("inf")),
         ]
         for attribute, default in attributes:
             StrategyResolver._override_attribute_helper(strategy, config, attribute, default)

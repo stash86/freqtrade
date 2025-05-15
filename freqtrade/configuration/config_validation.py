@@ -104,7 +104,7 @@ def _validate_unlimited_amount(conf: dict[str, Any]) -> None:
     """
     if (
         not conf.get("edge", {}).get("enabled")
-        and conf.get("max_open_trades") == float("inf")
+        and (conf.get("max_open_trades") == float("inf") or conf.get("max_open_trades") == -1)
         and conf.get("stake_amount") == UNLIMITED_STAKE_AMOUNT
     ):
         raise ConfigurationError("`max_open_trades` and `stake_amount` cannot both be unlimited.")

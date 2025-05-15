@@ -22,6 +22,7 @@ from freqtrade.data.history import get_timerange
 from freqtrade.enums import CandleType, ExitType, RunMode
 from freqtrade.exceptions import DependencyException, OperationalException
 from freqtrade.exchange import timeframe_to_next_date, timeframe_to_prev_date
+from freqtrade.exchange.exchange_utils import DECIMAL_PLACES, TICK_SIZE
 from freqtrade.optimize.backtest_caching import get_backtest_metadata_filename, get_strategy_run_id
 from freqtrade.optimize.backtesting import Backtesting
 from freqtrade.persistence import LocalTrade, Trade
@@ -346,6 +347,29 @@ def test_data_to_dataframe_bt(default_conf, mocker, testdatadir) -> None:
 
     processed2 = strategy.advise_all_indicators(data)
     assert processed["UNITTEST/BTC"].equals(processed2["UNITTEST/BTC"])
+
+
+def test_get_pair_precision_bt(default_conf, mocker) -> None:
+    patch_exchange(mocker)
+    default_conf["timeframe"] = "30m"
+    backtesting = Backtesting(default_conf)
+    backtesting._set_strategy(backtesting.strategylist[0])
+    pair = "UNITTEST/BTC"
+    backtesting.pairlists._whitelist = [pair]
+    ex_mock = mocker.patch(f"{EXMS}.get_precision_price", return_value=1e-5)
+    data, timerange = backtesting.load_bt_data()
+    assert data
+
+    assert backtesting.get_pair_precision(pair, dt_utc(2018, 1, 1)) == (1e-8, TICK_SIZE)
+    assert ex_mock.call_count == 0
+    assert backtesting.get_pair_precision(pair, dt_utc(2017, 12, 15)) == (1e-8, TICK_SIZE)
+    assert ex_mock.call_count == 0
+
+    # Fallback to exchange logic
+    assert backtesting.get_pair_precision(pair, dt_utc(2017, 1, 15)) == (1e-5, DECIMAL_PLACES)
+    assert ex_mock.call_count == 1
+    assert backtesting.get_pair_precision("ETH/BTC", dt_utc(2017, 1, 15)) == (1e-5, DECIMAL_PLACES)
+    assert ex_mock.call_count == 2
 
 
 def test_backtest_abort(default_conf, mocker, testdatadir) -> None:

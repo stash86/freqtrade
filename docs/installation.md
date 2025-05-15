@@ -87,7 +87,7 @@ OS Specific steps are listed first, the common section below is necessary for al
 
 
     ```bash
-    sudo apt-get install python3-venv libatlas-base-dev cmake curl
+    sudo apt-get install python3-venv libatlas-base-dev cmake curl libffi-dev
     # Use piwheels.org to speed up installation
     sudo echo "[global]\nextra-index-url=https://www.piwheels.org/simple" > tee /etc/pip.conf
 

@@ -178,6 +178,8 @@ Returning `None` will be interpreted as "no desire to change", and is the only s
 
 Stoploss on exchange works similar to `trailing_stop`, and the stoploss on exchange is updated as configured in `stoploss_on_exchange_interval` ([More details about stoploss on exchange](stoploss.md#stop-loss-on-exchangefreqtrade)).
 
+If you're on futures markets, please take note of the [stoploss and leverage](stoploss.md#stoploss-and-leverage) section, as the stoploss value returned from `custom_stoploss` is the risk for this trade - not the relative price movement.
+
 !!! Note "Use of dates"
     All time-based calculations should be done based on `current_time` - using `datetime.now()` or `datetime.utcnow()` is discouraged, as this will break backtesting support.
 
@@ -233,7 +235,7 @@ class AwesomeStrategy(IStrategy):
         :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
         :return float: New stoploss value, relative to the current_rate
         """
-        return -0.04
+        return -0.04 * trade.leverage
 ```
 
 #### Time based trailing stop
@@ -255,9 +257,9 @@ class AwesomeStrategy(IStrategy):
 
         # Make sure you have the longest interval first - these conditions are evaluated from top to bottom.
         if current_time - timedelta(minutes=120) > trade.open_date_utc:
-            return -0.05
+            return -0.05 * trade.leverage
         elif current_time - timedelta(minutes=60) > trade.open_date_utc:
-            return -0.10
+            return -0.10 * trade.leverage
         return None
 ```
 
@@ -284,9 +286,9 @@ class AwesomeStrategy(IStrategy):
             return stoploss_from_open(0.10, current_profit, is_short=trade.is_short, leverage=trade.leverage)
         # Make sure you have the longest interval first - these conditions are evaluated from top to bottom.
         if current_time - timedelta(minutes=120) > trade.open_date_utc:
-            return -0.05
+            return -0.05 * trade.leverage
         elif current_time - timedelta(minutes=60) > trade.open_date_utc:
-            return -0.10
+            return -0.10 * trade.leverage
         return None
 ```
 
@@ -309,10 +311,10 @@ class AwesomeStrategy(IStrategy):
                         **kwargs) -> float | None:
 
         if pair in ("ETH/BTC", "XRP/BTC"):
-            return -0.10
+            return -0.10 * trade.leverage
         elif pair in ("LTC/BTC"):
-            return -0.05
-        return -0.15
+            return -0.05 * trade.leverage
+        return -0.15 * trade.leverage
 ```
 
 #### Trailing stoploss with positive offset
@@ -341,7 +343,7 @@ class AwesomeStrategy(IStrategy):
         desired_stoploss = current_profit / 2
 
         # Use a minimum of 2.5% and a maximum of 5%
-        return max(min(desired_stoploss, 0.05), 0.025)
+        return max(min(desired_stoploss, 0.05), 0.025) * trade.leverage
 ```
 
 #### Stepped stoploss

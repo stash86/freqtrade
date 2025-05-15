@@ -267,11 +267,11 @@ class Exchange:
             exchange_conf.get("ccxt_async_config", {}), ccxt_async_config
         )
         self._api_async = self._init_ccxt(exchange_conf, False, ccxt_async_config)
-        self._has_watch_ohlcv = self.exchange_has("watchOHLCV") and self._ft_has["ws_enabled"]
+        _has_watch_ohlcv = self.exchange_has("watchOHLCV") and self._ft_has["ws_enabled"]
         if (
             self._config["runmode"] in TRADE_MODES
             and exchange_conf.get("enable_ws", True)
-            and self._has_watch_ohlcv
+            and _has_watch_ohlcv
         ):
             self._ws_async = self._init_ccxt(exchange_conf, False, ccxt_async_config)
             self._exchange_ws = ExchangeWS(self._config, self._ws_async)
@@ -2414,6 +2414,45 @@ class Exchange:
         data = sorted(data, key=lambda x: x[0])
         return pair, timeframe, candle_type, data, self._ohlcv_partial_candle
 
+    def _try_build_from_websocket(
+        self, pair: str, timeframe: str, candle_type: CandleType
+    ) -> Coroutine[Any, Any, OHLCVResponse] | None:
+        """
+        Try to build a coroutine to get data from websocket.
+        """
+        if self._can_use_websocket(self._exchange_ws, pair, timeframe, candle_type):
+            candle_ts = dt_ts(timeframe_to_prev_date(timeframe))
+            prev_candle_ts = dt_ts(date_minus_candles(timeframe, 1))
+            candles = self._exchange_ws.ohlcvs(pair, timeframe)
+            half_candle = int(candle_ts - (candle_ts - prev_candle_ts) * 0.5)
+            last_refresh_time = int(
+                self._exchange_ws.klines_last_refresh.get((pair, timeframe, candle_type), 0)
+            )
+
+            if candles and candles[-1][0] >= prev_candle_ts and last_refresh_time >= half_candle:
+                # Usable result, candle contains the previous candle.
+                # Also, we check if the last refresh time is no more than half the candle ago.
+                logger.debug(f"reuse watch result for {pair}, {timeframe}, {last_refresh_time}")
+
+                return self._exchange_ws.get_ohlcv(pair, timeframe, candle_type, candle_ts)
+            logger.info(
+                f"Couldn't reuse watch for {pair}, {timeframe}, falling back to REST api. "
+                f"{candle_ts < last_refresh_time}, {candle_ts}, {last_refresh_time}, "
+                f"{format_ms_time(candle_ts)}, {format_ms_time(last_refresh_time)} "
+            )
+        return None
+
+    def _can_use_websocket(
+        self, exchange_ws: ExchangeWS | None, pair: str, timeframe: str, candle_type: CandleType
+    ) -> TypeGuard[ExchangeWS]:
+        """
+        Check if we can use websocket for this pair.
+        Acts as typeguard for exchangeWs
+        """
+        if exchange_ws and candle_type in (CandleType.SPOT, CandleType.FUTURES):
+            return True
+        return False
+
     def _build_coroutine(
         self,
         pair: str,
@@ -2423,8 +2462,8 @@ class Exchange:
         cache: bool,
     ) -> Coroutine[Any, Any, OHLCVResponse]:
         not_all_data = cache and self.required_candle_call_count > 1
-        if cache and candle_type in (CandleType.SPOT, CandleType.FUTURES):
-            if self._has_watch_ohlcv and self._exchange_ws:
+        if cache:
+            if self._can_use_websocket(self._exchange_ws, pair, timeframe, candle_type):
                 # Subscribe to websocket
                 self._exchange_ws.schedule_ohlcv(pair, timeframe, candle_type)
 
@@ -2432,30 +2471,9 @@ class Exchange:
             candle_limit = self.ohlcv_candle_limit(timeframe, candle_type)
             min_ts = dt_ts(date_minus_candles(timeframe, candle_limit - 5))
 
-            if self._exchange_ws:
-                candle_ts = dt_ts(timeframe_to_prev_date(timeframe))
-                prev_candle_ts = dt_ts(date_minus_candles(timeframe, 1))
-                candles = self._exchange_ws.ohlcvs(pair, timeframe)
-                half_candle = int(candle_ts - (candle_ts - prev_candle_ts) * 0.5)
-                last_refresh_time = int(
-                    self._exchange_ws.klines_last_refresh.get((pair, timeframe, candle_type), 0)
-                )
-
-                if (
-                    candles
-                    and candles[-1][0] >= prev_candle_ts
-                    and last_refresh_time >= half_candle
-                ):
-                    # Usable result, candle contains the previous candle.
-                    # Also, we check if the last refresh time is no more than half the candle ago.
-                    logger.debug(f"reuse watch result for {pair}, {timeframe}, {last_refresh_time}")
-
-                    return self._exchange_ws.get_ohlcv(pair, timeframe, candle_type, candle_ts)
-                logger.info(
-                    f"Couldn't reuse watch for {pair}, {timeframe}, falling back to REST api. "
-                    f"{candle_ts < last_refresh_time}, {candle_ts}, {last_refresh_time}, "
-                    f"{format_ms_time(candle_ts)}, {format_ms_time(last_refresh_time)} "
-                )
+            if ws_resp := self._try_build_from_websocket(pair, timeframe, candle_type):
+                # We have a usable websocket response
+                return ws_resp
 
             # Check if 1 call can get us updated candles without hole in the data.
             if min_ts < self._pairs_last_refresh_time.get((pair, timeframe, candle_type), 0):
