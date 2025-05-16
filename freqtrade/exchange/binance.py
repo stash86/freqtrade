@@ -405,7 +405,7 @@ class Binance(Exchange):
                 since = max(since, listing_date)
 
             _, res = await download_archive_trades(
-                CandleType.SPOT,
+                CandleType.FUTURES if self.trading_mode == "futures" else CandleType.SPOT,
                 pair,
                 since_ms=since,
                 until_ms=until,
