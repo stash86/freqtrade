@@ -50,11 +50,11 @@
         "key": "1",
         "secret": "2",
         "pair_whitelist": [
-            "AAVE/BTC", "APT/BTC", "AR/BTC", "AVAX/BTC", "BCH/BTC", "BNB/BTC",
-            "DOT/BTC", "EGLD/BTC", "ETC/BTC", "ETH/BTC", "FTM/BTC",
-            "ICP/BTC", "INJ/BTC", "KAVA/BTC", "LINK/BTC", "LTC/BTC",
-            "NEAR/BTC", "SEI/BTC", "SOL/BTC", "S/BTC", "TAO/BTC",
-            "TIA/BTC", "UNI/BTC", "WBTC/BTC", "ZEC/BTC"
+            "AAVE/BTC", "AR/BTC", "AVAX/BTC", "BCH/BTC", "BNB/BTC",
+            "EGLD/BTC", "ETC/BTC", "ETH/BTC", "FTM/BTC",
+            "INJ/BTC", "KAVA/BTC", "LINK/BTC", "LTC/BTC",
+            "NEAR/BTC", "SOL/BTC", "S/BTC", "TAO/BTC",
+            "UNI/BTC", "WBTC/BTC", "ZEC/BTC"
         ],
         "pair_blacklist": []
     },
