@@ -39,7 +39,10 @@
         "order_book_max": 1
     },
     "pairlists": [
-        {"method": "StaticPairList"},
+        {
+            "method": "StaticPairList",
+            "allow_inactive": true,
+        },
         // {"method": "AgeFilter", "min_days_listed": 30},
     ],
     "exchange": {
