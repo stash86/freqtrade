@@ -48,7 +48,7 @@
         "secret": "2",
         "pair_whitelist": [
             "AAVE/BTC", "ADA/BTC", "ALGO/BTC", "APT/BTC", "AR/BTC", "AVAX/BTC", "BCH/BTC", "BNB/BTC",
-            "CHZ/BTC", "DOT/BTC", "DYDX/BTC", "EGLD/BTC", "ETC/BTC", "ETH/BTC", "FIL/BTC", "FLOW/BTC",
+            "CHZ/BTC", "DOT/BTC", "DYDX/BTC", "EGLD/BTC", "ETC/BTC", "ETH/BTC", "FIL/BTC", "FLOW/BTC", "FTM/BTC",
             "GALA/BTC", "HBAR/BTC", "ICP/BTC", "INJ/BTC", "IOTA/BTC", "KAVA/BTC", "LINK/BTC", "LTC/BTC",
             "NEAR/BTC", "OM/BTC", "SEI/BTC", "SOL/BTC", "SUI/BTC", "S/BTC", "TAO/BTC", "THETA/BTC",
             "TIA/BTC", "TON/BTC", "TRX/BTC", "UNI/BTC", "WBTC/BTC", "XLM/BTC", "XRP/BTC", "XTZ/BTC", "ZEC/BTC"
