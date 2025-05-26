@@ -262,6 +262,13 @@ AVAILABLE_CLI_OPTIONS = {
         metavar="INT",
         default=constants.HYPEROPT_EPOCH,
     ),
+    "early_stop": Arg(
+        "--early-stop",
+        help="Early stop hyperopt if no improvement after (default: %(default)d) epochs.",
+        type=check_int_positive,
+        metavar="INT",
+        default=0,  # 0 to disable by default
+    ),
     "spaces": Arg(
         "--spaces",
         help="Specify which parameters to hyperopt. Space-separated list.",

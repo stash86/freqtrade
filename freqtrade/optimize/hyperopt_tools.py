@@ -107,7 +107,7 @@ class HyperoptTools:
         """
         Tell if the space value is contained in the configuration
         """
-        # 'trailing' and 'protection spaces are not included in the 'default' set of spaces
+        # The following spaces are not included in the 'default' set of spaces
         if space in ("trailing", "protection", "trades"):
             return any(s in config["spaces"] for s in [space, "all"])
         else:

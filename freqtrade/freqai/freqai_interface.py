@@ -763,6 +763,8 @@ class IFreqaiModel(ABC):
             init_model = None
         else:
             init_model = self.dd.model_dictionary[pair]
+            # Set "fresh" tb_logger - the one in model_dictionary has the writer closed.
+            init_model.tb_logger = self.tb_logger
 
         return init_model
 

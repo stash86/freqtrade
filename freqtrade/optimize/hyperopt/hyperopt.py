@@ -317,6 +317,13 @@ class Hyperopt:
                         logging_mp_handle(log_queue)
                         gc.collect()
 
+                        if (
+                            self.hyperopter.es_epochs > 0
+                            and self.hyperopter.es_terminator.should_terminate(self.opt)
+                        ):
+                            logger.info(f"Early stopping after {(i + 1) * jobs} epochs")
+                            break
+
         except KeyboardInterrupt:
             print("User interrupted..")
 

@@ -40,7 +40,7 @@ from freqtrade.optimize.optimize_reports.optimize_reports import (
     generate_tag_metrics,
 )
 from freqtrade.resolvers.strategy_resolver import StrategyResolver
-from freqtrade.util import dt_ts
+from freqtrade.util import dt_ts, format_duration
 from freqtrade.util.datetime_helpers import dt_from_ts, dt_utc
 from tests.conftest import CURRENT_TEST_STRATEGY, log_has_re
 from tests.data.test_history import _clean_test_file
@@ -482,8 +482,8 @@ def test_generate_trading_stats(testdatadir):
     bt_data = load_backtest_data(filename)
     res = generate_trading_stats(bt_data)
     assert isinstance(res, dict)
-    assert res["winner_holding_avg"] == timedelta(seconds=1440)
-    assert res["loser_holding_avg"] == timedelta(days=1, seconds=21420)
+    assert res["winner_holding_avg"] == format_duration(timedelta(seconds=1440))
+    assert res["loser_holding_avg"] == format_duration(timedelta(days=1, seconds=21420))
     assert "wins" in res
     assert "losses" in res
     assert "draws" in res

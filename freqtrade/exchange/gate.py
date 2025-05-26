@@ -46,6 +46,7 @@ class Gate(Exchange):
         "funding_fee_candle_limit": 90,
         "stop_price_type_field": "price_type",
         "l2_limit_upper": 300,
+        "stoploss_blocks_assets": False,
         "stop_price_type_value_mapping": {
             PriceType.LAST: 0,
             PriceType.MARK: 1,

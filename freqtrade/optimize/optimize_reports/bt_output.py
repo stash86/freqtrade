@@ -365,17 +365,35 @@ def text_table_add_metrics(strat_results: dict) -> None:
                 f"{strat_results['winning_days']} / "
                 f"{strat_results['draw_days']} / {strat_results['losing_days']}",
             ),
-            ("Avg. Duration Winners", f"{strat_results['winner_holding_avg']}"),
-            ("Avg. Duration Loser", f"{strat_results['loser_holding_avg']}"),
-            # ("Max Consecutive Wins / Loss",
-            #  f"{strat_results["max_consecutive_wins"]} / {strat_results["max_consecutive_losses"]}"
-            #  if "max_consecutive_losses" in strat_results else "N/A"),
-            ("Rejected Entry signals", strat_results.get("rejected_signals", "N/A")),
             (
-                "Entry/Exit Timeouts",
-                f"{strat_results.get('timedout_entry_orders', 'N/A')} / "
-                f"{strat_results.get('timedout_exit_orders', 'N/A')}",
+                "Min/Max/Avg. Duration Winners",
+                f"{strat_results.get('winner_holding_min', 'N/A')} / "
+                f"{strat_results.get('winner_holding_max', 'N/A')} / "
+                f"{strat_results.get('winner_holding_avg', 'N/A')}",
             ),
+            (
+                "Min/Max/Avg. Duration Losers",
+                f"{strat_results.get('loser_holding_min', 'N/A')} / "
+                f"{strat_results.get('loser_holding_max', 'N/A')} / "
+                f"{strat_results.get('loser_holding_avg', 'N/A')}",
+            ),
+            # (
+            #     "Max Consecutive Wins / Loss",
+            #     (
+            #         (
+            #             f"{strat_results['max_consecutive_wins']} / "
+            #             f"{strat_results['max_consecutive_losses']}"
+            #         )
+            #         if "max_consecutive_losses" in strat_results
+            #         else "N/A"
+            #     ),
+            # ),
+            # ("Rejected Entry signals", strat_results.get("rejected_signals", "N/A")),
+            # (
+            #     "Entry/Exit Timeouts",
+            #     f"{strat_results.get('timedout_entry_orders', 'N/A')} / "
+            #     f"{strat_results.get('timedout_exit_orders', 'N/A')}",
+            # ),
             *entry_adjustment_metrics,
             ("", ""),  # Empty line to improve readability
             ("Min balance", fmt_coin(strat_results["csum_min"], strat_results["stake_currency"])),

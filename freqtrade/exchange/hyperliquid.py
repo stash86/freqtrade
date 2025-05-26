@@ -32,6 +32,7 @@ class Hyperliquid(Exchange):
     _ft_has_futures: FtHas = {
         "stoploss_on_exchange": True,
         "stoploss_order_types": {"limit": "limit"},
+        "stoploss_blocks_assets": False,
         "stop_price_prop": "stopPrice",
         "funding_fee_timeframe": "1h",
         "funding_fee_candle_limit": 500,

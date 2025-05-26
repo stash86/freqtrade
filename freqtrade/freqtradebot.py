@@ -1522,7 +1522,11 @@ class FreqtradeBot(LoggingMixin):
                 self.handle_protections(trade.pair, trade.trade_direction)
                 return True
 
-        if not trade.has_open_position or not trade.is_open:
+        if (
+            not trade.has_open_position
+            or not trade.is_open
+            or (trade.has_open_orders and self.exchange.get_option("stoploss_blocks_assets", True))
+        ):
             # The trade can be closed already (sell-order fill confirmation came in this iteration)
             return False
 
