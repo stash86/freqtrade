@@ -44,6 +44,7 @@ class Okx(Exchange):
             PriceType.MARK: "index",
             PriceType.INDEX: "mark",
         },
+        "stoploss_blocks_assets": False,
         "ws_enabled": True,
     }
 

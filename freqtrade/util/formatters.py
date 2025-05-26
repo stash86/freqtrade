@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from freqtrade.constants import DECIMAL_PER_COIN_FALLBACK, DECIMALS_PER_COIN
 
 
@@ -66,3 +68,15 @@ def fmt_coin2(
         val = f"{val} {coin}"
 
     return val
+
+
+def format_duration(td: timedelta) -> str:
+    """
+    Format a timedelta object to "XXd HH:MM" format
+    :param td: Timedelta object to format
+    :return: Formatted time string
+    """
+    d = td.days
+    h, r = divmod(td.seconds, 3600)
+    m, s = divmod(r, 60)
+    return f"{d}d {h:02d}:{m:02d}"

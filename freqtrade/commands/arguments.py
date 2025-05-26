@@ -78,6 +78,7 @@ ARGS_HYPEROPT = [
     "disableparamexport",
     "hyperopt_ignore_missing_space",
     "analyze_per_epoch",
+    "early_stop",
 ]
 
 ARGS_EDGE = [*ARGS_COMMON_OPTIMIZE, "stoploss_range"]

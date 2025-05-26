@@ -170,6 +170,48 @@ def test_setup_hyperopt_configuration_stake_amount(mocker, default_conf) -> None
         setup_optimize_configuration(get_args(args), RunMode.HYPEROPT)
 
 
+def test_setup_hyperopt_early_stop_setup(mocker, default_conf, caplog) -> None:
+    patched_configuration_load_config_file(mocker, default_conf)
+
+    args = [
+        "hyperopt",
+        "--config",
+        "config.json",
+        "--strategy",
+        "HyperoptableStrategy",
+        "--early-stop",
+        "1",
+    ]
+    conf = setup_optimize_configuration(get_args(args), RunMode.HYPEROPT)
+    assert isinstance(conf, dict)
+    assert conf["early_stop"] == 20
+    msg = (
+        r"Parameter --early-stop detected ... "
+        r"Will early stop hyperopt if no improvement after (20|25) epochs ..."
+    )
+    msg_adjust = r"Early stop epochs .* lower than 20. It will be replaced with 20."
+    assert log_has_re(msg_adjust, caplog)
+    assert log_has_re(msg, caplog)
+
+    caplog.clear()
+
+    args = [
+        "hyperopt",
+        "--config",
+        "config.json",
+        "--strategy",
+        CURRENT_TEST_STRATEGY,
+        "--early-stop",
+        "25",
+    ]
+    conf1 = setup_optimize_configuration(get_args(args), RunMode.HYPEROPT)
+    assert isinstance(conf1, dict)
+
+    assert conf1["early_stop"] == 25
+    assert not log_has_re(msg_adjust, caplog)
+    assert log_has_re(msg, caplog)
+
+
 def test_start_not_installed(mocker, default_conf, import_fails) -> None:
     start_mock = MagicMock()
     patched_configuration_load_config_file(mocker, default_conf)

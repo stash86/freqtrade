@@ -29,6 +29,7 @@ def sanitize_config(config: Config, *, show_sensitive: bool = False) -> Config:
         "telegram.chat_id",
         "discord.webhook_url",
         "api_server.password",
+        "webhook.url",
     ]
     config = deepcopy(config)
     for key in keys_to_remove:

@@ -315,7 +315,6 @@ $RepeatedMsgReduction on
 
 The syslog address can be either a Unix domain socket (socket filename) or a UDP socket specification, consisting of IP address and UDP port, separated by the `:` character.
 
-
 So, the following are the examples of possible addresses:
 
 * `"address": "/dev/log"` -- log to syslog (rsyslog) using the `/dev/log` socket, suitable for most systems.
@@ -323,20 +322,18 @@ So, the following are the examples of possible addresses:
 * `"address": "localhost:514"` -- log to local syslog using UDP socket, if it listens on port 514.
 * `"address": "<ip>:514"` -- log to remote syslog at IP address and port 514. This may be used on Windows for remote logging to an external syslog server.
 
-
 ??? Info "Deprecated - configure syslog via command line"
+    `--logfile syslog:<syslog_address>` -- send log messages to `syslog` service using the `<syslog_address>` as the syslog address.
 
-  `--logfile syslog:<syslog_address>` -- send log messages to `syslog` service using the `<syslog_address>` as the syslog address.
+    The syslog address can be either a Unix domain socket (socket filename) or a UDP socket specification, consisting of IP address and UDP port, separated by the `:` character.
 
-  The syslog address can be either a Unix domain socket (socket filename) or a UDP socket specification, consisting of IP address and UDP port, separated by the `:` character.
+    So, the following are the examples of possible usages:
 
-  So, the following are the examples of possible usages:
-
-  * `--logfile syslog:/dev/log` -- log to syslog (rsyslog) using the `/dev/log` socket, suitable for most systems.
-  * `--logfile syslog` -- same as above, the shortcut for `/dev/log`.
-  * `--logfile syslog:/var/run/syslog` -- log to syslog (rsyslog) using the `/var/run/syslog` socket. Use this on MacOS.
-  * `--logfile syslog:localhost:514` -- log to local syslog using UDP socket, if it listens on port 514.
-  * `--logfile syslog:<ip>:514` -- log to remote syslog at IP address and port 514. This may be used on Windows for remote logging to an external syslog server.
+    * `--logfile syslog:/dev/log` -- log to syslog (rsyslog) using the `/dev/log` socket, suitable for most systems.
+    * `--logfile syslog` -- same as above, the shortcut for `/dev/log`.
+    * `--logfile syslog:/var/run/syslog` -- log to syslog (rsyslog) using the `/var/run/syslog` socket. Use this on MacOS.
+    * `--logfile syslog:localhost:514` -- log to local syslog using UDP socket, if it listens on port 514.
+    * `--logfile syslog:<ip>:514` -- log to remote syslog at IP address and port 514. This may be used on Windows for remote logging to an external syslog server.
 
 ### Logging to journald
 

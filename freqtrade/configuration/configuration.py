@@ -334,6 +334,19 @@ class Configuration:
             ("print_all", "Parameter --print-all detected ..."),
         ]
         self._args_to_config_loop(config, configurations)
+        es_epochs = self.args.get("early_stop", 0)
+        if es_epochs > 0:
+            if es_epochs < 20:
+                logger.warning(
+                    f"Early stop epochs {es_epochs} lower than 20. It will be replaced with 20."
+                )
+                config.update({"early_stop": 20})
+            else:
+                config.update({"early_stop": self.args["early_stop"]})
+            logger.info(
+                f"Parameter --early-stop detected ... Will early stop hyperopt if no improvement "
+                f"after {config.get('early_stop')} epochs ..."
+            )
 
         configurations = [
             ("print_json", "Parameter --print-json detected ..."),

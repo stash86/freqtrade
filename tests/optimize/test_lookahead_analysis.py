@@ -490,4 +490,4 @@ def test_config_overrides(lookahead_conf):
     lookahead_conf = LookaheadAnalysisSubFunctions.calculate_config_overrides(lookahead_conf)
 
     assert lookahead_conf["dry_run_wallet"] == 1000000000
-    assert lookahead_conf["max_open_trades"] == 3
+    assert lookahead_conf["max_open_trades"] == -1

@@ -45,4 +45,4 @@ Please refer to the corresponding installation sections (common problems linked 
 
 Common problems and their solutions:
 
-* [ta-lib update on windows](windows_installation.md#2-install-ta-lib)
+* [ta-lib update on windows](windows_installation.md#install-ta-lib)

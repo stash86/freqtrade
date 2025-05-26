@@ -32,16 +32,19 @@ class Binance(Exchange):
         "stop_price_param": "stopPrice",
         "stop_price_prop": "stopPrice",
         "stoploss_order_types": {"limit": "stop_loss_limit"},
+        "stoploss_blocks_assets": True,  # By default stoploss orders block assets
         "order_time_in_force": ["GTC", "FOK", "IOC", "PO"],
         "trades_pagination": "id",
         "trades_pagination_arg": "fromId",
         "trades_has_history": True,
+        "fetch_orders_limit_minutes": None,
         "l2_limit_range": [5, 10, 20, 50, 100, 500, 1000],
         "ws_enabled": True,
     }
     _ft_has_futures: FtHas = {
         "funding_fee_candle_limit": 1000,
         "stoploss_order_types": {"limit": "stop", "market": "stop_market"},
+        "stoploss_blocks_assets": False,  # Stoploss orders do not block assets
         "order_time_in_force": ["GTC", "FOK", "IOC"],
         "tickers_have_price": False,
         "stop_price_type_field": "workingType",
@@ -50,6 +53,7 @@ class Binance(Exchange):
             PriceType.MARK: "MARK_PRICE",
         },
         "floor_leverage": True,
+        "fetch_orders_limit_minutes": 7 * 1440,  # "fetch_orders" is limited to 7 days
         "stop_price_type_field": "workingType",
         "order_props_in_contracts": ["amount", "cost", "filled", "remaining"],
         "stop_price_type_value_mapping": {

@@ -310,7 +310,7 @@ class MyCoolTransform(BaseTransform):
 
 If you have created your own custom `IFreqaiModel` with a custom `train()`/`predict()` function, *and* you still rely on `data_cleaning_train/predict()`, then you will need to migrate to the new pipeline. If your model does *not* rely on `data_cleaning_train/predict()`, then you do not need to worry about this migration.
 
-More details about the migration can be found [here](strategy_migration.md#freqai---new-data-pipeline).
+More details about the migration can be found [here](strategy_migration.md#freqai-new-data-pipeline).
 
 ## Outlier detection
 

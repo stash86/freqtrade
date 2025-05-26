@@ -235,7 +235,7 @@ class LookaheadAnalysis(BaseAnalysis):
                 return None
             if "force_exit" in result_row["exit_reason"]:
                 logger.info(
-                    "found force-exit in pair: {result_row['pair']}, "
+                    f"found force-exit in pair: {result_row['pair']}, "
                     f"timerange:{result_row['open_date']}-{result_row['close_date']}, "
                     f"idx: {idx}, skipping this one to avoid a false-positive."
                 )

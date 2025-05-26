@@ -131,6 +131,7 @@ class Exchange:
         "stop_price_param": "stopLossPrice",  # Used for stoploss_on_exchange request
         "stop_price_prop": "stopLossPrice",  # Used for stoploss_on_exchange response parsing
         "stoploss_order_types": {},
+        "stoploss_blocks_assets": True,  # By default stoploss orders block assets
         "order_time_in_force": ["GTC"],
         "ohlcv_params": {},
         "ohlcv_has_history": True,  # Some exchanges (Kraken) don't provide history via ohlcv
@@ -155,6 +156,7 @@ class Exchange:
         "ccxt_futures_name": "swap",
         "needs_trading_fees": False,  # use fetch_trading_fees to cache fees
         "order_props_in_contracts": ["amount", "filled", "remaining"],
+        "fetch_orders_limit_minutes": None,  # "fetch_orders" is not time-limited by default
         # Override createMarketBuyOrderRequiresPrice where ccxt has it wrong
         "marketOrderRequiresPrice": False,
         "exchange_has_overrides": {},  # Dictionary overriding ccxt's "has".
@@ -1742,7 +1744,7 @@ class Exchange:
         return orders
 
     @retrier(retries=0)
-    def fetch_orders(
+    def _fetch_orders(
         self, pair: str, since: datetime, params: dict | None = None
     ) -> list[CcxtOrder]:
         """
@@ -1780,6 +1782,24 @@ class Exchange:
             ) from e
         except ccxt.BaseError as e:
             raise OperationalException(e) from e
+
+    def fetch_orders(
+        self, pair: str, since: datetime, params: dict | None = None
+    ) -> list[CcxtOrder]:
+        if self._config["dry_run"]:
+            return []
+        if (limit := self._ft_has.get("fetch_orders_limit_minutes")) is not None:
+            orders = []
+            while since < dt_now():
+                orders += self._fetch_orders(pair, since)
+                # Since with 1 minute overlap
+                since = since + timedelta(minutes=limit - 1)
+            # Ensure each order is unique based on order id
+            orders = list({order["id"]: order for order in orders}.values())
+            return orders
+
+        else:
+            return self._fetch_orders(pair, since, params=params)
 
     @retrier
     def fetch_trading_fees(self) -> dict[str, Any]:

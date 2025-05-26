@@ -38,6 +38,7 @@ from freqtrade.strategy.informative_decorator import (
     _create_and_merge_informative_pair,
     _format_pair_name,
 )
+from freqtrade.strategy.strategy_validation import StrategyResultValidator
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
 from freqtrade.util import dt_now
 from freqtrade.wallets import Wallets
@@ -67,6 +68,7 @@ class IStrategy(ABC, HyperStrategyMixin):
     _ft_params_from_file: dict
     # associated minimal roi
     minimal_roi: dict = {}
+    use_custom_roi: bool = False
 
     # associated stoploss
     stoploss: float
@@ -465,6 +467,35 @@ class IStrategy(ABC, HyperStrategyMixin):
         :return float: New stoploss value, relative to the current_rate
         """
         return self.stoploss
+
+    def custom_roi(
+        self,
+        pair: str,
+        trade: Trade,
+        current_time: datetime,
+        trade_duration: int,
+        entry_tag: str | None,
+        side: str,
+        **kwargs,
+    ) -> float | None:
+        """
+        Custom ROI logic, returns a new minimum ROI threshold (as a ratio, e.g., 0.05 for +5%).
+        Only called when use_custom_roi is set to True.
+
+        If used at the same time as minimal_roi, an exit will be triggered when the lower
+        threshold is reached. Example: If minimal_roi = {"0": 0.01} and custom_roi returns 0.05,
+        an exit will be triggered if profit reaches 5%.
+
+        :param pair: Pair that's currently analyzed.
+        :param trade: trade object.
+        :param current_time: datetime object, containing the current datetime.
+        :param trade_duration: Current trade duration in minutes.
+        :param entry_tag: Optional entry_tag (buy_tag) if provided with the buy signal.
+        :param side: 'long' or 'short' - indicating the direction of the current trade.
+        :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
+        :return float: New ROI value as a ratio, or None to fall back to minimal_roi logic.
+        """
+        return None
 
     def custom_entry_price(
         self,
@@ -1215,13 +1246,15 @@ class IStrategy(ABC, HyperStrategyMixin):
             return
 
         try:
-            df_len, df_close, df_date = self.preserve_df(dataframe)
+            validator = StrategyResultValidator(
+                dataframe, warn_only=not self.disable_dataframe_checks
+            )
 
             dataframe = strategy_safe_wrapper(self._analyze_ticker_internal, message="")(
                 dataframe, {"pair": pair}
             )
 
-            self.assert_df(dataframe, df_len, df_close, df_date)
+            validator.assert_df(dataframe)
         except StrategyError as error:
             msg = f"Unable to analyze candle (OHLCV) data for pair {pair}: {error}"
             self.dp.send_msg(msg)
@@ -1241,31 +1274,6 @@ class IStrategy(ABC, HyperStrategyMixin):
         """
         for pair in pairs:
             self.analyze_pair(pair)
-
-    @staticmethod
-    def preserve_df(dataframe: DataFrame) -> tuple[int, float, datetime]:
-        """keep some data for dataframes"""
-        return len(dataframe), dataframe["close"].iloc[-1], dataframe["date"].iloc[-1]
-
-    def assert_df(self, dataframe: DataFrame, df_len: int, df_close: float, df_date: datetime):
-        """
-        Ensure dataframe (length, last candle) was not modified, and has all elements we need.
-        """
-        message_template = "Dataframe returned from strategy has mismatching {}."
-        message = ""
-        if dataframe is None:
-            message = "No dataframe returned (return statement missing?)."
-        elif df_len != len(dataframe):
-            message = message_template.format("length")
-        elif df_close != dataframe["close"].iloc[-1]:
-            message = message_template.format("last close price")
-        elif df_date != dataframe["date"].iloc[-1]:
-            message = message_template.format("last date")
-        if message:
-            if self.disable_dataframe_checks:
-                logger.warning(message)
-            else:
-                raise StrategyError(message)
 
     def get_latest_candle(
         self,
@@ -1648,18 +1656,49 @@ class IStrategy(ABC, HyperStrategyMixin):
 
         return ExitCheckTuple(exit_type=ExitType.NONE)
 
-    def min_roi_reached_entry(self, trade_dur: int) -> tuple[int | None, float | None]:
+    def min_roi_reached_entry(
+        self,
+        trade: Trade,
+        trade_dur: int,
+        current_time: datetime,
+    ) -> tuple[int | None, float | None]:
         """
         Based on trade duration defines the ROI entry that may have been reached.
         :param trade_dur: trade duration in minutes
         :return: minimal ROI entry value or None if none proper ROI entry was found.
         """
+
+        # Get custom ROI if use_custom_roi is set to True
+        custom_roi = None
+        if self.use_custom_roi:
+            custom_roi = strategy_safe_wrapper(
+                self.custom_roi, default_retval=None, supress_error=True
+            )(
+                pair=trade.pair,
+                trade=trade,
+                current_time=current_time,
+                trade_duration=trade_dur,
+                entry_tag=trade.enter_tag,
+                side=trade.trade_direction,
+            )
+            if custom_roi is None or isnan(custom_roi) or isinf(custom_roi):
+                custom_roi = None
+                logger.debug(f"Custom ROI function did not return a valid ROI for {trade.pair}")
+
         # Get highest entry in ROI dict where key <= trade-duration
         roi_list = [x for x in self.minimal_roi.keys() if x <= trade_dur]
-        if not roi_list:
-            return None, None
-        roi_entry = max(roi_list)
-        return roi_entry, self.minimal_roi[roi_entry]
+        if roi_list:
+            roi_entry = max(roi_list)
+            min_roi = self.minimal_roi[roi_entry]
+        else:
+            roi_entry = None
+            min_roi = None
+
+        # The lowest available value is used to trigger an exit.
+        if custom_roi is not None and (min_roi is None or custom_roi < min_roi):
+            return trade_dur, custom_roi
+        else:
+            return roi_entry, min_roi
 
     def min_roi_reached(self, trade: Trade, current_profit: float, current_time: datetime) -> bool:
         """
@@ -1670,7 +1709,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         """
         # Check if time matches and current rate is above threshold
         trade_dur = int((current_time.timestamp() - trade.open_date_utc.timestamp()) // 60)
-        _, roi = self.min_roi_reached_entry(trade_dur)
+        _, roi = self.min_roi_reached_entry(trade, trade_dur, current_time)
         if roi is None:
             return False
         else:
@@ -1711,10 +1750,14 @@ class IStrategy(ABC, HyperStrategyMixin):
         Has positive effects on memory usage for whatever reason - also when
         using only one strategy.
         """
-        return {
-            pair: self.advise_indicators(pair_data.copy(), {"pair": pair}).copy()
-            for pair, pair_data in data.items()
-        }
+        res = {}
+        for pair, pair_data in data.items():
+            validator = StrategyResultValidator(
+                pair_data, warn_only=not self.disable_dataframe_checks
+            )
+            res[pair] = self.advise_indicators(pair_data.copy(), {"pair": pair}).copy()
+            validator.assert_df(res[pair])
+        return res
 
     def ft_advise_signals(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         """

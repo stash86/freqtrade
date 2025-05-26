@@ -96,10 +96,27 @@ def test_bybit_fetch_orders(default_conf, mocker, limit_order):
             limit_order["sell"],
         ]
     )
-    api_mock.fetch_open_orders = MagicMock(return_value=[limit_order["buy"]])
-    api_mock.fetch_closed_orders = MagicMock(return_value=[limit_order["buy"]])
+    api_mock.fetch_open_orders = MagicMock(
+        side_effect=[
+            [{**limit_order["buy"], "id": 1}],
+            [{**limit_order["buy"], "id": 2}],
+            [{**limit_order["buy"], "id": 3}],
+        ]
+    )
+    api_mock.fetch_closed_orders = MagicMock(
+        side_effect=[
+            [{**limit_order["buy"], "id": 5}],
+            [{**limit_order["buy"], "id": 6}],
+            [{**limit_order["buy"], "id": 7}],
+        ]
+    )
 
-    mocker.patch(f"{EXMS}.exchange_has", return_value=True)
+    def exchange_has(value):
+        if value == "fetchOrders":
+            return False
+        return True
+
+    mocker.patch(f"{EXMS}.exchange_has", side_effect=exchange_has)
     start_time = datetime.now(timezone.utc) - timedelta(days=20)
 
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="bybit")
@@ -111,9 +128,9 @@ def test_bybit_fetch_orders(default_conf, mocker, limit_order):
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="bybit")
     res = exchange.fetch_orders("mocked", start_time)
     # Bybit will call the endpoint 3 times, as it has a limit of 7 days per call
-    assert api_mock.fetch_orders.call_count == 3
-    assert api_mock.fetch_open_orders.call_count == 0
-    assert api_mock.fetch_closed_orders.call_count == 0
+    assert api_mock.fetch_orders.call_count == 0
+    assert api_mock.fetch_open_orders.call_count == 3
+    assert api_mock.fetch_closed_orders.call_count == 3
     assert len(res) == 2 * 3
 
 

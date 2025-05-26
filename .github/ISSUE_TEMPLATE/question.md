@@ -1,6 +1,6 @@
 ---
 name: Question
-about: Ask a question you could not find an answer in the docs
+about: Ask a question you could not find an answer in the docs. Use this template if you've got problems with your strategy.
 title: ''
 labels: "Question"
 assignees: ''
