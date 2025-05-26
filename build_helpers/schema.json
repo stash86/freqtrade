@@ -610,11 +610,11 @@
           "type": "string"
         },
         "chat_id": {
-          "description": "Telegram chat or group ID",
+          "description": "Telegram chat or group ID. Recommended to be set via environment variable FREQTRADE__TELEGRAM__CHAT_ID",
           "type": "string"
         },
         "topic_id": {
-          "description": "Telegram topic ID - only applicable for group chats",
+          "description": "Telegram topic ID - only applicable for group chats. Recommended to be set via environment variable FREQTRADE__TELEGRAM__TOPIC_ID",
           "type": "string"
         },
         "authorized_users": {
@@ -773,9 +773,11 @@
       "type": "object",
       "properties": {
         "enabled": {
+          "description": "Enable webhook notifications.",
           "type": "boolean"
         },
         "url": {
+          "description": "Webhook URL. Recommended to be set via environment variable FREQTRADE__WEBHOOK__URL",
           "type": "string"
         },
         "format": {
@@ -853,6 +855,7 @@
           "type": "boolean"
         },
         "webhook_url": {
+          "description": "Discord webhook URL. Recommended to be set via environment variable FREQTRADE__DISCORD__WEBHOOK_URL",
           "type": "string"
         },
         "exit_fill": {
@@ -1168,28 +1171,35 @@
           "description": "Name of the exchange.",
           "type": "string"
         },
-        "enable_ws": {
-          "description": "Enable WebSocket connections to the exchange.",
-          "type": "boolean",
-          "default": true
-        },
         "key": {
-          "description": "API key for the exchange.",
+          "description": "API key for the exchange. Recommended to be set via environment variable FREQTRADE__EXCHANGE__KEY",
           "type": "string",
           "default": ""
         },
         "secret": {
-          "description": "API secret for the exchange.",
+          "description": "API secret for the exchange. Recommended to be set via environment variable FREQTRADE__EXCHANGE__SECRET",
           "type": "string",
           "default": ""
         },
         "password": {
-          "description": "Password for the exchange, if required.",
+          "description": "Password for the exchange, if required. Recommended to be set via environment variable FREQTRADE__EXCHANGE__PASSWORD",
           "type": "string",
           "default": ""
         },
         "uid": {
-          "description": "User ID for the exchange, if required.",
+          "description": "User ID for the exchange, if required. Recommended to be set via environment variable FREQTRADE__EXCHANGE__UID",
+          "type": "string"
+        },
+        "account_id": {
+          "description": "Account ID for the exchange, if required. Recommended to be set via environment variable FREQTRADE__EXCHANGE__ACCOUNT_ID",
+          "type": "string"
+        },
+        "wallet_address": {
+          "description": "Wallet address for the exchange, if required. Usually used by DEX exchanges. Recommended to be set via environment variable FREQTRADE__EXCHANGE__WALLET_ADDRESS",
+          "type": "string"
+        },
+        "private_key": {
+          "description": "Private key for the exchange, if required. Usually used by DEX exchanges. Recommended to be set via environment variable FREQTRADE__EXCHANGE__PRIVATE_KEY",
           "type": "string"
         },
         "pair_whitelist": {
@@ -1212,6 +1222,11 @@
           "description": "Log responses from the exchange.Useful/required to debug issues with order processing.",
           "type": "boolean",
           "default": false
+        },
+        "enable_ws": {
+          "description": "Enable WebSocket connections to the exchange.",
+          "type": "boolean",
+          "default": true
         },
         "unknown_fee_rate": {
           "description": "Fee rate for unknown markets.",

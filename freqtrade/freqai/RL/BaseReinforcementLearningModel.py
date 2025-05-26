@@ -318,13 +318,13 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         rename_dict = {
             "%-raw_open": "open",
             "%-raw_low": "low",
-            "%-raw_high": " high",
+            "%-raw_high": "high",
             "%-raw_close": "close",
         }
         rename_dict_old = {
             f"%-{pair}raw_open_{tf}": "open",
             f"%-{pair}raw_low_{tf}": "low",
-            f"%-{pair}raw_high_{tf}": " high",
+            f"%-{pair}raw_high_{tf}": "high",
             f"%-{pair}raw_close_{tf}": "close",
         }
 

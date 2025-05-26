@@ -153,14 +153,8 @@ class LookaheadAnalysisSubFunctions:
             raise OperationalException(
                 "Targeted trade amount can't be smaller than minimum trade amount."
             )
-        if len(config["pairs"]) > config.get("max_open_trades", 0):
-            logger.info(
-                "Max_open_trades were less than amount of pairs "
-                "or defined in the strategy. "
-                "Set max_open_trades to amount of pairs "
-                "just to avoid false positives."
-            )
-            config["max_open_trades"] = len(config["pairs"])
+        config["max_open_trades"] = -1
+        logger.info("Forced max_open_trades to -1 (same amount as there are pairs)")
 
         min_dry_run_wallet = 1000000000
         if get_dry_run_wallet(config) < min_dry_run_wallet:

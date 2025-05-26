@@ -13,7 +13,13 @@ from freqtrade.util.datetime_helpers import (
     shorten_date,
 )
 from freqtrade.util.dry_run_wallet import get_dry_run_wallet
-from freqtrade.util.formatters import decimals_per_coin, fmt_coin, fmt_coin2, round_value
+from freqtrade.util.formatters import (
+    decimals_per_coin,
+    fmt_coin,
+    fmt_coin2,
+    format_duration,
+    round_value,
+)
 from freqtrade.util.ft_precise import FtPrecise
 from freqtrade.util.measure_time import MeasureTime
 from freqtrade.util.periodic_cache import PeriodicCache
@@ -44,6 +50,7 @@ __all__ = [
     "shorten_date",
     "decimals_per_coin",
     "round_value",
+    "format_duration",
     "fmt_coin",
     "fmt_coin2",
     "MeasureTime",

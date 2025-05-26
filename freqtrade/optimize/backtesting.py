@@ -501,7 +501,12 @@ class Backtesting:
         return data
 
     def _get_close_rate(
-        self, row: tuple, trade: LocalTrade, exit_: ExitCheckTuple, trade_dur: int
+        self,
+        row: tuple,
+        trade: LocalTrade,
+        current_time: datetime,
+        exit_: ExitCheckTuple,
+        trade_dur: int,
     ) -> float:
         """
         Get close rate for backtesting result
@@ -514,7 +519,7 @@ class Backtesting:
         ):
             return self._get_close_rate_for_stoploss(row, trade, exit_, trade_dur)
         elif exit_.exit_type == (ExitType.ROI):
-            return self._get_close_rate_for_roi(row, trade, exit_, trade_dur)
+            return self._get_close_rate_for_roi(row, trade, current_time, exit_, trade_dur)
         else:
             return row[OPEN_IDX]
 
@@ -573,12 +578,21 @@ class Backtesting:
         return stoploss_value
 
     def _get_close_rate_for_roi(
-        self, row: tuple, trade: LocalTrade, exit_: ExitCheckTuple, trade_dur: int
+        self,
+        row: tuple,
+        trade: LocalTrade,
+        current_time: datetime,
+        exit_: ExitCheckTuple,
+        trade_dur: int,
     ) -> float:
         is_short = trade.is_short or False
         leverage = trade.leverage or 1.0
         side_1 = -1 if is_short else 1
-        roi_entry, roi = self.strategy.min_roi_reached_entry(trade_dur)
+        roi_entry, roi = self.strategy.min_roi_reached_entry(
+            trade,  # type: ignore[arg-type]
+            trade_dur,
+            current_time,
+        )
         if roi is not None and roi_entry is not None:
             if roi == -1 and roi_entry % self.timeframe_min == 0:
                 # When force_exiting with ROI=-1, the roi time will always be equal to trade_dur.
@@ -785,7 +799,7 @@ class Backtesting:
             amount_ = amount if amount is not None else trade.amount
             trade_dur = int((trade.close_date_utc - trade.open_date_utc).total_seconds() // 60)
             try:
-                close_rate = self._get_close_rate(row, trade, exit_, trade_dur)
+                close_rate = self._get_close_rate(row, trade, current_time, exit_, trade_dur)
             except ValueError:
                 return None
             # call the custom exit price,with default value as previous close_rate

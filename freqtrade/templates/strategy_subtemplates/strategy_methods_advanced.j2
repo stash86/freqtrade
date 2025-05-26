@@ -135,6 +135,37 @@ def custom_stake_amount(
     """
     return proposed_stake
 
+use_custom_roi = True
+
+def custom_roi(
+    self,
+    pair: str,
+    trade: Trade,
+    current_time: datetime,
+    trade_duration: int,
+    entry_tag: str | None,
+    side: str,
+    **kwargs,
+) -> float | None:
+    """
+    Custom ROI logic, returns a new minimum ROI threshold (as a ratio, e.g., 0.05 for +5%).
+    Only called when use_custom_roi is set to True.
+
+    If used at the same time as minimal_roi, an exit will be triggered when the lower
+    threshold is reached. Example: If minimal_roi = {"0": 0.01} and custom_roi returns 0.05,
+    an exit will be triggered if profit reaches 5%.
+
+    :param pair: Pair that's currently analyzed.
+    :param trade: trade object.
+    :param current_time: datetime object, containing the current datetime.
+    :param trade_duration: Current trade duration in minutes.
+    :param entry_tag: Optional entry_tag (buy_tag) if provided with the buy signal.
+    :param side: 'long' or 'short' - indicating the direction of the current trade.
+    :param **kwargs: Ensure to keep this here so updates to this won't break your strategy.
+    :return float: New ROI value as a ratio, or None to fall back to minimal_roi logic.
+    """
+    return None
+
 use_custom_stoploss = True
 
 def custom_stoploss(

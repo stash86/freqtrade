@@ -16,6 +16,7 @@ usage: freqtrade hyperopt [-h] [-v] [--no-color] [--logfile FILE] [-V]
                           [--random-state INT] [--min-trades INT]
                           [--hyperopt-loss NAME] [--disable-param-export]
                           [--ignore-missing-spaces] [--analyze-per-epoch]
+                          [--early-stop INT]
 
 options:
   -h, --help            show this help message and exit
@@ -87,6 +88,8 @@ options:
                         Suppress errors for any requested Hyperopt spaces that
                         do not contain any parameters.
   --analyze-per-epoch   Run populate_indicators once per epoch.
+  --early-stop INT      Early stop hyperopt if no improvement after (default:
+                        0) epochs.
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).

@@ -14,6 +14,7 @@ import optuna
 from joblib import delayed, dump, load, wrap_non_picklable_objects
 from joblib.externals import cloudpickle
 from optuna.exceptions import ExperimentalWarning
+from optuna.terminator import BestValueStagnationEvaluator, Terminator
 from pandas import DataFrame
 
 from freqtrade.constants import DATETIME_PRINT_FORMAT, Config
@@ -103,6 +104,10 @@ class HyperOptimizer:
         self.data_pickle_file = data_pickle_file
 
         self.market_change = 0.0
+
+        self.es_epochs = config.get("early_stop", 0)
+        if self.es_epochs > 0 and self.es_epochs < 0.2 * config.get("epochs", 0):
+            logger.warning(f"Early stop epochs {self.es_epochs} lower than 20% of total epochs")
 
         if HyperoptTools.has_space(self.config, "sell"):
             # Make sure use_exit_signal is enabled
@@ -423,6 +428,11 @@ class HyperOptimizer:
                 sampler = optuna_samplers_dict[o_sampler](seed=random_state)
         else:
             sampler = o_sampler
+
+        if self.es_epochs > 0:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore", category=ExperimentalWarning)
+                self.es_terminator = Terminator(BestValueStagnationEvaluator(self.es_epochs))
 
         logger.info(f"Using optuna sampler {o_sampler}.")
         return optuna.create_study(sampler=sampler, direction="minimize")
