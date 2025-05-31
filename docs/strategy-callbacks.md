@@ -27,6 +27,9 @@ Currently available callbacks:
 
 --8<-- "includes/strategy-imports.md"
 
+--8<-- "includes/strategy-exit-comparisons.md"
+
+
 ## Bot start
 
 A simple callback which is called once when the strategy is loaded.

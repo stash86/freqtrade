@@ -493,7 +493,7 @@ class FreqtradeBot(LoggingMixin):
                     order = trade.select_order("stoploss", False)
                 if order:
                     logger.info(
-                        f"Updating {trade.exit_side}-fee on trade {trade}"
+                        f"Updating {trade.exit_side}-fee on trade {trade} "
                         f"for order {order.order_id}."
                     )
                     self.update_trade_state(
@@ -511,7 +511,7 @@ class FreqtradeBot(LoggingMixin):
                     open_order = trade.select_order(trade.entry_side, True)
                     if order and open_order is None:
                         logger.info(
-                            f"Updating {trade.entry_side}-fee on trade {trade}"
+                            f"Updating {trade.entry_side}-fee on trade {trade} "
                             f"for order {order.order_id}."
                         )
                         self.update_trade_state(trade, order.order_id, send_msg=False)

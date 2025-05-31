@@ -590,7 +590,8 @@ def test__load_markets(default_conf, mocker, caplog):
 
     expected_return = {"ETH/BTC": "available"}
     api_mock = MagicMock()
-    api_mock.load_markets = get_mock_coro(return_value=expected_return)
+    api_mock.load_markets = get_mock_coro()
+    api_mock.markets = expected_return
     mocker.patch(f"{EXMS}._init_ccxt", MagicMock(return_value=api_mock))
     default_conf["exchange"]["pair_whitelist"] = ["ETH/BTC"]
     ex = Exchange(default_conf)
@@ -606,6 +607,7 @@ def test_reload_markets(default_conf, mocker, caplog, time_machine):
     time_machine.move_to(start_dt, tick=False)
     api_mock = MagicMock()
     api_mock.load_markets = get_mock_coro(return_value=initial_markets)
+    api_mock.markets = initial_markets
     default_conf["exchange"]["markets_refresh_interval"] = 10
     exchange = get_patched_exchange(
         mocker, default_conf, api_mock, exchange="binance", mock_markets=False
@@ -624,6 +626,7 @@ def test_reload_markets(default_conf, mocker, caplog, time_machine):
     api_mock.load_markets = get_mock_coro(return_value=updated_markets)
     # more than 10 minutes have passed, reload is executed
     time_machine.move_to(start_dt + timedelta(minutes=11), tick=False)
+    api_mock.markets = updated_markets
     exchange.reload_markets()
     assert exchange.markets == updated_markets
     assert lam_spy.call_count == 1
@@ -669,34 +672,33 @@ def test_reload_markets_exception(default_conf, mocker, caplog):
 
 
 @pytest.mark.parametrize("stake_currency", ["ETH", "BTC", "USDT"])
-def test_validate_stakecurrency(default_conf, stake_currency, mocker, caplog):
+def test_validate_stakecurrency(default_conf, stake_currency, mocker):
     default_conf["stake_currency"] = stake_currency
     api_mock = MagicMock()
-    type(api_mock).load_markets = get_mock_coro(
-        return_value={
-            "ETH/BTC": {"quote": "BTC"},
-            "LTC/BTC": {"quote": "BTC"},
-            "XRP/ETH": {"quote": "ETH"},
-            "NEO/USDT": {"quote": "USDT"},
-        }
-    )
+    api_mock.load_markets = get_mock_coro()
+    api_mock.markets = {
+        "ETH/BTC": {"quote": "BTC"},
+        "LTC/BTC": {"quote": "BTC"},
+        "XRP/ETH": {"quote": "ETH"},
+        "NEO/USDT": {"quote": "USDT"},
+    }
     mocker.patch(f"{EXMS}._init_ccxt", MagicMock(return_value=api_mock))
     mocker.patch(f"{EXMS}.validate_timeframes")
     mocker.patch(f"{EXMS}.validate_pricing")
     Exchange(default_conf)
 
 
-def test_validate_stakecurrency_error(default_conf, mocker, caplog):
+def test_validate_stakecurrency_error(default_conf, mocker):
     default_conf["stake_currency"] = "XRP"
     api_mock = MagicMock()
-    type(api_mock).load_markets = get_mock_coro(
-        return_value={
-            "ETH/BTC": {"quote": "BTC"},
-            "LTC/BTC": {"quote": "BTC"},
-            "XRP/ETH": {"quote": "ETH"},
-            "NEO/USDT": {"quote": "USDT"},
-        }
-    )
+    api_mock.load_markets = get_mock_coro()
+    api_mock.markets = {
+        "ETH/BTC": {"quote": "BTC"},
+        "LTC/BTC": {"quote": "BTC"},
+        "XRP/ETH": {"quote": "ETH"},
+        "NEO/USDT": {"quote": "USDT"},
+    }
+
     mocker.patch(f"{EXMS}._init_ccxt", MagicMock(return_value=api_mock))
     mocker.patch(f"{EXMS}.validate_timeframes")
     with pytest.raises(
@@ -705,7 +707,7 @@ def test_validate_stakecurrency_error(default_conf, mocker, caplog):
     ):
         Exchange(default_conf)
 
-    type(api_mock).load_markets = get_mock_coro(side_effect=ccxt.NetworkError("No connection."))
+    api_mock.load_markets = get_mock_coro(side_effect=ccxt.NetworkError("No connection."))
     mocker.patch(f"{EXMS}._init_ccxt", MagicMock(return_value=api_mock))
 
     with pytest.raises(

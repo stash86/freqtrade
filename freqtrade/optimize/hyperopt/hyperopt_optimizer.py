@@ -45,6 +45,7 @@ from freqtrade.util.dry_run_wallet import get_dry_run_wallet
 
 logger = logging.getLogger(__name__)
 
+INITIAL_POINTS = 30
 
 MAX_LOSS = 100000  # just a big enough number to be bad result in loss optimization
 
@@ -425,7 +426,16 @@ class HyperOptimizer:
                 raise OperationalException(f"Optuna Sampler {o_sampler} not supported.")
             with warnings.catch_warnings():
                 warnings.filterwarnings(action="ignore", category=ExperimentalWarning)
-                sampler = optuna_samplers_dict[o_sampler](seed=random_state)
+                if o_sampler in ["NSGAIIISampler", "NSGAIISampler"]:
+                    sampler = optuna_samplers_dict[o_sampler](
+                        seed=random_state, population_size=INITIAL_POINTS
+                    )
+                elif o_sampler in ["GPSampler", "TPESampler", "CmaEsSampler"]:
+                    sampler = optuna_samplers_dict[o_sampler](
+                        seed=random_state, n_startup_trials=INITIAL_POINTS
+                    )
+                else:
+                    sampler = optuna_samplers_dict[o_sampler](seed=random_state)
         else:
             sampler = o_sampler
 

@@ -26,7 +26,7 @@ repos:
       - id: mypy
         exclude: build_helpers
         additional_dependencies:
-          - types-cachetools==5.5.0.20240820
+          - types-cachetools==6.0.0.20250525
           - types-filelock==3.2.7
           - types-requests==2.32.0.20250515
           - types-tabulate==0.9.0.20241207
@@ -43,7 +43,7 @@ repos:
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.11.10'
+    rev: 'v0.11.11'
     hooks:
       - id: ruff
       - id: ruff-format
@@ -82,6 +82,6 @@ repos:
 
   # Ensure github actions remain safe
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.7.0
+    rev: v1.8.0
     hooks:
     - id: zizmor

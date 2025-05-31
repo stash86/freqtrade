@@ -283,7 +283,8 @@ def test_hyperliquid_dry_run_liquidation_price(default_conf, mocker):
     default_conf["trading_mode"] = "futures"
     default_conf["margin_mode"] = "isolated"
     default_conf["stake_currency"] = "USDC"
-    api_mock.load_markets = get_mock_coro(return_value=markets)
+    api_mock.load_markets = get_mock_coro()
+    api_mock.markets = markets
     exchange = get_patched_exchange(
         mocker, default_conf, api_mock, exchange="hyperliquid", mock_markets=False
     )
