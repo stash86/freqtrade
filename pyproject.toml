@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: MacOS",
     "Operating System :: Unix",
     "Topic :: Office/Business :: Financial :: Investment",
@@ -38,10 +39,10 @@ dependencies = [
   "httpx>=0.24.1",
   "urllib3",
   "jsonschema",
-  "numpy<2.0",
+  "numpy>2.0,<3.0",
   "pandas>=2.2.0,<3.0",
-  "TA-Lib",
-  "pandas-ta",
+  "TA-Lib<0.6",
+  "ft-pandas-ta",
   "technical",
   "tabulate",
   "pycoingecko>=3.2.0",
@@ -206,6 +207,14 @@ plugins = [
 [[tool.mypy.overrides]]
 module = "tests.*"
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+  "freqtrade.templates.*",
+  "tests.strategy.strats"
+]
+# Disable attr-defined check due to ta-lib not having type stubs
+disable_error_code = "attr-defined"
 
 [tool.pyright]
 include = ["freqtrade", "ft_client"]

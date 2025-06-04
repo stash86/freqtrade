@@ -81,7 +81,10 @@ class Binance(Exchange):
         :return: Proxy coin or stake currency
         """
         if self.margin_mode == MarginMode.CROSS:
-            return self._config.get("proxy_coin", self._config["stake_currency"])
+            return self._config.get(
+                "proxy_coin",
+                self._config["stake_currency"],
+            )  # type: ignore[return-value]
         return self._config["stake_currency"]
 
     def get_tickers(

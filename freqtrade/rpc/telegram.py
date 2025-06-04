@@ -1047,12 +1047,15 @@ class Telegram(RPCHandler):
         else:
             # Message to display
             if stats["closed_trade_count"] > 0:
+                fiat_closed_trades = (
+                    f"∙ `{fmt_coin(profit_closed_fiat, fiat_disp_cur)}`\n" if fiat_disp_cur else ""
+                )
                 markdown_msg = (
                     "*ROI:* Closed trades\n"
                     f"∙ `{fmt_coin(profit_closed_coin, stake_cur)} "
                     f"({profit_closed_ratio_mean:.2%}) "
                     f"({profit_closed_percent} \N{GREEK CAPITAL LETTER SIGMA}%)`\n"
-                    f"∙ `{fmt_coin(profit_closed_fiat, fiat_disp_cur)}`\n"
+                    f"{fiat_closed_trades}"
                 )
             else:
                 markdown_msg = "`No closed trade` \n"

@@ -150,13 +150,16 @@ function Test-PythonExecutable {
 function Find-PythonExecutable {
   $PythonExecutables = @(
     "python",
+    "python3.13",
     "python3.12",
     "python3.11",
     "python3.10",
     "python3",
+    "C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python313\python.exe",
     "C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python312\python.exe",
     "C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python311\python.exe",
     "C:\Users\$env:USERNAME\AppData\Local\Programs\Python\Python310\python.exe",
+    "C:\Python313\python.exe",
     "C:\Python312\python.exe",
     "C:\Python311\python.exe",
     "C:\Python310\python.exe"
