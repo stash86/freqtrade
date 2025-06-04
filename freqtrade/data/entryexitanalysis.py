@@ -331,7 +331,9 @@ def process_entry_exit_reasons(config: Config):
         exit_only = config.get("exit_only", False)
         do_rejected = config.get("analysis_rejected", False)
         to_csv = config.get("analysis_to_csv", False)
-        csv_path = Path(config.get("analysis_csv_path", config["exportfilename"]))
+        csv_path = Path(
+            config.get("analysis_csv_path", config["exportfilename"]),  # type: ignore[arg-type]
+        )
 
         if entry_only is True and exit_only is True:
             raise OperationalException(

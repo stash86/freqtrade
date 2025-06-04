@@ -101,7 +101,7 @@ class ReinforcementLearner(BaseReinforcementLearningModel):
 
         return model
 
-    MyRLEnv: type[BaseEnvironment]
+    MyRLEnv: type[BaseEnvironment]  # type: ignore[assignment, unused-ignore]
 
     class MyRLEnv(Base5ActionRLEnv):  # type: ignore[no-redef]
         """

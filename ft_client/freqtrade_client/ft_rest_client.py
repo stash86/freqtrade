@@ -268,8 +268,8 @@ class FtRestClient:
             params["limit"] = limit
         if offset:
             params["offset"] = offset
-        if order_by_id:
-            params["order_by_id"] = True
+        if not order_by_id:
+            params["order_by_id"] = False
         return self._get("trades", params)
 
     def list_open_trades_custom_data(self, key=None, limit=100, offset=0):
