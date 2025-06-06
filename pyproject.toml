@@ -30,7 +30,7 @@ classifiers = [
 
 dependencies = [
   # from requirements.txt
-  "ccxt>=4.4.60",
+  "ccxt>=4.4.87",
   "SQLAlchemy>=2.0.6",
   "python-telegram-bot>=20.1",
   "humanize>=4.0.0",
