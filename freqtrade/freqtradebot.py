@@ -1080,7 +1080,7 @@ class FreqtradeBot(LoggingMixin):
             trade.adjust_stop_loss(trade.open_rate, stoploss, initial=True)
 
         else:
-            # This is additional entry, we reset fee_open_currency so timeout checking can work
+            # This is additional entry, we reset fee_open_currency so fee checking can work
             trade.is_open = True
             trade.fee_open_currency = None
             trade.set_funding_fees(funding_fees)
@@ -2530,10 +2530,9 @@ class FreqtradeBot(LoggingMixin):
         return None
 
     def handle_order_fee(self, trade: Trade, order_obj: Order, order: CcxtOrder) -> None:
-        # Try update amount (binance-fix)
+        # Try update amount (binance-fix - but also applies to different exchanges)
         try:
-            fee_abs = self.get_real_amount(trade, order, order_obj)
-            if fee_abs is not None:
+            if (fee_abs := self.get_real_amount(trade, order, order_obj)) is not None:
                 order_obj.ft_fee_base = fee_abs
         except DependencyException as exception:
             logger.warning("Could not update trade amount: %s", exception)

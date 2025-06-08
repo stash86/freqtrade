@@ -1656,6 +1656,7 @@ class LocalTrade:
                 remaining=order.get("remaining", 0.0),
                 funding_fee=order.get("funding_fee", None),
                 ft_order_tag=order.get("ft_order_tag", None),
+                ft_fee_base=order.get("ft_fee_base", None),
             )
             trade.orders.append(order_obj)
 
@@ -1678,7 +1679,12 @@ class Trade(ModelBase, LocalTrade):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
     orders: Mapped[list[Order]] = relationship(
-        "Order", order_by="Order.id", cascade="all, delete-orphan", lazy="selectin", innerjoin=True
+        "Order",
+        order_by="Order.id",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        innerjoin=True,
+        back_populates="_trade_live",
     )
     custom_data: Mapped[list[_CustomData]] = relationship(
         "_CustomData", cascade="all, delete-orphan", lazy="raise"
