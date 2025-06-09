@@ -1018,7 +1018,17 @@ CONF_SCHEMA = {
                 },
                 "ccxt_config": {"description": "CCXT configuration settings.", "type": "object"},
                 "ccxt_async_config": {
-                    "description": "CCXT asynchronous configuration settings.",
+                    "description": (
+                        "CCXT asynchronous configuration settings."
+                        "Usually ccxt_config should be used instead."
+                    ),
+                    "type": "object",
+                },
+                "ccxt_sync_config": {
+                    "description": (
+                        "CCXT synchronous configuration settings. "
+                        "Usually ccxt_config should be used instead."
+                    ),
                     "type": "object",
                 },
             },

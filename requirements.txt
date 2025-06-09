@@ -1,12 +1,15 @@
 numpy==2.2.6
-pandas==2.2.3
+pandas==2.3.0
 bottleneck==1.4.2
 numexpr==2.10.2
+# Indicator libraries
 ft-pandas-ta==0.3.15
+ta-lib==0.5.5
+technical==1.5.1
 
-ccxt==4.4.87
+ccxt==4.4.88
 cryptography==45.0.3
-aiohttp==3.12.6
+aiohttp==3.12.11
 SQLAlchemy==2.0.41
 python-telegram-bot==22.1
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
@@ -17,8 +20,6 @@ requests==2.32.3
 urllib3==2.4.0
 certifi==2025.4.26
 jsonschema==4.24.0
-ta-lib==0.5.4
-technical==1.5.0
 tabulate==0.9.0
 pycoingecko==3.2.0
 jinja2==3.1.6

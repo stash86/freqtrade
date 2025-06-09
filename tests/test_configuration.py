@@ -1477,7 +1477,9 @@ def test_flat_vars_to_nested_dict(caplog):
     test_args = {
         "FREQTRADE__EXCHANGE__SOME_SETTING": "true",
         "FREQTRADE__EXCHANGE__SOME_FALSE_SETTING": "false",
-        "FREQTRADE__EXCHANGE__CONFIG__whatever": "sometime",
+        "FREQTRADE__EXCHANGE__CONFIG__whatEver": "sometime",  # Lowercased
+        # Preserve case for ccxt_config
+        "FREQTRADE__EXCHANGE__CCXT_CONFIG__httpsProxy": "something",
         "FREQTRADE__EXIT_PRICING__PRICE_SIDE": "bid",
         "FREQTRADE__EXIT_PRICING__cccc": "500",
         "FREQTRADE__STAKE_AMOUNT": "200.05",
@@ -1499,6 +1501,9 @@ def test_flat_vars_to_nested_dict(caplog):
         "exchange": {
             "config": {
                 "whatever": "sometime",
+            },
+            "ccxt_config": {
+                "httpsProxy": "something",
             },
             "some_setting": True,
             "some_false_setting": False,

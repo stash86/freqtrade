@@ -101,7 +101,6 @@ freqai_rl = [
   "tqdm",
 ]
 develop = [
-  "coveralls",
   "isort",
   "mypy",
   "pre-commit",

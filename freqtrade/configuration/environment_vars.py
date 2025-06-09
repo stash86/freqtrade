@@ -43,15 +43,27 @@ def _flat_vars_to_nested_dict(env_dict: dict[str, Any], prefix: str) -> dict[str
     :return: Nested dict based on available and relevant variables.
     """
     no_convert = ["CHAT_ID", "PASSWORD"]
+    ccxt_config_keys = ["ccxt_config", "ccxt_sync_config", "ccxt_async_config"]
     relevant_vars: dict[str, Any] = {}
 
     for env_var, val in sorted(env_dict.items()):
         if env_var.startswith(prefix):
             logger.info(f"Loading variable '{env_var}'")
             key = env_var.replace(prefix, "")
-            for k in reversed(key.split("__")):
+            key_parts = key.split("__")
+            logger.info("Key parts: %s", key_parts)
+
+            # Check if any ccxt config key is in the key parts
+            preserve_case = key_parts[0].lower() == "exchange" and any(
+                ccxt_key in [part.lower() for part in key_parts] for ccxt_key in ccxt_config_keys
+            )
+
+            for i, k in enumerate(reversed(key_parts)):
+                # Preserve case for the final key if ccxt config is involved
+                key_name = k if preserve_case and i == 0 else k.lower()
+
                 val = {
-                    k.lower(): (
+                    key_name: (
                         _get_var_typed(val)
                         if not isinstance(val, dict) and k not in no_convert
                         else val

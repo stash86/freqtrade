@@ -17,7 +17,7 @@ usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
                              [--export-filename PATH]
                              [--breakdown {day,week,month,year} [{day,week,month,year} ...]]
                              [--cache {none,day,week,month}]
-                             [--freqai-backtest-live-models]
+                             [--freqai-backtest-live-models] [--notes TEXT]
 
 options:
   -h, --help            show this help message and exit
@@ -73,6 +73,7 @@ options:
                         age (default: day).
   --freqai-backtest-live-models
                         Run backtest with ready models.
+  --notes TEXT          Add notes to the backtest results.
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).

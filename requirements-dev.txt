@@ -6,11 +6,10 @@
 # -r requirements-freqai-rl.txt
 -r docs/requirements-docs.txt
 
-coveralls==4.0.1
-ruff==0.11.12
+ruff==0.11.13
 mypy==1.16.0
 pre-commit==4.2.0
-pytest==8.3.5
+pytest==8.4.0
 pytest-asyncio==0.26.0
 pytest-cov==6.1.1
 pytest-mock==3.14.1

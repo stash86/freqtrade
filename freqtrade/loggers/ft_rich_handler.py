@@ -21,7 +21,9 @@ class FtRichHandler(Handler):
             msg = self.format(record)
             # Format log message
             log_time = Text(
-                datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S,%f")[:-3],
+                datetime.fromtimestamp(record.created).strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
+                if record.created
+                else "N/A",
             )
             name = Text(record.name, style="violet")
             log_level = Text(record.levelname, style=f"logging.level.{record.levelname.lower()}")
@@ -40,5 +42,8 @@ class FtRichHandler(Handler):
 
         except RecursionError:
             raise
+        except ImportError:
+            # Error when shutting down the console...
+            pass
         except Exception:
             self.handleError(record)

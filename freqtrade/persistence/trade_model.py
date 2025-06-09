@@ -114,6 +114,7 @@ class Order(ModelBase):
     order_update_date: Mapped[datetime | None] = mapped_column(nullable=True)
     funding_fee: Mapped[float | None] = mapped_column(Float(), nullable=True)
 
+    # Fee if paid in base currency
     ft_fee_base: Mapped[float | None] = mapped_column(Float(), nullable=True)
     ft_order_tag: Mapped[str | None] = mapped_column(String(CUSTOM_TAG_MAX_LENGTH), nullable=True)
 
@@ -959,6 +960,10 @@ class LocalTrade:
     ) -> None:
         """
         Update Fee parameters. Only acts once per side
+        :param fee_cost: Cost of the fee in stake currency
+        :param fee_currency: Currency the fee was paid in
+        :param fee_rate: Rate of the fee (e.g. 0.001 for 0.1%)
+        :param side: Side of the fee (buy / sell)
         """
         if self.entry_side == side and self.fee_open_currency is None:
             self.fee_open_cost = fee_cost

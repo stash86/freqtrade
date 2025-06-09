@@ -5,6 +5,8 @@ This page explains how to validate your strategy performance by using Backtestin
 Backtesting requires historic data to be available.
 To learn how to get data for the pairs and exchange you're interested in, head over to the [Data Downloading](data-download.md) section of the documentation.
 
+Backtesting is also available in [webserver mode](freq-ui.md#backtesting), which allows you to run backtests via the web interface.
+
 ## Backtesting command reference
 
 --8<-- "commands/backtesting.md"
@@ -434,6 +436,10 @@ To save time, by default backtest will reuse a cached result from within the las
 
 To further analyze your backtest results, freqtrade will export the trades to file by default.
 You can then load the trades to perform further analysis as shown in the [data analysis](strategy_analysis_example.md#load-backtest-results-to-pandas-dataframe) backtesting section.
+
+Also, you can use freqtrade in [webserver mode](freq-ui.md#backtesting) to visualize the backtest results in a web interface.
+This mode also allows you to load existing backtest results, so you can analyze them without running the backtest again.  
+For this mode - `--notes "<notes>"` can be used to add notes to the backtest results, which will be shown in the web interface.
 
 ### Backtest output file
 

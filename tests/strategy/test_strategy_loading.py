@@ -154,7 +154,7 @@ def test_strategy_can_short(caplog, default_conf):
     strat = StrategyResolver.load_strategy(default_conf)
     assert isinstance(strat, IStrategy)
     default_conf["strategy"] = "StrategyTestV3Futures"
-    with pytest.raises(ImportError, match=""):
+    with pytest.raises(ImportError, match="Short strategies cannot run in spot markets"):
         StrategyResolver.load_strategy(default_conf)
 
     default_conf["trading_mode"] = "futures"

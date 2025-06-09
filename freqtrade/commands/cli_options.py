@@ -204,6 +204,11 @@ AVAILABLE_CLI_OPTIONS = {
         help="Export backtest results (default: trades).",
         choices=constants.EXPORT_OPTIONS,
     ),
+    "backtest_notes": Arg(
+        "--notes",
+        help="Add notes to the backtest results.",
+        metavar="TEXT",
+    ),
     "exportfilename": Arg(
         "--export-filename",
         "--backtest-filename",
