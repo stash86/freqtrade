@@ -215,7 +215,6 @@ class Telegram(RPCHandler):
             r"/forceshort$",
             r"/forcesell$",
             r"/forceexit$",
-            r"/edge$",
             r"/health$",
             r"/help$",
             r"/version$",
@@ -299,7 +298,6 @@ class Telegram(RPCHandler):
             CommandHandler("blacklist", self._blacklist),
             CommandHandler(["blacklist_delete", "bl_delete"], self._blacklist_delete),
             CommandHandler("logs", self._logs),
-            CommandHandler("edge", self._edge),
             CommandHandler("health", self._health),
             CommandHandler("help", self._help),
             CommandHandler("version", self._version),
@@ -1233,10 +1231,13 @@ class Telegram(RPCHandler):
         total_stake = fmt_coin(
             result["total" if full_result else "total_bot"], result["stake"], False
         )
+        fiat_estimated_value = (
+            f"\t`{result['symbol']}: {value}`{fiat_val}\n" if result["symbol"] else ""
+        )
         output += (
             f"\n*Estimated Value{' (Bot managed assets only)' if not full_result else ''}*:\n"
             f"\t`{result['stake']}: {total_stake}`{stake_improve}\n"
-            f"\t`{result['symbol']}: {value}`{fiat_val}\n"
+            f"{fiat_estimated_value}"
         )
         await self._send_msg(
             output, reload_able=True, callback_path="update_balance", query=update.callback_query
@@ -1799,23 +1800,6 @@ class Telegram(RPCHandler):
             await self._send_msg(msgs, parse_mode=ParseMode.MARKDOWN_V2)
 
     @authorized_only
-    async def _edge(self, update: Update, context: CallbackContext) -> None:
-        """
-        Handler for /edge
-        Shows information related to Edge
-        """
-        edge_pairs = self._rpc._rpc_edge()
-        if not edge_pairs:
-            message = "<b>Edge only validated following pairs:</b>"
-            await self._send_msg(message, parse_mode=ParseMode.HTML)
-
-        for chunk in chunks(edge_pairs, 25):
-            edge_pairs_tab = tabulate(chunk, headers="keys", tablefmt="simple")
-            message = f"<b>Edge only validated following pairs:</b>\n<pre>{edge_pairs_tab}</pre>"
-
-            await self._send_msg(message, parse_mode=ParseMode.HTML)
-
-    @authorized_only
     async def _help(self, update: Update, context: CallbackContext) -> None:
         """
         Handler for /help.
@@ -1867,7 +1851,6 @@ class Telegram(RPCHandler):
             "*/balance total:* `Show account balance per currency`\n"
             "*/logs [limit]:* `Show latest logs - defaults to 10` \n"
             "*/count:* `Show number of active trades compared to allowed number of trades`\n"
-            "*/edge:* `Shows validated pairs by Edge if it is enabled` \n"
             "*/health* `Show latest process timestamp - defaults to 1970-01-01 00:00:00` \n"
             "*/marketdir [long | short | even | none]:* `Updates the user managed variable "
             "that represents the current market direction. If no direction is provided `"

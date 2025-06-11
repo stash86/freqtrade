@@ -7,7 +7,6 @@ usage: freqtrade edge [-h] [-v] [--no-color] [--logfile FILE] [-V] [-c PATH]
                       [--data-format-ohlcv {json,jsongz,feather,parquet}]
                       [--max-open-trades INT] [--stake-amount STAKE_AMOUNT]
                       [--fee FLOAT] [-p PAIRS [PAIRS ...]]
-                      [--stoplosses STOPLOSS_RANGE]
 
 options:
   -h, --help            show this help message and exit
@@ -29,11 +28,6 @@ options:
   -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
                         Limit command to these pairs. Pairs are space-
                         separated.
-  --stoplosses STOPLOSS_RANGE
-                        Defines a range of stoploss values against which edge
-                        will assess the strategy. The format is "min,max,step"
-                        (without any space). Example:
-                        `--stoplosses=-0.01,-0.1,-0.001`
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).

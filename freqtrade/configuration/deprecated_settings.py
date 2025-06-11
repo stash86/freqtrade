@@ -159,16 +159,6 @@ def process_temporary_deprecated_settings(config: Config) -> None:
     process_removed_setting(
         config, "ask_strategy", "ignore_roi_if_buy_signal", None, "ignore_roi_if_entry_signal"
     )
-    if config.get("edge", {}).get(
-        "enabled", False
-    ) and "capital_available_percentage" in config.get("edge", {}):
-        raise ConfigurationError(
-            "DEPRECATED: "
-            "Using 'edge.capital_available_percentage' has been deprecated in favor of "
-            "'tradable_balance_ratio'. Please migrate your configuration to "
-            "'tradable_balance_ratio' and remove 'capital_available_percentage' "
-            "from the edge configuration."
-        )
     if "ticker_interval" in config:
         raise ConfigurationError(
             "DEPRECATED: 'ticker_interval' detected. "

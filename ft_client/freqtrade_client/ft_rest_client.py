@@ -189,13 +189,6 @@ class FtRestClient:
         """
         return self._get("monthly", params={"timescale": months} if months else None)
 
-    def edge(self):
-        """Return information about edge.
-
-        :return: json object
-        """
-        return self._get("edge")
-
     def profit(self):
         """Return the profit summary.
 

@@ -82,7 +82,7 @@ ARGS_HYPEROPT = [
     "early_stop",
 ]
 
-ARGS_EDGE = [*ARGS_COMMON_OPTIMIZE, "stoploss_range"]
+ARGS_EDGE = [*ARGS_COMMON_OPTIMIZE]
 
 ARGS_LIST_STRATEGIES = [
     "strategy_path",
@@ -506,7 +506,9 @@ class Arguments:
 
         # Add edge subcommand
         edge_cmd = subparsers.add_parser(
-            "edge", help="Edge module.", parents=[_common_parser, _strategy_parser]
+            "edge",
+            help="Edge module. No longer part of Freqtrade",
+            parents=[_common_parser, _strategy_parser],
         )
         edge_cmd.set_defaults(func=start_edge)
         self._build_args(optionlist=ARGS_EDGE, parser=edge_cmd)

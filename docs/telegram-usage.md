@@ -188,7 +188,7 @@ You can create your own keyboard in `config.json`:
 !!! Note "Supported Commands"
     Only the following commands are allowed. Command arguments are not supported!
 
-    `/start`, `/pause`, `/stop`, `/status`, `/status table`, `/trades`, `/profit`, `/performance`, `/daily`, `/stats`, `/count`, `/locks`, `/balance`, `/stopentry`, `/reload_config`, `/show_config`, `/logs`, `/whitelist`, `/blacklist`, `/edge`, `/help`, `/version`, `/marketdir`
+    `/start`, `/pause`, `/stop`, `/status`, `/status table`, `/trades`, `/profit`, `/performance`, `/daily`, `/stats`, `/count`, `/locks`, `/balance`, `/stopentry`, `/reload_config`, `/show_config`, `/logs`, `/whitelist`, `/blacklist`, `/help`, `/version`, `/marketdir`
 
 ## Telegram commands
 
@@ -240,7 +240,6 @@ official commands. You can ask at any moment for help with `/help`.
 | `/entries` | Shows Wins / losses by Exit reason as well as Avg. holding durations for buys and sells
 | `/whitelist [sorted] [baseonly]` | Show the current whitelist. Optionally display in alphabetical order and/or with just the base currency of each pairing.
 | `/blacklist [pair]` | Show the current blacklist, or adds a pair to the blacklist.
-| `/edge` | Show validated pairs by Edge if it is enabled.
 
 ## Telegram commands in action
 
@@ -450,21 +449,6 @@ Use `/reload_config` to reset the blacklist.
 
 > Using blacklist `StaticPairList` with 2 pairs  
 >`DODGE/BTC`, `HOT/BTC`.  
-
-### /edge
-
-Shows pairs validated by Edge along with their corresponding win-rate, expectancy and stoploss values.
-
-> **Edge only validated following pairs:**
-```
-Pair        Winrate    Expectancy    Stoploss
---------  ---------  ------------  ----------
-DOCK/ETH   0.522727      0.881821       -0.03
-PHX/ETH    0.677419      0.560488       -0.03
-HOT/ETH    0.733333      0.490492       -0.03
-HC/ETH     0.588235      0.280988       -0.02
-ARDR/ETH   0.366667      0.143059       -0.01
-```
 
 ### /version
 

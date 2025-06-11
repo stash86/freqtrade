@@ -72,7 +72,6 @@ def test_FtRestClient_call_invalid(caplog):
         ("weekly", [15], {}),
         ("monthly", [], {}),
         ("monthly", [12], {}),
-        ("edge", [], {}),
         ("profit", [], {}),
         ("stats", [], {}),
         ("performance", [], {}),

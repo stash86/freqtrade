@@ -6,7 +6,6 @@ import pytest
 from numpy import isnan
 from sqlalchemy import select
 
-from freqtrade.edge import PairInfo
 from freqtrade.enums import SignalDirection, State, TradingMode
 from freqtrade.exceptions import ExchangeError, InvalidOrderException, TemporaryError
 from freqtrade.persistence import Order, Trade
@@ -1391,36 +1390,6 @@ def test_rpc_blacklist(mocker, default_conf) -> None:
     assert ret["blacklist_expanded"] == ["ETH/BTC", "XRP/BTC", "XRP/USDT"]
     assert "errors" in ret
     assert isinstance(ret["errors"], dict)
-
-
-def test_rpc_edge_disabled(mocker, default_conf) -> None:
-    mocker.patch("freqtrade.rpc.telegram.Telegram", MagicMock())
-    freqtradebot = get_patched_freqtradebot(mocker, default_conf)
-    rpc = RPC(freqtradebot)
-    with pytest.raises(RPCException, match=r"Edge is not enabled."):
-        rpc._rpc_edge()
-
-
-def test_rpc_edge_enabled(mocker, edge_conf) -> None:
-    mocker.patch("freqtrade.rpc.telegram.Telegram", MagicMock())
-    mocker.patch(
-        "freqtrade.edge.Edge._cached_pairs",
-        mocker.PropertyMock(
-            return_value={
-                "E/F": PairInfo(-0.02, 0.66, 3.71, 0.50, 1.71, 10, 60),
-            }
-        ),
-    )
-    freqtradebot = get_patched_freqtradebot(mocker, edge_conf)
-
-    rpc = RPC(freqtradebot)
-    ret = rpc._rpc_edge()
-
-    assert len(ret) == 1
-    assert ret[0]["Pair"] == "E/F"
-    assert ret[0]["Winrate"] == 0.66
-    assert ret[0]["Expectancy"] == 1.71
-    assert ret[0]["Stoploss"] == -0.02
 
 
 def test_rpc_health(mocker, default_conf) -> None:

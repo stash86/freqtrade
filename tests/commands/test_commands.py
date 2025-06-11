@@ -16,6 +16,7 @@ from freqtrade.commands import (
     start_convert_trades,
     start_create_userdir,
     start_download_data,
+    start_edge,
     start_hyperopt_list,
     start_hyperopt_show,
     start_install_ui,
@@ -1937,3 +1938,15 @@ def test_start_show_config(capsys, caplog):
     assert '"max_open_trades":' in captured.out
     assert '"secret": "REDACTED"' not in captured.out
     assert log_has_re(r"Sensitive information will be shown in the upcoming output.*", caplog)
+
+
+def test_start_edge():
+    args = [
+        "edge",
+        "--config",
+        "tests/testdata/testconfigs/main_test_config.json",
+    ]
+
+    pargs = get_args(args)
+    with pytest.raises(OperationalException, match="The Edge module has been deprecated in 2023.9"):
+        start_edge(pargs)

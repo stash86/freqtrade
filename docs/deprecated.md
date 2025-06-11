@@ -93,3 +93,8 @@ Please use the [`convert-data` subcommand](data-download.md#sub-command-convert-
 
 Configuring syslog and journald via `--logfile systemd` and `--logfile journald` respectively has been deprecated in 2025.3.
 Please use configuration based [log setup](advanced-setup.md#advanced-logging) instead.
+
+## Removal of the edge module
+
+The edge module has been deprecated in 2023.9 and removed in 2025.6.
+All functionalities of edge have been removed, and having edge configured will result in an error.

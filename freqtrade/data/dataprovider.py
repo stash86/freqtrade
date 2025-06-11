@@ -405,7 +405,7 @@ class DataProvider:
     def runmode(self) -> RunMode:
         """
         Get runmode of the bot
-        can be "live", "dry-run", "backtest", "edgecli", "hyperopt" or "other".
+        can be "live", "dry-run", "backtest", "hyperopt" or "other".
         """
         return RunMode(self._config.get("runmode", RunMode.OTHER))
 

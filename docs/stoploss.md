@@ -256,4 +256,4 @@ The new stoploss value will be applied to open trades (and corresponding log-mes
 
 ### Limitations
 
-Stoploss values cannot be changed if `trailing_stop` is enabled and the stoploss has already been adjusted, or if [Edge](edge.md) is enabled (since Edge would recalculate stoploss based on the current market situation).
+Stoploss values cannot be changed if `trailing_stop` is enabled and the stoploss has already been adjusted.

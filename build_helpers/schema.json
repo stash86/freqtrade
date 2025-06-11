@@ -538,10 +538,6 @@
       "description": "Exchange configuration.",
       "$ref": "#/definitions/exchange"
     },
-    "edge": {
-      "description": "Edge configuration.",
-      "$ref": "#/definitions/edge"
-    },
     "log_config": {
       "description": "Logging configuration.",
       "$ref": "#/definitions/logging"
@@ -1257,52 +1253,6 @@
       },
       "required": [
         "name"
-      ]
-    },
-    "edge": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "process_throttle_secs": {
-          "type": "integer",
-          "minimum": 600
-        },
-        "calculate_since_number_of_days": {
-          "type": "integer"
-        },
-        "allowed_risk": {
-          "type": "number"
-        },
-        "stoploss_range_min": {
-          "type": "number"
-        },
-        "stoploss_range_max": {
-          "type": "number"
-        },
-        "stoploss_range_step": {
-          "type": "number"
-        },
-        "minimum_winrate": {
-          "type": "number"
-        },
-        "minimum_expectancy": {
-          "type": "number"
-        },
-        "min_trade_number": {
-          "type": "number"
-        },
-        "max_trade_duration_minute": {
-          "type": "integer"
-        },
-        "remove_pumps": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "process_throttle_secs",
-        "allowed_risk"
       ]
     },
     "logging": {

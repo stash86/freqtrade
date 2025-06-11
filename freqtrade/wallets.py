@@ -362,7 +362,7 @@ class Wallets:
         return max(stake_amount, 0)
 
     def get_trade_stake_amount(
-        self, pair: str, max_open_trades: IntOrInf, edge=None, update: bool = True
+        self, pair: str, max_open_trades: IntOrInf, update: bool = True
     ) -> float:
         """
         Calculate stake amount for the trade
@@ -376,19 +376,11 @@ class Wallets:
         val_tied_up = Trade.total_open_trades_stakes()
         available_amount = self.get_available_stake_amount()
 
-        if edge:
-            stake_amount = edge.stake_amount(
-                pair,
-                self.get_free(self._stake_currency),
-                self.get_total(self._stake_currency),
-                val_tied_up,
+        stake_amount = self._config["stake_amount"]
+        if stake_amount == UNLIMITED_STAKE_AMOUNT:
+            stake_amount = self._calculate_unlimited_stake_amount(
+                available_amount, val_tied_up, max_open_trades
             )
-        else:
-            stake_amount = self._config["stake_amount"]
-            if stake_amount == UNLIMITED_STAKE_AMOUNT:
-                stake_amount = self._calculate_unlimited_stake_amount(
-                    available_amount, val_tied_up, max_open_trades
-                )
 
         return self._check_available_stake_amount(stake_amount, available_amount)
 

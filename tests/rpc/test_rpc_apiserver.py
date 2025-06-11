@@ -1167,21 +1167,6 @@ def test_api_logs(botclient):
     assert len(rc1.json()["logs"]) == rc1.json()["log_count"]
 
 
-def test_api_edge_disabled(botclient, mocker, ticker, fee, markets):
-    ftbot, client = botclient
-    patch_get_signal(ftbot)
-    mocker.patch.multiple(
-        EXMS,
-        get_balances=MagicMock(return_value=ticker),
-        fetch_ticker=ticker,
-        get_fee=fee,
-        markets=PropertyMock(return_value=markets),
-    )
-    rc = client_get(client, f"{BASE_URI}/edge")
-    assert_response(rc, 502)
-    assert rc.json() == {"error": "Error querying /api/v1/edge: Edge is not enabled."}
-
-
 @pytest.mark.parametrize(
     "is_short,expected",
     [

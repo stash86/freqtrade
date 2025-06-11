@@ -61,7 +61,7 @@ class PairListManager(LoggingMixin):
         LoggingMixin.__init__(self, logger, refresh_period)
 
     def _check_backtest(self) -> None:
-        if self._config["runmode"] not in (RunMode.BACKTEST, RunMode.EDGE, RunMode.HYPEROPT):
+        if self._config["runmode"] not in (RunMode.BACKTEST, RunMode.HYPEROPT):
             return
 
         pairlist_errors: list[str] = []

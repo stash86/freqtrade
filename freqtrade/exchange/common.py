@@ -107,7 +107,7 @@ EXCHANGE_HAS_OPTIONAL = [
 def remove_exchange_credentials(exchange_config: ExchangeConfig, dry_run: bool) -> None:
     """
     Removes exchange keys from the configuration and specifies dry-run
-    Used for backtesting / hyperopt / edge and utils.
+    Used for backtesting / hyperopt and utils.
     Modifies the input dict!
     """
     if dry_run:

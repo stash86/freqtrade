@@ -16,7 +16,6 @@ from tests.conftest import (
     get_patched_freqtradebot,
     log_has,
     log_has_re,
-    patch_edge,
     patch_exchange,
     patch_get_signal,
     patch_whitelist,
@@ -969,128 +968,6 @@ def test_handle_stoploss_on_exchange_custom_stop(
         f"{EXMS}.fetch_ticker", MagicMock(return_value={"bid": 4.17, "ask": 4.19, "last": 4.17})
     )
     assert freqtrade.handle_trade(trade) is True
-
-
-def test_tsl_on_exchange_compatible_with_edge(mocker, edge_conf, fee, limit_order) -> None:
-    enter_order = limit_order["buy"]
-    exit_order = limit_order["sell"]
-    enter_order["average"] = 2.19
-    # When trailing stoploss is set
-    stoploss = MagicMock(return_value={"id": "13434334", "status": "open"})
-    patch_RPCManager(mocker)
-    patch_exchange(mocker)
-    patch_edge(mocker)
-    edge_conf["max_open_trades"] = float("inf")
-    edge_conf["dry_run_wallet"] = 999.9
-    edge_conf["exchange"]["name"] = "binance"
-    mocker.patch.multiple(
-        EXMS,
-        fetch_ticker=MagicMock(return_value={"bid": 2.19, "ask": 2.2, "last": 2.19}),
-        create_order=MagicMock(
-            side_effect=[
-                enter_order,
-                exit_order,
-            ]
-        ),
-        get_fee=fee,
-        create_stoploss=stoploss,
-    )
-
-    # enabling TSL
-    edge_conf["trailing_stop"] = True
-    edge_conf["trailing_stop_positive"] = 0.01
-    edge_conf["trailing_stop_positive_offset"] = 0.011
-
-    # disabling ROI
-    edge_conf["minimal_roi"]["0"] = 999999999
-
-    freqtrade = FreqtradeBot(edge_conf)
-
-    # enabling stoploss on exchange
-    freqtrade.strategy.order_types["stoploss_on_exchange"] = True
-
-    # setting stoploss
-    freqtrade.strategy.stoploss = -0.02
-
-    # setting stoploss_on_exchange_interval to 0 seconds
-    freqtrade.strategy.order_types["stoploss_on_exchange_interval"] = 0
-
-    patch_get_signal(freqtrade)
-
-    freqtrade.active_pair_whitelist = freqtrade.edge.adjust(freqtrade.active_pair_whitelist)
-
-    freqtrade.enter_positions()
-    trade = Trade.session.scalars(select(Trade)).first()
-    trade.is_open = True
-
-    trade.stoploss_last_update = dt_now()
-    trade.orders.append(
-        Order(
-            ft_order_side="stoploss",
-            ft_pair=trade.pair,
-            ft_is_open=True,
-            ft_amount=trade.amount,
-            ft_price=trade.stop_loss,
-            order_id="100",
-        )
-    )
-
-    stoploss_order_hanging = MagicMock(
-        return_value={
-            "id": "100",
-            "status": "open",
-            "type": "stop_loss_limit",
-            "price": 3,
-            "average": 2,
-            "stopPrice": "2.178",
-        }
-    )
-
-    mocker.patch(f"{EXMS}.fetch_stoploss_order", stoploss_order_hanging)
-
-    # stoploss initially at 20% as edge dictated it.
-    assert freqtrade.handle_trade(trade) is False
-    assert freqtrade.handle_stoploss_on_exchange(trade) is False
-    assert pytest.approx(trade.stop_loss) == 1.76
-
-    cancel_order_mock = MagicMock()
-    stoploss_order_mock = MagicMock()
-    mocker.patch(f"{EXMS}.cancel_stoploss_order", cancel_order_mock)
-    mocker.patch(f"{EXMS}.create_stoploss", stoploss_order_mock)
-
-    # price goes down 5%
-    mocker.patch(
-        f"{EXMS}.fetch_ticker",
-        MagicMock(return_value={"bid": 2.19 * 0.95, "ask": 2.2 * 0.95, "last": 2.19 * 0.95}),
-    )
-    assert freqtrade.handle_trade(trade) is False
-    assert freqtrade.handle_stoploss_on_exchange(trade) is False
-
-    # stoploss should remain the same
-    assert pytest.approx(trade.stop_loss) == 1.76
-
-    # stoploss on exchange should not be canceled
-    cancel_order_mock.assert_not_called()
-
-    # price jumped 2x
-    mocker.patch(
-        f"{EXMS}.fetch_ticker", MagicMock(return_value={"bid": 4.38, "ask": 4.4, "last": 4.38})
-    )
-
-    assert freqtrade.handle_trade(trade) is False
-    assert freqtrade.handle_stoploss_on_exchange(trade) is False
-
-    # stoploss should be set to 1% as trailing is on
-    assert trade.stop_loss == 4.4 * 0.99
-    cancel_order_mock.assert_called_once_with("100", "NEO/BTC")
-    stoploss_order_mock.assert_called_once_with(
-        amount=30,
-        pair="NEO/BTC",
-        order_types=freqtrade.strategy.order_types,
-        stop_price=4.4 * 0.99,
-        side="sell",
-        leverage=1.0,
-    )
 
 
 @pytest.mark.parametrize("is_short", [False, True])

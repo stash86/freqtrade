@@ -21,7 +21,6 @@ from telegram.error import BadRequest, NetworkError, TelegramError
 
 from freqtrade import __version__
 from freqtrade.constants import CANCEL_REASON
-from freqtrade.edge import PairInfo
 from freqtrade.enums import (
     ExitType,
     MarketDirection,
@@ -171,7 +170,7 @@ def test_telegram_init(default_conf, mocker, caplog) -> None:
         "['reload_conf', 'reload_config'], ['show_conf', 'show_config'], "
         "['pause', 'stopbuy', 'stopentry'], ['whitelist'], ['blacklist'], "
         "['bl_delete', 'blacklist_delete'], "
-        "['logs'], ['edge'], ['health'], ['help'], ['version'], ['marketdir'], "
+        "['logs'], ['health'], ['help'], ['version'], ['marketdir'], "
         "['order'], ['list_custom_data'], ['tg_info']]"
     )
 
@@ -1950,40 +1949,6 @@ async def test_telegram_logs(default_conf, update, mocker) -> None:
     # Called at least 2 times. Exact times will change with unrelated changes to setup messages
     # Therefore we don't test for this explicitly.
     assert msg_mock.call_count >= 2
-
-
-async def test_edge_disabled(default_conf, update, mocker) -> None:
-    telegram, _, msg_mock = get_telegram_testobject(mocker, default_conf)
-
-    await telegram._edge(update=update, context=MagicMock())
-    assert msg_mock.call_count == 1
-    assert "Edge is not enabled." in msg_mock.call_args_list[0][0][0]
-
-
-async def test_edge_enabled(edge_conf, update, mocker) -> None:
-    mocker.patch(
-        "freqtrade.edge.Edge._cached_pairs",
-        mocker.PropertyMock(
-            return_value={
-                "E/F": PairInfo(-0.01, 0.66, 3.71, 0.50, 1.71, 10, 60),
-            }
-        ),
-    )
-
-    telegram, _, msg_mock = get_telegram_testobject(mocker, edge_conf)
-
-    await telegram._edge(update=update, context=MagicMock())
-    assert msg_mock.call_count == 1
-    assert "<b>Edge only validated following pairs:</b>\n<pre>" in msg_mock.call_args_list[0][0][0]
-    assert "Pair      Winrate    Expectancy    Stoploss" in msg_mock.call_args_list[0][0][0]
-
-    msg_mock.reset_mock()
-
-    mocker.patch("freqtrade.edge.Edge._cached_pairs", mocker.PropertyMock(return_value={}))
-    await telegram._edge(update=update, context=MagicMock())
-    assert msg_mock.call_count == 1
-    assert "<b>Edge only validated following pairs:</b>" in msg_mock.call_args_list[0][0][0]
-    assert "Winrate" not in msg_mock.call_args_list[0][0][0]
 
 
 @pytest.mark.parametrize(

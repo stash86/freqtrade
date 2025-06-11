@@ -300,12 +300,6 @@ def list_custom_data(trade_id: int, key: str | None = Query(None), rpc: RPC = De
         raise HTTPException(status_code=404, detail=str(e))
 
 
-# TODO: Missing response model
-@router.get("/edge", tags=["info"])
-def edge(rpc: RPC = Depends(get_rpc)):
-    return rpc._rpc_edge()
-
-
 @router.get("/show_config", response_model=ShowConfig, tags=["info"])
 def show_config(rpc: RPC | None = Depends(get_rpc_optional), config=Depends(get_config)):
     state: State | str = ""

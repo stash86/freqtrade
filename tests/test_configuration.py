@@ -756,27 +756,6 @@ def test_validate_tsl(default_conf):
         validate_config_consistency(default_conf)
 
 
-def test_validate_edge2(edge_conf):
-    edge_conf.update(
-        {
-            "use_exit_signal": True,
-        }
-    )
-    # Passes test
-    validate_config_consistency(edge_conf)
-
-    edge_conf.update(
-        {
-            "use_exit_signal": False,
-        }
-    )
-    with pytest.raises(
-        OperationalException,
-        match="Edge requires `use_exit_signal` to be True, otherwise no sells will happen.",
-    ):
-        validate_config_consistency(edge_conf)
-
-
 def test_validate_whitelist(default_conf):
     default_conf["runmode"] = RunMode.DRY_RUN
     # Test regular case - has whitelist and uses StaticPairlist
@@ -1062,6 +1041,17 @@ def test__validate_orderflow(default_conf) -> None:
     validate_config_consistency(conf)
 
 
+def test_validate_edge_removal(default_conf):
+    default_conf["edge"] = {
+        "enabled": True,
+    }
+    with pytest.raises(
+        ConfigurationError,
+        match="Edge is no longer supported and has been removed from Freqtrade with 2025.6.",
+    ):
+        validate_config_consistency(default_conf)
+
+
 def test_load_config_test_comments() -> None:
     """
     Load config with comments
@@ -1313,23 +1303,6 @@ def test_process_removed_settings(mocker, default_conf, setting):
     # New and deprecated settings are conflicting ones
     with pytest.raises(OperationalException, match=r"Setting .* has been moved"):
         process_temporary_deprecated_settings(default_conf)
-
-
-def test_process_deprecated_setting_edge(mocker, edge_conf):
-    patched_configuration_load_config_file(mocker, edge_conf)
-    edge_conf.update(
-        {
-            "edge": {
-                "enabled": True,
-                "capital_available_percentage": 0.5,
-            }
-        }
-    )
-
-    with pytest.raises(
-        OperationalException, match=r"DEPRECATED.*Using 'edge.capital_available_percentage'*"
-    ):
-        process_temporary_deprecated_settings(edge_conf)
 
 
 def test_check_conflicting_settings(mocker, default_conf, caplog):

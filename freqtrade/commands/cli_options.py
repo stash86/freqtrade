@@ -240,13 +240,6 @@ AVAILABLE_CLI_OPTIONS = {
         default=constants.BACKTEST_CACHE_DEFAULT,
         choices=constants.BACKTEST_CACHE_AGE,
     ),
-    # Edge
-    "stoploss_range": Arg(
-        "--stoplosses",
-        help="Defines a range of stoploss values against which edge will assess the strategy. "
-        'The format is "min,max,step" (without any space). '
-        "Example: `--stoplosses=-0.01,-0.1,-0.001`",
-    ),
     # Hyperopt
     "hyperopt": Arg(
         "--hyperopt",

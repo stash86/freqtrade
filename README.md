@@ -70,7 +70,6 @@ Please find the complete documentation on the [freqtrade website](https://www.fr
 - [x] **Backtesting**: Run a simulation of your buy/sell strategy.
 - [x] **Strategy Optimization by machine learning**: Use machine learning to optimize your buy/sell strategy parameters with real exchange data.
 - [X] **Adaptive prediction modeling**: Build a smart strategy with FreqAI that self-trains to the market via adaptive machine learning methods. [Learn more](https://www.freqtrade.io/en/stable/freqai/)
-- [x] **Edge position sizing** Calculate your win rate, risk reward ratio, the best stoploss and adjust your position size before taking a position for each specific market. [Learn more](https://www.freqtrade.io/en/stable/edge/).
 - [x] **Whitelist crypto-currencies**: Select which crypto-currency you want to trade or use dynamic whitelists.
 - [x] **Blacklist crypto-currencies**: Select which crypto-currency you want to avoid.
 - [x] **Builtin WebUI**: Builtin web UI to manage your bot.
@@ -112,7 +111,6 @@ positional arguments:
     backtesting-show    Show past Backtest results
     backtesting-analysis
                         Backtest Analysis module.
-    edge                Edge module.
     hyperopt            Hyperopt module.
     hyperopt-list       List Hyperopt results
     hyperopt-show       Show details of Hyperopt results

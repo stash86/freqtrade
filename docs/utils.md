@@ -1,6 +1,6 @@
 # Utility Subcommands
 
-Besides the Live-Trade and Dry-Run run modes, the `backtesting`, `edge` and `hyperopt` optimization subcommands, and the `download-data` subcommand which prepares historical data, the bot contains a number of utility subcommands. They are described in this section.
+Besides the Live-Trade and Dry-Run run modes, the `backtesting` and `hyperopt` optimization subcommands, and the `download-data` subcommand which prepares historical data, the bot contains a number of utility subcommands. They are described in this section.
 
 ## Create userdir
 

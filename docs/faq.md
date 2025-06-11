@@ -276,20 +276,6 @@ Example: 4% profit 650 times vs 0,3% profit a trade 10000 times in a year. If we
 Example:
 `freqtrade --config config.json --strategy SampleStrategy --hyperopt SampleHyperopt -e 1000 --timerange 20190601-20200601`
 
-## Edge module
-
-### Edge implements interesting approach for controlling position size, is there any theory behind it?
-
-The Edge module is mostly a result of brainstorming of [@mishaker](https://github.com/mishaker) and [@creslinux](https://github.com/creslinux) freqtrade team members.
-
-You can find further info on expectancy, win rate, risk management and position size in the following sources:
-
-- https://www.tradeciety.com/ultimate-math-guide-for-traders/
-- https://samuraitradingacademy.com/trading-expectancy/
-- https://www.learningmarkets.com/determining-expectancy-in-your-trading/
-- https://www.lonestocktrader.com/make-money-trading-positive-expectancy/
-- https://www.babypips.com/trading/trade-expectancy-matter
-
 ## Official channels
 
 Freqtrade is using exclusively the following official channels:

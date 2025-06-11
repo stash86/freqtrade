@@ -129,15 +129,10 @@ def start_edge(args: dict[str, Any]) -> None:
     :param args: Cli args from Arguments()
     :return: None
     """
-    from freqtrade.optimize.edge_cli import EdgeCli
-
-    # Initialize configuration
-    config = setup_optimize_configuration(args, RunMode.EDGE)
-    logger.info("Starting freqtrade in Edge mode")
-
-    # Initialize Edge object
-    edge_cli = EdgeCli(config)
-    edge_cli.start()
+    raise ConfigurationError(
+        "The Edge module has been deprecated in 2023.9 and removed in 2025.6. "
+        "All functionalities of edge have been removed."
+    )
 
 
 def start_lookahead_analysis(args: dict[str, Any]) -> None:

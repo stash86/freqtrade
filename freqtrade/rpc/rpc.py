@@ -1365,12 +1365,6 @@ class RPC:
 
         return {"log_count": len(records), "logs": records}
 
-    def _rpc_edge(self) -> list[dict[str, Any]]:
-        """Returns information related to Edge"""
-        if not self._freqtrade.edge:
-            raise RPCException("Edge is not enabled.")
-        return self._freqtrade.edge.accepted_pairs()
-
     @staticmethod
     def _convert_dataframe_to_dict(
         strategy: str,

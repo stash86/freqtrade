@@ -190,9 +190,6 @@ delete_trade
 
         :param trade_id: Deletes the trade with this ID from the database.
 
-edge
-	Return information about edge.
-
 forcebuy
 	Buy an asset.
 
@@ -368,7 +365,6 @@ All endpoints in the below table need to be prefixed with the base URL of the AP
 | `/blacklist` | GET | Show the current blacklist.
 | `/blacklist` | POST | Adds the specified pair to the blacklist.<br/>*Params:*<br/>- `pair` (`str`)
 | `/blacklist` | DELETE | Deletes the specified list of pairs from the blacklist.<br/>*Params:*<br/>- `[pair,pair]` (`list[str]`) 
-| `/edge` | GET | Show validated pairs by Edge if it is enabled.
 | `/pair_candles` | GET | Returns dataframe for a pair / timeframe combination while the bot is running. **Alpha**
 | `/pair_candles` | POST | Returns dataframe for a pair / timeframe combination while the bot is running, filtered by a provided list of columns to return. **Alpha**<br/>*Params:*<br/>- `<column_list>` (`list[str]`)
 | `/pair_history` | GET | Returns an analyzed dataframe for a given timerange, analyzed by a given strategy. **Alpha**

@@ -43,7 +43,6 @@ from tests.conftest import (
     get_patched_worker,
     log_has,
     log_has_re,
-    patch_edge,
     patch_exchange,
     patch_get_signal,
     patch_wallet,
@@ -253,92 +252,6 @@ def test_check_available_stake_amount(
                 freqtrade.wallets.get_trade_stake_amount("ETH/USDT", 1)
 
 
-def test_edge_called_in_process(mocker, edge_conf) -> None:
-    patch_RPCManager(mocker)
-    patch_edge(mocker)
-
-    patch_exchange(mocker)
-    freqtrade = FreqtradeBot(edge_conf)
-    patch_get_signal(freqtrade)
-    freqtrade.process()
-    assert freqtrade.active_pair_whitelist == ["NEO/BTC", "LTC/BTC"]
-
-
-def test_edge_overrides_stake_amount(mocker, edge_conf) -> None:
-    patch_RPCManager(mocker)
-    patch_exchange(mocker)
-    patch_edge(mocker)
-    edge_conf["dry_run_wallet"] = 999.9
-    freqtrade = FreqtradeBot(edge_conf)
-
-    assert (
-        freqtrade.wallets.get_trade_stake_amount("NEO/BTC", 1, freqtrade.edge)
-        == (999.9 * 0.5 * 0.01) / 0.20
-    )
-    assert (
-        freqtrade.wallets.get_trade_stake_amount("LTC/BTC", 1, freqtrade.edge)
-        == (999.9 * 0.5 * 0.01) / 0.21
-    )
-
-
-@pytest.mark.parametrize(
-    "buy_price_mult,ignore_strat_sl",
-    [
-        (0.79, False),  # Override stoploss
-        (0.85, True),  # Override strategy stoploss
-    ],
-)
-def test_edge_overrides_stoploss(
-    limit_order, fee, caplog, mocker, buy_price_mult, ignore_strat_sl, edge_conf
-) -> None:
-    patch_RPCManager(mocker)
-    patch_exchange(mocker)
-    patch_edge(mocker)
-    edge_conf["max_open_trades"] = float("inf")
-
-    # Strategy stoploss is -0.1 but Edge imposes a stoploss at -0.2
-    # Thus, if price falls 21%, stoploss should be triggered
-    #
-    # mocking the ticker: price is falling ...
-    enter_price = limit_order["buy"]["price"]
-    ticker_val = {
-        "bid": enter_price,
-        "ask": enter_price,
-        "last": enter_price,
-    }
-    mocker.patch.multiple(
-        EXMS,
-        fetch_ticker=MagicMock(return_value=ticker_val),
-        get_fee=fee,
-    )
-    #############################################
-
-    # Create a trade with "limit_buy_order_usdt" price
-    freqtrade = FreqtradeBot(edge_conf)
-    freqtrade.active_pair_whitelist = ["NEO/BTC"]
-    patch_get_signal(freqtrade)
-    freqtrade.strategy.min_roi_reached = MagicMock(return_value=False)
-    freqtrade.enter_positions()
-    trade = Trade.session.scalars(select(Trade)).first()
-    caplog.clear()
-    #############################################
-    ticker_val.update(
-        {
-            "bid": enter_price * buy_price_mult,
-            "ask": enter_price * buy_price_mult,
-            "last": enter_price * buy_price_mult,
-        }
-    )
-
-    # stoploss should be hit
-    assert freqtrade.handle_trade(trade) is not ignore_strat_sl
-    if not ignore_strat_sl:
-        assert log_has_re("Exit for NEO/BTC detected. Reason: stop_loss.*", caplog)
-        assert trade.exit_reason == ExitType.STOP_LOSS.value
-        # Test compatibility ...
-        assert trade.sell_reason == ExitType.STOP_LOSS.value
-
-
 def test_total_open_trades_stakes(mocker, default_conf_usdt, ticker_usdt, fee) -> None:
     patch_RPCManager(mocker)
     patch_exchange(mocker)
@@ -483,7 +396,7 @@ def test_create_trade_minimal_amount(
         if not max_open_trades:
             assert (
                 freqtrade.wallets.get_trade_stake_amount(
-                    "ETH/USDT", default_conf_usdt["max_open_trades"], freqtrade.edge
+                    "ETH/USDT", default_conf_usdt["max_open_trades"]
                 )
                 == 0
             )
@@ -4479,7 +4392,7 @@ def test_startup_state(default_conf_usdt, mocker):
     assert worker.freqtrade.state is State.RUNNING
 
 
-def test_startup_trade_reinit(default_conf_usdt, edge_conf, mocker):
+def test_startup_trade_reinit(default_conf_usdt, mocker):
     mocker.patch(f"{EXMS}.exchange_has", MagicMock(return_value=True))
     reinit_mock = MagicMock()
     mocker.patch("freqtrade.persistence.Trade.stoploss_reinitialization", reinit_mock)
@@ -4487,12 +4400,6 @@ def test_startup_trade_reinit(default_conf_usdt, edge_conf, mocker):
     ftbot = get_patched_freqtradebot(mocker, default_conf_usdt)
     ftbot.startup()
     assert reinit_mock.call_count == 1
-
-    reinit_mock.reset_mock()
-
-    ftbot = get_patched_freqtradebot(mocker, edge_conf)
-    ftbot.startup()
-    assert reinit_mock.call_count == 0
 
 
 @pytest.mark.usefixtures("init_persistence")
