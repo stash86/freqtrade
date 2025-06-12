@@ -1,0 +1,9 @@
+{
+    "pairlists": [
+        {
+            "method": "ProducerPairList",
+            "producer_name": "pairlist",
+        },
+        {"method": "FullTradesFilter"},
+    ],
+}
