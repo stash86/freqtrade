@@ -1,0 +1,31 @@
+{
+    "exchange": {
+        "pair_whitelist": [
+            "BTC/USDC:USDC", "ETH/USDC:USDC", "BNB/USDC:USDC", "SOL/USDC:USDC", "XRP/USDC:USDC", "ADA/USDC:USDC", 
+            "AVAX/USDC:USDC", "LINK/USDC:USDC", "TRX/USDC:USDC", "DOT/USDC:USDC", "ICP/USDC:USDC", 
+            "LTC/USDC:USDC", "UNI/USDC:USDC", "BCH/USDC:USDC", "ETC/USDC:USDC", "ATOM/USDC:USDC", "OP/USDC:USDC", 
+            "XLM/USDC:USDC", "IMX/USDC:USDC", "SUI/USDC:USDC", "TON/USDC:USDC", "HBAR/USDC:USDC", "NEAR/USDC:USDC", 
+            "APT/USDC:USDC", "XMR/USDC:USDC", "VET/USDC:USDC", "OM/USDC:USDC", "ALGO/USDC:USDC", "KAS/USDC:USDC", 
+            "TAO/USDC:USDC", "FIL/USDC:USDC", "TIA/USDC:USDC", "INJ/USDC:USDC", "THETA/USDC:USDC", "SEI/USDC:USDC", 
+            "GALA/USDC:USDC", "KAIA/USDC:USDC", "XTZ/USDC:USDC", "IOTA/USDC:USDC", "FLOW/USDC:USDC", "AR/USDC:USDC", 
+            "EGLD/USDC:USDC", "DYDX/USDC:USDC", "CHZ/USDC:USDC", "KAVA/USDC:USDC", "ROSE/USDC:USDC", "ASTR/USDC:USDC", 
+            "FET/USDC:USDC", "STX/USDC:USDC", "ARB/USDC:USDC","FTM/USDC:USDC",
+            "S/USDC:USDC", "ONDO/USDC:USDC"
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {"method": "StaticPairList"},
+        {
+            "method": "VolumePairList",
+            "number_assets": 45,
+            "sort_key": "quoteVolume",
+        },
+        {
+            "method": "OffsetFilter",
+            "offset": 0,
+            "number_assets": 15
+        },
+        {"method": "FullTradesFilter"},
+    ],
+}
