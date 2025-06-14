@@ -4,7 +4,7 @@
             "enableRateLimit": false,
             "urls": {
                 "api": {
-                    "fapiPublic": "http://binance_proxy_futures:8091/fapi/v1"
+                    "fapiPublic": "http://binance_proxy:8091/fapi/v1"
                 }
             }
         },
