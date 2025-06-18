@@ -1701,9 +1701,12 @@ class Trade(ModelBase, LocalTrade):
     stake_currency: Mapped[str | None] = mapped_column(String(25), nullable=True)
     is_open: Mapped[bool] = mapped_column(nullable=False, default=True, index=True)
     fee_open: Mapped[float] = mapped_column(Float(), nullable=False, default=0.0)
+    # Fee cost in quote currency for entry the trade
     fee_open_cost: Mapped[float | None] = mapped_column(Float(), nullable=True)
+    # Currency the fee was paid in. Has no relation to fee_open_cost.
     fee_open_currency: Mapped[str | None] = mapped_column(String(25), nullable=True)
     fee_close: Mapped[float | None] = mapped_column(Float(), nullable=False, default=0.0)
+    # Fee cost in quote currency for exit orders
     fee_close_cost: Mapped[float | None] = mapped_column(Float(), nullable=True)
     fee_close_currency: Mapped[str | None] = mapped_column(String(25), nullable=True)
     open_rate: Mapped[float] = mapped_column(Float())

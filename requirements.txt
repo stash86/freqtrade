@@ -1,15 +1,15 @@
 numpy==2.2.6
 pandas==2.3.0
-bottleneck==1.4.2
-numexpr==2.10.2
+bottleneck==1.5.0
+numexpr==2.11.0
 # Indicator libraries
 ft-pandas-ta==0.3.15
 ta-lib==0.5.5
 technical==1.5.1
 
-ccxt==4.4.88
-cryptography==45.0.3
-aiohttp==3.12.11
+ccxt==4.4.89
+cryptography==45.0.4
+aiohttp==3.12.13
 SQLAlchemy==2.0.41
 python-telegram-bot==22.1
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
@@ -18,7 +18,7 @@ humanize==4.12.3
 cachetools==6.0.0
 requests==2.32.4
 urllib3==2.4.0
-certifi==2025.4.26
+certifi==2025.6.15
 jsonschema==4.24.0
 tabulate==0.9.0
 pycoingecko==3.2.0
@@ -26,9 +26,6 @@ jinja2==3.1.6
 joblib==1.5.1
 rich==14.0.0
 pyarrow==20.0.0; platform_machine != 'armv7l'
-
-# find first, C search in arrays
-py_find_1st==1.1.7
 
 # Load ticker files 30% faster
 python-rapidjson==1.20
@@ -40,7 +37,7 @@ sdnotify==0.3.2
 
 # API Server
 fastapi==0.115.12
-pydantic==2.11.5
+pydantic==2.11.7
 uvicorn==0.34.3
 pyjwt==2.10.1
 aiofiles==24.1.0

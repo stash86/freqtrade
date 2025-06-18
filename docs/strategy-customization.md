@@ -1068,7 +1068,7 @@ To verify if a pair is currently locked, use `self.is_pair_locked(pair)`.
 ``` python
 from freqtrade.persistence import Trade
 from datetime import timedelta, datetime, timezone
-# Put the above lines a the top of the strategy file, next to all the other imports
+# Put the above lines at the top of the strategy file, next to all the other imports
 # --------
 
 # Within populate indicators (or populate_entry_trend):

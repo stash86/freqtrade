@@ -1064,9 +1064,7 @@ class FreqtradeBot(LoggingMixin):
             trade.adjust_stop_loss(trade.open_rate, stoploss, initial=True)
 
         else:
-            # This is additional entry, we reset fee_open_currency so fee checking can work
             trade.is_open = True
-            trade.fee_open_currency = None
             trade.set_funding_fees(funding_fees)
 
         trade.orders.append(order_obj)
@@ -1317,6 +1315,7 @@ class FreqtradeBot(LoggingMixin):
             if (
                 not trade.has_open_orders
                 and not trade.has_open_sl_orders
+                and trade.fee_open_currency is not None
                 and not self.wallets.check_exit_amount(trade)
             ):
                 logger.warning(
@@ -2399,6 +2398,10 @@ class FreqtradeBot(LoggingMixin):
             # If a entry order was closed, force update on stoploss on exchange
             if order.ft_order_side == trade.entry_side:
                 if send_msg:
+                    if trade.nr_of_successful_entries > 1:
+                        # Reset fee_open_currency so fee checking can work
+                        # Only necessary for additional entries
+                        trade.fee_open_currency = None
                     # Don't cancel stoploss in recovery modes immediately
                     trade = self.cancel_stoploss_on_exchange(trade)
                 trade.adjust_stop_loss(trade.open_rate, self.strategy.stoploss, initial=True)
@@ -2523,9 +2526,8 @@ class FreqtradeBot(LoggingMixin):
         order_amount = safe_value_fallback(order, "filled", "amount")
         # Only run for closed orders
         if (
-            trade.fee_updated(order.get("side", ""))
-            or order["status"] == "open"
-            or order_obj.ft_fee_base
+            trade.fee_updated(order.get("side", "")) or order["status"] == "open"
+            # or order_obj.ft_fee_base
         ):
             return None
 
