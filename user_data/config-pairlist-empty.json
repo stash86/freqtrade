@@ -4,4 +4,8 @@
             "method": "StaticPairList"
         },
     ],
+    "exchange": {
+        "pair_whitelist": [],
+        "pair_blacklist": []
+    },
 }
