@@ -5,7 +5,9 @@
         },
     ],
     "exchange": {
-        "pair_whitelist": [],
+        "pair_whitelist": [
+            "BTC/USDT:USDT"
+        ],
         "pair_blacklist": []
     },
 }
