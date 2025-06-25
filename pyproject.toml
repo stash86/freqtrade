@@ -290,6 +290,7 @@ extend-ignore = [
   "RUF010",  # Use explicit conversion flag
   "RUF012",  # mutable-class-default
   "RUF022",  # unsorted-dunder-all
+  "RUF005",  # list concatenation
 ]
 
 [tool.ruff.lint.mccabe]

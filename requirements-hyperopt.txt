@@ -5,5 +5,5 @@
 scipy==1.15.3
 scikit-learn==1.7.0
 filelock==3.18.0
-optuna==4.3.0
+optuna==4.4.0
 cmaes==0.11.1

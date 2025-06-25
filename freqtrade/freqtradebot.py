@@ -14,7 +14,7 @@ from typing import Any
 from schedule import Scheduler
 
 from freqtrade import constants
-from freqtrade.configuration import validate_config_consistency
+from freqtrade.configuration import remove_exchange_credentials, validate_config_consistency
 from freqtrade.constants import BuySell, Config, EntryExecuteMode, ExchangeConfig, LongShort
 from freqtrade.data.converter import order_book_to_dataframe
 from freqtrade.data.dataprovider import DataProvider
@@ -37,7 +37,6 @@ from freqtrade.exceptions import (
 from freqtrade.exchange import (
     ROUND_DOWN,
     ROUND_UP,
-    remove_exchange_credentials,
     timeframe_to_minutes,
     timeframe_to_next_date,
     timeframe_to_seconds,

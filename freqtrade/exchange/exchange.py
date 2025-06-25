@@ -21,6 +21,7 @@ from ccxt import TICK_SIZE
 from dateutil import parser
 from pandas import DataFrame, concat
 
+from freqtrade.configuration import remove_exchange_credentials
 from freqtrade.constants import (
     DEFAULT_AMOUNT_RESERVE_PERCENT,
     DEFAULT_TRADES_COLUMNS,
@@ -64,7 +65,6 @@ from freqtrade.exceptions import (
 )
 from freqtrade.exchange.common import (
     API_FETCH_ORDER_RETRY_COUNT,
-    remove_exchange_credentials,
     retrier,
     retrier_async,
 )

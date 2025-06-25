@@ -7,7 +7,7 @@ ft-pandas-ta==0.3.15
 ta-lib==0.5.5
 technical==1.5.1
 
-ccxt==4.4.89
+ccxt==4.4.90
 cryptography==45.0.4
 aiohttp==3.12.13
 SQLAlchemy==2.0.41
@@ -15,9 +15,9 @@ python-telegram-bot==22.1
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
 httpx>=0.24.1
 humanize==4.12.3
-cachetools==6.0.0
+cachetools==6.1.0
 requests==2.32.4
-urllib3==2.4.0
+urllib3==2.5.0
 certifi==2025.6.15
 jsonschema==4.24.0
 tabulate==0.9.0
@@ -36,7 +36,7 @@ orjson==3.10.18
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.115.12
+fastapi==0.115.13
 pydantic==2.11.7
 uvicorn==0.34.3
 pyjwt==2.10.1

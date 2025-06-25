@@ -9,8 +9,12 @@ import pytest
 from jsonschema import ValidationError
 
 from freqtrade.commands import Arguments
-from freqtrade.configuration import Configuration, validate_config_consistency
-from freqtrade.configuration.config_secrets import sanitize_config
+from freqtrade.configuration import (
+    Configuration,
+    remove_exchange_credentials,
+    sanitize_config,
+    validate_config_consistency,
+)
 from freqtrade.configuration.config_validation import validate_config_schema
 from freqtrade.configuration.deprecated_settings import (
     check_conflicting_settings,
@@ -1587,3 +1591,17 @@ def test_sanitize_config(default_conf_usdt):
     res = sanitize_config(default_conf_usdt, show_sensitive=True)
     assert res["exchange"]["key"] == default_conf_usdt["exchange"]["key"]
     assert res["exchange"]["secret"] == default_conf_usdt["exchange"]["secret"]
+
+
+def test_remove_exchange_credentials(default_conf) -> None:
+    conf = deepcopy(default_conf)
+    remove_exchange_credentials(conf["exchange"], False)
+
+    assert conf["exchange"]["key"] != ""
+    assert conf["exchange"]["secret"] != ""
+
+    remove_exchange_credentials(conf["exchange"], True)
+    assert conf["exchange"]["key"] == ""
+    assert conf["exchange"]["secret"] == ""
+    assert conf["exchange"].get("password", "") == ""
+    assert conf["exchange"].get("uid", "") == ""
