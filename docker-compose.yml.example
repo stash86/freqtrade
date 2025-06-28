@@ -1,5 +1,4 @@
 ---
-version: '3'
 services:
   freqtrade:
     image: stash86/freqtrade:linux-arm64-v8
@@ -107,12 +106,56 @@ services:
       --logfile /freqtrade/user_data/logs/freqtrade4.log
       --config /freqtrade/user_data/config4.json
 
-  # binance_proxy:
-  #   image: nightshift2k/binance-proxy:latest
-  #   container_name: binance_proxy
-  #   restart: unless-stopped
-  #   ports:
-  #     - "127.0.0.1:8090:8090"
+  binance_proxy:
+    image: stash86/binance-proxy:latest
+    container_name: binance_proxy
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:8090"
+      - "127.0.0.1:8091:8091"
+
+  pg_db:
+    image: postgres:latest
+    container_name: pg_db
+    restart: unless-stopped
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf -c hba_file=/etc/postgresql/pg_hba.conf
+    environment:
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASS:-12345}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+      PGCONF: "/etc/postgresql/postgresql.conf"
+      PGHBA: "/etc/postgresql/pg_hba.conf"
+    ports:
+      - "${DB_HOST:-127.0.0.1}:${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./user_data/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./user_data/postgresql/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    networks:
+      - ft_network
+
+  pg_admin:
+    image: dpage/pgadmin4:latest
+    container_name: pg_admin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "${DB_HOST:-127.0.0.1}:8080:80"
+    depends_on:
+      - pg_db
+    networks:
+      - ft_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  ft_network:
+    driver: bridge
 
   # kucoin-proxy:
   #   image: mikekonan/exchange-proxy:latest-amd64
