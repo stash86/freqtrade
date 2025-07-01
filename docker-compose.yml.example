@@ -5,20 +5,13 @@ services:
     # build:
     #   context: .
     #   dockerfile: "./docker/Dockerfile.custom"
-    # links:
-    #   - "binance_proxy"
-    # depends_on:
-    #   - "binance_proxy"
     restart: unless-stopped
     container_name: freqtrade
     volumes:
       - "./user_data:/freqtrade/user_data"
       - "./freqtrade_strategies:/freqtrade/freqtrade_strategies"
-    # Expose api on port 8080 (localhost only)
-    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
-    # before enabling this.
-    # ports:
-    #   - "127.0.0.1:8081:8081"
+    ports:
+      - "${DB_HOST:-127.0.0.1}:8081:8081"
     # Default command used when running `docker compose up`
     command: >
       trade
@@ -34,6 +27,7 @@ services:
       --config /freqtrade/user_data/config-telegram1.json
       --config /freqtrade/user_data/config-telegram-general.json
     #  --config /freqtrade/user_data/config-discord1.json
+      --db-url postgresql+psycopg2://${DB_USER:-admin}:${DB_PASS:-12345}@${DB_HOST:-127.0.0.1}:${DB_PORT:-5432}/<db_name>
   freqtrade2:
     image: stash86/freqtrade:linux-arm64-v8
     # build:
@@ -49,7 +43,7 @@ services:
       - "./user_data:/freqtrade/user_data"
       - "./freqtrade_strategies:/freqtrade/freqtrade_strategies"
     # ports:
-    #   - "127.0.0.1:8082:8081"
+    #   - "${DB_HOST:-127.0.0.1}:8082:8081"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade2.log
@@ -78,7 +72,7 @@ services:
       - "./user_data:/freqtrade/user_data"
       - "./freqtrade_strategies:/freqtrade/freqtrade_strategies"
     # ports:
-    #   - "127.0.0.1:8083:8081"
+    #   - "${DB_HOST:-127.0.0.1}:8083:8081"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade3.log
@@ -100,7 +94,7 @@ services:
       - "./user_data:/freqtrade/user_data"
       - "./freqtrade_strategies:/freqtrade/freqtrade_strategies"
     ports:
-      - "127.0.0.1:8084:8081"
+      - "${DB_HOST:-127.0.0.1}:8084:8081"
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade4.log
@@ -158,7 +152,7 @@ networks:
     driver: bridge
 
   # kucoin-proxy:
-  #   image: mikekonan/exchange-proxy:latest-amd64
+  #   image: stash86/kucoin-proxy:latest
   #   restart: unless-stopped
   #   command: -verbose 1
   #   container_name: kucoin-proxy
