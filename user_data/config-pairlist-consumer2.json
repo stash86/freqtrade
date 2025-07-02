@@ -6,9 +6,11 @@
         },
         {
             "method": "OffsetFilter",
-            "offset": 15,
-            "number_assets": 15
+            "offset": 12,
+            "number_assets": 12
         },
-        {"method": "FullTradesFilter"},
+        {
+            "method": "FullTradesFilter"
+        },
     ],
 }

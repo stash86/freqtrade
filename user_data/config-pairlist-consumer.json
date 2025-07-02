@@ -7,8 +7,10 @@
         {
             "method": "OffsetFilter",
             "offset": 0,
-            "number_assets": 15
+            "number_assets": 12
         },
-        {"method": "FullTradesFilter"},
+        {
+            "method": "FullTradesFilter"
+        },
     ],
 }
