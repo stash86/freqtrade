@@ -877,8 +877,8 @@ class Exchange:
             (trading_mode, margin_mode) not in self._supported_trading_mode_margin_pairs
         ):
             mm_value = margin_mode and margin_mode.value
-            raise OperationalException(
-                f"Freqtrade does not support {mm_value} {trading_mode} on {self.name}"
+            raise ConfigurationError(
+                f"Freqtrade does not support '{mm_value}' '{trading_mode}' on {self.name}."
             )
 
     def get_option(self, param: str, default: Any | None = None) -> Any:
@@ -3429,7 +3429,8 @@ class Exchange:
                 raise InvalidOrderException(f"Amount {stake_amount} too high for {pair}")
 
             raise OperationalException(
-                "Looped through all tiers without finding a max leverage. Should never be reached"
+                f"Looped through all tiers without finding a max leverage for {pair}. "
+                "Should never be reached."
             )
 
         elif self.trading_mode == TradingMode.MARGIN:  # Search markets.limits for max lev

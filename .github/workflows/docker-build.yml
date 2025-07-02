@@ -124,7 +124,7 @@ jobs:
         build_helpers/publish_docker_arm64.sh
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@a975c85e53c8ea07b0b10f8461b0a90059816dcf #v2.1.1
+      uses: rjstone/discord-webhook-notify@c2597273488aeda841dd1e891321952b51f7996f #v2.2.1
       if: always() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) && (github.event_name != 'schedule')
       with:
           severity: info
