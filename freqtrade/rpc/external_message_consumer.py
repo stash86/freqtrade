@@ -102,7 +102,7 @@ class ExternalMessageConsumer:
 
         self.start()
 
-        self._last_alive_log = 0
+        self._last_alive_log: dict[str, float] = {}
 
     def start(self):
         """
@@ -277,9 +277,10 @@ class ExternalMessageConsumer:
                     latency = await asyncio.wait_for(pong, timeout=self.ping_timeout) * 1000
 
                     now = time.time()
-                    if now - self._last_alive_log > 300:
+                    last_log = self._last_alive_log.get(channel, 0)
+                    if now - last_log > 300:
                         logger.info(f"Connection to {channel} still alive, latency: {latency}ms")
-                        self._last_alive_log = now
+                        self._last_alive_log[channel] = now
                     continue
 
                 except Exception as e:
