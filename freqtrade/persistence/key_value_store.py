@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import ClassVar, Literal
 
@@ -114,7 +114,7 @@ class KeyValueStore:
         if kv.value_type == ValueTypesEnum.STRING:
             return kv.string_value
         if kv.value_type == ValueTypesEnum.DATETIME and kv.datetime_value is not None:
-            return kv.datetime_value.replace(tzinfo=timezone.utc)
+            return kv.datetime_value.replace(tzinfo=UTC)
         if kv.value_type == ValueTypesEnum.FLOAT:
             return kv.float_value
         if kv.value_type == ValueTypesEnum.INT:
@@ -156,7 +156,7 @@ class KeyValueStore:
         )
         if kv is None or kv.datetime_value is None:
             return None
-        return kv.datetime_value.replace(tzinfo=timezone.utc)
+        return kv.datetime_value.replace(tzinfo=UTC)
 
     @staticmethod
     def get_float_value(key: KeyStoreKeys) -> float | None:
@@ -207,5 +207,5 @@ def set_startup_time() -> None:
         if t is not None:
             KeyValueStore.store_value("bot_start_time", t.open_date_utc)
         else:
-            KeyValueStore.store_value("bot_start_time", datetime.now(timezone.utc))
-    KeyValueStore.store_value("startup_time", datetime.now(timezone.utc))
+            KeyValueStore.store_value("bot_start_time", datetime.now(UTC))
+    KeyValueStore.store_value("startup_time", datetime.now(UTC))

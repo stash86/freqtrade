@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -31,8 +31,8 @@ def generate_mock_trade(
         stake_amount=0.01,
         fee_open=fee,
         fee_close=fee,
-        open_date=datetime.now(timezone.utc) - timedelta(minutes=min_ago_open or 200),
-        close_date=datetime.now(timezone.utc) - timedelta(minutes=min_ago_close or 30),
+        open_date=datetime.now(UTC) - timedelta(minutes=min_ago_open or 200),
+        close_date=datetime.now(UTC) - timedelta(minutes=min_ago_close or 30),
         open_rate=open_rate,
         is_open=is_open,
         amount=0.01 / open_rate,
@@ -99,9 +99,9 @@ def test_protectionmanager(mocker, default_conf):
     for handler in freqtrade.protections._protection_handlers:
         assert handler.name in AVAILABLE_PROTECTIONS
         if not handler.has_global_stop:
-            assert handler.global_stop(datetime.now(timezone.utc), "*") is None
+            assert handler.global_stop(datetime.now(UTC), "*") is None
         if not handler.has_local_stop:
-            assert handler.stop_per_pair("XRP/BTC", datetime.now(timezone.utc), "*") is None
+            assert handler.stop_per_pair("XRP/BTC", datetime.now(UTC), "*") is None
 
 
 @pytest.mark.parametrize(
@@ -499,7 +499,7 @@ def test_CooldownPeriod_unlock_at(mocker, default_conf, fee, caplog, time_machin
     assert not log_has_re(message, caplog)
     caplog.clear()
 
-    start_dt = datetime(2024, 5, 2, 0, 30, 0, tzinfo=timezone.utc)
+    start_dt = datetime(2024, 5, 2, 0, 30, 0, tzinfo=UTC)
     time_machine.move_to(start_dt, tick=False)
 
     generate_mock_trade(
@@ -527,7 +527,7 @@ def test_CooldownPeriod_unlock_at(mocker, default_conf, fee, caplog, time_machin
     assert not PairLocks.is_global_lock()
 
     # Force rollover to the next day.
-    start_dt = datetime(2024, 5, 2, 22, 00, 0, tzinfo=timezone.utc)
+    start_dt = datetime(2024, 5, 2, 22, 00, 0, tzinfo=UTC)
     time_machine.move_to(start_dt, tick=False)
     generate_mock_trade(
         "ETH/BTC",

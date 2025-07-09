@@ -1,6 +1,6 @@
 # pragma pylint: disable=missing-docstring, C0103
 
-from datetime import timezone
+from datetime import UTC
 
 import pandas as pd
 from numpy import nan
@@ -16,15 +16,15 @@ def test_get_tick_size_over_time():
     # Create test dataframe with different levels of precision
     data = {
         "date": [
-            Timestamp("2020-01-01 00:00:00", tz=timezone.utc),
-            Timestamp("2020-01-02 00:00:00", tz=timezone.utc),
-            Timestamp("2020-01-03 00:00:00", tz=timezone.utc),
-            Timestamp("2020-01-15 00:00:00", tz=timezone.utc),
-            Timestamp("2020-01-16 00:00:00", tz=timezone.utc),
-            Timestamp("2020-01-31 00:00:00", tz=timezone.utc),
-            Timestamp("2020-02-01 00:00:00", tz=timezone.utc),
-            Timestamp("2020-02-15 00:00:00", tz=timezone.utc),
-            Timestamp("2020-03-15 00:00:00", tz=timezone.utc),
+            Timestamp("2020-01-01 00:00:00", tz=UTC),
+            Timestamp("2020-01-02 00:00:00", tz=UTC),
+            Timestamp("2020-01-03 00:00:00", tz=UTC),
+            Timestamp("2020-01-15 00:00:00", tz=UTC),
+            Timestamp("2020-01-16 00:00:00", tz=UTC),
+            Timestamp("2020-01-31 00:00:00", tz=UTC),
+            Timestamp("2020-02-01 00:00:00", tz=UTC),
+            Timestamp("2020-02-15 00:00:00", tz=UTC),
+            Timestamp("2020-03-15 00:00:00", tz=UTC),
         ],
         "open": [1.23456, 1.234, 1.23, 1.2, 1.23456, 1.234, 2.3456, 2.34, 2.34],
         "high": [1.23457, 1.235, 1.24, 1.3, 1.23456, 1.235, 2.3457, 2.34, 2.34],

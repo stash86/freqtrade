@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -62,7 +62,7 @@ def test_PairLocks(use_db):
 
     pair = "BTC/USDT"
     # Lock until 14:30
-    lock_time = datetime(2020, 5, 1, 14, 30, 0, tzinfo=timezone.utc)
+    lock_time = datetime(2020, 5, 1, 14, 30, 0, tzinfo=UTC)
     PairLocks.lock_pair(pair, lock_time)
 
     assert not PairLocks.is_pair_locked(pair)
@@ -121,15 +121,15 @@ def test_PairLocks_getlongestlock(use_db):
     assert PairLocks.is_pair_locked(pair)
     lock = PairLocks.get_pair_longest_lock(pair)
 
-    assert lock.lock_end_time.replace(tzinfo=timezone.utc) > dt_now() + timedelta(minutes=3)
-    assert lock.lock_end_time.replace(tzinfo=timezone.utc) < dt_now() + timedelta(minutes=14)
+    assert lock.lock_end_time.replace(tzinfo=UTC) > dt_now() + timedelta(minutes=3)
+    assert lock.lock_end_time.replace(tzinfo=UTC) < dt_now() + timedelta(minutes=14)
 
     PairLocks.lock_pair(pair, dt_now() + timedelta(minutes=15))
     assert PairLocks.is_pair_locked(pair)
 
     lock = PairLocks.get_pair_longest_lock(pair)
     # Must be longer than above
-    assert lock.lock_end_time.replace(tzinfo=timezone.utc) > dt_now() + timedelta(minutes=14)
+    assert lock.lock_end_time.replace(tzinfo=UTC) > dt_now() + timedelta(minutes=14)
 
     PairLocks.reset_locks()
     PairLocks.use_db = True

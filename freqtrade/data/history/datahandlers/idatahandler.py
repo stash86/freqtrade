@@ -8,7 +8,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pandas import DataFrame, to_datetime
@@ -118,8 +118,8 @@ class IDataHandler(ABC):
         df = self._ohlcv_load(pair, timeframe, None, candle_type)
         if df.empty:
             return (
-                datetime.fromtimestamp(0, tz=timezone.utc),
-                datetime.fromtimestamp(0, tz=timezone.utc),
+                datetime.fromtimestamp(0, tz=UTC),
+                datetime.fromtimestamp(0, tz=UTC),
                 0,
             )
         return df.iloc[0]["date"].to_pydatetime(), df.iloc[-1]["date"].to_pydatetime(), len(df)
@@ -201,8 +201,8 @@ class IDataHandler(ABC):
         df = self._trades_load(pair, trading_mode)
         if df.empty:
             return (
-                datetime.fromtimestamp(0, tz=timezone.utc),
-                datetime.fromtimestamp(0, tz=timezone.utc),
+                datetime.fromtimestamp(0, tz=UTC),
+                datetime.fromtimestamp(0, tz=UTC),
                 0,
             )
         return (

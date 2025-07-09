@@ -3,7 +3,7 @@ Exchange support utils
 """
 
 import inspect
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from math import ceil, floor, isnan
 from typing import Any
 
@@ -148,7 +148,7 @@ def date_minus_candles(timeframe: str, candle_count: int, date: datetime | None 
 
     """
     if not date:
-        date = datetime.now(timezone.utc)
+        date = datetime.now(UTC)
 
     tf_min = timeframe_to_minutes(timeframe)
     new_date = timeframe_to_prev_date(timeframe, date) - timedelta(minutes=tf_min * candle_count)

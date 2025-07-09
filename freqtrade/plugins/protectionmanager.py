@@ -3,7 +3,7 @@ Protection manager class
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from freqtrade.constants import Config, LongShort
@@ -49,7 +49,7 @@ class ProtectionManager:
 
     def global_stop(self, now: datetime | None = None, side: LongShort = "long") -> PairLock | None:
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
         result = None
         for protection_handler in self._protection_handlers:
             if protection_handler.has_global_stop:
@@ -65,7 +65,7 @@ class ProtectionManager:
         self, pair, now: datetime | None = None, side: LongShort = "long"
     ) -> PairLock | None:
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
         result = None
         for protection_handler in self._protection_handlers:
             if protection_handler.has_local_stop:

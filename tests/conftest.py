@@ -4,7 +4,7 @@ import logging
 import platform
 import re
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, PropertyMock
 
@@ -126,7 +126,7 @@ def get_args(args):
 def generate_trades_history(n_rows, start_date: datetime | None = None, days=5):
     np.random.seed(42)
     if not start_date:
-        start_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
+        start_date = datetime(2020, 1, 1, tzinfo=UTC)
 
         # Generate random data
     end_date = start_date + timedelta(days=days)
@@ -3403,6 +3403,37 @@ def leverage_tiers():
                 "maintenanceMarginRate": 0.5,
                 "maxLeverage": 1,
                 "maintAmt": 654500.0,
+            },
+        ],
+        "TIA/USDT:USDT": [
+            # Okx tier - these have a gap between maxNotional and the next minNotional
+            {
+                "minNotional": 0.0,
+                "maxNotional": 6500.0,
+                "maintenanceMarginRate": 0.0065,
+                "maxLeverage": 50.0,
+                "maintAmt": None,
+            },
+            {
+                "minNotional": 6501.0,
+                "maxNotional": 12000.0,
+                "maintenanceMarginRate": 0.01,
+                "maxLeverage": 40.0,
+                "maintAmt": None,
+            },
+            {
+                "minNotional": 12001.0,
+                "maxNotional": 25000.0,
+                "maintenanceMarginRate": 0.015,
+                "maxLeverage": 20.0,
+                "maintAmt": None,
+            },
+            {
+                "minNotional": 25001.0,
+                "maxNotional": 50000.0,
+                "maintenanceMarginRate": 0.02,
+                "maxLeverage": 18.18,
+                "maintAmt": None,
             },
         ],
     }

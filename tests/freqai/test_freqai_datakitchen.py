@@ -1,5 +1,5 @@
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -67,9 +67,9 @@ def test_split_timerange(
 
 def test_check_if_model_expired(mocker, freqai_conf):
     dk = get_patched_data_kitchen(mocker, freqai_conf)
-    now = datetime.now(tz=timezone.utc).timestamp()
+    now = datetime.now(tz=UTC).timestamp()
     assert dk.check_if_model_expired(now) is False
-    now = (datetime.now(tz=timezone.utc) - timedelta(hours=2)).timestamp()
+    now = (datetime.now(tz=UTC) - timedelta(hours=2)).timestamp()
     assert dk.check_if_model_expired(now) is True
     shutil.rmtree(Path(dk.full_path))
 

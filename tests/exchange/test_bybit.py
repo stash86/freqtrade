@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
 import pytest
@@ -73,7 +73,7 @@ async def test_bybit_fetch_funding_rate(default_conf, mocker):
 
 
 def test_bybit_get_funding_fees(default_conf, mocker):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     exchange = get_patched_exchange(mocker, default_conf, exchange="bybit")
     exchange._fetch_and_calculate_funding_fees = MagicMock()
     exchange.get_funding_fees("BTC/USDT:USDT", 1, False, now)
@@ -117,7 +117,7 @@ def test_bybit_fetch_orders(default_conf, mocker, limit_order):
         return True
 
     mocker.patch(f"{EXMS}.exchange_has", side_effect=exchange_has)
-    start_time = datetime.now(timezone.utc) - timedelta(days=20)
+    start_time = datetime.now(UTC) - timedelta(days=20)
 
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="bybit")
     # Not available in dry-run

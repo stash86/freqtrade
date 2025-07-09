@@ -1,5 +1,5 @@
 # pragma pylint: disable=missing-docstring, C0103
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import FunctionType
 
 import pytest
@@ -265,7 +265,7 @@ def test_interest(fee, exchange, is_short, lev, minutes, rate, interest, trading
         stake_amount=20.0,
         amount=30.0,
         open_rate=2.0,
-        open_date=datetime.now(timezone.utc) - timedelta(minutes=minutes),
+        open_date=datetime.now(UTC) - timedelta(minutes=minutes),
         fee_open=fee.return_value,
         fee_close=fee.return_value,
         exchange=exchange,
@@ -605,7 +605,7 @@ def test_calc_open_close_trade_price(
         stake_amount=60.0,
         open_rate=2.0,
         amount=30.0,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=10),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=10),
         interest_rate=0.0005,
         fee_open=fee.return_value,
         fee_close=fee.return_value,
@@ -812,7 +812,7 @@ def test_calc_open_trade_value(
         stake_amount=60.0,
         amount=30.0,
         open_rate=2.0,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=10),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=10),
         fee_open=fee_rate,
         fee_close=fee_rate,
         exchange=exchange,
@@ -863,7 +863,7 @@ def test_calc_close_trade_price(
         stake_amount=60.0,
         amount=30.0,
         open_rate=open_rate,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=10),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=10),
         fee_open=fee_rate,
         fee_close=fee_rate,
         exchange=exchange,
@@ -1164,7 +1164,7 @@ def test_calc_profit(
         stake_amount=60.0,
         amount=30.0 * lev,
         open_rate=2.0,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=10),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=10),
         interest_rate=0.0005,
         exchange=exchange,
         is_short=is_short,
@@ -1882,7 +1882,7 @@ def test_get_trades_proxy(fee, use_db, is_short):
     assert len(trades) == 2
     assert not trades[0].is_open
 
-    opendate = datetime.now(tz=timezone.utc) - timedelta(minutes=15)
+    opendate = datetime.now(tz=UTC) - timedelta(minutes=15)
 
     assert len(Trade.get_trades_proxy(open_date=opendate)) == 3
 
@@ -1989,7 +1989,7 @@ def test_fully_canceled_entry_order_count(fee, is_short):
 
 @pytest.mark.usefixtures("init_persistence")
 def test_update_order_from_ccxt(caplog, time_machine):
-    start = datetime(2023, 1, 1, 4, tzinfo=timezone.utc)
+    start = datetime(2023, 1, 1, 4, tzinfo=UTC)
     time_machine.move_to(start, tick=False)
 
     # Most basic order return (only has orderid)
@@ -2172,7 +2172,7 @@ def test_trade_truncates_string_fields():
         stake_amount=20.0,
         amount=30.0,
         open_rate=2.0,
-        open_date=datetime.now(timezone.utc) - timedelta(minutes=20),
+        open_date=datetime.now(UTC) - timedelta(minutes=20),
         fee_open=0.001,
         fee_close=0.001,
         exchange="binance",

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pandas import DataFrame
@@ -47,7 +47,7 @@ def test_strategy_test_v3(dataframe_1m, fee, is_short, side):
             amount=0.1,
             rate=20000,
             time_in_force="gtc",
-            current_time=datetime.now(timezone.utc),
+            current_time=datetime.now(UTC),
             side=side,
             entry_tag=None,
         )
@@ -63,7 +63,7 @@ def test_strategy_test_v3(dataframe_1m, fee, is_short, side):
             time_in_force="gtc",
             exit_reason="roi",
             sell_reason="roi",
-            current_time=datetime.now(timezone.utc),
+            current_time=datetime.now(UTC),
             side=side,
         )
         is True

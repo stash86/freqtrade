@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import time
 
 import humanize
@@ -9,7 +9,7 @@ from freqtrade.constants import DATETIME_PRINT_FORMAT
 
 def dt_now() -> datetime:
     """Return the current datetime in UTC."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def dt_utc(
@@ -22,7 +22,7 @@ def dt_utc(
     microsecond: int = 0,
 ) -> datetime:
     """Return a datetime in UTC."""
-    return datetime(year, month, day, hour, minute, second, microsecond, tzinfo=timezone.utc)
+    return datetime(year, month, day, hour, minute, second, microsecond, tzinfo=UTC)
 
 
 def dt_ts(dt: datetime | None = None) -> int:
@@ -68,7 +68,7 @@ def dt_from_ts(timestamp: float) -> datetime:
     if timestamp > 1e10:
         # Timezone in ms - convert to seconds
         timestamp /= 1000
-    return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    return datetime.fromtimestamp(timestamp, tz=UTC)
 
 
 def shorten_date(_date: str) -> str:

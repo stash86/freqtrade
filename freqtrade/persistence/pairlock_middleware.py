@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -52,7 +52,7 @@ class PairLocks:
         """
         lock = PairLock(
             pair=pair,
-            lock_time=now or datetime.now(timezone.utc),
+            lock_time=now or datetime.now(UTC),
             lock_end_time=timeframe_to_next_date(PairLocks.timeframe, until),
             reason=reason,
             side=side,
@@ -77,7 +77,7 @@ class PairLocks:
         :param side: Side get locks for, can be 'long', 'short', '*' or None
         """
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         if PairLocks.use_db:
             return PairLock.query_pair_locks(pair, now, side).all()
@@ -114,7 +114,7 @@ class PairLocks:
             defaults to datetime.now(timezone.utc)
         """
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         logger.info(f"Releasing all locks for {pair}.")
         locks = PairLocks.get_pair_locks(pair, now, side=side)
@@ -132,7 +132,7 @@ class PairLocks:
             defaults to datetime.now(timezone.utc)
         """
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         if PairLocks.use_db:
             # used in live modes
@@ -161,7 +161,7 @@ class PairLocks:
             defaults to datetime.now(timezone.utc)
         """
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         return len(PairLocks.get_pair_locks("*", now, side)) > 0
 
@@ -173,7 +173,7 @@ class PairLocks:
             defaults to datetime.now(timezone.utc)
         """
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         return len(PairLocks.get_pair_locks(pair, now, side)) > 0 or PairLocks.is_global_lock(
             now, side

@@ -24,6 +24,7 @@ class FtHas(TypedDict, total=False):
     ohlcv_require_since: bool
     ohlcv_volume_currency: str
     ohlcv_candle_limit_per_timeframe: dict[str, int]
+    always_require_api_keys: bool
     # Tickers
     tickers_have_quoteVolume: bool
     tickers_have_percentage: bool

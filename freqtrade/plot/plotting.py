@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -638,7 +638,7 @@ def load_and_plot_trades(config: Config):
     exchange = ExchangeResolver.load_exchange(config)
     IStrategy.dp = DataProvider(config, exchange)
     strategy.ft_bot_start()
-    strategy_safe_wrapper(strategy.bot_loop_start)(current_time=datetime.now(timezone.utc))
+    strategy_safe_wrapper(strategy.bot_loop_start)(current_time=datetime.now(UTC))
     plot_elements = init_plotscript(config, list(exchange.markets), strategy.startup_candle_count)
     timerange = plot_elements["timerange"]
     trades = plot_elements["trades"]

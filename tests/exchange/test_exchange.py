@@ -1,7 +1,7 @@
 import copy
 import logging
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from random import randint
 from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
@@ -1728,7 +1728,7 @@ def test_fetch_orders(default_conf, mocker, exchange_name, limit_order):
     api_mock.fetch_closed_orders = MagicMock(return_value=[limit_order["buy"]])
 
     mocker.patch(f"{EXMS}.exchange_has", return_value=True)
-    start_time = datetime.now(timezone.utc) - timedelta(days=20)
+    start_time = datetime.now(UTC) - timedelta(days=20)
     expected = 1
     if exchange_name == "bybit":
         expected = 3
@@ -2106,7 +2106,7 @@ def test___now_is_time_to_refresh(default_conf, mocker, exchange_name, time_mach
     exchange = get_patched_exchange(mocker, default_conf, exchange=exchange_name)
     pair = "BTC/USDT"
     candle_type = CandleType.SPOT
-    start_dt = datetime(2023, 12, 1, 0, 10, 0, tzinfo=timezone.utc)
+    start_dt = datetime(2023, 12, 1, 0, 10, 0, tzinfo=UTC)
     time_machine.move_to(start_dt, tick=False)
     assert (pair, "5m", candle_type) not in exchange._pairs_last_refresh_time
 
@@ -2129,7 +2129,7 @@ def test___now_is_time_to_refresh(default_conf, mocker, exchange_name, time_mach
     assert exchange._now_is_time_to_refresh(pair, "5m", candle_type) is True
 
     # Test with 1d data
-    start_day_dt = datetime(2023, 12, 1, 0, 0, 0, tzinfo=timezone.utc)
+    start_day_dt = datetime(2023, 12, 1, 0, 0, 0, tzinfo=UTC)
     last_closed_candle_1d = dt_ts(start_day_dt - timedelta(days=1))
     exchange._pairs_last_refresh_time[(pair, "1d", candle_type)] = last_closed_candle_1d
 
@@ -2197,7 +2197,7 @@ def test_get_historic_ohlcv(default_conf, mocker, caplog, exchange_name, candle_
 async def test__async_get_historic_ohlcv(default_conf, mocker, caplog, exchange_name, candle_type):
     ohlcv = [
         [
-            int((datetime.now(timezone.utc).timestamp() - 1000) * 1000),
+            int((datetime.now(UTC).timestamp() - 1000) * 1000),
             1,  # open
             2,  # high
             3,  # low
@@ -2501,7 +2501,7 @@ def test_refresh_latest_trades(
 
 @pytest.mark.parametrize("candle_type", [CandleType.FUTURES, CandleType.MARK, CandleType.SPOT])
 def test_refresh_latest_ohlcv_cache(mocker, default_conf, candle_type, time_machine) -> None:
-    start = datetime(2021, 8, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
+    start = datetime(2021, 8, 1, 0, 0, 0, 0, tzinfo=UTC)
     ohlcv = generate_test_data_raw("1h", 100, start.strftime("%Y-%m-%d"))
     time_machine.move_to(start + timedelta(hours=99, minutes=30))
 
@@ -2595,7 +2595,7 @@ def test_refresh_latest_ohlcv_cache(mocker, default_conf, candle_type, time_mach
 
 
 def test_refresh_ohlcv_with_cache(mocker, default_conf, time_machine) -> None:
-    start = datetime(2021, 8, 1, 0, 0, 0, 0, tzinfo=timezone.utc)
+    start = datetime(2021, 8, 1, 0, 0, 0, 0, tzinfo=UTC)
     ohlcv = generate_test_data_raw("1h", 100, start.strftime("%Y-%m-%d"))
     time_machine.move_to(start, tick=False)
     pairs = [
@@ -2903,7 +2903,7 @@ def test_get_entry_rate(
     mocker, default_conf, caplog, side, ask, bid, last, last_ab, expected, time_machine
 ) -> None:
     caplog.set_level(logging.DEBUG)
-    start_dt = datetime(2023, 12, 1, 0, 10, 0, tzinfo=timezone.utc)
+    start_dt = datetime(2023, 12, 1, 0, 10, 0, tzinfo=UTC)
     time_machine.move_to(start_dt, tick=False)
     if last_ab is None:
         del default_conf["entry_pricing"]["price_last_balance"]
@@ -2940,7 +2940,7 @@ def test_get_exit_rate(
     default_conf, mocker, caplog, side, bid, ask, last, last_ab, expected, time_machine
 ) -> None:
     caplog.set_level(logging.DEBUG)
-    start_dt = datetime(2023, 12, 1, 0, 10, 0, tzinfo=timezone.utc)
+    start_dt = datetime(2023, 12, 1, 0, 10, 0, tzinfo=UTC)
     time_machine.move_to(start_dt, tick=False)
 
     default_conf["exit_pricing"]["price_side"] = side
@@ -3269,7 +3269,7 @@ async def test__async_fetch_trades(
     assert isinstance(res, list)
     assert isinstance(res[0], list)
     assert isinstance(res[1], list)
-    if exchange._trades_pagination == "id":
+    if exchange._ft_has["trades_pagination"] == "id":
         if exchange_name == "kraken":
             assert pagid == 1565798399872512133
         else:
@@ -3290,7 +3290,7 @@ async def test__async_fetch_trades(
     assert exchange._api_async.fetch_trades.call_args[1]["limit"] == 1000
     assert exchange._api_async.fetch_trades.call_args[1]["params"] == {"from": "123"}
 
-    if exchange._trades_pagination == "id":
+    if exchange._ft_has["trades_pagination"] == "id":
         if exchange_name == "kraken":
             assert pagid == 1565798399872512133
         else:
@@ -3379,10 +3379,10 @@ async def test__async_get_trade_history_id(
 ):
     default_conf["exchange"]["only_from_ccxt"] = True
     exchange = get_patched_exchange(mocker, default_conf, exchange=exchange_name)
-    if exchange._trades_pagination != "id":
+    if exchange._ft_has["trades_pagination"] != "id":
         exchange.close()
         pytest.skip("Exchange does not support pagination by trade id")
-    pagination_arg = exchange._trades_pagination_arg
+    pagination_arg = exchange._ft_has["trades_pagination_arg"]
 
     async def mock_get_trade_hist(pair, *args, **kwargs):
         if "since" in kwargs:
@@ -3456,7 +3456,7 @@ async def test__async_get_trade_history_time(
 
     caplog.set_level(logging.DEBUG)
     exchange = get_patched_exchange(mocker, default_conf, exchange=exchange_name)
-    if exchange._trades_pagination != "time":
+    if exchange._ft_has["trades_pagination"] != "time":
         exchange.close()
         pytest.skip("Exchange does not support pagination by timestamp")
     # Monkey-patch async function
@@ -4019,7 +4019,7 @@ def test_get_trades_for_order(default_conf, mocker, exchange_name, trading_mode,
     assert api_mock.fetch_my_trades.call_args[0][1] == 1525478395000
     assert (
         api_mock.fetch_my_trades.call_args[0][1]
-        == int(since.replace(tzinfo=timezone.utc).timestamp() - 5) * 1000
+        == int(since.replace(tzinfo=UTC).timestamp() - 5) * 1000
     )
 
     ccxt_exceptionhandlers(
@@ -4785,7 +4785,7 @@ def test_calculate_backoff(retrycount, max_retries, expected):
 
 @pytest.mark.parametrize("exchange_name", EXCHANGES)
 def test_get_funding_fees(default_conf_usdt, mocker, exchange_name, caplog):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     default_conf_usdt["trading_mode"] = "futures"
     default_conf_usdt["margin_mode"] = "isolated"
     exchange = get_patched_exchange(mocker, default_conf_usdt, exchange=exchange_name)
@@ -5002,8 +5002,8 @@ def test_calculate_funding_fees(
 ):
     exchange = get_patched_exchange(mocker, default_conf)
     kraken = get_patched_exchange(mocker, default_conf, exchange="kraken")
-    prior_date = timeframe_to_prev_date("1h", datetime.now(timezone.utc) - timedelta(hours=1))
-    trade_date = timeframe_to_prev_date("1h", datetime.now(timezone.utc))
+    prior_date = timeframe_to_prev_date("1h", datetime.now(UTC) - timedelta(hours=1))
+    trade_date = timeframe_to_prev_date("1h", datetime.now(UTC))
     funding_rates = DataFrame(
         [
             {"date": prior_date, "open": funding_rate},  # Line not used.
@@ -5072,9 +5072,9 @@ def test_combine_funding_and_mark(
     futures_funding_rate,
 ):
     exchange = get_patched_exchange(mocker, default_conf)
-    prior2_date = timeframe_to_prev_date("1h", datetime.now(timezone.utc) - timedelta(hours=2))
-    prior_date = timeframe_to_prev_date("1h", datetime.now(timezone.utc) - timedelta(hours=1))
-    trade_date = timeframe_to_prev_date("1h", datetime.now(timezone.utc))
+    prior2_date = timeframe_to_prev_date("1h", datetime.now(UTC) - timedelta(hours=2))
+    prior_date = timeframe_to_prev_date("1h", datetime.now(UTC) - timedelta(hours=1))
+    trade_date = timeframe_to_prev_date("1h", datetime.now(UTC))
     funding_rates = DataFrame(
         [
             {"date": prior2_date, "open": funding_rate},
@@ -5931,9 +5931,13 @@ def test_get_max_leverage_futures(default_conf, mocker, leverage_tiers):
     assert exchange.get_max_leverage("SPONGE/USDT:USDT", 200) == 1.0  # Pair not in leverage_tiers
     assert exchange.get_max_leverage("BTC/USDT:USDT", 0.0) == 125.0  # No stake amount
     with pytest.raises(
-        InvalidOrderException, match=r"Amount 1000000000.01 too high for BTC/USDT:USDT"
+        InvalidOrderException, match=r"Stake amount 1000000000.01 too high for BTC/USDT:USDT"
     ):
         exchange.get_max_leverage("BTC/USDT:USDT", 1000000000.01)
+
+    assert exchange.get_max_leverage("TIA/USDT:USDT", 130) == 50
+    assert exchange.get_max_leverage("TIA/USDT:USDT", 131) == 40
+    assert exchange.get_max_leverage("TIA/USDT:USDT", 130.008) == 40
 
 
 @pytest.mark.parametrize("exchange_name", ["binance", "kraken", "gate", "okx", "bybit"])

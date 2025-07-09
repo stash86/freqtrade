@@ -6,9 +6,9 @@ import logging
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from math import isclose
-from typing import Any, ClassVar, Optional, cast
+from typing import Any, ClassVar, Optional, Self, cast
 
 from sqlalchemy import (
     Enum,
@@ -25,7 +25,6 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.orm import Mapped, lazyload, mapped_column, relationship, validates
-from typing_extensions import Self
 
 from freqtrade.constants import (
     CANCELED_EXCHANGE_STATES,
@@ -121,14 +120,12 @@ class Order(ModelBase):
     @property
     def order_date_utc(self) -> datetime:
         """Order-date with UTC timezoneinfo"""
-        return self.order_date.replace(tzinfo=timezone.utc)
+        return self.order_date.replace(tzinfo=UTC)
 
     @property
     def order_filled_utc(self) -> datetime | None:
         """last order-date with UTC timezoneinfo"""
-        return (
-            self.order_filled_date.replace(tzinfo=timezone.utc) if self.order_filled_date else None
-        )
+        return self.order_filled_date.replace(tzinfo=UTC) if self.order_filled_date else None
 
     @property
     def safe_amount(self) -> float:
@@ -229,7 +226,7 @@ class Order(ModelBase):
                 self.order_filled_date = dt_from_ts(
                     safe_value_fallback(order, "lastTradeTimestamp", default_value=dt_ts())
                 )
-        self.order_update_date = datetime.now(timezone.utc)
+        self.order_update_date = datetime.now(UTC)
 
     def to_ccxt_object(self, stopPriceName: str = "stopPrice") -> dict[str, Any]:
         order: dict[str, Any] = {
@@ -286,7 +283,7 @@ class Order(ModelBase):
                         self.order_date.strftime(DATETIME_PRINT_FORMAT) if self.order_date else None
                     ),
                     "order_timestamp": (
-                        int(self.order_date.replace(tzinfo=timezone.utc).timestamp() * 1000)
+                        int(self.order_date.replace(tzinfo=UTC).timestamp() * 1000)
                         if self.order_date
                         else None
                     ),
@@ -533,7 +530,7 @@ class LocalTrade:
 
     @property
     def open_date_utc(self):
-        return self.open_date.replace(tzinfo=timezone.utc)
+        return self.open_date.replace(tzinfo=UTC)
 
     @property
     def stoploss_last_update_utc(self):
@@ -543,7 +540,7 @@ class LocalTrade:
 
     @property
     def close_date_utc(self):
-        return self.close_date.replace(tzinfo=timezone.utc) if self.close_date else None
+        return self.close_date.replace(tzinfo=UTC) if self.close_date else None
 
     @property
     def entry_side(self) -> str:
@@ -1058,7 +1055,7 @@ class LocalTrade:
             return zero
 
         open_date = self.open_date.replace(tzinfo=None)
-        now = (self.close_date or datetime.now(timezone.utc)).replace(tzinfo=None)
+        now = (self.close_date or datetime.now(UTC)).replace(tzinfo=None)
         sec_per_hour = FtPrecise(3600)
         total_seconds = FtPrecise((now - open_date).total_seconds())
         hours = total_seconds / sec_per_hour or zero
@@ -1601,12 +1598,12 @@ class LocalTrade:
             fee_close=data["fee_close"],
             fee_close_cost=data.get("fee_close_cost"),
             fee_close_currency=data.get("fee_close_currency"),
-            open_date=datetime.fromtimestamp(data["open_timestamp"] // 1000, tz=timezone.utc),
+            open_date=datetime.fromtimestamp(data["open_timestamp"] // 1000, tz=UTC),
             open_rate=data["open_rate"],
             open_rate_requested=data.get("open_rate_requested", data["open_rate"]),
             open_trade_value=data.get("open_trade_value"),
             close_date=(
-                datetime.fromtimestamp(data["close_timestamp"] // 1000, tz=timezone.utc)
+                datetime.fromtimestamp(data["close_timestamp"] // 1000, tz=UTC)
                 if data["close_timestamp"]
                 else None
             ),
@@ -1651,7 +1648,7 @@ class LocalTrade:
                 if order.get("order_date")
                 else None,
                 order_filled_date=(
-                    datetime.fromtimestamp(order["order_filled_timestamp"] // 1000, tz=timezone.utc)
+                    datetime.fromtimestamp(order["order_filled_timestamp"] // 1000, tz=UTC)
                     if order["order_filled_timestamp"]
                     else None
                 ),

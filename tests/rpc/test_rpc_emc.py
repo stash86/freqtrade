@@ -4,7 +4,7 @@ Unit test file for rpc/external_message_consumer.py
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 import pytest
@@ -99,7 +99,7 @@ def test_emc_handle_producer_message(patched_emc, caplog, ohlcv_history):
         "data": {
             "key": ("BTC/USDT", "5m", "spot"),
             "df": ohlcv_history,
-            "la": datetime.now(timezone.utc),
+            "la": datetime.now(UTC),
         },
     }
     patched_emc.handle_producer_message(test_producer, df_message)
@@ -123,7 +123,7 @@ def test_emc_handle_producer_message(patched_emc, caplog, ohlcv_history):
 
     malformed_message = {
         "type": "analyzed_df",
-        "data": {"key": "BTC/USDT", "df": ohlcv_history, "la": datetime.now(timezone.utc)},
+        "data": {"key": "BTC/USDT", "df": ohlcv_history, "la": datetime.now(UTC)},
     }
     patched_emc.handle_producer_message(test_producer, malformed_message)
 
@@ -137,7 +137,7 @@ def test_emc_handle_producer_message(patched_emc, caplog, ohlcv_history):
         "data": {
             "key": ("BTC/USDT", "5m", "spot"),
             "df": ohlcv_history.loc[ohlcv_history["open"] < 0],
-            "la": datetime.now(timezone.utc),
+            "la": datetime.now(UTC),
         },
     }
     patched_emc.handle_producer_message(test_producer, malformed_message)

@@ -1,6 +1,6 @@
 import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import jwt
@@ -89,15 +89,15 @@ async def validate_ws_token(
 def create_token(data: dict, secret_key: str, token_type: str = "access") -> str:  # noqa: S107
     to_encode = data.copy()
     if token_type == "access":  # noqa: S105
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(UTC) + timedelta(minutes=15)
     elif token_type == "refresh":  # noqa: S105
-        expire = datetime.now(timezone.utc) + timedelta(days=30)
+        expire = datetime.now(UTC) + timedelta(days=30)
     else:
         raise ValueError()
     to_encode.update(
         {
             "exp": expire,
-            "iat": datetime.now(timezone.utc),
+            "iat": datetime.now(UTC),
             "type": token_type,
         }
     )

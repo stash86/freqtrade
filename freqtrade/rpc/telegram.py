@@ -1091,6 +1091,10 @@ class Telegram(RPCHandler):
                     f"({fmt_coin(stats['drawdown_high'], stake_cur)})`\n"
                     f"    to `{stats['max_drawdown_end']} "
                     f"({fmt_coin(stats['drawdown_low'], stake_cur)})`\n"
+                    f"*Current Drawdown:* `{stats['current_drawdown']:.2%} "
+                    f"({fmt_coin(stats['current_drawdown_abs'], stake_cur)})`\n"
+                    f"    from `{stats['current_drawdown_start']} "
+                    f"({fmt_coin(stats['current_drawdown_high'], stake_cur)})`\n"
                 )
         await self._send_msg(
             markdown_msg,
@@ -1490,7 +1494,7 @@ class Telegram(RPCHandler):
         trade_id = int(context.args[0])
         msg = self._rpc._rpc_delete(trade_id)
         await self._send_msg(
-            f"`{msg['result_msg']}`\n"
+            f"{msg['result_msg']}\n"
             "Please make sure to take care of this asset on the exchange manually."
         )
 

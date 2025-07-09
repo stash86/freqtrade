@@ -3,7 +3,7 @@ import inspect
 import logging
 import random
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -341,7 +341,7 @@ class FreqaiDataKitchen:
         full_timerange = TimeRange.parse_timerange(tr)
         config_timerange = TimeRange.parse_timerange(self.config["timerange"])
         if config_timerange.stopts == 0:
-            config_timerange.stopts = int(datetime.now(tz=timezone.utc).timestamp())
+            config_timerange.stopts = int(datetime.now(tz=UTC).timestamp())
         timerange_train = copy.deepcopy(full_timerange)
         timerange_backtest = copy.deepcopy(full_timerange)
 
@@ -525,7 +525,7 @@ class FreqaiDataKitchen:
         :return:
             bool = If the model is expired or not.
         """
-        time = datetime.now(tz=timezone.utc).timestamp()
+        time = datetime.now(tz=UTC).timestamp()
         elapsed_time = (time - trained_timestamp) / 3600  # hours
         max_time = self.freqai_config.get("expiration_hours", 0)
         if max_time > 0:
@@ -536,7 +536,7 @@ class FreqaiDataKitchen:
     def check_if_new_training_required(
         self, trained_timestamp: int
     ) -> tuple[bool, TimeRange, TimeRange]:
-        time = datetime.now(tz=timezone.utc).timestamp()
+        time = datetime.now(tz=UTC).timestamp()
         trained_timerange = TimeRange()
         data_load_timerange = TimeRange()
 

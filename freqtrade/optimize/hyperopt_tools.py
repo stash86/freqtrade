@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Iterator
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +71,7 @@ class HyperoptTools:
             "strategy_name": strategy_name,
             "params": final_params,
             "ft_stratparam_v": 1,
-            "export_time": datetime.now(timezone.utc),
+            "export_time": datetime.now(UTC),
         }
         logger.info(f"Dumping parameters to {filename}")
         with filename.open("w") as f:

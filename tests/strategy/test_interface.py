@@ -1,7 +1,7 @@
 # pragma pylint: disable=missing-docstring, C0103
 import logging
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -208,7 +208,7 @@ def test_ignore_expired_candle(default_conf):
     strategy = StrategyResolver.load_strategy(default_conf)
     strategy.ignore_buying_expired_candle_after = 60
 
-    latest_date = datetime(2020, 12, 30, 7, 0, 0, tzinfo=timezone.utc)
+    latest_date = datetime(2020, 12, 30, 7, 0, 0, tzinfo=UTC)
     # Add 1 candle length as the "latest date" defines candle open.
     current_time = latest_date + timedelta(seconds=80 + 300)
 
@@ -765,7 +765,7 @@ def test_leverage_callback(default_conf, side) -> None:
     assert (
         strategy.leverage(
             pair="XRP/USDT",
-            current_time=datetime.now(timezone.utc),
+            current_time=datetime.now(UTC),
             current_rate=2.2,
             proposed_leverage=1.0,
             max_leverage=5.0,
@@ -780,7 +780,7 @@ def test_leverage_callback(default_conf, side) -> None:
     assert (
         strategy.leverage(
             pair="XRP/USDT",
-            current_time=datetime.now(timezone.utc),
+            current_time=datetime.now(UTC),
             current_rate=2.2,
             proposed_leverage=1.0,
             max_leverage=5.0,
@@ -897,7 +897,7 @@ def test_is_pair_locked(default_conf):
 
     pair = "BTC/USDT"
     # Lock until 14:30
-    lock_time = datetime(2020, 5, 1, 14, 30, 0, tzinfo=timezone.utc)
+    lock_time = datetime(2020, 5, 1, 14, 30, 0, tzinfo=UTC)
     # Subtract 2 seconds, as locking rounds up to the next candle.
     strategy.lock_pair(pair, lock_time - timedelta(seconds=2))
 

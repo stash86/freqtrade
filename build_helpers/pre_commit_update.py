@@ -16,10 +16,12 @@ with require_dev.open("r") as rfile:
 with require.open("r") as rfile:
     requirements.extend(rfile.readlines())
 
-# Extract types only
-type_reqs = [
-    r.strip("\n") for r in requirements if r.startswith("types-") or r.startswith("SQLAlchemy")
-]
+# Extract relevant types only
+supported = ("types-", "SQLAlchemy", "scipy-stubs")
+
+# Find relevant dependencies
+# Only keep the first part of the line up to the first space
+type_reqs = [r.strip("\n").split()[0] for r in requirements if r.startswith(supported)]
 
 with pre_commit_file.open("r") as file:
     f = yaml.load(file, Loader=yaml.SafeLoader)

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, PropertyMock
 
 import ccxt
@@ -15,7 +15,7 @@ from tests.exchange.test_exchange import ccxt_exceptionhandlers
 def test_okx_ohlcv_candle_limit(default_conf, mocker):
     exchange = get_patched_exchange(mocker, default_conf, exchange="okx")
     timeframes = ("1m", "5m", "1h")
-    start_time = int(datetime(2021, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
+    start_time = int(datetime(2021, 1, 1, tzinfo=UTC).timestamp() * 1000)
 
     for timeframe in timeframes:
         assert exchange.ohlcv_candle_limit(timeframe, CandleType.SPOT) == 300
@@ -29,8 +29,7 @@ def test_okx_ohlcv_candle_limit(default_conf, mocker):
         assert exchange.ohlcv_candle_limit(timeframe, CandleType.FUNDING_RATE, start_time) == 100
         one_call = int(
             (
-                datetime.now(timezone.utc)
-                - timedelta(minutes=290 * timeframe_to_minutes(timeframe))
+                datetime.now(UTC) - timedelta(minutes=290 * timeframe_to_minutes(timeframe))
             ).timestamp()
             * 1000
         )
@@ -40,8 +39,7 @@ def test_okx_ohlcv_candle_limit(default_conf, mocker):
 
         one_call = int(
             (
-                datetime.now(timezone.utc)
-                - timedelta(minutes=320 * timeframe_to_minutes(timeframe))
+                datetime.now(UTC) - timedelta(minutes=320 * timeframe_to_minutes(timeframe))
             ).timestamp()
             * 1000
         )
@@ -693,7 +691,7 @@ def test_fetch_orders_okx(default_conf, mocker, limit_order):
     api_mock.fetch_closed_orders = MagicMock(return_value=[limit_order["buy"]])
 
     mocker.patch(f"{EXMS}.exchange_has", return_value=True)
-    start_time = datetime.now(timezone.utc) - timedelta(days=20)
+    start_time = datetime.now(UTC) - timedelta(days=20)
 
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="okx")
     # Not available in dry-run
@@ -727,7 +725,7 @@ def test_fetch_orders_okx(default_conf, mocker, limit_order):
     api_mock.fetch_closed_orders.reset_mock()
 
     # regular closed_orders endpoint only has history for 7 days.
-    exchange.fetch_orders("mocked", datetime.now(timezone.utc) - timedelta(days=6))
+    exchange.fetch_orders("mocked", datetime.now(UTC) - timedelta(days=6))
     assert api_mock.fetch_orders.call_count == 0
     assert api_mock.fetch_open_orders.call_count == 1
     assert api_mock.fetch_closed_orders.call_count == 1

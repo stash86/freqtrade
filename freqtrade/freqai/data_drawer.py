@@ -5,7 +5,7 @@ import re
 import shutil
 import threading
 import warnings
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, TypedDict
 
@@ -116,7 +116,7 @@ class FreqaiDataDrawer:
             if metric not in self.metric_tracker[pair]:
                 self.metric_tracker[pair][metric] = {"timestamp": [], "value": []}
 
-            timestamp = int(datetime.now(timezone.utc).timestamp())
+            timestamp = int(datetime.now(UTC).timestamp())
             self.metric_tracker[pair][metric]["value"].append(value)
             self.metric_tracker[pair][metric]["timestamp"].append(timestamp)
 

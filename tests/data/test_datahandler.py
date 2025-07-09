@@ -1,7 +1,7 @@
 # pragma pylint: disable=missing-docstring, protected-access, C0103
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -165,19 +165,19 @@ def test_datahandler_ohlcv_data_min_max(testdatadir):
     # Empty pair
     min_max = dh.ohlcv_data_min_max("UNITTEST/BTC", "8m", "spot")
     assert len(min_max) == 3
-    assert min_max[0] == datetime.fromtimestamp(0, tz=timezone.utc)
+    assert min_max[0] == datetime.fromtimestamp(0, tz=UTC)
     assert min_max[0] == min_max[1]
     # Empty pair2
     min_max = dh.ohlcv_data_min_max("NOPAIR/XXX", "41m", "spot")
     assert len(min_max) == 3
-    assert min_max[0] == datetime.fromtimestamp(0, tz=timezone.utc)
+    assert min_max[0] == datetime.fromtimestamp(0, tz=UTC)
     assert min_max[0] == min_max[1]
 
     # Existing pair ...
     min_max = dh.ohlcv_data_min_max("UNITTEST/BTC", "1m", "spot")
     assert len(min_max) == 3
-    assert min_max[0] == datetime(2017, 11, 4, 23, 2, tzinfo=timezone.utc)
-    assert min_max[1] == datetime(2017, 11, 14, 22, 59, tzinfo=timezone.utc)
+    assert min_max[0] == datetime(2017, 11, 4, 23, 2, tzinfo=UTC)
+    assert min_max[1] == datetime(2017, 11, 14, 22, 59, tzinfo=UTC)
 
 
 def test_datahandler__check_empty_df(testdatadir, caplog):
@@ -467,14 +467,14 @@ def test_datahandler_trades_data_min_max(testdatadir):
     # Empty pair
     min_max = dh.trades_data_min_max("NADA/ETH", TradingMode.SPOT)
     assert len(min_max) == 3
-    assert min_max[0] == datetime.fromtimestamp(0, tz=timezone.utc)
+    assert min_max[0] == datetime.fromtimestamp(0, tz=UTC)
     assert min_max[0] == min_max[1]
 
     # Existing pair ...
     min_max = dh.trades_data_min_max("XRP/ETH", TradingMode.SPOT)
     assert len(min_max) == 3
-    assert min_max[0] == datetime(2019, 10, 11, 0, 0, 11, 620000, tzinfo=timezone.utc)
-    assert min_max[1] == datetime(2019, 10, 13, 11, 19, 28, 844000, tzinfo=timezone.utc)
+    assert min_max[0] == datetime(2019, 10, 11, 0, 0, 11, 620000, tzinfo=UTC)
+    assert min_max[1] == datetime(2019, 10, 13, 11, 19, 28, 844000, tzinfo=UTC)
 
 
 def test_gethandlerclass():

@@ -58,7 +58,7 @@ def setup_logging_pre() -> None:
 FT_LOGGING_CONFIG = {
     "version": 1,
     # "incremental": True,
-    # "disable_existing_loggers": False,
+    "disable_existing_loggers": False,
     "formatters": {
         "basic": {"format": "%(message)s"},
         "standard": {
@@ -223,7 +223,7 @@ def setup_logging(config: Config) -> None:
         logger.info("Enabling colorized output.")
         error_console._color_system = error_console._detect_color_system()
 
-    logging.info("Logfile configured")
+    logger.info("Logfile configured")
 
     # Set verbosity levels
     logging.root.setLevel(logging.INFO if verbosity < 1 else logging.DEBUG)

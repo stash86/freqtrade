@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from pandas import DataFrame
@@ -38,7 +38,7 @@ class BaseAnalysis:
 
     @staticmethod
     def dt_to_timestamp(dt: datetime):
-        timestamp = int(dt.replace(tzinfo=timezone.utc).timestamp())
+        timestamp = int(dt.replace(tzinfo=UTC).timestamp())
         return timestamp
 
     def fill_full_varholder(self):
@@ -48,12 +48,12 @@ class BaseAnalysis:
         parsed_timerange = TimeRange.parse_timerange(self.local_config["timerange"])
 
         if parsed_timerange.startdt is None:
-            self.full_varHolder.from_dt = datetime.fromtimestamp(0, tz=timezone.utc)
+            self.full_varHolder.from_dt = datetime.fromtimestamp(0, tz=UTC)
         else:
             self.full_varHolder.from_dt = parsed_timerange.startdt
 
         if parsed_timerange.stopdt is None:
-            self.full_varHolder.to_dt = datetime.now(timezone.utc)
+            self.full_varHolder.to_dt = datetime.now(UTC)
         else:
             self.full_varHolder.to_dt = parsed_timerange.stopdt
 

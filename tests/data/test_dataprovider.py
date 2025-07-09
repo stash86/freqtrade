@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 import pytest
@@ -222,8 +222,8 @@ def test_get_producer_df(default_conf):
     timeframe = default_conf["timeframe"]
     candle_type = CandleType.SPOT
 
-    empty_la = datetime.fromtimestamp(0, tz=timezone.utc)
-    now = datetime.now(timezone.utc)
+    empty_la = datetime.fromtimestamp(0, tz=UTC)
+    now = datetime.now(UTC)
 
     # no data has been added, any request should return an empty dataframe
     dataframe, la = dataprovider.get_producer_df(pair, timeframe, candle_type)
@@ -404,7 +404,7 @@ def test_get_analyzed_dataframe(mocker, default_conf, ohlcv_history):
     dataframe, time = dp.get_analyzed_dataframe("NOTHING/BTC", timeframe)
     assert dataframe.empty
     assert isinstance(time, datetime)
-    assert time == datetime(1970, 1, 1, tzinfo=timezone.utc)
+    assert time == datetime(1970, 1, 1, tzinfo=UTC)
 
     # Test backtest mode
     default_conf["runmode"] = RunMode.BACKTEST
@@ -478,7 +478,7 @@ def test_dp__add_external_df(default_conf_usdt):
     default_conf_usdt["timeframe"] = timeframe
     dp = DataProvider(default_conf_usdt, None)
     df = generate_test_data(timeframe, 24, "2022-01-01 00:00:00+00:00")
-    last_analyzed = datetime.now(timezone.utc)
+    last_analyzed = datetime.now(UTC)
 
     res = dp._add_external_df("ETH/USDT", df, last_analyzed, timeframe, CandleType.SPOT)
     assert res[0] is False

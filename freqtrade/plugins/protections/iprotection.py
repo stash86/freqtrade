@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from freqtrade.constants import Config, LongShort
@@ -127,7 +127,7 @@ class IProtection(LoggingMixin, ABC):
         max_date: datetime = max([trade.close_date for trade in trades if trade.close_date])
         # coming from Database, tzinfo is not set.
         if max_date.tzinfo is None:
-            max_date = max_date.replace(tzinfo=timezone.utc)
+            max_date = max_date.replace(tzinfo=UTC)
 
         if self._unlock_at is not None:
             # unlock_at case with fixed hour of the day

@@ -1,5 +1,5 @@
 # pragma pylint: disable=missing-docstring, C0103
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -29,8 +29,8 @@ def test_parse_timerange_incorrect():
     assert TimeRange("date", "date", 1231006505, 1233360000) == timerange
     assert isinstance(timerange.startdt, datetime)
     assert isinstance(timerange.stopdt, datetime)
-    assert timerange.startdt == datetime.fromtimestamp(1231006505, tz=timezone.utc)
-    assert timerange.stopdt == datetime.fromtimestamp(1233360000, tz=timezone.utc)
+    assert timerange.startdt == datetime.fromtimestamp(1231006505, tz=UTC)
+    assert timerange.stopdt == datetime.fromtimestamp(1233360000, tz=UTC)
     assert timerange.timerange_str == "20090103-20090131"
 
     timerange = TimeRange.parse_timerange("1231006505000-1233360000000")
@@ -68,7 +68,7 @@ def test_subtract_start():
 
 
 def test_adjust_start_if_necessary():
-    min_date = datetime(2017, 11, 14, 21, 15, 00, tzinfo=timezone.utc)
+    min_date = datetime(2017, 11, 14, 21, 15, 00, tzinfo=UTC)
 
     x = TimeRange("date", "date", 1510694100, 1510780500)
     # Adjust by 20 candles - min_date == startts

@@ -5,7 +5,7 @@ This module contains class to define a RPC communications
 import logging
 from abc import abstractmethod
 from collections.abc import Generator, Sequence
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 import psutil
@@ -388,7 +388,7 @@ class RPC:
         """
         :param timeunit: Valid entries are 'days', 'weeks', 'months'
         """
-        start_date = datetime.now(timezone.utc).date()
+        start_date = datetime.now(UTC).date()
         if timeunit == "weeks":
             # weekly
             start_date = start_date - timedelta(days=start_date.weekday())  # Monday
@@ -698,6 +698,11 @@ class RPC:
             "max_drawdown_end_timestamp": dt_ts_def(drawdown.low_date),
             "drawdown_high": drawdown.high_value,
             "drawdown_low": drawdown.low_value,
+            "current_drawdown": drawdown.current_relative_account_drawdown,
+            "current_drawdown_abs": drawdown.current_drawdown_abs,
+            "current_drawdown_high": drawdown.current_high_value,
+            "current_drawdown_start": format_date(drawdown.current_high_date),
+            "current_drawdown_start_timestamp": dt_ts_def(drawdown.current_high_date),
             "trading_volume": trading_volume,
             "sortino": sortino,
             "sharpe": sharpe,
@@ -1114,7 +1119,7 @@ class RPC:
             trade = Trade.get_trades(trade_filter=[Trade.id == trade_id]).first()
             if not trade:
                 logger.warning("delete trade: Invalid argument received")
-                raise RPCException("invalid argument")
+                raise RPCException(f"Trade with id '{trade_id}' not found.")
 
             # Try cancelling regular order if that exists
             for open_order in trade.open_orders:
@@ -1135,13 +1140,16 @@ class RPC:
                         c_count += 1
                     except ExchangeError:
                         pass
-
+            trade_pair = trade.pair
             trade.delete()
             self._freqtrade.wallets.update()
             return {
                 "result": "success",
                 "trade_id": trade_id,
-                "result_msg": f"Deleted trade {trade_id}. Closed {c_count} open orders.",
+                "result_msg": (
+                    f"Deleted trade #{trade_id} for pair {trade_pair}. "
+                    f"Closed {c_count} open orders."
+                ),
                 "cancel_order_count": c_count,
             }
 
@@ -1279,7 +1287,7 @@ class RPC:
 
         for lock in locks:
             lock.active = False
-            lock.lock_end_time = datetime.now(timezone.utc)
+            lock.lock_end_time = datetime.now(UTC)
 
         Trade.commit()
 

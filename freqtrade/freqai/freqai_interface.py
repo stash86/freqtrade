@@ -3,7 +3,7 @@ import threading
 import time
 from abc import ABC, abstractmethod
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -76,7 +76,7 @@ class IFreqaiModel(ABC):
 
         self.dd = FreqaiDataDrawer(Path(self.full_path), self.config)
         # set current candle to arbitrary historical date
-        self.current_candle: datetime = datetime.fromtimestamp(637887600, tz=timezone.utc)
+        self.current_candle: datetime = datetime.fromtimestamp(637887600, tz=UTC)
         self.dd.current_candle = self.current_candle
         self.scanning = False
         self.ft_params = self.freqai_info["feature_parameters"]

@@ -87,7 +87,7 @@ To run this bot we recommend you a linux cloud instance with a minimum of:
 
 Alternatively
 
-- Python 3.10+
+- Python 3.11+
 - pip (pip3)
 - git
 - TA-Lib

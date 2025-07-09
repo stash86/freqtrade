@@ -6,7 +6,7 @@ and will be sent to the hyperopt worker processes.
 import logging
 import sys
 import warnings
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -273,7 +273,7 @@ class HyperOptimizer:
         Keep this function as optimized as possible!
         """
         HyperoptStateContainer.set_state(HyperoptState.OPTIMIZE)
-        backtest_start_time = datetime.now(timezone.utc)
+        backtest_start_time = datetime.now(UTC)
 
         # Apply parameters
         if HyperoptTools.has_space(self.config, "buy"):
@@ -330,7 +330,7 @@ class HyperOptimizer:
         bt_results = self.backtesting.backtest(
             processed=processed, start_date=self.min_date, end_date=self.max_date
         )
-        backtest_end_time = datetime.now(timezone.utc)
+        backtest_end_time = datetime.now(UTC)
         bt_results.update(
             {
                 "backtest_start_time": int(backtest_start_time.timestamp()),

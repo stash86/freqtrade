@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, PropertyMock
 
 import pytest
@@ -306,7 +306,7 @@ def test_hyperliquid_dry_run_liquidation_price(default_conf, mocker):
 
 
 def test_hyperliquid_get_funding_fees(default_conf, mocker):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     exchange = get_patched_exchange(mocker, default_conf, exchange="hyperliquid")
     exchange._fetch_and_calculate_funding_fees = MagicMock()
     exchange.get_funding_fees("BTC/USDC:USDC", 1, False, now)

@@ -102,7 +102,7 @@ class WebSocketChannel:
             self._send_times.append(total_time)
 
             self._calc_send_limit()
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.info(f"Connection for {self} timed out, disconnecting")
             raise
 
@@ -201,8 +201,8 @@ class WebSocketChannel:
             try:
                 await task
             except (
+                TimeoutError,
                 asyncio.CancelledError,
-                asyncio.TimeoutError,
                 WebSocketDisconnect,
                 ConnectionClosed,
                 RuntimeError,

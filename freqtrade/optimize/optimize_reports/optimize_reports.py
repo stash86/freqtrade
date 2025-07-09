@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 import numpy as np
@@ -653,9 +653,9 @@ def generate_strategy_stats(
                 "max_drawdown_abs": 0.0,
                 "max_drawdown_low": 0.0,
                 "max_drawdown_high": 0.0,
-                "drawdown_start": datetime(1970, 1, 1, tzinfo=timezone.utc),
+                "drawdown_start": datetime(1970, 1, 1, tzinfo=UTC),
                 "drawdown_start_ts": 0,
-                "drawdown_end": datetime(1970, 1, 1, tzinfo=timezone.utc),
+                "drawdown_end": datetime(1970, 1, 1, tzinfo=UTC),
                 "drawdown_end_ts": 0,
                 "csum_min": 0,
                 "csum_max": 0,

@@ -7,7 +7,7 @@ Common Interface for bot and strategy to access data.
 
 import logging
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from pandas import DataFrame, Timedelta, Timestamp, to_timedelta
@@ -98,7 +98,7 @@ class DataProvider:
         :param candle_type: Any of the enum CandleType (must match trading mode!)
         """
         pair_key = (pair, timeframe, candle_type)
-        self.__cached_pairs[pair_key] = (dataframe, datetime.now(timezone.utc))
+        self.__cached_pairs[pair_key] = (dataframe, datetime.now(UTC))
 
     # For multiple producers we will want to merge the pairlists instead of overwriting
     def _set_producer_pairs(self, pairlist: list[str], producer_name: str = "default"):
@@ -131,7 +131,7 @@ class DataProvider:
                 "data": {
                     "key": pair_key,
                     "df": dataframe.tail(1),
-                    "la": datetime.now(timezone.utc),
+                    "la": datetime.now(UTC),
                 },
             }
             self.__rpc.send_msg(msg)
@@ -164,7 +164,7 @@ class DataProvider:
         if producer_name not in self.__producer_pairs_df:
             self.__producer_pairs_df[producer_name] = {}
 
-        _last_analyzed = datetime.now(timezone.utc) if not last_analyzed else last_analyzed
+        _last_analyzed = datetime.now(UTC) if not last_analyzed else last_analyzed
 
         self.__producer_pairs_df[producer_name][pair_key] = (dataframe, _last_analyzed)
         logger.debug(f"External DataFrame for {pair_key} from {producer_name} added.")
@@ -275,12 +275,12 @@ class DataProvider:
         # If we have no data from this Producer yet
         if producer_name not in self.__producer_pairs_df:
             # We don't have this data yet, return empty DataFrame and datetime (01-01-1970)
-            return (DataFrame(), datetime.fromtimestamp(0, tz=timezone.utc))
+            return (DataFrame(), datetime.fromtimestamp(0, tz=UTC))
 
         # If we do have data from that Producer, but no data on this pair_key
         if pair_key not in self.__producer_pairs_df[producer_name]:
             # We don't have this data yet, return empty DataFrame and datetime (01-01-1970)
-            return (DataFrame(), datetime.fromtimestamp(0, tz=timezone.utc))
+            return (DataFrame(), datetime.fromtimestamp(0, tz=UTC))
 
         # We have it, return this data
         df, la = self.__producer_pairs_df[producer_name][pair_key]
@@ -396,10 +396,10 @@ class DataProvider:
                 if (max_index := self.__slice_index.get(pair)) is not None:
                     df = df.iloc[max(0, max_index - MAX_DATAFRAME_CANDLES) : max_index]
                 else:
-                    return (DataFrame(), datetime.fromtimestamp(0, tz=timezone.utc))
+                    return (DataFrame(), datetime.fromtimestamp(0, tz=UTC))
             return df, date
         else:
-            return (DataFrame(), datetime.fromtimestamp(0, tz=timezone.utc))
+            return (DataFrame(), datetime.fromtimestamp(0, tz=UTC))
 
     @property
     def runmode(self) -> RunMode:

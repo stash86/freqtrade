@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Required
 
 from pydantic import TypeAdapter
-from typing_extensions import Required, TypedDict
+from typing_extensions import TypedDict
 
 
 class AnnotationType(TypedDict, total=False):

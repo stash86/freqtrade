@@ -1,4 +1,4 @@
-numpy==2.2.6
+numpy==2.3.1
 pandas==2.3.0
 bottleneck==1.5.0
 numexpr==2.11.0
@@ -7,8 +7,8 @@ ft-pandas-ta==0.3.15
 ta-lib==0.5.5
 technical==1.5.1
 
-ccxt==4.4.91
-cryptography==45.0.4
+ccxt==4.4.92
+cryptography==45.0.5
 aiohttp==3.12.13
 SQLAlchemy==2.0.41
 python-telegram-bot==22.2

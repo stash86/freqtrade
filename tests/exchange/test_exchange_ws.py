@@ -50,18 +50,18 @@ def test_exchangews_cleanup_error(mocker, caplog):
 
 
 def patch_eventloop_threading(exchange):
-    is_init = False
+    init_event = threading.Event()
 
-    def thread_fuck():
-        nonlocal is_init
+    def thread_func():
         exchange._loop = asyncio.new_event_loop()
-        is_init = True
+        init_event.set()
         exchange._loop.run_forever()
 
-    x = threading.Thread(target=thread_fuck, daemon=True)
+    x = threading.Thread(target=thread_func, daemon=True)
     x.start()
-    while not is_init:
-        pass
+    # Wait for thread to be properly initialized with timeout
+    if not init_event.wait(timeout=5.0):
+        raise RuntimeError("Failed to initialize event loop thread")
 
 
 async def test_exchangews_ohlcv(mocker, time_machine, caplog):
@@ -69,14 +69,24 @@ async def test_exchangews_ohlcv(mocker, time_machine, caplog):
     ccxt_object = MagicMock()
     caplog.set_level(logging.DEBUG)
 
-    async def sleeper(*args, **kwargs):
-        # pass
-        await asyncio.sleep(0.12)
+    async def controlled_sleeper(*args, **kwargs):
+        # Sleep to pass control back to the event loop
+        await asyncio.sleep(0.1)
         return MagicMock()
 
-    ccxt_object.un_watch_ohlcv_for_symbols = AsyncMock(side_effect=NotSupported)
+    async def wait_for_condition(condition_func, timeout_=5.0, check_interval=0.01):
+        """Wait for a condition to be true with timeout."""
+        try:
+            async with asyncio.timeout(timeout_):
+                while True:
+                    if condition_func():
+                        return True
+                    await asyncio.sleep(check_interval)
+        except TimeoutError:
+            return False
 
-    ccxt_object.watch_ohlcv = AsyncMock(side_effect=sleeper)
+    ccxt_object.un_watch_ohlcv_for_symbols = AsyncMock(side_effect=NotSupported)
+    ccxt_object.watch_ohlcv = AsyncMock(side_effect=controlled_sleeper)
     ccxt_object.close = AsyncMock()
     time_machine.move_to("2024-11-01 01:00:02 +00:00")
 
@@ -90,7 +100,14 @@ async def test_exchangews_ohlcv(mocker, time_machine, caplog):
 
         exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
         exchange_ws.schedule_ohlcv("XRP/BTC", "1m", CandleType.SPOT)
-        await asyncio.sleep(0.2)
+
+        # Wait for both pairs to be properly scheduled and watching
+        await wait_for_condition(
+            lambda: (
+                len(exchange_ws._klines_watching) == 2 and len(exchange_ws._klines_scheduled) == 2
+            ),
+            timeout_=2.0,
+        )
 
         assert exchange_ws._klines_watching == {
             ("ETH/BTC", "1m", CandleType.SPOT),
@@ -100,14 +117,21 @@ async def test_exchangews_ohlcv(mocker, time_machine, caplog):
             ("ETH/BTC", "1m", CandleType.SPOT),
             ("XRP/BTC", "1m", CandleType.SPOT),
         }
-        await asyncio.sleep(0.1)
-        assert ccxt_object.watch_ohlcv.call_count == 6
+
+        # Wait for the expected number of watch calls
+        await wait_for_condition(lambda: ccxt_object.watch_ohlcv.call_count >= 6, timeout_=3.0)
+        assert ccxt_object.watch_ohlcv.call_count >= 6
         ccxt_object.watch_ohlcv.reset_mock()
 
         time_machine.shift(timedelta(minutes=5))
         exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
-        await asyncio.sleep(1)
+
+        # Wait for log message
+        await wait_for_condition(
+            lambda: log_has_re("un_watch_ohlcv_for_symbols not supported: ", caplog), timeout_=2.0
+        )
         assert log_has_re("un_watch_ohlcv_for_symbols not supported: ", caplog)
+
         # XRP/BTC should be cleaned up.
         assert exchange_ws._klines_watching == {
             ("ETH/BTC", "1m", CandleType.SPOT),
@@ -116,6 +140,8 @@ async def test_exchangews_ohlcv(mocker, time_machine, caplog):
         # Cleanup happened.
         ccxt_object.un_watch_ohlcv_for_symbols = AsyncMock(side_effect=ValueError)
         exchange_ws.schedule_ohlcv("ETH/BTC", "1m", CandleType.SPOT)
+
+        # Verify final state
         assert exchange_ws._klines_watching == {
             ("ETH/BTC", "1m", CandleType.SPOT),
         }

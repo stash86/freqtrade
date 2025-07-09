@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from freqtrade.persistence.models import Order, Trade
 
@@ -43,7 +43,7 @@ def mock_trade_1(fee, is_short: bool):
         fee_open=fee.return_value,
         fee_close=fee.return_value,
         is_open=True,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=17),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=17),
         open_rate=0.123,
         exchange="binance",
         strategy="StrategyTestV3",
@@ -106,8 +106,8 @@ def mock_trade_2(fee, is_short: bool):
         timeframe=5,
         enter_tag="TEST1",
         exit_reason="sell_signal",
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=20),
-        close_date=datetime.now(tz=timezone.utc) - timedelta(minutes=2),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=20),
+        close_date=datetime.now(tz=UTC) - timedelta(minutes=2),
         is_short=is_short,
     )
     o = Order.parse_from_ccxt_object(mock_order_2(is_short), "ETC/BTC", entry_side(is_short))
@@ -168,8 +168,8 @@ def mock_trade_3(fee, is_short: bool):
         strategy="StrategyTestV3",
         timeframe=5,
         exit_reason="roi",
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=20),
-        close_date=datetime.now(tz=timezone.utc),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=20),
+        close_date=datetime.now(tz=UTC),
         is_short=is_short,
     )
     o = Order.parse_from_ccxt_object(mock_order_3(is_short), "XRP/BTC", entry_side(is_short))
@@ -205,7 +205,7 @@ def mock_trade_4(fee, is_short: bool):
         amount_requested=124.0,
         fee_open=fee.return_value,
         fee_close=fee.return_value,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=14),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=14),
         is_open=True,
         open_rate=0.123,
         exchange="binance",
@@ -260,7 +260,7 @@ def mock_trade_5(fee, is_short: bool):
         amount_requested=124.0,
         fee_open=fee.return_value,
         fee_close=fee.return_value,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=12),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=12),
         is_open=True,
         open_rate=0.123,
         exchange="binance",
@@ -316,7 +316,7 @@ def mock_trade_6(fee, is_short: bool):
         stake_amount=0.001,
         amount=2.0,
         amount_requested=2.0,
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=5),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=5),
         fee_open=fee.return_value,
         fee_close=fee.return_value,
         is_open=True,
@@ -410,7 +410,7 @@ def short_trade(fee):
         strategy="DefaultStrategy",
         timeframe=5,
         exit_reason="sell_signal",
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=20),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=20),
         # close_date=datetime.now(tz=timezone.utc) - timedelta(minutes=2),
         is_short=True,
     )
@@ -500,8 +500,8 @@ def leverage_trade(fee):
         strategy="DefaultStrategy",
         timeframe=5,
         exit_reason="sell_signal",
-        open_date=datetime.now(tz=timezone.utc) - timedelta(minutes=300),
-        close_date=datetime.now(tz=timezone.utc),
+        open_date=datetime.now(tz=UTC) - timedelta(minutes=300),
+        close_date=datetime.now(tz=UTC),
         interest_rate=0.0005,
     )
     o = Order.parse_from_ccxt_object(leverage_order(), "DOGE/BTC", "sell")

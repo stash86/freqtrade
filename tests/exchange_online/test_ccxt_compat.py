@@ -5,7 +5,7 @@ However, these tests should give a good idea to determine if a new exchange is
 suitable to run with freqtrade.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -248,7 +248,7 @@ class TestCCXTExchange:
             len(exch.klines(pair_tf)) > exch.ohlcv_candle_limit(timeframe, CandleType.SPOT) * 0.90
         )
         # Check if last-timeframe is within the last 2 intervals
-        now = datetime.now(timezone.utc) - timedelta(minutes=(timeframe_to_minutes(timeframe) * 2))
+        now = datetime.now(UTC) - timedelta(minutes=(timeframe_to_minutes(timeframe) * 2))
         assert exch.klines(pair_tf).iloc[-1]["date"] >= timeframe_to_prev_date(timeframe, now)
 
     def test_ccxt_fetch_ohlcv_startdate(self, exchange: EXCHANGE_FIXTURE_TYPE):
@@ -266,7 +266,7 @@ class TestCCXTExchange:
         assert isinstance(ohlcv, dict)
         assert len(ohlcv[pair_tf]) == len(exch.klines(pair_tf))
         # Check if last-timeframe is within the last 2 intervals
-        now = datetime.now(timezone.utc) - timedelta(minutes=(timeframe_to_minutes(timeframe) * 2))
+        now = datetime.now(UTC) - timedelta(minutes=(timeframe_to_minutes(timeframe) * 2))
         assert exch.klines(pair_tf).iloc[-1]["date"] >= timeframe_to_prev_date(timeframe, now)
         assert exch.klines(pair_tf)["date"].astype(int).iloc[0] // 1e6 == since_ms
 
@@ -274,7 +274,7 @@ class TestCCXTExchange:
         self, exchange, exchangename, pair, timeframe, candle_type, factor=0.9
     ):
         timeframe_ms = timeframe_to_msecs(timeframe)
-        now = timeframe_to_prev_date(timeframe, datetime.now(timezone.utc))
+        now = timeframe_to_prev_date(timeframe, datetime.now(UTC))
         for offset in (360, 120, 30, 10, 5, 2):
             since = now - timedelta(days=offset)
             since_ms = int(since.timestamp() * 1000)
@@ -336,7 +336,7 @@ class TestCCXTExchange:
         exchange, exchangename = exchange_futures
 
         pair = EXCHANGES[exchangename].get("futures_pair", EXCHANGES[exchangename]["pair"])
-        since = int((datetime.now(timezone.utc) - timedelta(days=5)).timestamp() * 1000)
+        since = int((datetime.now(UTC) - timedelta(days=5)).timestamp() * 1000)
         timeframe_ff = exchange._ft_has.get(
             "funding_fee_timeframe", exchange._ft_has["mark_ohlcv_timeframe"]
         )
@@ -371,7 +371,7 @@ class TestCCXTExchange:
     def test_ccxt_fetch_mark_price_history(self, exchange_futures: EXCHANGE_FIXTURE_TYPE):
         exchange, exchangename = exchange_futures
         pair = EXCHANGES[exchangename].get("futures_pair", EXCHANGES[exchangename]["pair"])
-        since = int((datetime.now(timezone.utc) - timedelta(days=5)).timestamp() * 1000)
+        since = int((datetime.now(UTC) - timedelta(days=5)).timestamp() * 1000)
         pair_tf = (pair, "1h", CandleType.MARK)
 
         mark_ohlcv = exchange.refresh_latest_ohlcv([pair_tf], since_ms=since, drop_incomplete=False)
@@ -389,7 +389,7 @@ class TestCCXTExchange:
     def test_ccxt__calculate_funding_fees(self, exchange_futures: EXCHANGE_FIXTURE_TYPE):
         exchange, exchangename = exchange_futures
         pair = EXCHANGES[exchangename].get("futures_pair", EXCHANGES[exchangename]["pair"])
-        since = datetime.now(timezone.utc) - timedelta(days=5)
+        since = datetime.now(UTC) - timedelta(days=5)
 
         funding_fee = exchange._fetch_and_calculate_funding_fees(
             pair, 20, is_short=False, open_date=since
@@ -403,7 +403,7 @@ class TestCCXTExchange:
         if not (lookback := EXCHANGES[exchangename].get("trades_lookback_hours")):
             pytest.skip("test_fetch_trades not enabled for this exchange")
         pair = EXCHANGES[exchangename]["pair"]
-        since = int((datetime.now(timezone.utc) - timedelta(hours=lookback)).timestamp() * 1000)
+        since = int((datetime.now(UTC) - timedelta(hours=lookback)).timestamp() * 1000)
         res = exch.loop.run_until_complete(exch._async_get_trade_history(pair, since, None, None))
         assert len(res) == 2
         res_pair, res_trades = res

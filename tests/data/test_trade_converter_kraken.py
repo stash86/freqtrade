@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from shutil import copytree
 from unittest.mock import PropertyMock
 
@@ -49,12 +49,8 @@ def test_import_kraken_trades_from_csv(testdatadir, tmp_path, caplog, default_co
     trades = dh.trades_load("BCH_EUR", TradingMode.SPOT)
     assert len(trades) == 340
 
-    assert trades["date"].min().to_pydatetime() == datetime(
-        2023, 1, 1, 0, 3, 56, tzinfo=timezone.utc
-    )
-    assert trades["date"].max().to_pydatetime() == datetime(
-        2023, 1, 2, 23, 17, 3, tzinfo=timezone.utc
-    )
+    assert trades["date"].min().to_pydatetime() == datetime(2023, 1, 1, 0, 3, 56, tzinfo=UTC)
+    assert trades["date"].max().to_pydatetime() == datetime(2023, 1, 2, 23, 17, 3, tzinfo=UTC)
     # ID is not filled
     assert len(trades.loc[trades["id"] != ""]) == 0
 

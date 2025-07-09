@@ -4,9 +4,8 @@ This module contains the argument manager class
 
 import logging
 import re
-from datetime import datetime, timezone
-
-from typing_extensions import Self
+from datetime import UTC, datetime
+from typing import Self
 
 from freqtrade.constants import DATETIME_PRINT_FORMAT
 from freqtrade.exceptions import ConfigurationError
@@ -151,9 +150,7 @@ class TimeRange:
                     starts = rvals[index]
                     if stype[0] == "date" and len(starts) == 8:
                         start = int(
-                            datetime.strptime(starts, "%Y%m%d")
-                            .replace(tzinfo=timezone.utc)
-                            .timestamp()
+                            datetime.strptime(starts, "%Y%m%d").replace(tzinfo=UTC).timestamp()
                         )
                     elif len(starts) == 13:
                         start = int(starts) // 1000
@@ -164,9 +161,7 @@ class TimeRange:
                     stops = rvals[index]
                     if stype[1] == "date" and len(stops) == 8:
                         stop = int(
-                            datetime.strptime(stops, "%Y%m%d")
-                            .replace(tzinfo=timezone.utc)
-                            .timestamp()
+                            datetime.strptime(stops, "%Y%m%d").replace(tzinfo=UTC).timestamp()
                         )
                     elif len(stops) == 13:
                         stop = int(stops) // 1000

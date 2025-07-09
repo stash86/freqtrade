@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import ccxt
 from ccxt import ROUND_DOWN, ROUND_UP
@@ -59,7 +59,7 @@ def timeframe_to_prev_date(timeframe: str, date: datetime | None = None) -> date
     :returns: date of previous candle (with utc timezone)
     """
     if not date:
-        date = datetime.now(timezone.utc)
+        date = datetime.now(UTC)
 
     new_timestamp = ccxt.Exchange.round_timeframe(timeframe, dt_ts(date), ROUND_DOWN) // 1000
     return dt_from_ts(new_timestamp)
@@ -73,6 +73,6 @@ def timeframe_to_next_date(timeframe: str, date: datetime | None = None) -> date
     :returns: date of next candle (with utc timezone)
     """
     if not date:
-        date = datetime.now(timezone.utc)
+        date = datetime.now(UTC)
     new_timestamp = ccxt.Exchange.round_timeframe(timeframe, dt_ts(date), ROUND_UP) // 1000
     return dt_from_ts(new_timestamp)

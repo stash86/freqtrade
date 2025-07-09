@@ -3,7 +3,7 @@ import importlib
 import logging
 from abc import abstractmethod
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -239,7 +239,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
                         pair, refresh=False, side="exit", is_short=trade.is_short
                     )
 
-                now = datetime.now(timezone.utc).timestamp()
+                now = datetime.now(UTC).timestamp()
                 trade_duration = int((now - trade.open_date_utc.timestamp()) / self.base_tf_seconds)
                 current_profit = trade.calc_profit_ratio(current_rate)
                 if trade.is_short:

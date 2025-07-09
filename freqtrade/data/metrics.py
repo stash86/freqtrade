@@ -174,12 +174,18 @@ def calculate_underwater(
 
 @dataclass()
 class DrawDownResult:
+    # Max drawdown fields
     drawdown_abs: float = 0.0
     high_date: pd.Timestamp = None
     low_date: pd.Timestamp = None
     high_value: float = 0.0
     low_value: float = 0.0
     relative_account_drawdown: float = 0.0
+    # Current drawdown fields
+    current_high_date: pd.Timestamp = None
+    current_high_value: float = 0.0
+    current_drawdown_abs: float = 0.0
+    current_relative_account_drawdown: float = 0.0
 
 
 def calculate_max_drawdown(
@@ -191,29 +197,31 @@ def calculate_max_drawdown(
     relative: bool = False,
 ) -> DrawDownResult:
     """
-    Calculate max drawdown and the corresponding close dates
-    :param trades: DataFrame containing trades (requires columns close_date and profit_ratio)
+    Calculate max drawdown and current drawdown with corresponding dates
+    :param trades: DataFrame containing trades (requires columns close_date and profit_abs)
     :param date_col: Column in DataFrame to use for dates (defaults to 'close_date')
     :param value_col: Column in DataFrame to use for values (defaults to 'profit_abs')
     :param starting_balance: Portfolio starting balance - properly calculate relative drawdown.
+    :param relative: If True, use relative drawdown for max calculation instead of absolute
     :return: DrawDownResult object
              with absolute max drawdown, high and low time and high and low value,
-             and the relative account drawdown
+             relative account drawdown, and current drawdown information.
     :raise: ValueError if trade-dataframe was found empty.
     """
     if len(trades) == 0:
         raise ValueError("Trade dataframe empty.")
+
     profit_results = trades.sort_values(date_col).reset_index(drop=True)
     max_drawdown_df = _calc_drawdown_series(
         profit_results, date_col=date_col, value_col=value_col, starting_balance=starting_balance
     )
 
+    # Calculate maximum drawdown
     idxmin = (
         max_drawdown_df["drawdown_relative"].idxmax()
         if relative
         else max_drawdown_df["drawdown"].idxmin()
     )
-
     high_idx = max_drawdown_df.iloc[: idxmin + 1]["high_value"].idxmax()
     high_date = profit_results.loc[high_idx, date_col]
     low_date = profit_results.loc[idxmin, date_col]
@@ -221,13 +229,27 @@ def calculate_max_drawdown(
     low_val = max_drawdown_df.loc[idxmin, "cumulative"]
     max_drawdown_rel = max_drawdown_df.loc[idxmin, "drawdown_relative"]
 
+    # Calculate current drawdown
+    current_high_idx = max_drawdown_df["high_value"].iloc[:-1].idxmax()
+    current_high_date = profit_results.loc[current_high_idx, date_col]
+    current_high_value = max_drawdown_df.iloc[-1]["high_value"]
+    current_cumulative = max_drawdown_df.iloc[-1]["cumulative"]
+    current_drawdown_abs = current_high_value - current_cumulative
+    current_drawdown_relative = max_drawdown_df.iloc[-1]["drawdown_relative"]
+
     return DrawDownResult(
+        # Max drawdown
         drawdown_abs=abs(max_drawdown_df.loc[idxmin, "drawdown"]),
         high_date=high_date,
         low_date=low_date,
         high_value=high_val,
         low_value=low_val,
         relative_account_drawdown=max_drawdown_rel,
+        # Current drawdown
+        current_high_date=current_high_date,
+        current_high_value=current_high_value,
+        current_drawdown_abs=current_drawdown_abs,
+        current_relative_account_drawdown=current_drawdown_relative,
     )
 
 

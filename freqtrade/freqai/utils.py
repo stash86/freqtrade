@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +64,7 @@ def get_required_data_timerange(config: Config) -> TimeRange:
     Used to compute the required data download time range
     for auto data-download in FreqAI
     """
-    time = datetime.now(tz=timezone.utc).timestamp()
+    time = datetime.now(tz=UTC).timestamp()
 
     timeframes = config["freqai"]["feature_parameters"].get("include_timeframes")
 

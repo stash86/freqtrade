@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -182,7 +182,7 @@ def test_trade_fromjson():
 
     assert trade.id == 25
     assert trade.pair == "ETH/USDT"
-    assert trade.open_date_utc == datetime(2022, 10, 18, 9, 12, 42, tzinfo=timezone.utc)
+    assert trade.open_date_utc == datetime(2022, 10, 18, 9, 12, 42, tzinfo=UTC)
     assert isinstance(trade.open_date, datetime)
     assert trade.exit_reason == "no longer good"
     assert trade.realized_profit == 2.76315361
@@ -192,7 +192,7 @@ def test_trade_fromjson():
 
     assert len(trade.orders) == 5
     last_o = trade.orders[-1]
-    assert last_o.order_filled_utc == datetime(2022, 10, 18, 9, 45, 22, tzinfo=timezone.utc)
+    assert last_o.order_filled_utc == datetime(2022, 10, 18, 9, 45, 22, tzinfo=UTC)
     assert isinstance(last_o.order_date, datetime)
     assert last_o.funding_fee == -0.055
 

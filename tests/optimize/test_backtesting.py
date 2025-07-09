@@ -3,7 +3,7 @@
 import random
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, PropertyMock
 
@@ -687,7 +687,7 @@ def test_backtest__check_trade_exit(default_conf, mocker) -> None:
     backtesting._set_strategy(backtesting.strategylist[0])
     pair = "UNITTEST/BTC"
     row = [
-        pd.Timestamp(year=2020, month=1, day=1, hour=4, minute=55, tzinfo=timezone.utc),
+        pd.Timestamp(year=2020, month=1, day=1, hour=4, minute=55, tzinfo=UTC),
         200,  # Open
         201.5,  # High
         195,  # Low
@@ -705,7 +705,7 @@ def test_backtest__check_trade_exit(default_conf, mocker) -> None:
     assert isinstance(trade, LocalTrade)
 
     row_sell = [
-        pd.Timestamp(year=2020, month=1, day=1, hour=5, minute=0, tzinfo=timezone.utc),
+        pd.Timestamp(year=2020, month=1, day=1, hour=5, minute=0, tzinfo=UTC),
         200,  # Open
         210.5,  # High
         195,  # Low
@@ -723,7 +723,7 @@ def test_backtest__check_trade_exit(default_conf, mocker) -> None:
     res = backtesting._check_trade_exit(trade, row_sell, row_sell[0].to_pydatetime())
     assert res is not None
     assert res.exit_reason == ExitType.ROI.value
-    assert res.close_date_utc == datetime(2020, 1, 1, 5, 0, tzinfo=timezone.utc)
+    assert res.close_date_utc == datetime(2020, 1, 1, 5, 0, tzinfo=UTC)
 
     # Enter new trade
     trade = backtesting._enter_trade(pair, row=row, direction="long")
@@ -928,7 +928,7 @@ def test_backtest_one_detail(default_conf_usdt, mocker, testdatadir, use_detail)
         assert len(t["orders"]) == 2
 
         entryo = t["orders"][0]
-        entry_ts = datetime.fromtimestamp(entryo["order_filled_timestamp"] // 1000, tz=timezone.utc)
+        entry_ts = datetime.fromtimestamp(entryo["order_filled_timestamp"] // 1000, tz=UTC)
         if entry_ts > t["open_date"]:
             late_entry += 1
 
@@ -1039,7 +1039,7 @@ def test_backtest_one_detail_futures(
         assert len(t["orders"]) == 2
 
         entryo = t["orders"][0]
-        entry_ts = datetime.fromtimestamp(entryo["order_filled_timestamp"] // 1000, tz=timezone.utc)
+        entry_ts = datetime.fromtimestamp(entryo["order_filled_timestamp"] // 1000, tz=UTC)
         if entry_ts > t["open_date"]:
             late_entry += 1
 
@@ -1121,7 +1121,7 @@ def test_backtest_one_detail_futures_funding_fees(
         return df
 
     def adjust_trade_position(trade, current_time, **kwargs):
-        if current_time > datetime(2021, 11, 18, 2, 0, 0, tzinfo=timezone.utc):
+        if current_time > datetime(2021, 11, 18, 2, 0, 0, tzinfo=UTC):
             return None
         return default_conf_usdt["stake_amount"]
 
@@ -2564,7 +2564,7 @@ def test_backtest_start_multi_strat_caching(
     mocker.patch("freqtrade.optimize.backtesting.Backtesting.backtest", backtestmock)
     mocker.patch("freqtrade.optimize.backtesting.show_backtest_results", MagicMock())
 
-    now = min_backtest_date = datetime.now(tz=timezone.utc)
+    now = min_backtest_date = datetime.now(tz=UTC)
     start_time = now - timedelta(**start_delta) + timedelta(hours=1)
     if cache == "none":
         min_backtest_date = now + timedelta(days=1)

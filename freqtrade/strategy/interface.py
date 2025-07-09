@@ -5,7 +5,7 @@ This module defines the interface to apply for strategies
 
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from math import isinf, isnan
 
 from pandas import DataFrame
@@ -1149,7 +1149,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         manually from within the strategy, to allow an easy way to unlock pairs.
         :param pair: Unlock pair to allow trading again
         """
-        PairLocks.unlock_pair(pair, datetime.now(timezone.utc))
+        PairLocks.unlock_pair(pair, datetime.now(UTC))
 
     def unlock_reason(self, reason: str) -> None:
         """
@@ -1158,7 +1158,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         manually from within the strategy, to allow an easy way to unlock pairs.
         :param reason: Unlock pairs to allow trading again
         """
-        PairLocks.unlock_reason(reason, datetime.now(timezone.utc))
+        PairLocks.unlock_reason(reason, datetime.now(UTC))
 
     def is_pair_locked(
         self, pair: str, *, candle_date: datetime | None = None, side: str = "*"

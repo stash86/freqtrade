@@ -269,7 +269,7 @@ class ExternalMessageConsumer:
                 except Exception as e:
                     logger.exception(f"Error handling producer message: {e}")
 
-            except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed):
+            except (TimeoutError, websockets.exceptions.ConnectionClosed):
                 # We haven't received data yet. Check the connection and continue.
                 try:
                     # ping

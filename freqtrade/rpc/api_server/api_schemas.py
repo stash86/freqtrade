@@ -163,6 +163,11 @@ class Profit(BaseModel):
     max_drawdown_start_timestamp: int
     max_drawdown_end: str
     max_drawdown_end_timestamp: int
+    current_drawdown: float
+    current_drawdown_abs: float
+    current_drawdown_high: float
+    current_drawdown_start: str
+    current_drawdown_start_timestamp: int
     trading_volume: float | None = None
     bot_start_timestamp: int
     bot_start_date: str
