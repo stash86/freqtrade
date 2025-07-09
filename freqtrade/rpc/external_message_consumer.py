@@ -8,6 +8,7 @@ from it
 import asyncio
 import logging
 import socket
+import time
 from collections.abc import Callable
 from threading import Thread
 from typing import Any, TypedDict
@@ -100,6 +101,8 @@ class ExternalMessageConsumer:
         self._channel_streams: dict[str, MessageStream] = {}
 
         self.start()
+
+        self._last_alive_log = 0
 
     def start(self):
         """
@@ -273,7 +276,10 @@ class ExternalMessageConsumer:
                     pong = await channel.ping()
                     latency = await asyncio.wait_for(pong, timeout=self.ping_timeout) * 1000
 
-                    logger.info(f"Connection to {channel} still alive, latency: {latency}ms")
+                    now = time.time()
+                    if now - self._last_alive_log > 300:
+                        logger.info(f"Connection to {channel} still alive, latency: {latency}ms")
+                        self._last_alive_log = now
                     continue
 
                 except Exception as e:
