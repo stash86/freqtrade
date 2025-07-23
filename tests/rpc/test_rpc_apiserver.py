@@ -1343,6 +1343,44 @@ def test_api_profit(botclient, mocker, ticker, fee, markets, is_short, expected)
     }
 
 
+def test_api_profit_all(botclient, mocker, ticker, fee, markets):
+    ftbot, client = botclient
+    ftbot.config["tradable_balance_ratio"] = 1
+    ftbot.config["trading_mode"] = TradingMode.FUTURES
+    patch_get_signal(ftbot)
+    mocker.patch.multiple(
+        EXMS,
+        get_balances=MagicMock(return_value=ticker),
+        fetch_ticker=ticker,
+        get_fee=fee,
+        markets=PropertyMock(return_value=markets),
+    )
+
+    rc = client_get(client, f"{BASE_URI}/profit_all")
+    assert_response(rc, 200)
+    response = rc.json()
+    assert "all" in response
+    assert "long" in response
+    assert "short" in response
+
+    assert response["all"]["trade_count"] == 0
+    create_mock_trades_usdt(fee, is_short=None)
+
+    rc = client_get(client, f"{BASE_URI}/profit_all")
+    assert_response(rc, 200)
+    response = rc.json()
+    assert response["all"]["trade_count"] == 7
+    assert response["long"]["trade_count"] == 2
+    assert response["short"]["trade_count"] == 5
+    assert pytest.approx(response["all"]["profit_all_coin"]) == 22.58997755
+    assert pytest.approx(response["long"]["profit_all_coin"]) == -20.0498903
+    assert pytest.approx(response["short"]["profit_all_coin"]) == 42.639867
+
+    assert response["all"]["best_pair"] == "NEO/USDT"
+    assert response["long"]["best_pair"] == ""
+    assert response["short"]["best_pair"] == "NEO/USDT"
+
+
 @pytest.mark.parametrize("is_short", [True, False])
 def test_api_stats(botclient, mocker, ticker, fee, markets, is_short):
     ftbot, client = botclient

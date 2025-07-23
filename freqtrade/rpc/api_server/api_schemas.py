@@ -173,6 +173,12 @@ class Profit(BaseModel):
     bot_start_date: str
 
 
+class ProfitAll(BaseModel):
+    all: Profit
+    long: Profit | None = None
+    short: Profit | None = None
+
+
 class SellReason(BaseModel):
     wins: int
     losses: int

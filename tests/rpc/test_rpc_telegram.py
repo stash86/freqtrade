@@ -171,7 +171,7 @@ def test_telegram_init(default_conf, mocker, caplog) -> None:
         "['pause', 'stopbuy', 'stopentry'], ['whitelist'], ['blacklist'], "
         "['bl_delete', 'blacklist_delete'], "
         "['logs'], ['health'], ['help'], ['version'], ['marketdir'], "
-        "['order'], ['list_custom_data'], ['tg_info']]"
+        "['order'], ['list_custom_data'], ['tg_info'], ['profit_long'], ['profit_short']]"
     )
 
     assert log_has(message_str, caplog)
@@ -943,7 +943,7 @@ async def test_telegram_profit_handle(
     trade.is_open = False
     Trade.commit()
 
-    context.args = [3]
+    context.args = ["3"]
     await telegram._profit(update=update, context=context)
     assert msg_mock.call_count == 1
     assert "*ROI:* Closed trades" in msg_mock.call_args_list[-1][0][0]
@@ -965,6 +965,92 @@ async def test_telegram_profit_handle(
     assert "*Winrate:*" in msg_mock.call_args_list[-1][0][0]
     assert "*Expectancy (Ratio):*" in msg_mock.call_args_list[-1][0][0]
     assert "*Trading volume:* `126 USDT`" in msg_mock.call_args_list[-1][0][0]
+
+
+@pytest.mark.asyncio
+async def test_telegram_profit_long_short_handle(
+    default_conf_usdt, update, ticker_usdt, fee, mocker
+):
+    """
+    Test the /profit_long and /profit_short commands to ensure the output content
+    is consistent with /profit, covering both no trades and trades present cases.
+    """
+
+    mocker.patch("freqtrade.rpc.rpc.CryptoToFiatConverter._find_price", return_value=1.1)
+    mocker.patch.multiple(EXMS, fetch_ticker=ticker_usdt, get_fee=fee)
+    telegram, freqtradebot, msg_mock = get_telegram_testobject(mocker, default_conf_usdt)
+
+    # When there are no trades
+    await telegram._profit_long(update=update, context=MagicMock())
+    assert msg_mock.call_count == 1
+    assert "No long trades yet." in msg_mock.call_args_list[0][0][0]
+    msg_mock.reset_mock()
+
+    # Test support with "/profit long"
+    context = MagicMock()
+    context.args = ["long"]
+    await telegram._profit(update=update, context=context)
+    assert msg_mock.call_count == 1
+    assert "No long trades yet." in msg_mock.call_args_list[0][0][0]
+    msg_mock.reset_mock()
+
+    await telegram._profit_short(update=update, context=MagicMock())
+    assert msg_mock.call_count == 1
+    assert "No short trades yet." in msg_mock.call_args_list[0][0][0]
+    msg_mock.reset_mock()
+
+    # Test support with "/profit short"
+    context = MagicMock()
+    context.args = ["short"]
+    await telegram._profit(update=update, context=context)
+    assert msg_mock.call_count == 1
+    assert "No short trades yet." in msg_mock.call_args_list[0][0][0]
+    msg_mock.reset_mock()
+
+    # When there are trades
+    create_mock_trades_usdt(fee)
+
+    # Keep only long trades
+    for t in Trade.get_trades_proxy():
+        t.is_short = False
+    Trade.commit()
+    await telegram._profit_long(update=update, context=MagicMock())
+    msg = msg_mock.call_args_list[0][0][0]
+    assert "*ROI:* Closed long trades" in msg
+    assert "*ROI:* All long trades" in msg
+    assert "*Total Trade Count:*" in msg
+    assert "*Winrate:*" in msg
+    assert "*Expectancy (Ratio):*" in msg
+    assert "*Best Performing:*" in msg
+    assert "*Profit factor:*" in msg
+    assert "*Max Drawdown:*" in msg
+    assert "*Current Drawdown:*" in msg
+    msg_mock.reset_mock()
+
+    # Keep only short trades
+    for t in Trade.get_trades_proxy():
+        t.is_short = True
+    Trade.commit()
+    await telegram._profit_short(update=update, context=MagicMock())
+    msg = msg_mock.call_args_list[0][0][0]
+    assert "*ROI:* Closed short trades" in msg
+    assert "*ROI:* All short trades" in msg
+    assert "*Total Trade Count:*" in msg
+    assert "*Winrate:*" in msg
+    assert "*Expectancy (Ratio):*" in msg
+    assert "*Best Performing:*" in msg
+    assert "*Profit factor:*" in msg
+    assert "*Max Drawdown:*" in msg
+    assert "*Current Drawdown:*" in msg
+    msg_mock.reset_mock()
+
+    # Test parameter passing
+    context = MagicMock()
+    context.args = ["2"]
+    await telegram._profit_long(update=update, context=context)
+    assert msg_mock.call_count == 1
+    await telegram._profit_short(update=update, context=context)
+    assert msg_mock.call_count == 2
 
 
 @pytest.mark.parametrize("is_short", [True, False])
@@ -2890,7 +2976,7 @@ async def test_telegram_list_custom_data(default_conf_usdt, update, ticker, fee,
     msg_mock.reset_mock()
 
 
-def test_noficiation_settings(default_conf_usdt, mocker):
+def test_notification_settings(default_conf_usdt, mocker):
     (telegram, _, _) = get_telegram_testobject(mocker, default_conf_usdt)
     telegram._config["telegram"].update(
         {

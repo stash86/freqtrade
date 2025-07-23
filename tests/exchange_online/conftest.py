@@ -487,10 +487,10 @@ EXCHANGES = {
         ],
     },
     "hyperliquid": {
-        "pair": "PURR/USDC",
+        "pair": "UBTC/USDC",
         "stake_currency": "USDC",
         "hasQuoteVolume": False,
-        "timeframe": "1h",
+        "timeframe": "30m",
         "futures": True,
         "candle_count": 5000,
         "orderbook_max_entries": 20,
@@ -498,6 +498,8 @@ EXCHANGES = {
         "hasQuoteVolumeFutures": True,
         "leverage_tiers_public": False,
         "leverage_in_spot_market": False,
+        # TODO: re-enable hyperliquid websocket tests
+        "skip_ws_tests": True,
     },
 }
 

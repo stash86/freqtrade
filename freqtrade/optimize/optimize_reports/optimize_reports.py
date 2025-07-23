@@ -83,7 +83,6 @@ def _generate_result_line(
     """
     Generate one result dict, with "first_column" as key.
     """
-    profit_sum = result["profit_ratio"].sum()
     # (end-capital - starting capital) / starting capital
     profit_total = result["profit_abs"].sum() / starting_balance
     backtest_days = (max_date - min_date).days or 1
@@ -108,8 +107,6 @@ def _generate_result_line(
         "profit_mean_pct": (
             round(result["profit_ratio"].mean() * 100.0, 2) if len(result) > 0 else 0.0
         ),
-        "profit_sum": profit_sum,
-        "profit_sum_pct": round(profit_sum * 100.0, 2),
         "profit_total_abs": result["profit_abs"].sum(),
         "profit_total": profit_total,
         "profit_total_pct": round(profit_total * 100.0, 2),
@@ -519,14 +516,16 @@ def generate_strategy_stats(
 
     best_pair = (
         max(
-            [pair for pair in pair_results if pair["key"] != "TOTAL"], key=lambda x: x["profit_sum"]
+            [pair for pair in pair_results if pair["key"] != "TOTAL"],
+            key=lambda x: x["profit_total_abs"],
         )
         if len(pair_results) > 1
         else None
     )
     worst_pair = (
         min(
-            [pair for pair in pair_results if pair["key"] != "TOTAL"], key=lambda x: x["profit_sum"]
+            [pair for pair in pair_results if pair["key"] != "TOTAL"],
+            key=lambda x: x["profit_total_abs"],
         )
         if len(pair_results) > 1
         else None

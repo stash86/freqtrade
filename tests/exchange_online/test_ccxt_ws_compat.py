@@ -35,21 +35,22 @@ class TestCCXTExchangeWs:
                 break
             sleep(1)
 
+        caplog.set_level(logging.DEBUG)
         res = exch.refresh_latest_ohlcv([pair_tf])
         assert m_cand.call_count == 1
 
         # Currently open candle
         next_candle = timeframe_to_prev_date(timeframe, dt_now())
-        now = next_candle - timedelta(seconds=1)
         # Currently closed candle
-        curr_candle = timeframe_to_prev_date(timeframe, now)
+        curr_candle = timeframe_to_prev_date(timeframe, next_candle - timedelta(seconds=1))
 
         assert pair_tf in exch._exchange_ws._klines_watching
         assert pair_tf in exch._exchange_ws._klines_scheduled
         assert res[pair_tf] is not None
         df1 = res[pair_tf]
-        caplog.set_level(logging.DEBUG)
-        assert df1.iloc[-1]["date"] == curr_candle
+        assert df1.iloc[-1]["date"] == curr_candle, (
+            f"Expected {curr_candle}, got {df1.iloc[-1]['date']} for {pair_tf}, now: {dt_now()}"
+        )
 
         # Wait until the next candle (might be up to 1 minute).
         while True:

@@ -743,7 +743,7 @@ class Backtesting:
         if order and self._get_order_filled(order.ft_price, row):
             order.close_bt_order(current_date, trade)
             self._run_funding_fees(trade, current_date, force=True)
-            strategy_safe_wrapper(self.strategy.order_filled, default_retval=None)(
+            strategy_safe_wrapper(self.strategy.order_filled, supress_error=True)(
                 pair=trade.pair,
                 trade=trade,  # type: ignore[arg-type]
                 order=order,

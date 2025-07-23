@@ -229,6 +229,7 @@ official commands. You can ask at any moment for help with `/help`.
 | `/cancel_open_order <trade_id> | /coo <trade_id>` | Cancel an open order for a trade.
 | **Metrics** |
 | `/profit [<n>]` | Display a summary of your profit/loss from close trades and some stats about your performance, over the last n days (all trades by default)
+| `/profit_[long|short] [<n>]` | Display a summary of your profit/loss from close trades in one direction and some stats about your performance, over the last n days (all trades by default)
 | `/performance` | Show performance of each finished trade grouped by pair
 | `/balance` | Show bot managed balance per currency
 | `/balance full` | Show account balance per currency
@@ -308,6 +309,8 @@ current    max
 ```
 
 ### /profit
+
+Also available as `/profit_long` and `/profit_short` to show profit for long or short trades only.
 
 Return a summary of your profit/loss and performance.
 

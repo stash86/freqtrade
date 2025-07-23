@@ -1,8 +1,5 @@
-"""Bybit exchange subclass"""
-
 import logging
 from datetime import datetime, timedelta
-from typing import Any
 
 import ccxt
 
@@ -12,6 +9,7 @@ from freqtrade.exceptions import DDosProtection, ExchangeError, OperationalExcep
 from freqtrade.exchange import Exchange
 from freqtrade.exchange.common import retrier
 from freqtrade.exchange.exchange_types import CcxtOrder, FtHas
+from freqtrade.misc import deep_merge_dicts
 
 
 logger = logging.getLogger(__name__)
@@ -64,9 +62,9 @@ class Bybit(Exchange):
     }
 
     _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [
-        # TradingMode.SPOT always supported and not required in this list
+        (TradingMode.SPOT, MarginMode.NONE),
+        (TradingMode.FUTURES, MarginMode.ISOLATED),
         # (TradingMode.FUTURES, MarginMode.CROSS),
-        (TradingMode.FUTURES, MarginMode.ISOLATED)
     ]
 
     @property
@@ -76,13 +74,10 @@ class Bybit(Exchange):
         config = {}
         if self.trading_mode == TradingMode.SPOT:
             config.update({"options": {"defaultType": "spot"}})
-        config.update(super()._ccxt_config)
+        elif self.trading_mode == TradingMode.FUTURES:
+            config.update({"options": {"defaultSettle": self._config["stake_currency"]}})
+        config = deep_merge_dicts(config, super()._ccxt_config)
         return config
-
-    def market_is_future(self, market: dict[str, Any]) -> bool:
-        main = super().market_is_future(market)
-        # For ByBit, we'll only support USDT markets for now.
-        return main and market["settle"] == "USDT"
 
     @retrier
     def additional_exchange_init(self) -> None:
@@ -182,18 +177,36 @@ class Bybit(Exchange):
         PERPETUAL:
          bybit:
           https://www.bybithelp.com/HelpCenterKnowledge/bybitHC_Article?language=en_US&id=000001067
-          https://www.bybit.com/en/help-center/article/Liquidation-Price-Calculation-under-Isolated-Mode-Unified-Trading-Account#b
+          USDT:
+            https://www.bybit.com/en/help-center/article/Liquidation-Price-Calculation-under-Isolated-Mode-Unified-Trading-Account#b
+          USDC:
+            https://www.bybit.com/en/help-center/article/Liquidation-Price-Calculation-under-Isolated-Mode-Unified-Trading-Account#c
 
-        Long:
+        Long USDT:
+            Liquidation Price = (
+                Entry Price - [(Initial Margin - Maintenance Margin)/Contract Quantity]
+                - (Extra Margin Added/Contract Quantity))
+        Short USDT:
+            Liquidation Price = (
+                Entry Price + [(Initial Margin - Maintenance Margin)/Contract Quantity]
+                + (Extra Margin Added/Contract Quantity))
+
+        Long USDC:
         Liquidation Price = (
-            Entry Price - [(Initial Margin - Maintenance Margin)/Contract Quantity]
-            - (Extra Margin Added/Contract Quantity))
-        Short:
+            Position Entry Price - [
+                (Initial Margin + Extra Margin Added - Maintenance Margin) / Position Size
+            ]
+        )
+
+        Short USDC:
         Liquidation Price = (
-            Entry Price + [(Initial Margin - Maintenance Margin)/Contract Quantity]
-            + (Extra Margin Added/Contract Quantity))
+            Position Entry Price + [
+                (Initial Margin + Extra Margin Added - Maintenance Margin) / Position Size
+            ]
+        )
 
         Implementation Note: Extra margin is currently not used.
+        Due to this - the liquidation formula between USDT and USDC is the same.
 
         :param pair: Pair to calculate liquidation price for
         :param open_rate: Entry price of position

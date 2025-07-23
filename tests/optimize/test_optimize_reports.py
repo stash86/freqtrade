@@ -452,7 +452,6 @@ def test_generate_pair_metrics():
     assert (
         pytest.approx(pair_results[-1]["profit_mean_pct"]) == pair_results[-1]["profit_mean"] * 100
     )
-    assert pytest.approx(pair_results[-1]["profit_sum_pct"]) == pair_results[-1]["profit_sum"] * 100
 
 
 def test_generate_daily_stats(testdatadir):

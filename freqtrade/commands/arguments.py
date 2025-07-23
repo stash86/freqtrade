@@ -258,24 +258,26 @@ ARGS_RECURSIVE_ANALYSIS = ["timeframe", "timerange", "dataformat_ohlcv", "pairs"
 
 # Command level configs - keep at the bottom of the above definitions
 NO_CONF_REQURIED = [
+    "backtest-filter",
+    "backtesting-show",
     "convert-data",
     "convert-trade-data",
     "download-data",
-    "list-timeframes",
+    "hyperopt-list",
+    "hyperopt-show",
+    "list-data",
+    "list-freqaimodels",
+    "list-hyperoptloss",
     "list-markets",
     "list-pairs",
     "list-strategies",
-    "list-freqaimodels",
-    "list-hyperoptloss",
-    "list-data",
-    "hyperopt-list",
-    "hyperopt-show",
-    "backtest-filter",
+    "list-timeframes",
     "plot-dataframe",
     "plot-profit",
     "show-trades",
-    "trades-to-ohlcv",
+    "install-ui",
     "strategy-updater",
+    "trades-to-ohlcv",
 ]
 
 NO_CONF_ALLOWED = ["create-userdir", "list-exchanges", "new-strategy"]
@@ -311,8 +313,6 @@ class Arguments:
         # (see https://bugs.python.org/issue16399)
         # Allow no-config for certain commands (like downloading / plotting)
         if "config" in parsed_arg and parsed_arg.config is None:
-            conf_required = "command" in parsed_arg and parsed_arg.command in NO_CONF_REQURIED
-
             if "user_data_dir" in parsed_arg and parsed_arg.user_data_dir is not None:
                 user_dir = parsed_arg.user_data_dir
             else:
@@ -325,7 +325,9 @@ class Arguments:
             else:
                 # Else use "config.json".
                 cfgfile = Path.cwd() / DEFAULT_CONFIG
-                if cfgfile.is_file() or not conf_required:
+                conf_optional = "command" in parsed_arg and parsed_arg.command in NO_CONF_REQURIED
+                if cfgfile.is_file() or not conf_optional:
+                    # Only inject config if the file exists, or if the config is required
                     parsed_arg.config = [DEFAULT_CONFIG]
 
         return parsed_arg

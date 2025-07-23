@@ -169,7 +169,8 @@ class Exchange:
     _ft_has_futures: FtHas = {}
 
     _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [
-        # TradingMode.SPOT always supported and not required in this list
+        # Non-defined exchanges only support spot mode.
+        (TradingMode.SPOT, MarginMode.NONE),
     ]
 
     def __init__(
@@ -198,13 +199,19 @@ class Exchange:
         self.loop = self._init_async_loop()
         self._config: Config = {}
 
-        self._config.update(config)
-
         # Leverage properties
-        self.trading_mode: TradingMode = config.get("trading_mode", TradingMode.SPOT)
-        self.margin_mode: MarginMode = (
-            MarginMode(config.get("margin_mode")) if config.get("margin_mode") else MarginMode.NONE
+        self.trading_mode: TradingMode = TradingMode(
+            config.get("trading_mode", self._supported_trading_mode_margin_pairs[0][0])
         )
+        self.margin_mode: MarginMode = MarginMode(
+            MarginMode(config.get("margin_mode"))
+            if config.get("margin_mode")
+            else self._supported_trading_mode_margin_pairs[0][1]
+        )
+        config["trading_mode"] = self.trading_mode
+        config["margin_mode"] = self.margin_mode
+        config["candle_type_def"] = CandleType.get_default(self.trading_mode)
+        self._config.update(config)
         self.liquidation_buffer = config.get("liquidation_buffer", 0.05)
 
         exchange_conf: ExchangeConfig = exchange_config if exchange_config else config["exchange"]
@@ -2596,10 +2603,12 @@ class Exchange:
         if ticks and cache:
             idx = -2 if drop_incomplete and len(ticks) > 1 else -1
             self._pairs_last_refresh_time[(pair, timeframe, c_type)] = ticks[idx][0]
-        # keeping parsed dataframe in cache
+        has_cache = cache and (pair, timeframe, c_type) in self._klines
+        # in case of existing cache, fill_missing happens after concatenation
         ohlcv_df = ohlcv_to_dataframe(
-            ticks, timeframe, pair=pair, fill_missing=True, drop_incomplete=drop_incomplete
+            ticks, timeframe, pair=pair, fill_missing=not has_cache, drop_incomplete=drop_incomplete
         )
+        # keeping parsed dataframe in cache
         if cache:
             if (pair, timeframe, c_type) in self._klines:
                 old = self._klines[(pair, timeframe, c_type)]

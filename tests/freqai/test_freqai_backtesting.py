@@ -10,7 +10,6 @@ from freqtrade.configuration.timerange import TimeRange
 from freqtrade.data import history
 from freqtrade.data.dataprovider import DataProvider
 from freqtrade.enums import RunMode
-from freqtrade.enums.candletype import CandleType
 from freqtrade.exceptions import OperationalException
 from freqtrade.freqai.data_kitchen import FreqaiDataKitchen
 from freqtrade.optimize.backtesting import Backtesting
@@ -142,7 +141,7 @@ def test_freqai_backtest_consistent_timerange(mocker, freqai_conf):
 
     gbs = mocker.patch("freqtrade.optimize.backtesting.generate_backtest_stats")
 
-    freqai_conf["candle_type_def"] = CandleType.FUTURES
+    freqai_conf["trading_mode"] = "futures"
     freqai_conf.get("exchange", {}).update({"pair_whitelist": ["XRP/USDT:USDT"]})
     freqai_conf.get("freqai", {}).get("feature_parameters", {}).update(
         {"include_timeframes": ["5m", "1h"], "include_corr_pairlist": []}

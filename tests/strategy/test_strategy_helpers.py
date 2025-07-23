@@ -354,6 +354,7 @@ def test_informative_decorator(mocker, default_conf_usdt, trading_mode):
     default_conf_usdt["strategy"] = "InformativeDecoratorTest"
     strategy = StrategyResolver.load_strategy(default_conf_usdt)
     exchange = get_patched_exchange(mocker, default_conf_usdt)
+    default_conf_usdt["candle_type_def"] = candle_def
     strategy.dp = DataProvider({}, exchange, None)
     mocker.patch.object(
         strategy.dp, "current_whitelist", return_value=["XRP/USDT", "LTC/USDT", "NEO/USDT"]

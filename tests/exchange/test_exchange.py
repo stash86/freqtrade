@@ -4954,7 +4954,7 @@ def test_validate_trading_mode_and_margin_mode(
         ("binance", "margin", {"options": {"defaultType": "margin"}}),
         ("binance", "futures", {"options": {"defaultType": "swap"}}),
         ("bybit", "spot", {"options": {"defaultType": "spot"}}),
-        ("bybit", "futures", {"options": {"defaultType": "swap"}}),
+        ("bybit", "futures", {"options": {"defaultType": "swap", "defaultSettle": "USDT"}}),
         ("gate", "futures", {"options": {"defaultType": "swap"}}),
         ("hitbtc", "futures", {"options": {"defaultType": "swap"}}),
         ("kraken", "futures", {"options": {"defaultType": "swap"}}),
@@ -4962,10 +4962,10 @@ def test_validate_trading_mode_and_margin_mode(
         ("okx", "futures", {"options": {"defaultType": "swap"}}),
     ],
 )
-def test__ccxt_config(default_conf, mocker, exchange_name, trading_mode, ccxt_config):
-    default_conf["trading_mode"] = trading_mode
-    default_conf["margin_mode"] = "isolated"
-    exchange = get_patched_exchange(mocker, default_conf, exchange=exchange_name)
+def test__ccxt_config(default_conf_usdt, mocker, exchange_name, trading_mode, ccxt_config):
+    default_conf_usdt["trading_mode"] = trading_mode
+    default_conf_usdt["margin_mode"] = "isolated"
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange=exchange_name)
     assert exchange._ccxt_config == ccxt_config
 
 

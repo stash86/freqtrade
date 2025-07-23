@@ -258,6 +258,7 @@ def patch_exchange(
             "._supported_trading_mode_margin_pairs",
             PropertyMock(
                 return_value=[
+                    (TradingMode.SPOT, MarginMode.NONE),
                     (TradingMode.MARGIN, MarginMode.CROSS),
                     (TradingMode.MARGIN, MarginMode.ISOLATED),
                     (TradingMode.FUTURES, MarginMode.CROSS),

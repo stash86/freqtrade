@@ -27,7 +27,7 @@ from freqtrade.exchange.common import (
     SUPPORTED_EXCHANGES,
 )
 from freqtrade.exchange.exchange_utils_timeframe import timeframe_to_minutes, timeframe_to_prev_date
-from freqtrade.ft_types import ValidExchangesType
+from freqtrade.ft_types import TradeModeType, ValidExchangesType
 from freqtrade.util import FtPrecise
 
 
@@ -110,7 +110,7 @@ def _build_exchange_list_entry(
         "trade_modes": [{"trading_mode": "spot", "margin_mode": ""}],
     }
     if resolved := exchangeClasses.get(mapped_exchange_name):
-        supported_modes = [{"trading_mode": "spot", "margin_mode": ""}] + [
+        supported_modes: list[TradeModeType] = [
             {"trading_mode": tm.value, "margin_mode": mm.value}
             for tm, mm in resolved["class"]._supported_trading_mode_margin_pairs
         ]

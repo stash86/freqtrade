@@ -9,4 +9,4 @@ def get_dry_run_wallet(config: Config) -> int | float:
     if isinstance(_start_cap := config["dry_run_wallet"], float | int):
         return _start_cap
     else:
-        return _start_cap.get("stake_currency")
+        return _start_cap.get(config["stake_currency"], 0.0)

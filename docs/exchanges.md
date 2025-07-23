@@ -339,13 +339,13 @@ This needs to be configured like this:
 ```json
 "exchange": {
     "name": "hyperliquid",
-    "walletAddress": "your_eth_wallet_address",
+    "walletAddress": "your_eth_wallet_address",  // This should NOT be your API Wallet Address!
     "privateKey": "your_api_private_key",
     // ...
 }
 ```
 
-* walletAddress in hex format: `0x<40 hex characters>` - Can be easily copied from your wallet - and should be your wallet address, not your API Wallet Address.
+* walletAddress in hex format: `0x<40 hex characters>` - Can be easily copied from your wallet - and should be your main wallet address, not your API Wallet Address.
 * privateKey in hex format: `0x<64 hex characters>` - Use the key the API Wallet shows on creation.
 
 Hyperliquid handles deposits and withdrawals on the Arbitrum One chain, a Layer 2 scaling solution built on top of Ethereum. Hyperliquid uses USDC as quote / collateral. The process of depositing USDC on Hyperliquid requires a couple of steps, see [how to start trading](https://hyperliquid.gitbook.io/hyperliquid-docs/onboarding/how-to-start-trading) for details on what steps are needed.
@@ -362,6 +362,27 @@ Hyperliquid handles deposits and withdrawals on the Arbitrum One chain, a Layer 
     * Don't use the same mnemonic as the one you had to backup when initializing a hardware wallet, using the same mnemonic basically deletes the security of your hardware wallet.
     * Create a different software wallet, only transfer the funds you want to trade with to that wallet, and use that wallet to trade on Hyperliquid.
     * If you have funds you don't want to use for trading (after making a profit for example), transfer them back to your hardware wallet.
+
+### Hyperliquid Vault / Subaccount
+
+Hyperliquid allows you to create either a vault or a subaccount.  
+To use these with Freqtrade, you will need to use the following configuration pattern:
+
+``` json
+"exchange": {
+    "name": "hyperliquid",
+    "walletAddress": "your_vault_address",  // Vault or subaccount address
+    "privateKey": "your_api_private_key",
+    "ccxt_config": {
+        "options": {
+            "vaultAddress": "your_vault_address" // Optional, only if you want to use a vault or subaccount
+        }
+    },
+    // ...
+}
+```
+
+Your balance and trades will now be used from your vault / subaccount - and no longer from your main account.
 
 ### Historic Hyperliquid data
 
