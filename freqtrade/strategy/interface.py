@@ -172,6 +172,7 @@ class IStrategy(ABC, HyperStrategyMixin):
                         "Informative timeframe must be equal or higher than strategy timeframe!"
                     )
                 if not informative_data.candle_type:
+                    print(config)
                     informative_data.candle_type = config["candle_type_def"]
                 self._ft_informative.append((informative_data, cls_method))
 
