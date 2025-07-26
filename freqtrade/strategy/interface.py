@@ -166,13 +166,16 @@ class IStrategy(ABC, HyperStrategyMixin):
                 # True, confusing this code.
                 continue
             strategy_timeframe_minutes = timeframe_to_minutes(self.timeframe)
+
+            if "candle_type_def" not in config:
+                config["candle_type_def"] = CandleType.get_default(config["trading_mode"])
+
             for informative_data in informative_data_list:
                 if timeframe_to_minutes(informative_data.timeframe) < strategy_timeframe_minutes:
                     raise OperationalException(
                         "Informative timeframe must be equal or higher than strategy timeframe!"
                     )
                 if not informative_data.candle_type:
-                    print(config)
                     informative_data.candle_type = config["candle_type_def"]
                 self._ft_informative.append((informative_data, cls_method))
 

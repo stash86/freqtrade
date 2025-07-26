@@ -211,9 +211,7 @@ class Exchange:
         config["trading_mode"] = self.trading_mode
         config["margin_mode"] = self.margin_mode
         config["candle_type_def"] = CandleType.get_default(self.trading_mode)
-        print(config["candle_type_def"])
         self._config.update(config)
-        print(self._config["candle_type_def"])
         self.liquidation_buffer = config.get("liquidation_buffer", 0.05)
 
         exchange_conf: ExchangeConfig = exchange_config if exchange_config else config["exchange"]
