@@ -1204,16 +1204,12 @@ class LocalTrade:
         else:
             if use_first_rate:
                 first_entry = self.select_filled_orders(self.entry_side)[0]
-                first_trade_rate = first_entry.safe_price
-                if self.is_short:
-                    profit_ratio = (1 - (rate / first_trade_rate)) * self.leverage
-                else:
-                    profit_ratio = ((rate / first_trade_rate) - 1) * self.leverage
+                open_trade_value = first_entry.safe_price
+
+            if self.is_short:
+                profit_ratio = (1 - (close_trade_value / open_trade_value)) * self.leverage
             else:
-                if self.is_short:
-                    profit_ratio = (1 - (close_trade_value / open_trade_value)) * self.leverage
-                else:
-                    profit_ratio = ((close_trade_value / open_trade_value) - 1) * self.leverage
+                profit_ratio = ((close_trade_value / open_trade_value) - 1) * self.leverage
 
         return float(f"{profit_ratio:.8f}")
 
