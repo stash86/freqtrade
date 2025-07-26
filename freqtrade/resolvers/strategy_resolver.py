@@ -54,7 +54,7 @@ class StrategyResolver(IResolver):
         strategy.ft_load_params_from_file()
         # Set attributes
         # Check if we need to override configuration
-        #             (Attribute name,                    default,     subkey)
+        # (Attribute name, default, subkey)
         attributes = [
             ("minimal_roi", {"0": 10.0}),
             ("timeframe", None),

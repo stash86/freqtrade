@@ -93,14 +93,16 @@ class FreqtradeBot(LoggingMixin):
         # Remove credentials from original exchange config to avoid accidental credential exposure
         remove_exchange_credentials(config["exchange"], True)
 
+        self.exchange = ExchangeResolver.load_exchange(
+            self.config, exchange_config=exchange_config, load_leverage_tiers=True
+        )
+
         self.strategy: IStrategy = StrategyResolver.load_strategy(self.config)
 
         # Check config consistency here since strategies can set certain options
         validate_config_consistency(config)
-
-        self.exchange = ExchangeResolver.load_exchange(
-            self.config, exchange_config=exchange_config, load_leverage_tiers=True
-        )
+        # Re-validate exchange compatibility
+        self.exchange.validate_config(self.config)
 
         init_db(self.config["db_url"])
 
