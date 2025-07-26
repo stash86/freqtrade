@@ -167,9 +167,6 @@ class IStrategy(ABC, HyperStrategyMixin):
                 continue
             strategy_timeframe_minutes = timeframe_to_minutes(self.timeframe)
 
-            if "candle_type_def" not in config:
-                config["candle_type_def"] = CandleType.get_default(config["trading_mode"])
-
             for informative_data in informative_data_list:
                 if timeframe_to_minutes(informative_data.timeframe) < strategy_timeframe_minutes:
                     raise OperationalException(

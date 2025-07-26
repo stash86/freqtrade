@@ -1178,7 +1178,11 @@ class LocalTrade:
         )
 
     def calc_profit_ratio(
-        self, rate: float, amount: float | None = None, open_rate: float | None = None, use_first_rate=False,
+        self,
+        rate: float,
+        amount: float | None = None,
+        open_rate: float | None = None,
+        use_first_rate=False,
     ) -> float:
         """
         Calculates the profit as ratio (including fee).
