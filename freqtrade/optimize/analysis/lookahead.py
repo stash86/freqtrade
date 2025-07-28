@@ -125,6 +125,7 @@ class LookaheadAnalysis(BaseAnalysis):
 
         backtesting = Backtesting(prepare_data_config, self.exchange)
         self.exchange = backtesting.exchange
+        self.local_config["candle_type_def"] = prepare_data_config["candle_type_def"]
         self._fee = backtesting.fee
         backtesting._set_strategy(backtesting.strategylist[0])
 

@@ -294,10 +294,6 @@ class Exchange:
             # Initial markets load
             self.reload_markets(True, load_leverage_tiers=False)
             self.validate_config(config)
-            self._startup_candle_count: int = config.get("startup_candle_count", 0)
-            self.required_candle_call_count = self.validate_required_startup_candles(
-                self._startup_candle_count, config.get("timeframe", "")
-            )
 
         if self.trading_mode != TradingMode.SPOT and load_leverage_tiers:
             self.fill_leverage_tiers()
@@ -336,6 +332,12 @@ class Exchange:
         asyncio.set_event_loop(loop)
         return loop
 
+    def _set_startup_candle_count(self, config: Config) -> None:
+        self._startup_candle_count: int = config.get("startup_candle_count", 0)
+        self.required_candle_call_count = self.validate_required_startup_candles(
+            self._startup_candle_count, config.get("timeframe", "")
+        )
+
     def validate_config(self, config: Config) -> None:
         # Check if timeframe is available
         self.validate_timeframes(config.get("timeframe"))
@@ -349,6 +351,8 @@ class Exchange:
         self.validate_pricing(config["entry_pricing"])
         self.validate_orderflow(config["exchange"])
         self.validate_freqai(config)
+
+        self._set_startup_candle_count(config)
 
     def _init_ccxt(
         self, exchange_config: dict[str, Any], sync: bool, ccxt_kwargs: dict[str, Any]
