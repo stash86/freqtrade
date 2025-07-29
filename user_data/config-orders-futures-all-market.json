@@ -1,0 +1,35 @@
+{
+    "trading_mode": "futures",
+    "margin_mode": "isolated",
+    "ignore_buying_expired_candle_after": 15,
+    "unfilledtimeout": {
+        "entry": 2,
+        "exit": 1500,
+        "unit": "minutes"
+    },
+    "order_types": {
+        "entry": "market",
+        "exit": "market",
+        "emergency_exit": "market",
+        "force_exit": "market",
+        "force_entry": "market",
+        "stoploss": "limit",
+        "stoploss_on_exchange": false,
+        "stoploss_on_exchange_interval": 60
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true, // true for futures binance
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true, // true for futures binance
+        "order_book_top": 1
+    },
+}
