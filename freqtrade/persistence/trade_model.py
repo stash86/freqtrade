@@ -1204,7 +1204,9 @@ class LocalTrade:
         else:
             if use_first_rate:
                 first_entry = self.select_filled_orders(self.entry_side)[0]
-                open_trade_value = first_entry.safe_price
+                if amount is None:
+                    amount = self.amount
+                open_trade_value = self._calc_open_trade_value(amount, first_entry.safe_price)
 
             if self.is_short:
                 profit_ratio = (1 - (close_trade_value / open_trade_value)) * self.leverage
