@@ -270,9 +270,7 @@ class TestCCXTExchange:
         assert exch.klines(pair_tf).iloc[-1]["date"] >= timeframe_to_prev_date(timeframe, now)
         assert exch.klines(pair_tf)["date"].astype(int).iloc[0] // 1e6 == since_ms
 
-    def ccxt__async_get_candle_history(
-        self, exchange, exchangename, pair, timeframe, candle_type, factor=0.9
-    ):
+    def _ccxt__async_get_candle_history(self, exchange, pair, timeframe, candle_type, factor=0.9):
         timeframe_ms = timeframe_to_msecs(timeframe)
         now = timeframe_to_prev_date(timeframe, datetime.now(UTC))
         for offset in (360, 120, 30, 10, 5, 2):
@@ -304,7 +302,7 @@ class TestCCXTExchange:
             pytest.skip("Exchange does not support candle history")
         pair = EXCHANGES[exchangename]["pair"]
         timeframe = EXCHANGES[exchangename]["timeframe"]
-        self.ccxt__async_get_candle_history(exc, exchangename, pair, timeframe, CandleType.SPOT)
+        self._ccxt__async_get_candle_history(exc, pair, timeframe, CandleType.SPOT)
 
     @pytest.mark.parametrize(
         "candle_type",
@@ -315,7 +313,7 @@ class TestCCXTExchange:
         ],
     )
     def test_ccxt__async_get_candle_history_futures(
-        self, exchange_futures: EXCHANGE_FIXTURE_TYPE, candle_type
+        self, exchange_futures: EXCHANGE_FIXTURE_TYPE, candle_type: CandleType
     ):
         exchange, exchangename = exchange_futures
         pair = EXCHANGES[exchangename].get("futures_pair", EXCHANGES[exchangename]["pair"])
@@ -324,9 +322,8 @@ class TestCCXTExchange:
             timeframe = exchange._ft_has.get(
                 "funding_fee_timeframe", exchange._ft_has["mark_ohlcv_timeframe"]
             )
-        self.ccxt__async_get_candle_history(
+        self._ccxt__async_get_candle_history(
             exchange,
-            exchangename,
             pair=pair,
             timeframe=timeframe,
             candle_type=candle_type,
@@ -396,7 +393,7 @@ class TestCCXTExchange:
         )
 
         assert isinstance(funding_fee, float)
-        # assert funding_fee > 0
+        assert funding_fee != 0
 
     def test_ccxt__async_get_trade_history(self, exchange: EXCHANGE_FIXTURE_TYPE):
         exch, exchangename = exchange

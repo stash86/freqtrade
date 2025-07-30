@@ -117,9 +117,9 @@ Different payloads can be configured for different events. Not all fields are ne
 
 ## Webhook Message types
 
-### Entry
+### Entry / Entry fill
 
-The fields in `webhook.entry` are filled when the bot executes a long/short. Parameters are filled using string.format.
+The fields in `webhook.entry` and `webhook.entry_fill` are filled when the bot places a long/short Order to increase a position, or when that order fills respectively. Parameters are filled using string.format.
 Possible parameters are:
 
 * `trade_id`
@@ -162,31 +162,9 @@ Possible parameters are:
 * `current_rate`
 * `enter_tag`
 
-### Entry fill
+### Exit / Exit fill
 
-The fields in `webhook.entry_fill` are filled when the bot filled a long/short order. Parameters are filled using string.format.
-Possible parameters are:
-
-* `trade_id`
-* `exchange`
-* `pair`
-* `direction`
-* `leverage`
-* `open_rate`
-* `amount`
-* `open_date`
-* `stake_amount`
-* `stake_currency`
-* `base_currency`
-* `quote_currency`
-* `fiat_currency`
-* `order_type`
-* `current_rate`
-* `enter_tag`
-
-### Exit
-
-The fields in `webhook.exit` are filled when the bot exits a trade. Parameters are filled using string.format.
+The fields in `webhook.exit` and `webhook.exit_fill` are filled when the bot places an exit order, or when that exit order fills respectively. Parameters are filled using string.format.
 Possible parameters are:
 
 * `trade_id`
@@ -195,34 +173,9 @@ Possible parameters are:
 * `direction`
 * `leverage`
 * `gain`
-* `limit`
 * `amount`
 * `open_rate`
-* `profit_amount`
-* `profit_ratio`
-* `stake_currency`
-* `base_currency`
-* `quote_currency`
-* `fiat_currency`
-* `exit_reason`
-* `order_type`
-* `open_date`
-* `close_date`
-
-### Exit fill
-
-The fields in `webhook.exit_fill` are filled when the bot fills a exit order (closes a Trade). Parameters are filled using string.format.
-Possible parameters are:
-
-* `trade_id`
-* `exchange`
-* `pair`
-* `direction`
-* `leverage`
-* `gain`
 * `close_rate`
-* `amount`
-* `open_rate`
 * `current_rate`
 * `profit_amount`
 * `profit_ratio`
@@ -230,10 +183,14 @@ Possible parameters are:
 * `base_currency`
 * `quote_currency`
 * `fiat_currency`
+* `enter_tag`
 * `exit_reason`
 * `order_type`
 * `open_date`
 * `close_date`
+* `sub_trade`
+* `is_final_exit`
+
 
 ### Exit cancel
 
@@ -246,7 +203,7 @@ Possible parameters are:
 * `direction`
 * `leverage`
 * `gain`
-* `limit`
+* `order_rate`
 * `amount`
 * `open_rate`
 * `current_rate`

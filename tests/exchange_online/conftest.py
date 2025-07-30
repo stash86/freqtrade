@@ -570,12 +570,16 @@ def get_futures_exchange(exchange_name, exchange_conf, class_mocker):
 @pytest.fixture(params=EXCHANGES, scope="class")
 def exchange(request, exchange_conf, class_mocker):
     class_mocker.patch("freqtrade.exchange.bybit.Bybit.additional_exchange_init")
-    return get_exchange(request.param, exchange_conf)
+    exchange, name = get_exchange(request.param, exchange_conf)
+    yield exchange, name
+    exchange.close()
 
 
 @pytest.fixture(params=EXCHANGES, scope="class")
 def exchange_futures(request, exchange_conf, class_mocker):
-    return get_futures_exchange(request.param, exchange_conf, class_mocker)
+    exchange, name = get_futures_exchange(request.param, exchange_conf, class_mocker)
+    yield exchange, name
+    exchange.close()
 
 
 @pytest.fixture(params=["spot", "futures"], scope="class")

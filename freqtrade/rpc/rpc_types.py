@@ -56,7 +56,8 @@ class __RPCEntryExitMsgBase(RPCSendMsgBase):
     quote_currency: str
     leverage: float | None
     direction: str
-    limit: float
+    limit: float  # Deprecated, use order_rate instead
+    order_rate: float
     open_rate: float
     order_type: str
     stake_amount: float
@@ -87,7 +88,6 @@ class RPCExitMsg(__RPCEntryExitMsgBase):
     exit_reason: str | None
     close_date: datetime
     # current_rate: float | None
-    order_rate: float | None
     final_profit_ratio: float | None
     is_final_exit: bool
 

@@ -1250,6 +1250,7 @@ class FreqtradeBot(LoggingMixin):
             "leverage": trade.leverage if trade.leverage else None,
             "direction": "Short" if trade.is_short else "Long",
             "limit": open_rate,  # Deprecated (?)
+            "order_rate": open_rate,
             "open_rate": open_rate,
             "order_type": order_type or "unknown",
             "stake_amount": stake_amount,
@@ -1286,6 +1287,7 @@ class FreqtradeBot(LoggingMixin):
             "leverage": trade.leverage,
             "direction": "Short" if trade.is_short else "Long",
             "limit": trade.open_rate,
+            "order_rate": trade.open_rate,
             "order_type": order_type,
             "stake_amount": trade.stake_amount,
             "open_rate": trade.open_rate,
@@ -2301,6 +2303,7 @@ class FreqtradeBot(LoggingMixin):
             "direction": "Short" if trade.is_short else "Long",
             "gain": gain,
             "limit": profit_rate or 0,
+            "order_rate": profit_rate or 0,
             "order_type": order_type,
             "amount": order.safe_amount_after_fee,
             "open_rate": trade.open_rate,
