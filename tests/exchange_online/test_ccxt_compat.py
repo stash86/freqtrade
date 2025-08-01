@@ -380,6 +380,10 @@ class TestCCXTExchange:
         this_hour = timeframe_to_prev_date(expected_tf)
         prev_hour = timeframe_to_prev_date(expected_tf, this_hour - timedelta(minutes=1))
 
+        # Mark price must be available for the currently open candle (as well as older candles,
+        # even though the test only asserts the last two).
+        # This is a requirement to have funding fee calculations available correctly and timely
+        # right as the funding fee applies (e.g. at 08:00).
         assert mark_candles[mark_candles["date"] == prev_hour].iloc[0]["open"] != 0.0
         assert mark_candles[mark_candles["date"] == this_hour].iloc[0]["open"] != 0.0
 
