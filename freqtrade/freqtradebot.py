@@ -1240,6 +1240,8 @@ class FreqtradeBot(LoggingMixin):
                 o.stake_amount for o in trade.open_orders if o.ft_order_side == trade.entry_side
             )
 
+        order_tag = order.ft_order_tag or ""
+
         msg: RPCEntryMsg = {
             "trade_id": trade.id,
             "type": RPCMessageType.ENTRY_FILL if fill else RPCMessageType.ENTRY,
@@ -1262,6 +1264,7 @@ class FreqtradeBot(LoggingMixin):
             "open_date": trade.open_date_utc or datetime.now(UTC),
             "current_rate": current_rate,
             "sub_trade": sub_trade,
+            "order_tag": order_tag,
         }
 
         # Send the message
@@ -2235,6 +2238,8 @@ class FreqtradeBot(LoggingMixin):
             amount = trade.amount
         gain: ProfitLossStr = "profit" if profit.profit_ratio > 0 else "loss"
 
+        order_tag = order.ft_order_tag or ""
+
         msg: RPCExitMsg = {
             "type": (RPCMessageType.EXIT_FILL if fill else RPCMessageType.EXIT),
             "trade_id": trade.id,
@@ -2268,6 +2273,7 @@ class FreqtradeBot(LoggingMixin):
             "max_profit": trade.max_profit,
             "final_profit_ratio": trade.close_profit if not trade.is_open else None,
             "is_final_exit": trade.is_open is False,
+            "order_tag": order_tag,
         }
 
         # Send the message

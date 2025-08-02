@@ -599,8 +599,8 @@ CONF_SCHEMA = {
                         "description": (
                             f"Discord webhook URL. {__VIA_ENV} FREQTRADE__DISCORD__WEBHOOK_URL"
                         ),
-                        "type": "string"
-                    }
+                        "type": "string",
+                    },
                 },
                 "allow_custom_messages": {"type": "boolean", "default": True},
                 "entry_cancel": {
@@ -644,7 +644,7 @@ CONF_SCHEMA = {
                                 {"Open Rate": "{open_rate}"},
                                 {"Additional Entry Amount": "{amount}"},
                                 {"Total Stake Amount": "{stake_amount} {stake_currency}"},
-                                # {"Strategy": "{strategy}"},
+                                {"Order Tag": "{order_tag}"},
                                 # {"Timeframe": "{timeframe}"},
                             ],
                         },
@@ -706,7 +706,7 @@ CONF_SCHEMA = {
                                 {"Profit": "{profit_amount} {stake_currency}"},
                                 {"Profit %": "{profit_ratio:.2%}"},
                                 {"Cumulative Profit": "{cumulative_profit} {stake_currency}"},
-                                # {"Strategy": "{strategy}"},
+                                {"Order Tag": "{order_tag}"},
                                 # {"Timeframe": "{timeframe}"},
                             ],
                         },
