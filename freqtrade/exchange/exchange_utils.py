@@ -213,9 +213,9 @@ def amount_to_precision(
         amount = float(
             decimal_to_precision(
                 amount,
-                rounding_mode=TRUNCATE,
-                precision=precision,
-                counting_mode=precisionMode,
+                TRUNCATE,  # rounding_mode
+                precision,  # numPrecisionDigits
+                precisionMode,  # counting_mode
             )
         )
 
@@ -311,11 +311,11 @@ def price_to_precision(
             return float(
                 decimal_to_precision(
                     price,
-                    rounding_mode=rounding_mode,
-                    precision=int(price_precision)
+                    rounding_mode,  # rounding mode
+                    int(price_precision)
                     if precisionMode != TICK_SIZE
-                    else price_precision,
-                    counting_mode=precisionMode,
+                    else price_precision,  # numPrecisionDigits
+                    precisionMode,  # counting_mode
                 )
             )
 

@@ -96,7 +96,7 @@ ARGS_LIST_HYPEROPTS = ["hyperopt_path", "print_one_column"]
 
 ARGS_BACKTEST_SHOW = ["exportfilename", "backtest_show_pair_list", "backtest_breakdown"]
 
-ARGS_LIST_EXCHANGES = ["print_one_column", "list_exchanges_all"]
+ARGS_LIST_EXCHANGES = ["print_one_column", "list_exchanges_all", "trading_mode", "dex_exchanges"]
 
 ARGS_LIST_TIMEFRAMES = ["exchange", "print_one_column"]
 

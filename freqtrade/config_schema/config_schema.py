@@ -157,6 +157,16 @@ CONF_SCHEMA = {
             "description": f"Offset for profit exit. {__IN_STRATEGY}",
             "type": "number",
         },
+        "recursive_strategy_search": {
+            "description": "Enable recursive strategy search.",
+            "type": "boolean",
+        },
+        "user_data_dir": {
+            "description": "Path to the user data directory.",
+        },
+        "datadir": {
+            "description": "Path to the data directory.",
+        },
         "fee": {
             "description": "Trading fee percentage. Can help to simulate slippage in backtesting",
             "type": "number",

@@ -46,7 +46,18 @@ def start_list_exchanges(args: dict[str, Any]) -> None:
         table.add_column("Markets")
         table.add_column("Reason")
 
+        trading_mode = args.get("trading_mode", None)
+        dex_only = args.get("dex_exchanges", False)
+
         for exchange in available_exchanges:
+            if trading_mode and not any(
+                a["trading_mode"] == trading_mode for a in exchange["trade_modes"]
+            ):
+                # If trading_mode is specified, only show exchanges that support it
+                continue
+            if dex_only and not exchange.get("dex", False):
+                # If dex_only is specified, only show DEX exchanges
+                continue
             name = Text(exchange["name"])
             if exchange["supported"]:
                 name.append(" (Supported)", style="italic")
