@@ -180,6 +180,16 @@
       "description": "Offset for profit exit. \nUsually specified in the strategy and missing in the configuration.",
       "type": "number"
     },
+    "recursive_strategy_search": {
+      "description": "Enable recursive strategy search.",
+      "type": "boolean"
+    },
+    "user_data_dir": {
+      "description": "Path to the user data directory."
+    },
+    "datadir": {
+      "description": "Path to the data directory."
+    },
     "fee": {
       "description": "Trading fee percentage. Can help to simulate slippage in backtesting",
       "type": "number",

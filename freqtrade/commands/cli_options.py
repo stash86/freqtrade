@@ -369,6 +369,11 @@ AVAILABLE_CLI_OPTIONS = {
         help="Print all exchanges known to the ccxt library.",
         action="store_true",
     ),
+    "dex_exchanges": Arg(
+        "--dex-exchanges",
+        help="Print only DEX exchanges.",
+        action="store_true",
+    ),
     # List pairs / markets
     "list_pairs_all": Arg(
         "-a",

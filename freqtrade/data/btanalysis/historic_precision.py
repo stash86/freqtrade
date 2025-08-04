@@ -11,7 +11,7 @@ def get_tick_size_over_time(candles: DataFrame) -> Series:
     # count the number of significant digits for the open and close prices
     for col in ["open", "high", "low", "close"]:
         candles[f"{col}_count"] = (
-            candles[col].round(14).astype(str).str.extract(r"\.(\d*[1-9])")[0].str.len()
+            candles[col].round(14).apply("{:.15f}".format).str.extract(r"\.(\d*[1-9])")[0].str.len()
         )
     candles["max_count"] = candles[["open_count", "close_count", "high_count", "low_count"]].max(
         axis=1
