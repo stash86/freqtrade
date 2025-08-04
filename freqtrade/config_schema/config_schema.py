@@ -629,8 +629,7 @@ CONF_SCHEMA = {
                                 {"Direction": "{direction}"},
                                 {"Leverage": "{leverage}"},
                                 {"Open Rate": "{open_rate}"},
-                                {"Amount": "{amount}"},
-                                {"Stake Amount": "{stake_amount} {stake_currency}"},
+                                {"Amount": "{amount} ({stake_amount} {stake_currency})"},
                                 {"Open Date": "{open_date:%Y-%m-%d %H:%M:%S}"},
                                 {"Enter Tag": "{enter_tag}"},
                                 # {"Strategy": "{strategy}"},
@@ -642,10 +641,18 @@ CONF_SCHEMA = {
                             "items": {"type": "object"},
                             "default": [
                                 {"Open Rate": "{open_rate}"},
-                                {"Additional Entry Amount": "{amount}"},
-                                {"Total Stake Amount": "{stake_amount} {stake_currency}"},
+                                {
+                                    "Additional Entry Amount": (
+                                        "{amount} ({order_stake_amount:.4f} {stake_currency})"
+                                    )
+                                },
+                                {
+                                    "Total Amount": (
+                                        "{full_amount} ({stake_amount:.4f} {stake_currency})"
+                                    )
+                                },
                                 {"Order Tag": "{order_tag}"},
-                                # {"Timeframe": "{timeframe}"},
+                                {"Filled Date": "{order_filled_date:%Y-%m-%d %H:%M:%S}"},
                             ],
                         },
                     },
@@ -681,7 +688,7 @@ CONF_SCHEMA = {
                                 # {"Leverage": "{leverage}"},
                                 {"Open Rate": "{open_rate}"},
                                 {"Close Rate": "{close_rate}"},
-                                {"Amount": "{amount}"},
+                                {"Amount": "{amount} ({stake_amount:.4f} {stake_currency})"},
                                 {"Open Date": "{open_date:%Y-%m-%d %H:%M:%S}"},
                                 {"Close Date": "{close_date:%Y-%m-%d %H:%M:%S}"},
                                 {"Profit": "{profit_amount} {stake_currency}"},
@@ -700,14 +707,21 @@ CONF_SCHEMA = {
                             "default": [
                                 {"Open Rate": "{open_rate}"},
                                 {"Close Rate": "{close_rate}"},
-                                {"Partial Exit Amount": "{amount}"},
-                                {"Partial Exit Date": "{close_date:%Y-%m-%d %H:%M:%S}"},
-                                {"Remaining Stake Amount": "{stake_amount} {stake_currency}"},
+                                {
+                                    "Partial Exit Amount": (
+                                        "{amount} ({order_stake_amount:.4f} {stake_currency})"
+                                    )
+                                },
+                                {"Filled Date": "{order_filled_date:%Y-%m-%d %H:%M:%S}"},
+                                {
+                                    "Remaining Amount": (
+                                        "{full_amount} ({stake_amount:.4f} {stake_currency})"
+                                    )
+                                },
                                 {"Profit": "{profit_amount} {stake_currency}"},
-                                {"Profit %": "{profit_ratio:.2%}"},
+                                {"Profit %": "{profit_ratio:.3%}"},
                                 {"Cumulative Profit": "{cumulative_profit} {stake_currency}"},
                                 {"Order Tag": "{order_tag}"},
-                                # {"Timeframe": "{timeframe}"},
                             ],
                         },
                     },
