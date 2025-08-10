@@ -4,7 +4,7 @@ python -m pip install --upgrade pip
 python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"
 
 pip install -U wheel "numpy<3.0"
-pip install --only-binary ta-lib --find-links=build_helpers\ ta-lib
+pip install --only-binary ta-lib --find-links=build_helpers\ "ta-lib<0.6.0"
 
 pip install -r requirements-dev.txt
 pip install -e .

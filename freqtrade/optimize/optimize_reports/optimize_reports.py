@@ -599,6 +599,8 @@ def generate_strategy_stats(
         "timerange": config.get("timerange", ""),
         "enable_protections": config.get("enable_protections", False),
         "strategy_name": strategy,
+        "freqaimodel": config.get("freqaimodel", None),
+        "freqai_identifier": config.get("freqai", {}).get("identifier", None),
         # Parameters relevant for backtesting
         "stoploss": config["stoploss"],
         "trailing_stop": config.get("trailing_stop", False),

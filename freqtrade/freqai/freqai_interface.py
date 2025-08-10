@@ -514,12 +514,7 @@ class IFreqaiModel(ABC):
                    current coin/bot loop
         """
 
-        if "training_features_list_raw" in dk.data:
-            feature_list = dk.data["training_features_list_raw"]
-        else:
-            feature_list = dk.data["training_features_list"]
-
-        if dk.training_features_list != feature_list:
+        if dk.training_features_list != dk.data["training_features_list"]:
             raise OperationalException(
                 "Trying to access pretrained model with `identifier` "
                 "but found different features furnished by current strategy. "

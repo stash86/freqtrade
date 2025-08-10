@@ -415,13 +415,14 @@ EXCHANGES = {
         "timeframe": "1h",
         "candle_count": 1000,
     },
-    "htx": {
-        "pair": "ETH/BTC",
-        "stake_currency": "BTC",
-        "hasQuoteVolume": True,
-        "timeframe": "1h",
-        "candle_count": 1000,
-    },
+    # TODO: re-enable htx once certificates work again
+    # "htx": {
+    #     "pair": "ETH/BTC",
+    #     "stake_currency": "BTC",
+    #     "hasQuoteVolume": True,
+    #     "timeframe": "1h",
+    #     "candle_count": 1000,
+    # },
     "bitvavo": {
         "pair": "BTC/EUR",
         "stake_currency": "EUR",

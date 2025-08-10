@@ -29,6 +29,10 @@ updates:
     mkdocs:
       patterns:
         - "mkdocs*"
+    scipy:
+      patterns:
+        - "scipy"
+        - "scipy-stubs"
 
 - package-ecosystem: "github-actions"
   directory: "/"
