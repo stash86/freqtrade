@@ -188,7 +188,7 @@ def text_table_strategy(strategy_results, stake_currency: str, title: str):
             t["duration_avg"],
             generate_wins_draws_losses(t["wins"], t["draws"], t["losses"]),
             drawdown,
-            f'{t.get("expectancy", 0):.3f} ({t.get("expectancy_ratio", 100):.3f})',
+            f"{t.get('expectancy', 0):.3f} ({t.get('expectancy_ratio', 100):.3f})",
         ]
         for t, drawdown in zip(strategy_results, drawdown, strict=False)
     ]
@@ -227,35 +227,35 @@ def text_table_add_metrics(strat_results: dict) -> None:
             else []
         )
 
-        drawdown_metrics = []
-        if "max_relative_drawdown" in strat_results:
-            # Compatibility to show old hyperopt results
-            drawdown_metrics.append(
-                ("Max % of account underwater", f"{strat_results['max_relative_drawdown']:.2%}")
-            )
-        drawdown_metrics.extend(
-            [
-                (
-                    ("Absolute Drawdown (Account)", f"{strat_results['max_drawdown_account']:.2%}")
-                    if "max_drawdown_account" in strat_results
-                    else ("Drawdown", f"{strat_results['max_drawdown']:.2%}")
-                ),
-                (
-                    "Absolute Drawdown",
-                    fmt_coin(strat_results["max_drawdown_abs"], strat_results["stake_currency"]),
-                ),
-                (
-                    "Drawdown high",
-                    fmt_coin(strat_results["max_drawdown_high"], strat_results["stake_currency"]),
-                ),
-                (
-                    "Drawdown low",
-                    fmt_coin(strat_results["max_drawdown_low"], strat_results["stake_currency"]),
-                ),
-                ("Drawdown Start", strat_results["drawdown_start"]),
-                ("Drawdown End", strat_results["drawdown_end"]),
-            ]
-        )
+        # drawdown_metrics = []
+        # if "max_relative_drawdown" in strat_results:
+        #     # Compatibility to show old hyperopt results
+        #     drawdown_metrics.append(
+        #         ("Max % of account underwater", f"{strat_results['max_relative_drawdown']:.2%}")
+        #     )
+        # drawdown_metrics.extend(
+        #     [
+        #         (
+        #             ("Absolute Drawdown (Account)", f"{strat_results['max_drawdown_account']:.2%}")
+        #             if "max_drawdown_account" in strat_results
+        #             else ("Drawdown", f"{strat_results['max_drawdown']:.2%}")
+        #         ),
+        #         (
+        #             "Absolute Drawdown",
+        #             fmt_coin(strat_results["max_drawdown_abs"], strat_results["stake_currency"]),
+        #         ),
+        #         (
+        #             "Drawdown high",
+        #             fmt_coin(strat_results["max_drawdown_high"], strat_results["stake_currency"]),
+        #         ),
+        #         (
+        #             "Drawdown low",
+        #             fmt_coin(strat_results["max_drawdown_low"], strat_results["stake_currency"]),
+        #         ),
+        #         ("Drawdown Start", strat_results["drawdown_start"]),
+        #         ("Drawdown End", strat_results["drawdown_end"]),
+        #     ]
+        # )
 
         entry_adjustment_metrics = (
             [
@@ -360,7 +360,7 @@ def text_table_add_metrics(strat_results: dict) -> None:
                 f"{strat_results['worst_pair']['profit_total']:.2%}",
             ),
             ("Best trade", f"{best_trade['pair']} {best_trade['profit_ratio']:.2%}"),
-            ("Worst trade", f"{worst_trade['pair']} " f"{worst_trade['profit_ratio']:.2%}"),
+            ("Worst trade", f"{worst_trade['pair']} {worst_trade['profit_ratio']:.2%}"),
             # ("Best day", fmt_coin(strat_results["backtest_best_day_abs"],
             #                       strat_results["stake_currency"])),
             # ("Worst day", fmt_coin(strat_results["backtest_worst_day_abs"],
@@ -400,10 +400,10 @@ def text_table_add_metrics(strat_results: dict) -> None:
             #     f"{strat_results.get('timedout_exit_orders', 'N/A')}",
             # ),
             *entry_adjustment_metrics,
-            ("", ""),  # Empty line to improve readability
-            ("Min balance", fmt_coin(strat_results["csum_min"], strat_results["stake_currency"])),
-            ("Max balance", fmt_coin(strat_results["csum_max"], strat_results["stake_currency"])),
-            *drawdown_metrics,
+            # ("", ""),  # Empty line to improve readability
+            # ("Min balance", fmt_coin(strat_results["csum_min"], strat_results["stake_currency"])),
+            # ("Max balance", fmt_coin(strat_results["csum_max"], strat_results["stake_currency"])),
+            # *drawdown_metrics,
             # ("Market change", f"{strat_results['market_change']:.2%}"),
         ]
         print_rich_table(metrics, ["Metric", "Value"], summary="SUMMARY METRICS", justify="left")
@@ -431,11 +431,11 @@ def _show_tag_subresults(results: dict[str, Any], stake_currency: str):
     if (enter_tags := results.get("results_per_enter_tag")) is not None:
         text_table_tags("enter_tag", enter_tags, stake_currency)
 
-    if (exit_reasons := results.get("exit_reason_summary")) is not None:
-        text_table_tags("exit_tag", exit_reasons, stake_currency)
+    # if (exit_reasons := results.get("exit_reason_summary")) is not None:
+    #     text_table_tags("exit_tag", exit_reasons, stake_currency)
 
-    if (mix_tag := results.get("mix_tag_stats")) is not None:
-        text_table_tags("mix_tag", mix_tag, stake_currency)
+    # if (mix_tag := results.get("mix_tag_stats")) is not None:
+    #     text_table_tags("mix_tag", mix_tag, stake_currency)
 
 
 def show_backtest_result(
