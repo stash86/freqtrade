@@ -84,9 +84,6 @@ class Configuration:
         if "internals" not in config:
             config["internals"] = {}
 
-        if "pairlists" not in config:
-            config["pairlists"] = []
-
         # Keep a copy of the original configuration file
         config["original_config"] = deepcopy(config)
 

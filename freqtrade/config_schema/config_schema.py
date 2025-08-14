@@ -453,6 +453,7 @@ CONF_SCHEMA = {
         "pairlists": {
             "description": "Configuration for pairlists.",
             "type": "array",
+            "minItems": 1,
             "items": {
                 "type": "object",
                 "properties": {
@@ -1500,6 +1501,7 @@ SCHEMA_TRADE_REQUIRED = [
     "entry_pricing",
     "stoploss",
     "minimal_roi",
+    "pairlists",
     "internals",
     "dataformat_ohlcv",
     "dataformat_trades",
@@ -1509,6 +1511,7 @@ SCHEMA_BACKTEST_REQUIRED = [
     "exchange",
     "stake_currency",
     "stake_amount",
+    "pairlists",
     "dry_run_wallet",
     "dataformat_ohlcv",
     "dataformat_trades",

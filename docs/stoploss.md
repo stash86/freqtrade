@@ -31,6 +31,7 @@ The Order-type will be ignored if only one mode is available.
 | Binance  | limit |
 | Binance Futures  | market, limit |
 | Bingx    | market, limit |
+| Bitget   | market, limit |
 | HTX      | limit |
 | kraken   | market, limit |
 | Gate     | limit |

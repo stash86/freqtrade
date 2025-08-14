@@ -28,9 +28,9 @@ repos:
         additional_dependencies:
           - types-cachetools==6.1.0.20250717
           - types-filelock==3.2.7
-          - types-requests==2.32.4.20250611
+          - types-requests==2.32.4.20250809
           - types-tabulate==0.9.0.20241207
-          - types-python-dateutil==2.9.0.20250708
+          - types-python-dateutil==2.9.0.20250809
           - scipy-stubs==1.16.1.0
           - SQLAlchemy==2.0.42
         # stages: [push]
@@ -44,13 +44,13 @@ repos:
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.12.7'
+    rev: 'v0.12.8'
     hooks:
       - id: ruff
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: end-of-file-fixer
         exclude: |

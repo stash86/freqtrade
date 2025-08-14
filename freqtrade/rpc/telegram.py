@@ -342,8 +342,22 @@ class Telegram(RPCHandler):
         self._loop.run_until_complete(self._startup_telegram())
 
     async def _startup_telegram(self) -> None:
-        await self._app.initialize()
-        await self._app.start()
+        retries = 3
+        attempt = 0
+        while attempt < retries:
+            try:
+                await self._app.initialize()
+                await self._app.start()
+                break
+            except Exception as ex:
+                logger.error(
+                    "Error starting Telegram bot (attempt %d/%d): %s", attempt + 1, retries, ex
+                )
+                attempt += 1
+                if attempt == retries:
+                    logger.warning("Telegram init failed.")
+                    return
+                await asyncio.sleep(2)
         if self._app.updater:
             await self._app.updater.start_polling(
                 bootstrap_retries=-1,

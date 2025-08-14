@@ -1883,7 +1883,12 @@ def test_pairlistmanager_no_pairlist(mocker, whitelist_conf):
 
     whitelist_conf["pairlists"] = []
 
-    with pytest.raises(OperationalException, match=r"No Pairlist Handlers defined"):
+    with pytest.raises(OperationalException, match=r"\[\] should be non-empty"):
+        get_patched_freqtradebot(mocker, whitelist_conf)
+
+    del whitelist_conf["pairlists"]
+
+    with pytest.raises(OperationalException, match=r"'pairlists' is a required property"):
         get_patched_freqtradebot(mocker, whitelist_conf)
 
 

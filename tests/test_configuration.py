@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from jsonschema import ValidationError
 
 from freqtrade.commands import Arguments
 from freqtrade.configuration import (
@@ -51,20 +50,20 @@ def test_load_config_missing_attributes(default_conf) -> None:
     conf = deepcopy(default_conf)
     conf.pop("exchange")
 
-    with pytest.raises(ValidationError, match=r".*'exchange' is a required property.*"):
+    with pytest.raises(ConfigurationError, match=r".*'exchange' is a required property.*"):
         validate_config_schema(conf)
 
     conf = deepcopy(default_conf)
     conf.pop("stake_currency")
     conf["runmode"] = RunMode.DRY_RUN
-    with pytest.raises(ValidationError, match=r".*'stake_currency' is a required property.*"):
+    with pytest.raises(ConfigurationError, match=r".*'stake_currency' is a required property.*"):
         validate_config_schema(conf)
 
 
 def test_load_config_incorrect_stake_amount(default_conf) -> None:
     default_conf["stake_amount"] = "fake"
 
-    with pytest.raises(ValidationError, match=r".*'fake' does not match 'unlimited'.*"):
+    with pytest.raises(ConfigurationError, match=r".*'fake' does not match 'unlimited'.*"):
         validate_config_schema(default_conf)
 
 
@@ -1075,7 +1074,7 @@ def test_load_config_default_exchange(all_conf) -> None:
 
     assert "exchange" not in all_conf
 
-    with pytest.raises(ValidationError, match=r"'exchange' is a required property"):
+    with pytest.raises(ConfigurationError, match=r"'exchange' is a required property"):
         validate_config_schema(all_conf)
 
 
@@ -1088,14 +1087,14 @@ def test_load_config_default_exchange_name(all_conf) -> None:
 
     assert "name" not in all_conf["exchange"]
 
-    with pytest.raises(ValidationError, match=r"'name' is a required property"):
+    with pytest.raises(ConfigurationError, match=r"'name' is a required property"):
         validate_config_schema(all_conf)
 
 
 def test_load_config_stoploss_exchange_limit_ratio(all_conf) -> None:
     all_conf["order_types"]["stoploss_on_exchange_limit_ratio"] = 1.15
 
-    with pytest.raises(ValidationError, match=r"1.15 is greater than the maximum"):
+    with pytest.raises(ConfigurationError, match=r"1.15 is greater than the maximum"):
         validate_config_schema(all_conf)
 
 

@@ -572,6 +572,7 @@
     "pairlists": {
       "description": "Configuration for pairlists.",
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "object",
         "properties": {
