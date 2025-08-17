@@ -228,16 +228,6 @@ function Main {
     }
   }
 
-  if (-not (Test-Path "$VenvDir\Lib\site-packages\talib")) {
-    # Install TA-Lib using the virtual environment's pip
-    Write-Log "Installing TA-Lib using virtual environment's pip..."
-    python -m pip install --find-links=build_helpers\ --prefer-binary TA-Lib 2>&1 | Out-File $LogFilePath -Append
-    if ($LASTEXITCODE -ne 0) {
-      Write-Log "Failed to install TA-Lib." -Level 'ERROR'
-      Exit-Script -exitCode 1
-    }
-  }
-
   # Present options for requirement files
   $SelectedIndices = Get-UserSelection -prompt "Select which requirement files to install:" -options $RequirementFiles -defaultChoice 'A'
 

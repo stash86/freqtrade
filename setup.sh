@@ -91,7 +91,6 @@ function updateenv() {
             fi
         fi
     fi
-    install_talib
 
     ${PYTHON} -m pip install --upgrade -r ${REQUIREMENTS} ${REQUIREMENTS_HYPEROPT} ${REQUIREMENTS_PLOT} ${REQUIREMENTS_FREQAI} ${REQUIREMENTS_FREQAI_RL}
     if [ $? -ne 0 ]; then
@@ -117,25 +116,6 @@ function updateenv() {
         fi
     fi
 }
-
-# Install tab lib
-function install_talib() {
-    if [ -f /usr/local/lib/libta_lib.a ] || [ -f /usr/local/lib/libta_lib.so ] || [ -f /usr/lib/libta_lib.so ]; then
-        echo "ta-lib already installed, skipping"
-        return
-    fi
-
-    cd build_helpers && ./install_ta-lib.sh
-
-    if [ $? -ne 0 ]; then
-        echo "Quitting. Please fix the above error before continuing."
-        cd ..
-        exit 1
-    fi;
-
-    cd ..
-}
-
 
 # Install bot MacOS
 function install_macos() {
@@ -257,7 +237,7 @@ function install() {
         install_redhat
     else
         echo "This script does not support your OS."
-        echo "If you have Python version 3.11 - 3.13, pip, virtualenv, ta-lib you can continue."
+        echo "If you have Python version 3.11 - 3.13, pip, virtualenv installed you can continue."
         echo "Wait 10 seconds to continue the next install steps or use ctrl+c to interrupt this shell."
         sleep 10
     fi

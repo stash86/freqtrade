@@ -46,7 +46,6 @@ These requirements apply to both [Script Installation](#script-installation) and
 * [pip](https://pip.pypa.io/en/stable/installing/)
 * [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 * [virtualenv](https://virtualenv.pypa.io/en/stable/installation.html) (Recommended)
-* [TA-Lib](https://ta-lib.github.io/ta-lib-python/) (install instructions [below](#install-ta-lib))
 
 ### Install code
 
@@ -201,35 +200,6 @@ This option will hard reset your branch (only if you are on either `stable` or `
 
 Make sure you fulfill the [Requirements](#requirements) and have downloaded the [Freqtrade repository](#freqtrade-repository).
 
-### Install TA-Lib
-
-#### TA-Lib script installation
-
-```bash
-sudo ./build_helpers/install_ta-lib.sh
-```
-
-!!! Note
-    This will use the ta-lib tar.gz included in this repository.
-
-##### TA-Lib manual installation
-
-[Official installation guide](https://ta-lib.github.io/ta-lib-python/install.html)
-
-```bash
-wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz
-tar xvzf ta-lib-0.4.0-src.tar.gz
-cd ta-lib
-sed -i.bak "s|0.00000001|0.000000000000000001 |g" src/ta_func/ta_utility.h
-./configure --prefix=/usr/local
-make
-sudo make install
-# On debian based systems (debian, ubuntu, ...) - updating ldconfig might be necessary.
-sudo ldconfig  
-cd ..
-rm -rf ./ta-lib*
-```
-
 ### Setup Python virtual environment (virtualenv)
 
 You will run freqtrade in separated `virtual environment`
@@ -330,16 +300,6 @@ Install last python dependencies with pip
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 python3 -m pip install -e .
-```
-
-Patch conda libta-lib (Linux only)
-
-```bash
-# Ensure that the environment is active!
-conda activate freqtrade
-
-cd build_helpers
-bash install_ta-lib.sh ${CONDA_PREFIX} nosudo
 ```
 
 [You are now ready](#you-are-ready) to run the bot.

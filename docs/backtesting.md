@@ -105,11 +105,13 @@ Only use this if you're sure you'll not want to plot or analyze your results fur
 
 ---
 
-Exporting trades to file specifying a custom filename
+Exporting trades to file specifying a custom directory
 
 ```bash
-freqtrade backtesting --strategy backtesting --export trades --export-filename=backtest_samplestrategy.json
+freqtrade backtesting --strategy backtesting --export trades --export-filename=user_data/custom-backtest-results
 ```
+
+---
 
 Please also read about the [strategy startup period](strategy-customization.md#strategy-startup-period).
 

@@ -15,7 +15,6 @@ from freqtrade.loggers.set_log_levels import (
 )
 from freqtrade.optimize.backtesting import Backtesting
 from freqtrade.optimize.base_analysis import BaseAnalysis, VarHolder
-from freqtrade.resolvers import StrategyResolver
 
 
 logger = logging.getLogger(__name__)
@@ -32,13 +31,6 @@ class RecursiveAnalysis(BaseAnalysis):
         )
 
         super().__init__(config, strategy_obj)
-
-        strat = StrategyResolver.load_strategy(config)
-        self._strat_scc = strat.startup_candle_count
-
-        if self._strat_scc not in self._startup_candle:
-            self._startup_candle.append(self._strat_scc)
-        self._startup_candle.sort()
 
         self.partial_varHolder_array: list[VarHolder] = []
         self.partial_varHolder_lookahead_array: list[VarHolder] = []
@@ -148,6 +140,13 @@ class RecursiveAnalysis(BaseAnalysis):
         self.exchange = backtesting.exchange
         self.local_config["candle_type_def"] = prepare_data_config["candle_type_def"]
         backtesting._set_strategy(backtesting.strategylist[0])
+
+        strat = backtesting.strategy
+        self._strat_scc = strat.startup_candle_count
+
+        if self._strat_scc not in self._startup_candle:
+            self._startup_candle.append(self._strat_scc)
+        self._startup_candle.sort()
 
         varholder.data, varholder.timerange = backtesting.load_bt_data()
         varholder.timeframe = backtesting.timeframe

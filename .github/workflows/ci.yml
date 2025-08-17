@@ -47,24 +47,9 @@ jobs:
         cache-suffix: "${{ matrix.python-version }}"
         prune-cache: false
 
-    - name: Cache_dependencies
-      uses: actions/cache@v4
-      id: cache
-      with:
-        path: ~/dependencies/
-        key: ${{ runner.os }}-dependencies
-
-    - name: TA binary *nix
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        cd build_helpers && ./install_ta-lib.sh ${HOME}/dependencies/; cd ..
-
     - name: Installation - *nix
       run: |
         uv pip install --upgrade wheel
-        export LD_LIBRARY_PATH=${HOME}/dependencies/lib:$LD_LIBRARY_PATH
-        export TA_LIBRARY_PATH=${HOME}/dependencies/lib
-        export TA_INCLUDE_PATH=${HOME}/dependencies/include
         uv pip install -r requirements-dev.txt
         uv pip install -e ft_client/
         uv pip install -e .
@@ -183,18 +168,6 @@ jobs:
         cache-suffix: "${{ matrix.python-version }}"
         prune-cache: false
 
-    - name: Cache_dependencies
-      uses: actions/cache@v4
-      id: cache
-      with:
-        path: ~/dependencies/
-        key: ${{ matrix.os }}-dependencies
-
-    - name: TA binary *nix
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        cd build_helpers && ./install_ta-lib.sh ${HOME}/dependencies/; cd ..
-
     - name: Installation - macOS (Brew)
       run: |
         # brew update
@@ -222,9 +195,6 @@ jobs:
     - name: Installation (python)
       run: |
         uv pip install wheel
-        export LD_LIBRARY_PATH=${HOME}/dependencies/lib:$LD_LIBRARY_PATH
-        export TA_LIBRARY_PATH=${HOME}/dependencies/lib
-        export TA_INCLUDE_PATH=${HOME}/dependencies/include
         uv pip install -r requirements-dev.txt
         uv pip install -e ft_client/
         uv pip install -e .
@@ -315,7 +285,9 @@ jobs:
         function uvpipFunction { uv pip $args }
         Set-Alias -name pip -value uvpipFunction
 
-        ./build_helpers/install_windows.ps1
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+        pip install -e .
 
     - name: Tests
       run: |
@@ -458,25 +430,9 @@ jobs:
         cache-suffix: "3.12"
         prune-cache: false
 
-    - name: Cache_dependencies
-      uses: actions/cache@v4
-      id: cache
-      with:
-        path: ~/dependencies/
-        key: ${{ runner.os }}-dependencies
-
-
-    - name: TA binary *nix
-      if: steps.cache.outputs.cache-hit != 'true'
-      run: |
-        cd build_helpers && ./install_ta-lib.sh ${HOME}/dependencies/; cd ..
-
     - name: Installation - *nix
       run: |
         uv pip install --upgrade wheel
-        export LD_LIBRARY_PATH=${HOME}/dependencies/lib:$LD_LIBRARY_PATH
-        export TA_LIBRARY_PATH=${HOME}/dependencies/lib
-        export TA_INCLUDE_PATH=${HOME}/dependencies/include
         uv pip install -r requirements-dev.txt
         uv pip install -e ft_client/
         uv pip install -e .

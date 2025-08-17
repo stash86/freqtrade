@@ -1,15 +1,15 @@
 ```
 usage: freqtrade backtesting-show [-h] [-v] [--no-color] [--logfile FILE] [-V]
                                   [-c PATH] [-d PATH] [--userdir PATH]
-                                  [--export-filename PATH] [--show-pair-list]
+                                  [--backtest-filename PATH]
+                                  [--show-pair-list]
                                   [--breakdown {day,week,month,year} [{day,week,month,year} ...]]
 
 options:
   -h, --help            show this help message and exit
-  --export-filename PATH, --backtest-filename PATH
-                        Use this filename for backtest results.Requires
-                        `--export` to be set as well. Example: `--export-filen
-                        ame=user_data/backtest_results/backtest_today.json`
+  --backtest-filename PATH, --export-filename PATH
+                        Use this filename for backtest results.Example:
+                        `--backtest-filename=user_data/backtest_results/`
   --show-pair-list      Show backtesting pairlist sorted by profit.
   --breakdown {day,week,month,year} [{day,week,month,year} ...]
                         Show backtesting breakdown per [day, week, month,

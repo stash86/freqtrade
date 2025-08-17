@@ -521,7 +521,11 @@ def patch_torch_initlogs(mocker) -> None:
         mocked_module = types.ModuleType(module_name)
         sys.modules[module_name] = mocked_module
     else:
-        mocker.patch("torch._logging._init_logs")
+        try:
+            mocker.patch("torch._logging._init_logs")
+        except ModuleNotFoundError:
+            # Allow running limited tests to run without freqAI dependencies
+            pass
 
 
 @pytest.fixture(autouse=True)

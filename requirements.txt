@@ -1,10 +1,12 @@
-numpy==2.3.2
-pandas==2.3.1
+numpy==2.3.2; platform_machine != 'armv7l'
+numpy==2.2.4; platform_machine == 'armv7l'
+pandas==2.3.1; platform_machine != 'armv7l'
+pandas==2.2.3; platform_machine == 'armv7l'
 bottleneck==1.5.0
 numexpr==2.11.0
 # Indicator libraries
 ft-pandas-ta==0.3.15
-ta-lib==0.5.5
+ta-lib==0.6.5
 technical==1.5.2
 
 ccxt==4.4.99

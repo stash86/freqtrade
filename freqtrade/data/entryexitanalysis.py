@@ -7,11 +7,9 @@ from freqtrade.configuration import TimeRange
 from freqtrade.constants import Config
 from freqtrade.data.btanalysis import (
     BT_DATA_COLUMNS,
+    load_backtest_analysis_data,
     load_backtest_data,
     load_backtest_stats,
-    load_exit_signal_candles,
-    load_rejected_signals,
-    load_signal_candles,
 )
 from freqtrade.exceptions import ConfigurationError, OperationalException
 from freqtrade.util import print_df_rich_table
@@ -354,12 +352,14 @@ def process_entry_exit_reasons(config: Config):
             trades = load_backtest_data(config["exportfilename"], strategy_name)
 
             if trades is not None and not trades.empty:
-                signal_candles = load_signal_candles(config["exportfilename"])
-                exit_signals = load_exit_signal_candles(config["exportfilename"])
+                signal_candles = load_backtest_analysis_data(config["exportfilename"], "signals")
+                exit_signals = load_backtest_analysis_data(config["exportfilename"], "exited")
 
                 rej_df = None
                 if do_rejected:
-                    rejected_signals_dict = load_rejected_signals(config["exportfilename"])
+                    rejected_signals_dict = load_backtest_analysis_data(
+                        config["exportfilename"], "rejected"
+                    )
                     rej_df = prepare_results(
                         rejected_signals_dict,
                         strategy_name,

@@ -30,11 +30,6 @@ RUN  apt-get update \
   && apt-get clean \
   && pip install --upgrade pip wheel
 
-# Install TA-lib
-COPY build_helpers/* /tmp/
-RUN cd /tmp && /tmp/install_ta-lib.sh && rm -r /tmp/*ta-lib*
-ENV LD_LIBRARY_PATH=/usr/local/lib
-
 # Install dependencies
 COPY --chown=ftuser:ftuser requirements.txt requirements-hyperopt.txt /freqtrade/
 USER ftuser
@@ -52,7 +47,7 @@ USER ftuser
 # Install and execute
 COPY --chown=ftuser:ftuser . /freqtrade/
 
-RUN pip install -e . --user --no-cache-dir --no-build-isolation \
+RUN pip install -e . --user --no-cache-dir \
   && mkdir /freqtrade/user_data/ \
   && freqtrade install-ui
 

@@ -17,7 +17,7 @@ class RecursiveAnalysisSubFunctions:
     @staticmethod
     def text_table_recursive_analysis_instances(recursive_instances: list[RecursiveAnalysis]):
         startups = recursive_instances[0]._startup_candle
-        strat_scc = recursive_instances[0]._strat_scc
+        strat_scc = getattr(recursive_instances[0], "_strat_scc", 0) or 0
         headers = ["Indicators"]
         for candle in startups:
             if candle == strat_scc:

@@ -34,7 +34,7 @@ COPY build_helpers/* /tmp/
 # Install dependencies
 COPY --chown=ftuser:ftuser requirements.txt /freqtrade/
 USER ftuser
-RUN  pip install --user --no-cache-dir "numpy<3.0" \
+RUN  pip install --user --prefer-binary --no-cache-dir "numpy<3.0" build \
   && pip install --user --no-index --find-links /tmp/ pyarrow TA-Lib \
   && pip install --user --no-cache-dir -r requirements.txt
 
@@ -49,7 +49,7 @@ USER ftuser
 # Install and execute
 COPY --chown=ftuser:ftuser . /freqtrade/
 
-RUN pip install -e . --user --no-cache-dir --no-build-isolation\
+RUN pip install -e . --user --no-cache-dir \
   && mkdir /freqtrade/user_data/ \
   && freqtrade install-ui
 

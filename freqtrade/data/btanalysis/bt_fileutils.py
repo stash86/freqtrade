@@ -430,7 +430,7 @@ def load_file_from_zip(zip_path: Path, filename: str) -> bytes:
         raise ValueError(f"Bad zip file: {zip_path}.") from None
 
 
-def load_backtest_analysis_data(backtest_dir: Path, name: str):
+def load_backtest_analysis_data(backtest_dir: Path, name: Literal["signals", "rejected", "exited"]):
     """
     Load backtest analysis data either from a pickle file or from within a zip file
     :param backtest_dir: Directory containing backtest results
@@ -471,27 +471,6 @@ def load_backtest_analysis_data(backtest_dir: Path, name: str):
         except Exception:
             logger.exception(f"Cannot load {name} data from pickled results.")
             return None
-
-
-def load_rejected_signals(backtest_dir: Path):
-    """
-    Load rejected signals from backtest directory
-    """
-    return load_backtest_analysis_data(backtest_dir, "rejected")
-
-
-def load_signal_candles(backtest_dir: Path):
-    """
-    Load signal candles from backtest directory
-    """
-    return load_backtest_analysis_data(backtest_dir, "signals")
-
-
-def load_exit_signal_candles(backtest_dir: Path) -> dict[str, dict[str, pd.DataFrame]]:
-    """
-    Load exit signal candles from backtest directory
-    """
-    return load_backtest_analysis_data(backtest_dir, "exited")
 
 
 def trade_list_to_dataframe(trades: list[Trade] | list[LocalTrade]) -> pd.DataFrame:

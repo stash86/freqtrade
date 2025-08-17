@@ -55,7 +55,7 @@ output file. This allows you to keep historical versions of backtest results and
 them at a later date:
 
 ``` bash
-freqtrade backtesting -c <config.json> --timeframe <tf> --strategy <strategy_name> --timerange=<timerange> --export=signals --export-filename=/tmp/mystrat_backtest.json
+freqtrade backtesting-analysis -c <config.json> --timeframe <tf> --strategy <strategy_name> --timerange=<timerange> --export=signals --export-filename=user_data/backtest-results/backtest-result-2025-03-05_20-38-34.zip
 ```
 
 You should see some output similar to below in the logs with the name of the timestamped

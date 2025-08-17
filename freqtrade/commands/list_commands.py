@@ -146,6 +146,9 @@ def start_list_strategies(args: dict[str, Any]) -> None:
     strategy_objs = StrategyResolver.search_all_objects(
         config, not args["print_one_column"], config.get("recursive_strategy_search", False)
     )
+    if not strategy_objs:
+        logger.warning("No strategies found.")
+        return
     # Sort alphabetically
     strategy_objs = sorted(strategy_objs, key=lambda x: x["name"])
     for obj in strategy_objs:

@@ -22,6 +22,7 @@ permissions:
 
 jobs:
   deploy-docker:
+    name: "Deploy Docker x64 and armv7l"
     runs-on: ubuntu-22.04
     if: github.repository == 'freqtrade/freqtrade'
 
@@ -74,7 +75,7 @@ jobs:
         build_helpers/publish_docker_multi.sh
 
   deploy-arm:
-    name: "Deploy Docker"
+    name: "Deploy Docker ARM64"
     permissions:
       packages: write
     needs: [ deploy-docker ]
