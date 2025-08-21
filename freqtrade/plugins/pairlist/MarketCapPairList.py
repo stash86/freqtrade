@@ -37,7 +37,6 @@ class MarketCapPairList(IPairList):
         self._refresh_period = self._pairlistconfig.get("refresh_period", 86400)
         self._categories = self._pairlistconfig.get("categories", [])
         self._marketcap_cache: TTLCache = TTLCache(maxsize=1, ttl=self._refresh_period)
-        self._def_candletype = self._config["candle_type_def"]
 
         _coingecko_config = self._config.get("coingecko", {})
 
@@ -191,7 +190,7 @@ class MarketCapPairList(IPairList):
         if marketcap_list:
             filtered_pairlist = []
 
-            market = self._config["trading_mode"]
+            market = self._exchange._config["trading_mode"]
             pair_format = f"{self._stake_currency.upper()}"
             if market == "futures":
                 pair_format += f":{self._stake_currency.upper()}"

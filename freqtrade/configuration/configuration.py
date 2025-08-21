@@ -209,13 +209,28 @@ class Configuration:
         config.update({"datadir": create_datadir(config, self.args.get("datadir"))})
         logger.info("Using data directory: %s ...", config.get("datadir"))
 
+        self._args_to_config(
+            config, argname="exportdirectory", logstring="Using {} as backtest directory ..."
+        )
+
         if self.args.get("exportfilename"):
             self._args_to_config(
                 config, argname="exportfilename", logstring="Storing backtest results to {} ..."
             )
             config["exportfilename"] = Path(config["exportfilename"])
-        else:
-            config["exportfilename"] = config["user_data_dir"] / "backtest_results"
+            if config.get("exportdirectory") and Path(config["exportdirectory"]).is_dir():
+                logger.warning(
+                    "DEPRECATED: Using `--export-filename` with directories is deprecated, "
+                    "use `--backtest-directory` instead."
+                )
+                if config.get("exportdirectory") is None:
+                    # Fallback - assign export-directory directly.
+                    config["exportdirectory"] = config["exportfilename"]
+        if not config.get("exportdirectory"):
+            config["exportdirectory"] = config["user_data_dir"] / "backtest_results"
+        if not config.get("exportfilename"):
+            config["exportfilename"] = None
+        config["exportdirectory"] = Path(config["exportdirectory"])
 
         if self.args.get("show_sensitive"):
             logger.warning(

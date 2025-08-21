@@ -70,34 +70,29 @@ class LookaheadAnalysis(BaseAnalysis):
         cut_df: DataFrame = cut_vars.indicators[current_pair]
         full_df: DataFrame = full_vars.indicators[current_pair]
 
-        # cut longer dataframe to length of the shorter
-        full_df_cut = full_df[(full_df.date == cut_vars.compared_dt)].reset_index(drop=True)
-        cut_df_cut = cut_df[(cut_df.date == cut_vars.compared_dt)].reset_index(drop=True)
+        # trim full_df to the same index and length as cut_df
+        cut_full_df = full_df.loc[cut_df.index]
+        compare_df = cut_full_df.compare(cut_df)
 
-        # check if dataframes are not empty
-        if full_df_cut.shape[0] != 0 and cut_df_cut.shape[0] != 0:
-            # compare dataframes
-            compare_df = full_df_cut.compare(cut_df_cut)
+        if compare_df.shape[0] > 0:
+            for col_name in compare_df:
+                col_idx = compare_df.columns.get_loc(col_name)
+                compare_df_row = compare_df.iloc[0]
+                # compare_df now comprises tuples with [1] having either 'self' or 'other'
+                if "other" in col_name[1]:
+                    continue
+                self_value = compare_df_row.iloc[col_idx]
+                other_value = compare_df_row.iloc[col_idx + 1]
 
-            if compare_df.shape[0] > 0:
-                for col_name, values in compare_df.items():
-                    col_idx = compare_df.columns.get_loc(col_name)
-                    compare_df_row = compare_df.iloc[0]
-                    # compare_df now comprises tuples with [1] having either 'self' or 'other'
-                    if "other" in col_name[1]:
-                        continue
-                    self_value = compare_df_row.iloc[col_idx]
-                    other_value = compare_df_row.iloc[col_idx + 1]
-
-                    # output differences
-                    if self_value != other_value:
-                        if not self.current_analysis.false_indicators.__contains__(col_name[0]):
-                            self.current_analysis.false_indicators.append(col_name[0])
-                            logger.info(
-                                f"=> found look ahead bias in indicator "
-                                f"{col_name[0]}. "
-                                f"{str(self_value)} != {str(other_value)}"
-                            )
+                # output differences
+                if self_value != other_value:
+                    if not self.current_analysis.false_indicators.__contains__(col_name[0]):
+                        self.current_analysis.false_indicators.append(col_name[0])
+                        logger.info(
+                            f"=> found look ahead bias in column "
+                            f"{col_name[0]}. "
+                            f"{str(self_value)} != {str(other_value)}"
+                        )
 
     def prepare_data(self, varholder: VarHolder, pairs_to_load: list[DataFrame]):
         if "freqai" in self.local_config and "identifier" in self.local_config["freqai"]:
@@ -132,7 +127,13 @@ class LookaheadAnalysis(BaseAnalysis):
         varholder.data, varholder.timerange = backtesting.load_bt_data()
         varholder.timeframe = backtesting.timeframe
 
-        varholder.indicators = backtesting.strategy.advise_all_indicators(varholder.data)
+        temp_indicators = backtesting.strategy.advise_all_indicators(varholder.data)
+        filled_indicators = dict()
+        for pair, dataframe in temp_indicators.items():
+            filled_indicators[pair] = backtesting.strategy.ft_advise_signals(
+                dataframe, {"pair": pair}
+            )
+        varholder.indicators = filled_indicators
         varholder.result = self.get_result(backtesting, varholder.indicators)
 
     def fill_entry_and_exit_varHolders(self, result_row):

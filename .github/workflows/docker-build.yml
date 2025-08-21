@@ -27,7 +27,7 @@ jobs:
     if: github.repository == 'freqtrade/freqtrade'
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
 
@@ -84,7 +84,7 @@ jobs:
     if: github.repository == 'freqtrade/freqtrade'
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
 

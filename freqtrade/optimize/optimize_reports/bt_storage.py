@@ -64,7 +64,7 @@ def store_backtest_results(
     :param market_change_data: Dataframe containing market change data
     :param analysis_results: Dictionary containing analysis results
     """
-    recordfilename: Path = config["exportfilename"]
+    recordfilename: Path = config["exportdirectory"]
     zip_filename = _generate_filename(recordfilename, dtappendix, ".zip")
     base_filename = _generate_filename(recordfilename, dtappendix, "")
     json_filename = _generate_filename(recordfilename, dtappendix, ".json")

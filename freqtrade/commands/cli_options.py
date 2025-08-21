@@ -199,21 +199,29 @@ AVAILABLE_CLI_OPTIONS = {
         "(so `backtest-data.json` becomes `backtest-data-SampleStrategy.json`",
         nargs="+",
     ),
-    "export": Arg(
-        "--export",
-        help="Export backtest results (default: trades).",
-        choices=constants.EXPORT_OPTIONS,
-    ),
     "backtest_notes": Arg(
         "--notes",
         help="Add notes to the backtest results.",
         metavar="TEXT",
     ),
+    "export": Arg(
+        "--export",
+        help="Export backtest results (default: trades).",
+        choices=constants.EXPORT_OPTIONS,
+    ),
+    "exportdirectory": Arg(
+        "--backtest-directory",
+        "--export-directory",
+        help="Directory to use for backtest results. "
+        "Example: `--export-directory=user_data/backtest_results/`. ",
+        metavar="PATH",
+    ),
     "exportfilename": Arg(
         "--backtest-filename",
         "--export-filename",
         help="Use this filename for backtest results."
-        "Example: `--backtest-filename=user_data/backtest_results/`",
+        "Example: `--backtest-filename=backtest_results_2020-09-27_16-20-48.json`. "
+        "Assumes either `user_data/backtest_results/` or `--export-directory` as base directory.",
         metavar="PATH",
     ),
     "disableparamexport": Arg(

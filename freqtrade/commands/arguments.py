@@ -54,6 +54,7 @@ ARGS_BACKTEST = [
     "strategy_list",
     "export",
     "exportfilename",
+    "exportdirectory",
     "backtest_breakdown",
     "backtest_cache",
     "freqai_backtest_live_models",
@@ -94,7 +95,12 @@ ARGS_LIST_FREQAIMODELS = ["freqaimodel_path", "print_one_column"]
 
 ARGS_LIST_HYPEROPTS = ["hyperopt_path", "print_one_column"]
 
-ARGS_BACKTEST_SHOW = ["exportfilename", "backtest_show_pair_list", "backtest_breakdown"]
+ARGS_BACKTEST_SHOW = [
+    "exportfilename",
+    "exportdirectory",
+    "backtest_show_pair_list",
+    "backtest_breakdown",
+]
 
 ARGS_LIST_EXCHANGES = ["print_one_column", "list_exchanges_all", "trading_mode", "dex_exchanges"]
 
@@ -233,6 +239,7 @@ ARGS_HYPEROPT_SHOW = [
 
 ARGS_ANALYZE_ENTRIES_EXITS = [
     "exportfilename",
+    "exportdirectory",
     "analysis_groups",
     "enter_reason_list",
     "exit_reason_list",

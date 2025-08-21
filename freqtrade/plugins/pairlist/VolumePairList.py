@@ -89,7 +89,7 @@ class VolumePairList(IPairList):
             raise OperationalException(f"key {self._sort_key} not in {SORT_VALUES}")
 
         candle_limit = self._exchange.ohlcv_candle_limit(
-            self._lookback_timeframe, self._config["candle_type_def"]
+            self._lookback_timeframe, self._def_candletype
         )
         if self._lookback_period < 0:
             raise OperationalException("VolumeFilter requires lookback_period to be >= 0")

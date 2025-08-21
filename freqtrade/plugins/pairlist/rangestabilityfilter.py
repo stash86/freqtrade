@@ -34,7 +34,7 @@ class RangeStabilityFilter(IPairList):
 
         self._pair_cache: TTLCache = TTLCache(maxsize=1000, ttl=self._refresh_period)
 
-        candle_limit = self._exchange.ohlcv_candle_limit("1d", self._config["candle_type_def"])
+        candle_limit = self._exchange.ohlcv_candle_limit("1d", self._def_candletype)
         if self._days < 1:
             raise OperationalException("RangeStabilityFilter requires lookback_days to be >= 1")
         if self._days > candle_limit:

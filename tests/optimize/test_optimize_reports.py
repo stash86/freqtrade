@@ -236,7 +236,7 @@ def test_generate_backtest_stats(default_conf, testdatadir, tmp_path):
     filename_last = tmp_path / LAST_BT_RESULT_FN
     _backup_file(filename_last, copy_file=True)
     assert not filename.is_file()
-    default_conf["exportfilename"] = filename
+    default_conf["exportdirectory"] = filename
 
     store_backtest_results(default_conf, stats, "2022_01_01_15_05_13")
 
@@ -263,7 +263,7 @@ def test_store_backtest_results(testdatadir, mocker):
     zip_mock = mocker.patch("freqtrade.optimize.optimize_reports.bt_storage.ZipFile")
     data = {"metadata": {}, "strategy": {}, "strategy_comparison": []}
     store_backtest_results(
-        {"exportfilename": testdatadir, "original_config": {}}, data, "2022_01_01_15_05_13"
+        {"exportdirectory": testdatadir, "original_config": {}}, data, "2022_01_01_15_05_13"
     )
 
     assert dump_mock.call_count == 2
@@ -275,7 +275,7 @@ def test_store_backtest_results(testdatadir, mocker):
     zip_mock.reset_mock()
     filename = testdatadir / "testresult.json"
     store_backtest_results(
-        {"exportfilename": filename, "original_config": {}}, data, "2022_01_01_15_05_13"
+        {"exportdirectory": filename, "original_config": {}}, data, "2022_01_01_15_05_13"
     )
     assert dump_mock.call_count == 2
     assert zip_mock.call_count == 1
@@ -287,7 +287,7 @@ def test_store_backtest_results(testdatadir, mocker):
 def test_store_backtest_results_real(tmp_path, caplog):
     data = {"metadata": {}, "strategy": {}, "strategy_comparison": []}
     config = {
-        "exportfilename": tmp_path,
+        "exportdirectory": tmp_path,
         "original_config": {},
     }
     store_backtest_results(
@@ -356,7 +356,7 @@ def test_write_read_backtest_candles(tmp_path):
     bt_results = {"metadata": {}, "strategy": {}, "strategy_comparison": []}
 
     mock_conf = {
-        "exportfilename": tmp_path,
+        "exportdirectory": tmp_path,
         "export": "signals",
         "runmode": "backtest",
         "original_config": {},
@@ -389,33 +389,6 @@ def test_write_read_backtest_candles(tmp_path):
     assert pickled_signal_candles["DefStrat"].keys() == pickled_signal_candles["DefStrat"].keys()
     assert pickled_signal_candles["DefStrat"]["UNITTEST/BTC"].equals(
         pickled_signal_candles["DefStrat"]["UNITTEST/BTC"]
-    )
-
-    _clean_test_file(stored_file)
-
-    # test file exporting
-    filename = tmp_path / "testresult"
-    mock_conf["exportfilename"] = filename
-    store_backtest_results(mock_conf, bt_results, sample_date, analysis_results=data)
-    stored_file = tmp_path / f"testresult-{sample_date}.zip"
-    signals_pkl = f"testresult-{sample_date}_signals.pkl"
-    rejected_pkl = f"testresult-{sample_date}_rejected.pkl"
-    exited_pkl = f"testresult-{sample_date}_exited.pkl"
-    assert not (tmp_path / signals_pkl).is_file()
-    assert stored_file.is_file()
-
-    with ZipFile(stored_file, "r") as zipf:
-        assert signals_pkl in zipf.namelist()
-        assert rejected_pkl in zipf.namelist()
-        assert exited_pkl in zipf.namelist()
-
-        with zipf.open(signals_pkl) as scp:
-            pickled_signal_candles2 = joblib.load(scp)
-
-    assert pickled_signal_candles2.keys() == candle_dict.keys()
-    assert pickled_signal_candles2["DefStrat"].keys() == pickled_signal_candles2["DefStrat"].keys()
-    assert pickled_signal_candles2["DefStrat"]["UNITTEST/BTC"].equals(
-        pickled_signal_candles2["DefStrat"]["UNITTEST/BTC"]
     )
 
     _clean_test_file(stored_file)

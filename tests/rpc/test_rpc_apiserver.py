@@ -2802,8 +2802,8 @@ def test_api_backtesting(botclient, mocker, fee, caplog, tmp_path):
         ftbot.config["export"] = "trades"
         ftbot.config["backtest_cache"] = "day"
         ftbot.config["user_data_dir"] = tmp_path
-        ftbot.config["exportfilename"] = tmp_path / "backtest_results"
-        ftbot.config["exportfilename"].mkdir()
+        ftbot.config["exportdirectory"] = tmp_path / "backtest_results"
+        ftbot.config["exportdirectory"].mkdir()
 
         # start backtesting
         data = {

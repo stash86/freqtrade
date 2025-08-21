@@ -31,8 +31,9 @@ class AgeFilter(IPairList):
 
         self._min_days_listed = self._pairlistconfig.get("min_days_listed", 10)
         self._max_days_listed = self._pairlistconfig.get("max_days_listed")
+        self._def_candletype = self._config["candle_type_def"]
 
-        candle_limit = self._exchange.ohlcv_candle_limit("1d", self._config["candle_type_def"])
+        candle_limit = self._exchange.ohlcv_candle_limit("1d", self._def_candletype)
         if self._min_days_listed < 1:
             raise OperationalException("AgeFilter requires min_days_listed to be >= 1")
         if self._min_days_listed > candle_limit:
@@ -100,7 +101,7 @@ class AgeFilter(IPairList):
         :return: new allowlist
         """
         needed_pairs: ListPairsWithTimeframes = [
-            (p, "1d", self._config["candle_type_def"])
+            (p, "1d", self._def_candletype)
             for p in pairlist
             if p not in self._symbolsChecked and p not in self._symbolsCheckFailed
         ]
@@ -116,8 +117,8 @@ class AgeFilter(IPairList):
         if self._enabled:
             for p in deepcopy(pairlist):
                 daily_candles = (
-                    candles[(p, "1d", self._config["candle_type_def"])]
-                    if (p, "1d", self._config["candle_type_def"]) in candles
+                    candles[(p, "1d", self._def_candletype)]
+                    if (p, "1d", self._def_candletype) in candles
                     else None
                 )
                 if not self._validate_pair_loc(p, daily_candles):

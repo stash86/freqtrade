@@ -1862,8 +1862,10 @@ def test_backtesting_show(mocker, testdatadir, capsys):
     sbr = mocker.patch("freqtrade.optimize.optimize_reports.show_backtest_results")
     args = [
         "backtesting-show",
+        "--export-directory",
+        f"{testdatadir / 'backtest_results'}",
         "--export-filename",
-        f"{testdatadir / 'backtest_results/backtest-result.json'}",
+        "backtest-result.json",
         "--show-pair-list",
     ]
     pargs = get_args(args)

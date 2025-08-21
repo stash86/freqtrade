@@ -40,7 +40,10 @@ options:
                         Export backtest results (default: trades).
   --backtest-filename PATH, --export-filename PATH
                         Use this filename for backtest results.Example:
-                        `--backtest-filename=user_data/backtest_results/`
+                        `--backtest-
+                        filename=backtest_results_2020-09-27_16-20-48.json`.
+                        Assumes either `user_data/backtest_results/` or
+                        `--export-directory` as base directory.
   --timerange TIMERANGE
                         Specify what timerange of data to use.
   -i TIMEFRAME, --timeframe TIMEFRAME

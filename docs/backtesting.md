@@ -108,7 +108,7 @@ Only use this if you're sure you'll not want to plot or analyze your results fur
 Exporting trades to file specifying a custom directory
 
 ```bash
-freqtrade backtesting --strategy backtesting --export trades --export-filename=user_data/custom-backtest-results
+freqtrade backtesting --strategy backtesting --export trades --backtest-directory=user_data/custom-backtest-results
 ```
 
 ---

@@ -91,7 +91,7 @@ class PercentChangePairList(IPairList):
             )
 
         candle_limit = self._exchange.ohlcv_candle_limit(
-            self._lookback_timeframe, self._config["candle_type_def"]
+            self._lookback_timeframe, self._def_candletype
         )
 
         if self._lookback_period > candle_limit:

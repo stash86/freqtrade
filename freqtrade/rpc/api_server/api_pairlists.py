@@ -54,6 +54,7 @@ def __run_pairlist(job_id: str, config_loc: Config):
 
         with FtNoDBContext():
             exchange = get_exchange(config_loc)
+            config_loc["candle_type_def"] = exchange._config["candle_type_def"]
             pairlists = PairListManager(exchange, config_loc)
             pairlists.refresh_pairlist()
             ApiBG.jobs[job_id]["result"] = {
