@@ -225,7 +225,6 @@ class RealParameter(NumericParameter):
 
 class DecimalParameter(NumericParameter):
     default: float
-    value: float
 
     def __init__(
         self,
@@ -258,6 +257,14 @@ class DecimalParameter(NumericParameter):
         super().__init__(
             low=low, high=high, default=default, space=space, optimize=optimize, load=load, **kwargs
         )
+
+    @property
+    def value(self) -> float:
+        return self._value
+
+    @value.setter
+    def value(self, new_value: float):
+        self._value = round(new_value, self._decimals)
 
     def get_space(self, name: str) -> "SKDecimal":
         """

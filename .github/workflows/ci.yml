@@ -257,7 +257,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-latest ]
+        os: [ "windows-2022", "windows-2025" ]
         python-version: ["3.11", "3.12", "3.13.6"]
 
     steps:
@@ -464,9 +464,9 @@ jobs:
 
     - name: Check user permission
       id: check
-      uses: scherermichael-oss/action-has-permission@136e061bfe093832d87f090dd768e14e27a740d3 # 1.0.6
+      uses: prince-chrismc/check-actor-permissions-action@d504e74ba31658f4cdf4fcfeb509d4c09736d88e # v3.0.2
       with:
-        required-permission: write
+        permission: "write"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

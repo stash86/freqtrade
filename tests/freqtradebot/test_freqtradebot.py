@@ -1528,6 +1528,25 @@ def test_handle_trade(
     assert trade.close_date is not None
     assert trade.exit_reason == "sell_signal1"
 
+    correct_profit_ratio = trade.calc_profit_ratio(
+        rate=trade.close_rate, amount=trade.amount, open_rate=trade.open_rate
+    )
+    profit_ratio_1 = trade.calc_profit_ratio(rate=trade.close_rate, open_rate=trade.open_rate)
+    profit_ratio_2 = trade.calc_profit_ratio(
+        rate=trade.close_rate, open_rate=trade.open_rate * 1.02
+    )
+    profit_ratio_3 = trade.calc_profit_ratio(rate=trade.close_rate, amount=trade.amount)
+    profit_ratio_4 = trade.calc_profit_ratio(rate=trade.close_rate)
+    profit_ratio_5 = trade.calc_profit_ratio(
+        rate=trade.close_rate, amount=trade.amount, open_rate=trade.open_rate * 1.02
+    )
+    assert correct_profit_ratio == close_profit
+    assert correct_profit_ratio == profit_ratio_1
+    assert correct_profit_ratio != profit_ratio_2
+    assert correct_profit_ratio == profit_ratio_3
+    assert correct_profit_ratio == profit_ratio_4
+    assert correct_profit_ratio != profit_ratio_5
+
 
 @pytest.mark.parametrize("is_short", [False, True])
 def test_handle_overlapping_signals(
@@ -5729,7 +5748,7 @@ def test_position_adjust2(mocker, default_conf_usdt, fee) -> None:
 @pytest.mark.parametrize(
     "data",
     [
-        # tuple 1 - side amount, price
+        # tuple 1 - side, amount, price
         # tuple 2 - amount, open_rate, stake_amount, cumulative_profit, realized_profit, rel_profit
         (
             (("buy", 100, 10), (100.0, 10.0, 1000.0, 0.0, None, None)),

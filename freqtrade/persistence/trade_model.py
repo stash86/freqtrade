@@ -1194,10 +1194,13 @@ class LocalTrade:
         """
         close_trade_value = self.calc_close_trade_value(rate, amount)
 
-        if amount is None or open_rate is None:
+        if (amount is None) and (open_rate is None):
             open_trade_value = self.open_trade_value
         else:
-            open_trade_value = self._calc_open_trade_value(amount, open_rate)
+            # Fall back to trade.amount and self.open_rate if necessary
+            open_trade_value = self._calc_open_trade_value(
+                amount or self.amount, open_rate or self.open_rate
+            )
 
         if open_trade_value == 0.0:
             return 0.0
