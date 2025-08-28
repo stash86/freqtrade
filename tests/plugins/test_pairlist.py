@@ -2409,7 +2409,7 @@ def test_MarketCapPairList_timing(mocker, default_conf_usdt, markets, time_machi
     pm = PairListManager(exchange, default_conf_usdt)
     markets_mock.reset_mock()
     pm.refresh_pairlist()
-    assert markets_mock.call_count == 3
+    assert markets_mock.call_count == 4
     markets_mock.reset_mock()
 
     time_machine.move_to(start_dt + timedelta(hours=20))
@@ -2421,7 +2421,52 @@ def test_MarketCapPairList_timing(mocker, default_conf_usdt, markets, time_machi
     time_machine.move_to(start_dt + timedelta(days=2))
     pm.refresh_pairlist()
     # No longer cached pairlist ...
-    assert markets_mock.call_count == 3
+    assert markets_mock.call_count == 4
+
+
+def test_MarketCapPairList_1000_K_fillup(mocker, default_conf_usdt, markets, time_machine):
+    test_value = [
+        {"symbol": "btc"},
+        {"symbol": "eth"},
+        {"symbol": "usdt"},
+        {"symbol": "bnb"},
+        {"symbol": "sol"},
+        {"symbol": "xrp"},
+        {"symbol": "usdc"},
+        {"symbol": "steth"},
+        {"symbol": "ada"},
+        {"symbol": "avax"},
+    ]
+
+    default_conf_usdt["trading_mode"] = "spot"
+    default_conf_usdt["exchange"]["pair_whitelist"] = []
+    default_conf_usdt["pairlists"] = [{"method": "MarketCapPairList", "number_assets": 3}]
+    markets["1000ETH/USDT"] = markets["ETH/USDT"]
+    markets["KXRP/USDT"] = markets["XRP/USDT"]
+    del markets["ETH/USDT"]
+    del markets["XRP/USDT"]
+
+    markets_mock = MagicMock(return_value=markets)
+    mocker.patch.multiple(
+        EXMS,
+        get_markets=markets_mock,
+        exchange_has=MagicMock(return_value=True),
+    )
+
+    mocker.patch(
+        "freqtrade.plugins.pairlist.MarketCapPairList.FtCoinGeckoApi.get_coins_markets",
+        return_value=test_value,
+    )
+
+    start_dt = dt_now()
+
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
+    time_machine.move_to(start_dt)
+
+    pm = PairListManager(exchange, default_conf_usdt)
+    markets_mock.reset_mock()
+    pm.refresh_pairlist()
+    assert pm.whitelist == ["BTC/USDT", "1000ETH/USDT", "KXRP/USDT"]
 
 
 def test_MarketCapPairList_filter_special_no_pair_from_coingecko(

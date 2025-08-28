@@ -389,6 +389,8 @@ The `refresh_period` setting defines the interval (in seconds) at which the mark
 The `categories` setting specifies the [coingecko categories](https://www.coingecko.com/en/categories) from which to select coins from. The default is an empty list `[]`, meaning no category filtering is applied.
 If an incorrect category string is chosen, the plugin will print the available categories from CoinGecko and fail. The category should be the ID of the category, for example, for `https://www.coingecko.com/en/categories/layer-1`, the category ID would be `layer-1`. You can pass multiple categories such as `["layer-1", "meme-token"]` to select from several categories.
 
+Coins like 1000PEPE/USDT or KPEPE/USDT:USDT are detected on a best effort basis, with the prefixes `1000` and `K` being used to identify them.
+
 !!! Warning "Many categories"
     Each added category corresponds to one API call to CoinGecko. The more categories you add, the longer the pairlist generation will take, potentially causing rate limit issues.
 

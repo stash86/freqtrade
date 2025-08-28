@@ -1649,7 +1649,7 @@ class Backtesting:
                     pair_detail = self.get_detail_data(pair, row)
                     if pair_detail is not None:
                         pair_detail_cache[pair] = pair_detail
-                    row = pair_detail_cache[pair][idx]
+                        row = pair_detail_cache[pair][idx]
 
                 is_last_row = current_time_det == end_date
 

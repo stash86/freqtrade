@@ -38,7 +38,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
+      uses: astral-sh/setup-uv@4959332f0f014c5280e7eac8b70c90cb574c9f9b # v6.6.0
       with:
         activate-environment: true
         enable-cache: true
@@ -159,7 +159,7 @@ jobs:
         check-latest: true
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
+      uses: astral-sh/setup-uv@4959332f0f014c5280e7eac8b70c90cb574c9f9b # v6.6.0
       with:
         activate-environment: true
         enable-cache: true
@@ -271,7 +271,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
+      uses: astral-sh/setup-uv@4959332f0f014c5280e7eac8b70c90cb574c9f9b # v6.6.0
       with:
         activate-environment: true
         enable-cache: true
@@ -421,7 +421,7 @@ jobs:
         python-version: "3.12"
 
     - name: Install uv
-      uses: astral-sh/setup-uv@d9e0f98d3fc6adb07d1e3d37f3043649ddad06a1 # v6.5.0
+      uses: astral-sh/setup-uv@4959332f0f014c5280e7eac8b70c90cb574c9f9b # v6.6.0
       with:
         activate-environment: true
         enable-cache: true
@@ -464,6 +464,7 @@ jobs:
 
     - name: Check user permission
       id: check
+      continue-on-error: true
       uses: prince-chrismc/check-actor-permissions-action@d504e74ba31658f4cdf4fcfeb509d4c09736d88e # v3.0.2
       with:
         permission: "write"
@@ -472,7 +473,7 @@ jobs:
 
     - name: Discord notification
       uses: rjstone/discord-webhook-notify@c2597273488aeda841dd1e891321952b51f7996f #v2.2.1
-      if: always() && steps.check.outputs.has-permission && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+      if: steps.check.outputs.permitted == 'true' && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
       with:
           severity: info
           details: Test Completed!

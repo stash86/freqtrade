@@ -227,7 +227,7 @@ Kucoin requires a passphrase for each api key, you will therefore need to add th
 }
 ```
 
-Kucoin supports [time_in_force](configuration.md#understand-order_time_in_force).
+Kucoin supports [time_in_force](configuration.md#understand-order_time_in_force) with settings "GTC" (good till cancelled), "FOK" (full-or-cancel) and "IOC" (immediate-or-cancel) settings.
 
 !!! Tip "Stoploss on Exchange"
     Kucoin supports `stoploss_on_exchange` and can use both stop-loss-market and stop-loss-limit orders. It provides great advantages, so we recommend to benefit from it.
@@ -271,7 +271,9 @@ Using the wrong exchange will result in the error "OKX Error 50119: API key does
 ## Gate.io
 
 !!! Tip "Stoploss on Exchange"
-    Gate.io supports `stoploss_on_exchange` and uses `stop-loss-limit` orders. It provides great advantages, so we recommend to benefit from it by enabling stoploss on exchange..
+    Gate.io supports `stoploss_on_exchange` and uses `stop-loss-limit` orders. It provides great advantages, so we recommend to benefit from it by enabling stoploss on exchange.
+
+Gate.io supports [time_in_force](configuration.md#understand-order_time_in_force) with settings "GTC" (good till cancelled), and "IOC" (immediate-or-cancel) settings.
 
 Gate.io allows the use of `POINT` to pay for fees. As this is not a tradable currency (no regular market available), automatic fee calculations will fail (and default to a fee of 0).
 The configuration parameter `exchange.unknown_fee_rate` can be used to specify the exchange rate between Point and the stake currency. Obviously, changing the stake-currency will also require changes to this value.
@@ -286,9 +288,15 @@ Without these permissions, the bot will not start correctly and show errors like
 
 ## Bybit
 
-Futures trading on bybit is currently supported for USDT markets, and will use isolated futures mode.
+!!! Tip "Stoploss on Exchange"
+    Bybit (futures only) supports `stoploss_on_exchange` and uses `stop-loss-limit` orders. It provides great advantages, so we recommend to benefit from it by enabling stoploss on exchange.
+    On futures, Bybit supports both `stop-limit` as well as `stop-market` orders. You can use either `"limit"` or `"market"` in the `order_types.stoploss` configuration setting to decide which type to use.
 
-On startup, freqtrade will set the position mode to "One-way Mode" for the whole (sub)account. This avoids making this call over and over again (slowing down bot operations), but means that changes to this setting may result in exceptions and errors.
+Bybit supports [time_in_force](configuration.md#understand-order_time_in_force) with settings "GTC" (good till cancelled), "FOK" (full-or-cancel), "IOC" (immediate-or-cancel) and "PO" (Post only) settings.
+
+Futures trading on bybit is currently supported for isolated futures mode.
+
+On startup, freqtrade will set the position mode to "One-way Mode" for the whole (sub)account. This avoids making this call over and over again (slowing down bot operations), but means that manual changes to this setting may result in exceptions and errors.
 
 As bybit doesn't provide funding rate history, the dry-run calculation is used for live trades as well.
 
@@ -304,11 +312,6 @@ We do strongly recommend to limit all API keys to the IP you're going to use it 
     Freqtrade assumes accounts to be dedicated to the bot.
     We therefore recommend the usage of one subaccount per bot. This is especially important when using unified accounts.  
     Other configurations (multiple bots on one account, manual non-bot trades on the bot account) are not supported and may lead to unexpected behavior.
-
-
-!!! Tip "Stoploss on Exchange"
-    Bybit (futures only) supports `stoploss_on_exchange` and uses `stop-loss-limit` orders. It provides great advantages, so we recommend to benefit from it by enabling stoploss on exchange.
-    On futures, Bybit supports both `stop-limit` as well as `stop-market` orders. You can use either `"limit"` or `"market"` in the `order_types.stoploss` configuration setting to decide which type to use.
 
 ## Bitmart
 
@@ -342,7 +345,7 @@ Bitget requires a passphrase for each api key, you will therefore need to add th
 }
 ```
 
-Bitget supports [time_in_force](configuration.md#understand-order_time_in_force).
+Bitget supports [time_in_force](configuration.md#understand-order_time_in_force) with settings "GTC" (good till cancelled), "FOK" (full-or-cancel), "IOC" (immediate-or-cancel) and "PO" (Post only) settings.
 
 !!! Tip "Stoploss on Exchange"
     Bitget supports `stoploss_on_exchange` and can use both stop-loss-market and stop-loss-limit orders. It provides great advantages, so we recommend to benefit from it.
