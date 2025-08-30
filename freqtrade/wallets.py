@@ -465,7 +465,4 @@ class Wallets:
                 # logger.info(msg)
                 func = logger.info
 
-            self._logger_cache.log_with_cache(
-                msg,
-                func,
-            )
+            self._logger_cache.log_with_cache(msg, func, None)
