@@ -59,7 +59,9 @@ class Wallets:
         self.__msg_cache = PeriodicCache(
             maxsize=1000, ttl=timeframe_to_seconds(self._default_timeframe)
         )
-        
+
+        self._logger_cache = PeriodicCache(maxsize=100, ttl=60)
+
         self.update()
 
     def get_free(self, currency: str) -> float:
@@ -407,7 +409,10 @@ class Wallets:
 
         if min_stake_amount is not None and min_stake_amount > max_allowed_stake:
             if not self._is_backtest:
-                msg = f"{pair} - Minimum stake amount > available balance. {min_stake_amount} > {max_allowed_stake}"
+                msg = (
+                    f"{pair} - Minimum stake amount > available balance. "
+                    f"{min_stake_amount} > {max_allowed_stake}"
+                )
                 self._local_log(msg, level="warning")
                 self.send_dp_message(msg)
 
@@ -451,8 +456,16 @@ class Wallets:
         """
         if not self._is_backtest:
             if level == "warning":
-                logger.warning(msg)
+                # logger.warning(msg)
+                func = logger.warning
             elif level == "debug":
-                logger.debug(msg)
+                # logger.debug(msg)
+                func = logger.debug
             else:
-                logger.info(msg)
+                # logger.info(msg)
+                func = logger.info
+
+            self._logger_cache.log_with_cache(
+                msg,
+                func,
+            )

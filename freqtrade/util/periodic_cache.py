@@ -17,3 +17,16 @@ class PeriodicCache(TTLCache):
 
         # Init with smlight offset
         super().__init__(maxsize=maxsize, ttl=ttl - 1e-5, timer=local_timer, getsizeof=getsizeof)
+
+    def log_with_cache(self, message: str, log_func, cache_key: str | None):
+        """
+        Log message only if it hasn't been logged recently
+        :param message: Message to log
+        :param log_func: Logger function (logger.info, logger.warning, etc.)
+        :param cache_key: Custom cache key (defaults to message)
+        :param ttl: Time to live in seconds
+        """
+        key = cache_key or message
+        if key not in self:
+            log_func(message)
+            self[key] = True

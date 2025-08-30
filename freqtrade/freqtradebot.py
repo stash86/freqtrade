@@ -207,19 +207,6 @@ class FreqtradeBot(LoggingMixin):
 
         self._logger_cache = PeriodicCache(maxsize=100, ttl=60)  # Cache for 60 seconds
 
-    def log_with_cache(self, message: str, log_func, cache_key: str | None):
-        """
-        Log message only if it hasn't been logged recently
-        :param message: Message to log
-        :param log_func: Logger function (logger.info, logger.warning, etc.)
-        :param cache_key: Custom cache key (defaults to message)
-        :param ttl: Time to live in seconds
-        """
-        key = cache_key or message
-        if key not in self._logger_cache:
-            log_func(message)
-            self._logger_cache[key] = True
-
     def notify_status(
         self, msg: str, msg_type=RPCMessageType.STATUS, strategy_version: str = ""
     ) -> None:
@@ -1441,7 +1428,7 @@ class FreqtradeBot(LoggingMixin):
 
                 exit_msg = f"Exit for {trade.pair} detected. Reason: {should_exit.exit_type}"
                 exit_msg += f"{f' Tag: {exit_tag1}' if exit_tag1 is not None else ''}"
-                self.log_with_cache(
+                self._logger_cache.log_with_cache(
                     exit_msg,
                     logger.info,
                     cache_key=f"exit_{trade.id}_{should_exit.exit_type}",
@@ -2190,7 +2177,7 @@ class FreqtradeBot(LoggingMixin):
             )
         ):
             # logger.info(f"User denied exit for {trade.pair}.")
-            self.log_with_cache(
+            self._logger_cache.log_with_cache(
                 f"User denied exit for {trade.pair}.",
                 logger.info,
                 cache_key=f"denied_exit_{trade.id}",
