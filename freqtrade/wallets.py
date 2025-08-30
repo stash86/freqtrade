@@ -60,7 +60,7 @@ class Wallets:
             maxsize=1000, ttl=timeframe_to_seconds(self._default_timeframe)
         )
 
-        self._logger_cache = PeriodicCache(maxsize=100, ttl=60)
+        self._logger_cache = PeriodicCache(maxsize=100, ttl=300)
 
         self.update()
 

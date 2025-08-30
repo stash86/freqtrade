@@ -205,7 +205,7 @@ class FreqtradeBot(LoggingMixin):
 
         self._measure_execution = MeasureTime(log_took_too_long, timeframe_secs * 0.25)
 
-        self._logger_cache = PeriodicCache(maxsize=100, ttl=60)  # Cache for 60 seconds
+        self._logger_cache = PeriodicCache(maxsize=100, ttl=300)  # Cache for 60 seconds
 
     def notify_status(
         self, msg: str, msg_type=RPCMessageType.STATUS, strategy_version: str = ""

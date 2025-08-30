@@ -8,7 +8,6 @@ from it
 import asyncio
 import logging
 import socket
-import time
 from collections.abc import Callable
 from threading import Thread
 from typing import Any, TypedDict
@@ -31,6 +30,7 @@ from freqtrade.rpc.api_server.ws_schemas import (
     WSWhitelistMessage,
     WSWhitelistRequest,
 )
+from freqtrade.util import PeriodicCache
 
 
 class Producer(TypedDict):
@@ -102,7 +102,9 @@ class ExternalMessageConsumer:
 
         self.start()
 
-        self._last_alive_log: dict[str, float] = {}
+        # self._last_alive_log: dict[str, float] = {}
+
+        self._logger_cache = PeriodicCache(maxsize=100, ttl=300)
 
     def start(self):
         """
@@ -276,11 +278,10 @@ class ExternalMessageConsumer:
                     pong = await channel.ping()
                     latency = await asyncio.wait_for(pong, timeout=self.ping_timeout) * 1000
 
-                    now = time.time()
-                    last_log = self._last_alive_log.get(channel, 0)
-                    if now - last_log > 300:
-                        logger.info(f"Connection to {channel} still alive, latency: {latency}ms")
-                        self._last_alive_log[channel] = now
+                    msg = f"Connection to {channel} still alive, latency: {latency}ms"
+                    self._logger_cache.log_with_cache(
+                        msg, logger.info, f"connection_{channel}_alive"
+                    )
                     continue
 
                 except Exception as e:
