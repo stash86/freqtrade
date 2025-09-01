@@ -46,11 +46,6 @@ class Binance(Exchange):
         "stoploss_order_types": {"limit": "stop", "market": "stop_market"},
         "stoploss_blocks_assets": False,  # Stoploss orders do not block assets
         "tickers_have_price": False,
-        "stop_price_type_field": "workingType",
-        "stop_price_type_value_mapping": {
-            PriceType.LAST: "CONTRACT_PRICE",
-            PriceType.MARK: "MARK_PRICE",
-        },
         "floor_leverage": True,
         "fetch_orders_limit_minutes": 7 * 1440,  # "fetch_orders" is limited to 7 days
         "stop_price_type_field": "workingType",
