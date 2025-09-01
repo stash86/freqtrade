@@ -1,6 +1,6 @@
 """Freqtrade bot"""
 
-__version__ = "2025.8-dev"
+__version__ = "2025.9-dev"
 
 if "dev" in __version__:
     from pathlib import Path

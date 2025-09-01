@@ -258,7 +258,7 @@ jobs:
     strategy:
       matrix:
         os: [ "windows-2022", "windows-2025" ]
-        python-version: ["3.11", "3.12", "3.13.6"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v5

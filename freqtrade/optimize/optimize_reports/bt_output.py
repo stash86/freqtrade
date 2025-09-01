@@ -196,6 +196,7 @@ def text_table_strategy(strategy_results, stake_currency: str, title: str):
 
 
 def text_table_add_metrics(strat_results: dict) -> None:
+    stake = strat_results["stake_currency"]
     if len(strat_results["trades"]) > 0:
         best_trade = max(strat_results["trades"], key=lambda x: x["profit_ratio"])
         worst_trade = min(strat_results["trades"], key=lambda x: x["profit_ratio"])
@@ -204,23 +205,19 @@ def text_table_add_metrics(strat_results: dict) -> None:
             [
                 ("", ""),  # Empty line to improve readability
                 (
-                    "Long / Short",
+                    "Long / Short trades",
                     f"{strat_results.get('trade_count_long', 'total_trades')} / "
                     f"{strat_results.get('trade_count_short', 0)}",
                 ),
-                ("Total profit Long %", f"{strat_results['profit_total_long']:.2%}"),
-                ("Total profit Short %", f"{strat_results['profit_total_short']:.2%}"),
                 (
-                    "Absolute profit Long",
-                    fmt_coin(
-                        strat_results["profit_total_long_abs"], strat_results["stake_currency"]
-                    ),
+                    "Long / Short profit %",
+                    f"{strat_results['profit_total_long']:.2%} / "
+                    f"{strat_results['profit_total_short']:.2%}",
                 ),
                 (
-                    "Absolute profit Short",
-                    fmt_coin(
-                        strat_results["profit_total_short_abs"], strat_results["stake_currency"]
-                    ),
+                    f"Long / Short profit {stake}",
+                    f"{strat_results['profit_total_long_abs']:.{decimals_per_coin(stake)}f} / "
+                    f"{strat_results['profit_total_short_abs']:.{decimals_per_coin(stake)}f}",
                 ),
             ]
             if strat_results.get("trade_count_short", 0) > 0
@@ -233,27 +230,34 @@ def text_table_add_metrics(strat_results: dict) -> None:
         #     drawdown_metrics.append(
         #         ("Max % of account underwater", f"{strat_results['max_relative_drawdown']:.2%}")
         #     )
+        # drawdown_account = (
+        #     strat_results["max_drawdown_account"]
+        #     if "max_drawdown_account" in strat_results
+        #     else strat_results["max_drawdown"]
+        # )
         # drawdown_metrics.extend(
         #     [
         #         (
-        #             ("Absolute Drawdown (Account)", f"{strat_results['max_drawdown_account']:.2%}")
-        #             if "max_drawdown_account" in strat_results
-        #             else ("Drawdown", f"{strat_results['max_drawdown']:.2%}")
+        #             "Absolute drawdown",
+        #             f"{fmt_coin(strat_results['max_drawdown_abs'], stake)} "
+        #             f"({drawdown_account:.2%})",
         #         ),
         #         (
-        #             "Absolute Drawdown",
-        #             fmt_coin(strat_results["max_drawdown_abs"], strat_results["stake_currency"]),
+        #             "Drawdown duration",
+        #             strat_results["drawdown_duration"]
+        #             if "drawdown_duration" in strat_results
+        #             else "N/A",
         #         ),
         #         (
-        #             "Drawdown high",
-        #             fmt_coin(strat_results["max_drawdown_high"], strat_results["stake_currency"]),
+        #             "Profit at drawdown start",
+        #             fmt_coin(strat_results["max_drawdown_high"], stake),
         #         ),
         #         (
-        #             "Drawdown low",
-        #             fmt_coin(strat_results["max_drawdown_low"], strat_results["stake_currency"]),
+        #             "Profit at drawdown end",
+        #             fmt_coin(strat_results["max_drawdown_low"], stake),
         #         ),
-        #         ("Drawdown Start", strat_results["drawdown_start"]),
-        #         ("Drawdown End", strat_results["drawdown_end"]),
+        #         ("Drawdown start", strat_results["drawdown_start"]),
+        #         ("Drawdown end", strat_results["drawdown_end"]),
         #     ]
         # )
 
@@ -301,15 +305,15 @@ def text_table_add_metrics(strat_results: dict) -> None:
             ),
             (
                 "Starting balance",
-                fmt_coin(strat_results["starting_balance"], strat_results["stake_currency"]),
+                fmt_coin(strat_results["starting_balance"], stake),
             ),
             (
                 "Final balance",
-                fmt_coin(strat_results["final_balance"], strat_results["stake_currency"]),
+                fmt_coin(strat_results["final_balance"], stake),
             ),
             (
                 "Absolute profit ",
-                fmt_coin(strat_results["profit_total_abs"], strat_results["stake_currency"]),
+                fmt_coin(strat_results["profit_total_abs"], stake),
             ),
             ("Total profit %", f"{strat_results['profit_total']:.2%}"),
             ("CAGR %", f"{strat_results['cagr']:.2%}" if "cagr" in strat_results else "N/A"),
@@ -338,15 +342,17 @@ def text_table_add_metrics(strat_results: dict) -> None:
             #     "Avg. daily profit",
             #     fmt_coin(
             #         (strat_results["profit_total_abs"] / strat_results["backtest_days"]),
-            #         strat_results["stake_currency"],
+            #         stake,
             #     ),
             # ),
             (
                 "Avg. stake amount",
-                fmt_coin(strat_results["avg_stake_amount"], strat_results["stake_currency"]),
+                fmt_coin(strat_results["avg_stake_amount"], stake),
             ),
-            # ("Total trade volume", fmt_coin(strat_results["total_volume"],
-            #                                 strat_results["stake_currency"])),
+            # (
+            #     "Total trade volume",
+            #     fmt_coin(strat_results["total_volume"], stake),
+            # ),
             *short_metrics,
             ("", ""),  # Empty line to improve readability
             (
@@ -361,10 +367,14 @@ def text_table_add_metrics(strat_results: dict) -> None:
             ),
             ("Best trade", f"{best_trade['pair']} {best_trade['profit_ratio']:.2%}"),
             ("Worst trade", f"{worst_trade['pair']} {worst_trade['profit_ratio']:.2%}"),
-            # ("Best day", fmt_coin(strat_results["backtest_best_day_abs"],
-            #                       strat_results["stake_currency"])),
-            # ("Worst day", fmt_coin(strat_results["backtest_worst_day_abs"],
-            #                        strat_results["stake_currency"])),
+            # (
+            #     "Best day",
+            #     fmt_coin(strat_results["backtest_best_day_abs"], stake),
+            # ),
+            # (
+            #     "Worst day",
+            #     fmt_coin(strat_results["backtest_worst_day_abs"], stake),
+            # ),
             (
                 "Days win/draw/lose",
                 f"{strat_results['winning_days']} / "
@@ -401,17 +411,17 @@ def text_table_add_metrics(strat_results: dict) -> None:
             # ),
             *entry_adjustment_metrics,
             # ("", ""),  # Empty line to improve readability
-            # ("Min balance", fmt_coin(strat_results["csum_min"], strat_results["stake_currency"])),
-            # ("Max balance", fmt_coin(strat_results["csum_max"], strat_results["stake_currency"])),
+            # ("Min balance", fmt_coin(strat_results["csum_min"], stake)),
+            # ("Max balance", fmt_coin(strat_results["csum_max"], stake)),
             # *drawdown_metrics,
             # ("Market change", f"{strat_results['market_change']:.2%}"),
         ]
         print_rich_table(metrics, ["Metric", "Value"], summary="SUMMARY METRICS", justify="left")
 
     else:
-        start_balance = fmt_coin(strat_results["starting_balance"], strat_results["stake_currency"])
+        start_balance = fmt_coin(strat_results["starting_balance"], stake)
         stake_amount = (
-            fmt_coin(strat_results["stake_amount"], strat_results["stake_currency"])
+            fmt_coin(strat_results["stake_amount"], stake)
             if strat_results["stake_amount"] != UNLIMITED_STAKE_AMOUNT
             else "unlimited"
         )

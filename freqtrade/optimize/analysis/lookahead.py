@@ -13,8 +13,8 @@ from freqtrade.loggers.set_log_levels import (
     reduce_verbosity_for_bias_tester,
     restore_verbosity_for_bias_tester,
 )
+from freqtrade.optimize.analysis.base_analysis import BaseAnalysis, VarHolder
 from freqtrade.optimize.backtesting import Backtesting
-from freqtrade.optimize.base_analysis import BaseAnalysis, VarHolder
 
 
 logger = logging.getLogger(__name__)
@@ -172,23 +172,23 @@ class LookaheadAnalysis(BaseAnalysis):
         self.fill_entry_and_exit_varHolders(result_row)
 
         # this will trigger a logger-message
-        buy_or_sell_biased: bool = False
+        entry_or_exit_biased: bool = False
 
         # register if buy signal is broken
         if not self.report_signal(
             self.entry_varHolders[idx].result, "open_date", self.entry_varHolders[idx].compared_dt
         ):
             self.current_analysis.false_entry_signals += 1
-            buy_or_sell_biased = True
+            entry_or_exit_biased = True
 
         # register if buy or sell signal is broken
         if not self.report_signal(
             self.exit_varHolders[idx].result, "close_date", self.exit_varHolders[idx].compared_dt
         ):
             self.current_analysis.false_exit_signals += 1
-            buy_or_sell_biased = True
+            entry_or_exit_biased = True
 
-        if buy_or_sell_biased:
+        if entry_or_exit_biased:
             logger.info(
                 f"found lookahead-bias in trade "
                 f"pair: {result_row['pair']}, "

@@ -408,6 +408,22 @@ jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace freqtrade/tem
 jupyter nbconvert --ClearOutputPreprocessor.enabled=True --to markdown freqtrade/templates/strategy_analysis_example.ipynb --stdout > docs/strategy_analysis_example.md
 ```
 
+## Backtest documentation results
+
+To generate backtest outputs, please use the following commands:
+
+``` bash
+# Assume a dedicated user directory for this output
+freqtrade create-userdir --userdir user_data_bttest/
+# set can_short = True
+sed -i "s/can_short: bool = False/can_short: bool = True/" user_data_bttest/strategies/sample_strategy.py
+
+freqtrade download-data --timerange 20250625-20250801 --config tests/testdata/config.tests.usdt.json --userdir user_data_bttest/ -t 5m
+
+freqtrade backtesting --config tests/testdata/config.tests.usdt.json -s SampleStrategy --userdir user_data_bttest/ --cache none --timerange 20250701-20250801
+```
+
+
 ## Continuous integration
 
 This documents some decisions taken for the CI Pipeline.
@@ -418,7 +434,6 @@ This documents some decisions taken for the CI Pipeline.
 * Docker images contain a file, `/freqtrade/freqtrade_commit` containing the commit this image is based of.
 * Full docker image rebuilds are run once a week via schedule.
 * Deployments run on ubuntu.
-* ta-lib binaries are contained in the build_helpers directory to avoid fails related to external unavailability.
 * All tests must pass for a PR to be merged to `stable` or `develop`.
 
 ## Creating a release
