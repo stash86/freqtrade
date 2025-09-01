@@ -1,0 +1,6 @@
+{
+    "order_time_in_force": {
+        "entry": "GTC",
+        "exit": "PO"
+    },
+}
