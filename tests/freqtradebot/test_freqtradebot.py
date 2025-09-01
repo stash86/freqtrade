@@ -4659,7 +4659,7 @@ def test_reupdate_enter_order_fees(mocker, default_conf_usdt, fee, caplog, is_sh
 
     # Test with trade without orders
     trade = Trade(
-        pair="XRP/ETH",
+        pair="XRP/USDT",
         stake_amount=60.0,
         fee_open=fee.return_value,
         fee_close=fee.return_value,

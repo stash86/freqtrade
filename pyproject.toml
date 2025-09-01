@@ -224,7 +224,7 @@ exclude = [
 ]
 ignore = ["freqtrade/vendor/**"]
 pythonPlatform = "All"
-pythonVersion = "3.9"
+pythonVersion = "3.11"
 
 typeCheckingMode = "off"
 # analyzeUnannotatedFunctions = false

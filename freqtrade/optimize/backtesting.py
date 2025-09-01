@@ -124,7 +124,7 @@ class Backtesting:
         self.trade_id_counter: int = 0
         self.order_id_counter: int = 0
 
-        config["dry_run"] = True
+        self.config["dry_run"] = True
         self.price_pair_prec: dict[str, Series] = {}
         self.run_ids: dict[str, str] = {}
         self.strategylist: list[IStrategy] = []
@@ -137,6 +137,7 @@ class Backtesting:
         self.rejected_dict: dict[str, list] = {}
 
         self._exchange_name = self.config["exchange"]["name"]
+        self.__initial_backtest = exchange is None
         if not exchange:
             exchange = ExchangeResolver.load_exchange(self.config, load_leverage_tiers=True)
         self.exchange = exchange
@@ -179,20 +180,7 @@ class Backtesting:
 
         if len(self.pairlists.whitelist) == 0:
             raise OperationalException("No pair in whitelist.")
-
-        if config.get("fee", None) is not None:
-            self.fee = config["fee"]
-            logger.info(f"Using fee {self.fee:.4%} from config.")
-        else:
-            fees = [
-                self.exchange.get_fee(
-                    symbol=self.pairlists.whitelist[0],
-                    taker_or_maker=mt,  # type: ignore
-                )
-                for mt in ("taker", "maker")
-            ]
-            self.fee = max(fee for fee in fees if fee is not None)
-            logger.info(f"Using fee {self.fee:.4%} - worst case fee from exchange (lowest tier).")
+        self.set_fee()
         self.precision_mode = self.exchange.precisionMode
         self.precision_mode_price = self.exchange.precision_mode_price
 
@@ -217,8 +205,8 @@ class Backtesting:
             # This value should NOT be written to startup_candle_count
             self.required_startup = self.dataprovider.get_required_startup(self.timeframe)
 
-        self.trading_mode: TradingMode = config.get("trading_mode", TradingMode.SPOT)
-        self.margin_mode: MarginMode = config.get("margin_mode", MarginMode.ISOLATED)
+        self.trading_mode: TradingMode = self.config.get("trading_mode", TradingMode.SPOT)
+        self.margin_mode: MarginMode = self.config.get("margin_mode", MarginMode.ISOLATED)
         # strategies which define "can_short=True" will fail to load in Spot mode.
         self._can_short = self.trading_mode != TradingMode.SPOT
         self._position_stacking: bool = self.config.get("position_stacking", False)
@@ -237,6 +225,30 @@ class Backtesting:
             raise OperationalException(
                 "PrecisionFilter not allowed for backtesting multiple strategies."
             )
+
+    def log_once(self, msg: str) -> None:
+        """
+        Partial reimplementation of log_once from the Login mixin.
+        only used by recursive, as __initial_backtest is false in all other cases.
+
+        """
+        if self.__initial_backtest:
+            logger.info(msg)
+
+    def set_fee(self):
+        if self.config.get("fee", None) is not None:
+            self.fee = self.config["fee"]
+            self.log_once(f"Using fee {self.fee:.4%} from config.")
+        else:
+            fees = [
+                self.exchange.get_fee(
+                    symbol=self.pairlists.whitelist[0],
+                    taker_or_maker=mt,
+                )
+                for mt in ("taker", "maker")
+            ]
+            self.fee = max(fee for fee in fees if fee is not None)
+            self.log_once(f"Using fee {self.fee:.4%} - worst case fee from exchange (lowest tier).")
 
     @staticmethod
     def cleanup():

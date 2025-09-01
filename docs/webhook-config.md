@@ -80,6 +80,29 @@ When using the Form-Encoded or JSON-Encoded configuration you can configure any 
 
 The result would be a POST request with e.g. `Status: running` body and `Content-Type: text/plain` header.
 
+### Nested Webhook Configuration
+
+Some webhook targets require a nested structure.
+This can be accomplished by setting the content as dictionary or list instead of as text directly.  
+
+This is only supported for the JSON format.
+
+```json
+"webhook": {
+    "enabled": true,
+    "url": "https://<yourhookurl>",
+    "format": "json",
+    "status": {
+        "msgtype": "text",
+        "text": {
+            "content": "Status update: {status}"
+        }
+    }
+}
+```
+
+The result would be a POST request with e.g. `{"msgtype":"text","text":{"content":"Status update: running"}}` body and `Content-Type: application/json` header.
+
 ## Additional configurations
 
 The `webhook.retries` parameter can be set for the maximum number of retries the webhook request should attempt if it is unsuccessful (i.e. HTTP response status is not 200). By default this is set to `0` which is disabled. An additional `webhook.retry_delay` parameter can be set to specify the time in seconds between retry attempts. By default this is set to `0.1` (i.e. 100ms). Note that increasing the number of retries or retry delay may slow down the trader if there are connectivity issues with the webhook.

@@ -2234,7 +2234,7 @@ async def test__async_get_historic_ohlcv(default_conf, mocker, caplog, exchange_
 
 
 @pytest.mark.parametrize("candle_type", [CandleType.FUTURES, CandleType.MARK, CandleType.SPOT])
-def test_refresh_latest_ohlcv(mocker, default_conf, caplog, candle_type) -> None:
+def test_refresh_latest_ohlcv(mocker, default_conf_usdt, caplog, candle_type) -> None:
     ohlcv = [
         [
             dt_ts(dt_now() - timedelta(minutes=5)),  # unix timestamp ms
@@ -2255,10 +2255,10 @@ def test_refresh_latest_ohlcv(mocker, default_conf, caplog, candle_type) -> None
     ]
 
     caplog.set_level(logging.DEBUG)
-    exchange = get_patched_exchange(mocker, default_conf)
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
     exchange._api_async.fetch_ohlcv = get_mock_coro(ohlcv)
 
-    pairs = [("IOTA/ETH", "5m", candle_type), ("XRP/ETH", "5m", candle_type)]
+    pairs = [("IOTA/USDT", "5m", candle_type), ("XRP/USDT", "5m", candle_type)]
     # empty dicts
     assert not exchange._klines
     res = exchange.refresh_latest_ohlcv(pairs, cache=False)
@@ -2290,7 +2290,7 @@ def test_refresh_latest_ohlcv(mocker, default_conf, caplog, candle_type) -> None
 
     # test caching
     res = exchange.refresh_latest_ohlcv(
-        [("IOTA/ETH", "5m", candle_type), ("XRP/ETH", "5m", candle_type)]
+        [("IOTA/USDT", "5m", candle_type), ("XRP/USDT", "5m", candle_type)]
     )
     assert len(res) == len(pairs)
 
@@ -2303,7 +2303,7 @@ def test_refresh_latest_ohlcv(mocker, default_conf, caplog, candle_type) -> None
     # Reset refresh times - must do 2 call per pair as cache is expired
     exchange._pairs_last_refresh_time = {}
     res = exchange.refresh_latest_ohlcv(
-        [("IOTA/ETH", "5m", candle_type), ("XRP/ETH", "5m", candle_type)]
+        [("IOTA/USDT", "5m", candle_type), ("XRP/USDT", "5m", candle_type)]
     )
     assert len(res) == len(pairs)
 
@@ -2314,9 +2314,9 @@ def test_refresh_latest_ohlcv(mocker, default_conf, caplog, candle_type) -> None
     exchange.required_candle_call_count = 1
 
     pairlist = [
-        ("IOTA/ETH", "5m", candle_type),
-        ("XRP/ETH", "5m", candle_type),
-        ("XRP/ETH", "1d", candle_type),
+        ("IOTA/USDT", "5m", candle_type),
+        ("XRP/USDT", "5m", candle_type),
+        ("XRP/USDT", "1d", candle_type),
     ]
     res = exchange.refresh_latest_ohlcv(pairlist, cache=False)
     assert len(res) == 3
@@ -2331,11 +2331,11 @@ def test_refresh_latest_ohlcv(mocker, default_conf, caplog, candle_type) -> None
     caplog.clear()
 
     # Call with invalid timeframe
-    res = exchange.refresh_latest_ohlcv([("IOTA/ETH", "3m", candle_type)], cache=False)
+    res = exchange.refresh_latest_ohlcv([("IOTA/USDT", "3m", candle_type)], cache=False)
     if candle_type != CandleType.MARK:
         assert not res
         assert len(res) == 0
-        assert log_has_re(r"Cannot download \(IOTA\/ETH, 3m\).*", caplog)
+        assert log_has_re(r"Cannot download \(IOTA\/USDT, 3m\).*", caplog)
     else:
         assert len(res) == 1
 

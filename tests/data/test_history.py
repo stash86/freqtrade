@@ -397,6 +397,7 @@ def test_load_partial_missing(testdatadir, caplog) -> None:
     # Make sure we start fresh - test missing data at start
     start = dt_utc(2018, 1, 1)
     end = dt_utc(2018, 1, 11)
+    caplog.set_level(logging.DEBUG)
     data = load_data(
         testdatadir,
         "5m",

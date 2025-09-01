@@ -628,6 +628,7 @@ def generate_strategy_stats(
         underwater = calculate_max_drawdown(
             results, value_col="profit_abs", starting_balance=start_balance, relative=True
         )
+        drawdown_duration = drawdown.low_date - drawdown.high_date
 
         strat_stats.update(
             {
@@ -638,6 +639,8 @@ def generate_strategy_stats(
                 "drawdown_start_ts": drawdown.high_date.timestamp() * 1000,
                 "drawdown_end": drawdown.low_date.strftime(DATETIME_PRINT_FORMAT),
                 "drawdown_end_ts": drawdown.low_date.timestamp() * 1000,
+                "drawdown_duration": drawdown_duration,
+                "drawdown_duration_s": drawdown_duration.total_seconds(),
                 "max_drawdown_low": drawdown.low_value,
                 "max_drawdown_high": drawdown.high_value,
             }

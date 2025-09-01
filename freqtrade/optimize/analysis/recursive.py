@@ -13,8 +13,8 @@ from freqtrade.loggers.set_log_levels import (
     reduce_verbosity_for_bias_tester,
     restore_verbosity_for_bias_tester,
 )
+from freqtrade.optimize.analysis.base_analysis import BaseAnalysis, VarHolder
 from freqtrade.optimize.backtesting import Backtesting
-from freqtrade.optimize.base_analysis import BaseAnalysis, VarHolder
 
 
 logger = logging.getLogger(__name__)

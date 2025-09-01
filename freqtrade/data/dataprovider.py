@@ -498,7 +498,12 @@ class DataProvider:
             return DataFrame()
 
     def trades(
-        self, pair: str, timeframe: str | None = None, copy: bool = True, candle_type: str = ""
+        self,
+        pair: str,
+        timeframe: str | None = None,
+        copy: bool = True,
+        candle_type: str = "",
+        timerange: TimeRange | None = None,
     ) -> DataFrame:
         """
         Get candle (TRADES) data for the given pair as DataFrame
@@ -526,7 +531,7 @@ class DataProvider:
                 self._config["datadir"], data_format=self._config["dataformat_trades"]
             )
             trades_df = data_handler.trades_load(
-                pair, self._config.get("trading_mode", TradingMode.SPOT)
+                pair, self._config.get("trading_mode", TradingMode.SPOT), timerange=timerange
             )
             return trades_df
 
