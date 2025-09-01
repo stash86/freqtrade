@@ -45,7 +45,7 @@ class Binance(Exchange):
         "funding_fee_candle_limit": 1000,
         "stoploss_order_types": {"limit": "stop", "market": "stop_market"},
         "stoploss_blocks_assets": False,  # Stoploss orders do not block assets
-        "order_time_in_force": ["GTC", "FOK", "IOC", "PO"],
+        "order_time_in_force": ["GTC", "FOK", "IOC"],
         "tickers_have_price": False,
         "stop_price_type_field": "workingType",
         "stop_price_type_value_mapping": {
