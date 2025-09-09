@@ -6,13 +6,13 @@
 # -r requirements-freqai-rl.txt
 -r docs/requirements-docs.txt
 
-ruff==0.12.10
+ruff==0.12.12
 mypy==1.17.1
 pre-commit==4.3.0
-pytest==8.4.1
+pytest==8.4.2
 pytest-asyncio==1.1.0
-pytest-cov==6.2.1
-pytest-mock==3.14.1
+pytest-cov==6.3.0
+pytest-mock==3.15.0
 pytest-random-order==1.2.0
 pytest-timeout==2.4.0
 pytest-xdist==3.8.0
@@ -25,7 +25,7 @@ nbconvert==7.16.6
 
 # mypy types
 scipy-stubs==1.16.1.1  # keep in sync with `scipy` in `requirements-hyperopt.txt`
-types-cachetools==6.1.0.20250717
+types-cachetools==6.2.0.20250827
 types-filelock==3.2.7
 types-requests==2.32.4.20250809
 types-tabulate==0.9.0.20241207

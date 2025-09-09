@@ -145,8 +145,7 @@ class LookaheadAnalysisSubFunctions:
             config["enable_protections"] = False
             logger.info(
                 "Protections were enabled. "
-                "Disabling protections now "
-                "since they could otherwise produce false positives."
+                "Disabling protections now since they can produce false positives."
             )
         if config["targeted_trade_amount"] < config["minimum_trade_amount"]:
             # this combo doesn't make any sense.

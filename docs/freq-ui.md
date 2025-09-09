@@ -4,7 +4,7 @@ Freqtrade provides a builtin webserver, which can serve [FreqUI](https://github.
 
 By default, the UI is automatically installed as part of the installation (script, docker).
 freqUI can also be manually installed by using the `freqtrade install-ui` command.
-This same command can also be used to update freqUI to new new releases.
+This same command can also be used to update freqUI to new releases.
 
 Once the bot is started in trade / dry-run mode (with `freqtrade trade`) - the UI will be available under the configured API port (by default `http://127.0.0.1:8080`).
 

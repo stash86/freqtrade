@@ -152,7 +152,7 @@ class IStrategy(ABC, HyperStrategyMixin):
     def __init__(self, config: Config) -> None:
         self.config = config
         # Dict to determine if analysis is necessary
-        self._last_candle_seen_per_pair: dict[str, datetime] = {}
+        self.__last_candle_seen_per_pair: dict[str, datetime] = {}
         super().__init__(config)
 
         # Gather informative pairs from @informative-decorated methods.
@@ -1210,14 +1210,14 @@ class IStrategy(ABC, HyperStrategyMixin):
         """
         pair = str(metadata.get("pair"))
 
-        new_candle = self._last_candle_seen_per_pair.get(pair, None) != dataframe.iloc[-1]["date"]
+        new_candle = self.__last_candle_seen_per_pair.get(pair, None) != dataframe.iloc[-1]["date"]
         # Test if seen this pair and last candle before.
         # always run if process_only_new_candles is set to false
         if not self.process_only_new_candles or new_candle:
             # Defs that only make change on new candle data.
             dataframe = self.analyze_ticker(dataframe, metadata)
 
-            self._last_candle_seen_per_pair[pair] = dataframe.iloc[-1]["date"]
+            self.__last_candle_seen_per_pair[pair] = dataframe.iloc[-1]["date"]
 
             candle_type = self.config.get("candle_type_def", CandleType.SPOT)
             self.dp._set_cached_df(pair, self.timeframe, dataframe, candle_type=candle_type)

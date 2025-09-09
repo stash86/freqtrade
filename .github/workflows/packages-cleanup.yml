@@ -1,0 +1,46 @@
+name: Cleanup Packages
+
+on:
+  workflow_call:
+    inputs:
+       package_name:
+        description: 'Package name to clean up'
+        required: false
+        default: 'freqtrade'
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: 'Package name to clean up'
+        required: false
+        default: 'freqtrade'
+        type: choice
+        options:
+          - 'freqtrade'
+          - 'freqtrade-devcontainer'
+      delete-untagged:
+        description: 'Whether to delete only untagged images'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PACKAGE_NAME: "freqtrade"
+
+jobs:
+  deploy-docker:
+    name: "Delete Packages"
+    runs-on: ubuntu-24.04
+    if: github.repository == 'freqtrade/freqtrade'
+    permissions:
+      packages: write
+
+    steps:
+    - name: "Delete untagged Package Versions"
+      uses: actions/delete-package-versions@v5
+      with:
+        package-name: ${{ inputs.package_name || env.PACKAGE_NAME }}
+        package-type: 'container'
+        min-versions-to-keep: 10
+        delete-only-untagged-versions: ${{ inputs.delete-untagged || 'true' }}

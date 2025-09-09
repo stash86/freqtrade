@@ -14,10 +14,11 @@ MANIFEST.in
 README.md
 freqtrade.service
 freqtrade.egg-info
+.venv/
 
 config.json*
 *.sqlite
-user_data
+user_data/
 *.log
 
 .vscode

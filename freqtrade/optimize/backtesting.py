@@ -966,7 +966,7 @@ class Backtesting:
                     )
                 )
 
-    def get_valid_price_and_stake(
+    def get_valid_entry_price_and_stake(
         self,
         pair: str,
         row: tuple,
@@ -1089,18 +1089,20 @@ class Backtesting:
         stake_amount_ = stake_amount or (trade.stake_amount if trade else 0.0)
         precision_price, precision_mode_price = self.get_pair_precision(pair, current_time)
 
-        propose_rate, stake_amount, leverage, min_stake_amount = self.get_valid_price_and_stake(
-            pair,
-            row,
-            row[OPEN_IDX],
-            stake_amount_,
-            direction,
-            current_time,
-            entry_tag,
-            trade,
-            order_type,
-            precision_price,
-            precision_mode_price,
+        propose_rate, stake_amount, leverage, min_stake_amount = (
+            self.get_valid_entry_price_and_stake(
+                pair,
+                row,
+                row[OPEN_IDX],
+                stake_amount_,
+                direction,
+                current_time,
+                entry_tag,
+                trade,
+                order_type,
+                precision_price,
+                precision_mode_price,
+            )
         )
 
         # replace proposed rate if another rate was requested

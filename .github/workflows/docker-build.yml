@@ -20,6 +20,12 @@ on:
 permissions:
   contents: read
 
+env:
+  IMAGE_NAME: "freqtradeorg/freqtrade"
+  CACHE_IMAGE: "freqtradeorg/freqtrade_cache"
+  GHCR_IMAGE_NAME: "ghcr.io/freqtrade/freqtrade"
+  PI_PLATFORM: "linux/arm/v7"
+
 jobs:
   deploy-docker:
     name: "Deploy Docker x64 and armv7l"
@@ -31,33 +37,20 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Set docker tag names
+      id: tags
+      uses: ./.github/actions/docker-tags
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
       with:
-        python-version: "3.12"
-
-    - name: Extract branch name
-      id: extract-branch
-      env:
-        BRANCH_NAME_INPUT: ${{ github.event.inputs.branch_name }}
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          BRANCH_NAME="${BRANCH_NAME_INPUT}"
-        else
-          BRANCH_NAME="${GITHUB_REF##*/}"
-        fi
-        echo "GITHUB_REF='${GITHUB_REF}'"
-        echo "branch=${BRANCH_NAME}" >> "$GITHUB_OUTPUT"
-
-    - name: Dockerhub login
-      env:
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      run: |
-        echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+      with:
+        cache-image: false
 
     - name: Set up Docker Buildx
       id: buildx
@@ -68,11 +61,86 @@ jobs:
       env:
         PLATFORMS: ${{ steps.buildx.outputs.platforms }}
 
-    - name: Build and test and push docker images
+    - name: Build image without cache
+      if: github.event_name == 'schedule'
       env:
-        BRANCH_NAME: ${{ steps.extract-branch.outputs.branch }}
+        TAG: ${{ steps.tags.outputs.TAG }}
       run: |
-        build_helpers/publish_docker_multi.sh
+        docker build -t ${CACHE_IMAGE}:${TAG} .
+
+    - name: Build ARMHF image without cache
+      if: github.event_name == 'schedule'
+      env:
+        TAG_PI: ${{ steps.tags.outputs.TAG_PI }}
+        CACHE_TAG_PI: ${{ steps.tags.outputs.CACHE_TAG_PI }}
+      run: |
+        docker buildx build \
+          --cache-to=type=registry,ref=${CACHE_TAG_PI} \
+          -f docker/Dockerfile.armhf \
+          --platform ${PI_PLATFORM} \
+          -t ${IMAGE_NAME}:${TAG_PI} \
+          --push \
+          --provenance=false \
+          .
+
+    - name: Build image with cache
+      if: github.event_name != 'schedule'
+      env:
+        TAG: ${{ steps.tags.outputs.TAG }}
+      run: |
+        docker pull ${IMAGE_NAME}:${TAG} || true
+        docker build --cache-from ${IMAGE_NAME}:${TAG} -t ${CACHE_IMAGE}:${TAG} .
+
+    - name: Build ARMHF image with cache
+      if: github.event_name != 'schedule'
+      # disable provenance due to https://github.com/docker/buildx/issues/1509
+      env:
+        TAG_PI: ${{ steps.tags.outputs.TAG_PI }}
+        CACHE_TAG_PI: ${{ steps.tags.outputs.CACHE_TAG_PI }}
+      run: |
+        docker buildx build \
+          --cache-from=type=registry,ref=${CACHE_TAG_PI} \
+          --cache-to=type=registry,ref=${CACHE_TAG_PI} \
+          -f docker/Dockerfile.armhf \
+          --platform ${PI_PLATFORM} \
+          -t ${IMAGE_NAME}:${TAG_PI} \
+          --push \
+          --provenance=false \
+          .
+
+    - name: Run build for AI images
+      env:
+        TAG: ${{ steps.tags.outputs.TAG }}
+        TAG_PLOT: ${{ steps.tags.outputs.TAG_PLOT }}
+        TAG_FREQAI: ${{ steps.tags.outputs.TAG_FREQAI }}
+        TAG_FREQAI_RL: ${{ steps.tags.outputs.TAG_FREQAI_RL }}
+      run: |
+        docker build --build-arg sourceimage=${CACHE_IMAGE} --build-arg sourcetag=${TAG} -t ${CACHE_IMAGE}:${TAG_PLOT} -f docker/Dockerfile.plot .
+        docker build --build-arg sourceimage=${CACHE_IMAGE} --build-arg sourcetag=${TAG} -t ${CACHE_IMAGE}:${TAG_FREQAI} -f docker/Dockerfile.freqai .
+        docker build --build-arg sourceimage=${CACHE_IMAGE} --build-arg sourcetag=${TAG_FREQAI} -t ${CACHE_IMAGE}:${TAG_FREQAI_RL} -f docker/Dockerfile.freqai_rl .
+
+
+    - name: Run backtest in Docker
+      env:
+        TAG: ${{ steps.tags.outputs.TAG }}
+      run: |
+        docker run --rm -v $(pwd)/tests/testdata/config.tests.json:/freqtrade/config.json:ro -v $(pwd)/tests:/tests ${CACHE_IMAGE}:${TAG} backtesting --datadir /tests/testdata --strategy-path /tests/strategy/strats/ --strategy StrategyTestV3
+
+    - name: Push cache images
+      env:
+        TAG: ${{ steps.tags.outputs.TAG }}
+        TAG_PLOT: ${{ steps.tags.outputs.TAG_PLOT }}
+        TAG_FREQAI: ${{ steps.tags.outputs.TAG_FREQAI }}
+        TAG_FREQAI_RL: ${{ steps.tags.outputs.TAG_FREQAI_RL }}
+      run: |
+        docker push ${CACHE_IMAGE}:$TAG
+        docker push ${CACHE_IMAGE}:$TAG_PLOT
+        docker push ${CACHE_IMAGE}:$TAG_FREQAI
+        docker push ${CACHE_IMAGE}:$TAG_FREQAI_RL
+
+    - name: list Images
+      run: |
+        docker images
 
   deploy-arm:
     name: "Deploy Docker ARM64"
@@ -88,33 +156,135 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Extract branch name
-      id: extract-branch
-      env:
-        BRANCH_NAME_INPUT: ${{ github.event.inputs.branch_name }}
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          BRANCH_NAME="${BRANCH_NAME_INPUT}"
-        else
-          BRANCH_NAME="${GITHUB_REF##*/}"
-        fi
-        echo "GITHUB_REF='${GITHUB_REF}'"
-        echo "branch=${BRANCH_NAME}" >> "$GITHUB_OUTPUT"
+    - name: Set docker tag names
+      id: tags
+      uses: ./.github/actions/docker-tags
 
-    - name: Dockerhub login
-      env:
-        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      run: |
-        echo "${DOCKER_PASSWORD}" | docker login --username ${DOCKER_USERNAME} --password-stdin
+    - name: Login to Docker Hub
+      uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and test and push docker images
+    - name: Login to github
+      uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build image without cache
+      if: github.event_name == 'schedule'
       env:
-        BRANCH_NAME: ${{ steps.extract-branch.outputs.branch }}
-        GHCR_USERNAME: ${{ github.actor }}
-        GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAG_ARM: ${{ steps.tags.outputs.TAG_ARM }}
       run: |
-        build_helpers/publish_docker_arm64.sh
+        docker build -t ${IMAGE_NAME}:${TAG_ARM} .
+
+    - name: Build image with cache
+      if: github.event_name != 'schedule'
+      env:
+        TAG_ARM: ${{ steps.tags.outputs.TAG_ARM }}
+      run: |
+        docker pull ${IMAGE_NAME}:${TAG_ARM} || true
+        docker build --cache-from ${IMAGE_NAME}:${TAG_ARM} -t ${CACHE_IMAGE}:${TAG_ARM} .
+
+    - name: Run build for AI images
+      env:
+        TAG_ARM: ${{ steps.tags.outputs.TAG_ARM }}
+        TAG_PLOT_ARM: ${{ steps.tags.outputs.TAG_PLOT_ARM }}
+        TAG_FREQAI_ARM: ${{ steps.tags.outputs.TAG_FREQAI_ARM }}
+        TAG_FREQAI_RL_ARM: ${{ steps.tags.outputs.TAG_FREQAI_RL_ARM }}
+      run: |
+        docker build --build-arg sourceimage=${CACHE_IMAGE} --build-arg sourcetag=${TAG_ARM} -t ${CACHE_IMAGE}:${TAG_PLOT_ARM} -f docker/Dockerfile.plot .
+        docker build --build-arg sourceimage=${CACHE_IMAGE} --build-arg sourcetag=${TAG_ARM} -t ${CACHE_IMAGE}:${TAG_FREQAI_ARM} -f docker/Dockerfile.freqai .
+        docker build --build-arg sourceimage=${CACHE_IMAGE} --build-arg sourcetag=${TAG_FREQAI_ARM} -t ${CACHE_IMAGE}:${TAG_FREQAI_RL_ARM} -f docker/Dockerfile.freqai_rl .
+
+
+    - name: Run backtest in Docker
+      env:
+        TAG_ARM: ${{ steps.tags.outputs.TAG_ARM }}
+      run: |
+        docker run --rm -v $(pwd)/tests/testdata/config.tests.json:/freqtrade/config.json:ro -v $(pwd)/tests:/tests ${CACHE_IMAGE}:${TAG_ARM} backtesting --datadir /tests/testdata --strategy-path /tests/strategy/strats/ --strategy StrategyTestV3
+
+    - name: Docker images
+      run: |
+        docker images
+
+    - name: Push cache images
+      env:
+        TAG_ARM: ${{ steps.tags.outputs.TAG_ARM }}
+        TAG_PLOT_ARM: ${{ steps.tags.outputs.TAG_PLOT_ARM }}
+        TAG_FREQAI_ARM: ${{ steps.tags.outputs.TAG_FREQAI_ARM }}
+        TAG_FREQAI_RL_ARM: ${{ steps.tags.outputs.TAG_FREQAI_RL_ARM }}
+      run: |
+        docker push ${CACHE_IMAGE}:$TAG_PLOT_ARM
+        docker push ${CACHE_IMAGE}:$TAG_FREQAI_ARM
+        docker push ${CACHE_IMAGE}:$TAG_FREQAI_RL_ARM
+        docker push ${CACHE_IMAGE}:$TAG_ARM
+
+    - name: Create manifests
+      env:
+        TAG_ARM: ${{ steps.tags.outputs.TAG_ARM }}
+        TAG: ${{ steps.tags.outputs.TAG }}
+        TAG_PI: ${{ steps.tags.outputs.TAG_PI }}
+      run: |
+        docker buildx imagetools create \
+          --tag ${IMAGE_NAME}:${TAG} \
+          --tag ${GHCR_IMAGE_NAME}:${TAG} \
+          ${CACHE_IMAGE}:${TAG} ${CACHE_IMAGE}:${TAG_ARM} ${IMAGE_NAME}:${TAG_PI}
+
+    - name: Create multiarch image - Plot
+      env:
+        TAG_PLOT: ${{ steps.tags.outputs.TAG_PLOT }}
+        TAG_PLOT_ARM: ${{ steps.tags.outputs.TAG_PLOT_ARM }}
+      run: |
+        docker buildx imagetools create \
+          --tag ${IMAGE_NAME}:${TAG_PLOT} \
+          --tag ${GHCR_IMAGE_NAME}:${TAG_PLOT} \
+          ${CACHE_IMAGE}:${TAG_PLOT} ${CACHE_IMAGE}:${TAG_PLOT_ARM}
+
+    - name: Create multiarch image - FreqAI
+      env:
+        TAG_FREQAI: ${{ steps.tags.outputs.TAG_FREQAI }}
+        TAG_FREQAI_ARM: ${{ steps.tags.outputs.TAG_FREQAI_ARM }}
+      run: |
+        docker buildx imagetools create \
+          --tag ${IMAGE_NAME}:${TAG_FREQAI} \
+          --tag ${GHCR_IMAGE_NAME}:${TAG_FREQAI} \
+          ${CACHE_IMAGE}:${TAG_FREQAI} ${CACHE_IMAGE}:${TAG_FREQAI_ARM}
+
+    - name: Create multiarch image - FreqAI RL
+      env:
+        TAG_FREQAI_RL: ${{ steps.tags.outputs.TAG_FREQAI_RL }}
+        TAG_FREQAI_RL_ARM: ${{ steps.tags.outputs.TAG_FREQAI_RL_ARM }}
+        TAG_FREQAI_TORCH: ${{ steps.tags.outputs.TAG_FREQAI_TORCH }}
+      run: |
+        # Create special Torch tag - which is identical to the RL tag.
+        docker buildx imagetools create \
+          --tag ${IMAGE_NAME}:${TAG_FREQAI_RL} \
+          --tag ${GHCR_IMAGE_NAME}:${TAG_FREQAI_RL} \
+          --tag ${IMAGE_NAME}:${TAG_FREQAI_TORCH} \
+          --tag ${GHCR_IMAGE_NAME}:${TAG_FREQAI_TORCH} \
+          ${CACHE_IMAGE}:${TAG_FREQAI_RL} ${CACHE_IMAGE}:${TAG_FREQAI_RL_ARM}
+
+    - name: Tag latest
+      if: env.TAG == 'develop'
+      env:
+        TAG: ${{ steps.tags.outputs.TAG }}
+      run: |
+        # Tag image as latest
+        docker buildx imagetools create \
+          --tag ${GHCR_IMAGE_NAME}:${TAG} \
+          --tag ${GHCR_IMAGE_NAME}:latest \
+          ${IMAGE_NAME}:${TAG}
+
+    - name: Docker images
+      run: |
+        docker images
+
+    - name: Image cleanup
+      run: |
+        docker image prune -a --force --filter "until=24h"
 
     - name: Discord notification
       uses: rjstone/discord-webhook-notify@c2597273488aeda841dd1e891321952b51f7996f #v2.2.1

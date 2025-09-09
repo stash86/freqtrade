@@ -73,6 +73,7 @@ from freqtrade.exchange.exchange_types import (
     CcxtOrder,
     CcxtPosition,
     FtHas,
+    FundingRate,
     OHLCVResponse,
     OrderBook,
     Ticker,
@@ -137,6 +138,7 @@ class Exchange:
         "ohlcv_has_history": True,  # Some exchanges (Kraken) don't provide history via ohlcv
         "ohlcv_partial_candle": True,
         "ohlcv_require_since": False,
+        "download_data_parallel_quick": True,
         "always_require_api_keys": False,  # purge API keys for Dry-run. Must default to false.
         # Check https://github.com/ccxt/ccxt/issues/10767 for removal of ohlcv_volume_currency
         "ohlcv_volume_currency": "base",  # "base" or "quote"
@@ -2001,6 +2003,30 @@ class Exchange:
         except ccxt.BaseError as e:
             raise OperationalException(e) from e
 
+    @retrier
+    def fetch_funding_rate(self, pair: str) -> FundingRate:
+        """
+        Get current Funding rate from exchange.
+        On Futures markets, this is the interest rate for holding a position.
+        Won't work for non-futures markets
+        """
+        try:
+            if pair not in self.markets or self.markets[pair].get("active", False) is False:
+                raise ExchangeError(f"Pair {pair} not available")
+            return self._api.fetch_funding_rate(pair)
+        except ccxt.NotSupported as e:
+            raise OperationalException(
+                f"Exchange {self._api.name} does not support fetching funding rate. Message: {e}"
+            ) from e
+        except ccxt.DDoSProtection as e:
+            raise DDosProtection(e) from e
+        except (ccxt.OperationFailed, ccxt.ExchangeError) as e:
+            raise TemporaryError(
+                f"Could not get funding rate due to {e.__class__.__name__}. Message: {e}"
+            ) from e
+        except ccxt.BaseError as e:
+            raise OperationalException(e) from e
+
     @staticmethod
     def get_next_limit_in_list(
         limit: int,
@@ -2456,7 +2482,14 @@ class Exchange:
                         data.extend(new_data)
         # Sort data again after extending the result - above calls return in "async order"
         data = sorted(data, key=lambda x: x[0])
-        return pair, timeframe, candle_type, data, self._ohlcv_partial_candle
+        return (
+            pair,
+            timeframe,
+            candle_type,
+            data,
+            # funding_rates are always complete, so never need to be dropped.
+            self._ohlcv_partial_candle if candle_type != CandleType.FUNDING_RATE else False,
+        )
 
     def _try_build_from_websocket(
         self, pair: str, timeframe: str, candle_type: CandleType
@@ -2566,14 +2599,24 @@ class Exchange:
         input_coroutines: list[Coroutine[Any, Any, OHLCVResponse]] = []
         cached_pairs = []
         for pair, timeframe, candle_type in set(pair_list):
-            if timeframe not in self.timeframes and candle_type in (
+            invalid_funding = (
+                candle_type == CandleType.FUNDING_RATE
+                and timeframe != self.get_option("funding_fee_timeframe")
+            )
+            invalid_timeframe = timeframe not in self.timeframes and candle_type in (
                 CandleType.SPOT,
                 CandleType.FUTURES,
-            ):
+            )
+            if invalid_timeframe or invalid_funding:
+                timeframes_ = (
+                    ", ".join(self.timeframes)
+                    if candle_type != CandleType.FUNDING_RATE
+                    else self.get_option("funding_fee_timeframe")
+                )
                 logger.warning(
-                    f"Cannot download ({pair}, {timeframe}) combination as this timeframe is "
-                    f"not available on {self.name}. Available timeframes are "
-                    f"{', '.join(self.timeframes)}."
+                    f"Cannot download ({pair}, {timeframe}, {candle_type}) combination as this "
+                    f"timeframe is not available on {self.name}. Available timeframes are "
+                    f"{timeframes_}."
                 )
                 continue
 
@@ -2756,7 +2799,7 @@ class Exchange:
                 timeframe, candle_type=candle_type, since_ms=since_ms
             )
 
-            if candle_type and candle_type != CandleType.SPOT:
+            if candle_type and candle_type not in (CandleType.SPOT, CandleType.FUTURES):
                 params.update({"price": candle_type.value})
             if candle_type != CandleType.FUNDING_RATE:
                 data = await self._api_async.fetch_ohlcv(
@@ -2771,8 +2814,6 @@ class Exchange:
                     since_ms=since_ms,
                 )
             # Some exchanges sort OHLCV in ASC order and others in DESC.
-            # Ex: Bittrex returns the list of OHLCV in ASC order (oldest first, newest last)
-            # while GDAX returns the list of OHLCV in DESC order (newest first, oldest last)
             # Only sort if necessary to save computing time
             try:
                 if data and data[0][0] > data[-1][0]:
@@ -2781,7 +2822,14 @@ class Exchange:
                 logger.exception("Error loading %s. Result was %s.", pair, data)
                 return pair, timeframe, candle_type, [], self._ohlcv_partial_candle
             logger.debug("Done fetching pair %s, %s interval %s...", pair, candle_type, timeframe)
-            return pair, timeframe, candle_type, data, self._ohlcv_partial_candle
+            return (
+                pair,
+                timeframe,
+                candle_type,
+                data,
+                # funding_rates are always complete, so never need to be dropped.
+                self._ohlcv_partial_candle if candle_type != CandleType.FUNDING_RATE else False,
+            )
 
         except ccxt.NotSupported as e:
             raise OperationalException(
@@ -3229,7 +3277,7 @@ class Exchange:
             for sig in [signal.SIGINT, signal.SIGTERM]:
                 try:
                     self.loop.add_signal_handler(sig, task.cancel)
-                except NotImplementedError:
+                except (NotImplementedError, RuntimeError):
                     # Not all platforms implement signals (e.g. windows)
                     pass
             return self.loop.run_until_complete(task)

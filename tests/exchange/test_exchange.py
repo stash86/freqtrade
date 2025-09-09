@@ -28,6 +28,7 @@ from freqtrade.exchange import (
     Bybit,
     Exchange,
     Kraken,
+    date_minus_candles,
     market_is_active,
     timeframe_to_prev_date,
 )
@@ -2144,7 +2145,7 @@ def test___now_is_time_to_refresh(default_conf, mocker, exchange_name, time_mach
     assert exchange._now_is_time_to_refresh(pair, "1d", candle_type) is True
 
 
-@pytest.mark.parametrize("candle_type", ["mark", ""])
+@pytest.mark.parametrize("candle_type", ["mark", "spot", "futures"])
 @pytest.mark.parametrize("exchange_name", EXCHANGES)
 def test_get_historic_ohlcv(default_conf, mocker, caplog, exchange_name, candle_type):
     caplog.set_level(logging.DEBUG)
@@ -2171,24 +2172,24 @@ def test_get_historic_ohlcv(default_conf, mocker, caplog, exchange_name, candle_
 
     exchange._async_get_candle_history = Mock(wraps=mock_candle_hist)
     # one_call calculation * 1.8 should do 2 calls
+    candle_limit = exchange.ohlcv_candle_limit("5m", candle_type)
+    since = date_minus_candles("5m", candle_limit)
+    ret = exchange.get_historic_ohlcv(pair, "5m", dt_ts(since), candle_type=candle_type)
 
-    since = 5 * 60 * exchange.ohlcv_candle_limit("5m", candle_type) * 1.8
-    ret = exchange.get_historic_ohlcv(
-        pair, "5m", dt_ts(dt_now() - timedelta(seconds=since)), candle_type=candle_type
-    )
-
-    assert exchange._async_get_candle_history.call_count == 2
+    if exchange_name == "okx" and candle_type == "mark":
+        expected = 4
+    else:
+        expected = 2
+    assert exchange._async_get_candle_history.call_count == expected
     # Returns twice the above OHLCV data after truncating the open candle.
-    assert len(ret) == 2
+    assert len(ret) == expected
     assert log_has_re(r"Downloaded data for .* from ccxt with length .*\.", caplog)
 
     caplog.clear()
 
     exchange._async_get_candle_history = get_mock_coro(side_effect=TimeoutError())
     with pytest.raises(TimeoutError):
-        exchange.get_historic_ohlcv(
-            pair, "5m", dt_ts(dt_now() - timedelta(seconds=since)), candle_type=candle_type
-        )
+        exchange.get_historic_ohlcv(pair, "5m", dt_ts(since), candle_type=candle_type)
     assert log_has_re(r"Async code raised an exception: .*", caplog)
 
 
@@ -2335,7 +2336,7 @@ def test_refresh_latest_ohlcv(mocker, default_conf_usdt, caplog, candle_type) ->
     if candle_type != CandleType.MARK:
         assert not res
         assert len(res) == 0
-        assert log_has_re(r"Cannot download \(IOTA\/USDT, 3m\).*", caplog)
+        assert log_has_re(r"Cannot download \(IOTA\/USDT, 3m, \S+\).*", caplog)
     else:
         assert len(res) == 1
 
@@ -4455,8 +4456,7 @@ def test_ohlcv_candle_limit(default_conf, mocker, exchange_name):
     for timeframe in timeframes:
         # if 'ohlcv_candle_limit_per_timeframe' in exchange._ft_has:
         # expected = exchange._ft_has['ohlcv_candle_limit_per_timeframe'][timeframe]
-        # This should only run for bittrex
-        # assert exchange_name == 'bittrex'
+        # This should only run for htx
         assert exchange.ohlcv_candle_limit(timeframe, CandleType.SPOT) == expected
 
 
@@ -6319,3 +6319,39 @@ def test_exchange_features(default_conf, mocker):
     assert exchange.features("futures", "fetchOHLCV", "limit", 500) == 997
     # Fall back to default
     assert exchange.features("futures", "fetchOHLCV_else", "limit", 601) == 601
+
+
+@pytest.mark.parametrize("exchange_name", EXCHANGES)
+def test_fetch_funding_rate(default_conf, mocker, exchange_name):
+    api_mock = MagicMock()
+    funding_rate = {
+        "symbol": "ETH/BTC",
+        "fundingRate": 5.652e-05,
+        "fundingTimestamp": 1757174400000,
+        "fundingDatetime": "2025-09-06T16:00:00.000Z",
+    }
+    api_mock.fetch_funding_rate = MagicMock(return_value=funding_rate)
+    api_mock.markets = {"ETH/BTC": {"active": True}}
+    exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange=exchange_name)
+    # retrieve original funding rate
+    funding_rate = exchange.fetch_funding_rate(pair="ETH/BTC")
+    assert funding_rate["fundingRate"] == funding_rate["fundingRate"]
+    assert funding_rate["fundingTimestamp"] == funding_rate["fundingTimestamp"]
+    assert funding_rate["fundingDatetime"] == funding_rate["fundingDatetime"]
+
+    ccxt_exceptionhandlers(
+        mocker,
+        default_conf,
+        api_mock,
+        exchange_name,
+        "fetch_funding_rate",
+        "fetch_funding_rate",
+        pair="ETH/BTC",
+    )
+
+    api_mock.fetch_funding_rate = MagicMock(return_value={})
+    exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange=exchange_name)
+    exchange.fetch_funding_rate(pair="ETH/BTC")
+
+    with pytest.raises(DependencyException, match=r"Pair XRP/ETH not available"):
+        exchange.fetch_funding_rate(pair="XRP/ETH")

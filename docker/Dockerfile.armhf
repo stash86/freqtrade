@@ -34,8 +34,7 @@ COPY build_helpers/* /tmp/
 # Install dependencies
 COPY --chown=ftuser:ftuser requirements.txt /freqtrade/
 USER ftuser
-RUN  pip install --user --prefer-binary --no-cache-dir "numpy<3.0" build \
-  && pip install --user --no-index --find-links /tmp/ pyarrow TA-Lib \
+RUN  pip install --user --only-binary=:all: --find-links /tmp/ pyarrow TA-Lib \
   && pip install --user --no-cache-dir -r requirements.txt
 
 # Copy dependencies to runtime-image

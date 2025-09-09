@@ -783,6 +783,7 @@ Please always check the mode of operation to select the correct method to get da
 - `ohlcv(pair, timeframe)` - Currently cached candle (OHLCV) data for the pair, returns DataFrame or empty DataFrame.
 - [`orderbook(pair, maximum)`](#orderbookpair-maximum) - Returns latest orderbook data for the pair, a dict with bids/asks with a total of `maximum` entries.
 - [`ticker(pair)`](#tickerpair) - Returns current ticker data for the pair. See [ccxt documentation](https://github.com/ccxt/ccxt/wiki/Manual#price-tickers) for more details on the Ticker data structure.
+- [`funding_rate(pair)`](#funding_ratepair) - Returns current funding rate data for the pair.
 - `runmode` - Property containing the current runmode.
 
 ### Example Usages
@@ -854,6 +855,8 @@ dataframe, last_updated = self.dp.get_analyzed_dataframe(pair=metadata['pair'],
 
 ### *orderbook(pair, maximum)*
 
+Retrieve the current order book for a pair.
+
 ``` python
 if self.dp.runmode.value in ('live', 'dry_run'):
     ob = self.dp.orderbook(metadata['pair'], 1)
@@ -902,6 +905,53 @@ if self.dp.runmode.value in ('live', 'dry_run'):
 
 !!! Warning "Warning about backtesting"
     This method will always return up-to-date / real-time values. As such, usage during backtesting / hyperopt without runmode checks will lead to wrong results, e.g. your whole dataframe will contain the same single value in all rows.
+
+### *funding_rate(pair)*
+
+Retrieves the current funding rate for the pair and only works for futures pairs in the format of `base/quote:settle` (e.g. `ETH/USDT:USDT`).
+
+``` python
+if self.dp.runmode.value in ('live', 'dry_run'):
+    funding_rate = self.dp.funding_rate(metadata['pair'])
+    dataframe['current_funding_rate'] = funding_rate['fundingRate']
+    dataframe['next_funding_timestamp'] = funding_rate['fundingTimestamp']
+    dataframe['next_funding_datetime'] = funding_rate['fundingDatetime']
+```
+
+The funding rate structure is aligned with the funding rate structure from [ccxt](https://github.com/ccxt/ccxt/wiki/Manual#funding-rate-structure), so the result will be formatted as follows:
+
+``` python
+{
+    "info": {
+        # ... 
+    },
+    "symbol": "BTC/USDT:USDT",
+    "markPrice": 110730.7,
+    "indexPrice": 110782.52,
+    "interestRate": 0.0001,
+    "estimatedSettlePrice": 110822.67200153,
+    "timestamp": 1757146321001,
+    "datetime": "2025-09-06T08:12:01.001Z",
+    "fundingRate": 5.609e-05,
+    "fundingTimestamp": 1757174400000,
+    "fundingDatetime": "2025-09-06T16:00:00.000Z",
+    "nextFundingRate": None,
+    "nextFundingTimestamp": None,
+    "nextFundingDatetime": None,
+    "previousFundingRate": None,
+    "previousFundingTimestamp": None,
+    "previousFundingDatetime": None,
+    "interval": None,
+}
+```
+
+Therefore, using `funding_rate['fundingRate']` as demonstrated above will use the current funding rate.
+Actually available data will vary between exchanges, so this code may not work as expected across exchanges.
+
+!!! Warning "Warning about backtesting"
+    Current funding-rate is not part of the historic data which means backtesting and hyperopt will not work correctly if this method is used, as the method will return up-to-date values.
+    We recommend to use the historically available funding rate for backtesting (which is automatically downloaded, and is at the frequency of what the exchange provides, usually 4h or 8h).
+    `self.dp.get_pair_dataframe(pair=metadata['pair'], timeframe='8h', candle_type="funding_rate")`
 
 ### Send Notification
 

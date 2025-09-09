@@ -4,6 +4,7 @@ usage: freqtrade download-data [-h] [-v] [--no-color] [--logfile FILE] [-V]
                                [-p PAIRS [PAIRS ...]] [--pairs-file FILE]
                                [--days INT] [--new-pairs-days INT]
                                [--include-inactive-pairs]
+                               [--no-parallel-download]
                                [--timerange TIMERANGE] [--dl-trades]
                                [--convert] [--exchange EXCHANGE]
                                [-t TIMEFRAMES [TIMEFRAMES ...]] [--erase]
@@ -24,6 +25,9 @@ options:
                         Default: `None`.
   --include-inactive-pairs
                         Also download data from inactive pairs.
+  --no-parallel-download
+                        Disable parallel startup download. Only use this if
+                        you experience issues.
   --timerange TIMERANGE
                         Specify what timerange of data to use.
   --dl-trades           Download trades instead of OHLCV data.
