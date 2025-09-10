@@ -37,10 +37,12 @@ class RecursiveAnalysis(BaseAnalysis):
 
         self.dict_recursive: dict[str, Any] = dict()
 
+        self.pair_to_used: str | None = None
+
     # For recursive bias check
     # analyzes two data frames with processed indicators and shows differences between them.
     def analyze_indicators(self):
-        pair_to_check = self.local_config["pairs"][0]
+        pair_to_check = self.pair_to_used
         logger.info("Start checking for recursive bias")
 
         # check and report signals
@@ -85,7 +87,7 @@ class RecursiveAnalysis(BaseAnalysis):
     # For lookahead bias check
     # analyzes two data frames with processed indicators and shows differences between them.
     def analyze_indicators_lookahead(self):
-        pair_to_check = self.local_config["pairs"][0]
+        pair_to_check = self.pair_to_used
         logger.info("Start checking for lookahead bias on indicators only")
 
         part = self.partial_varHolder_lookahead_array[0]
@@ -138,7 +140,13 @@ class RecursiveAnalysis(BaseAnalysis):
 
         backtesting = Backtesting(prepare_data_config, self.exchange)
         self.exchange = backtesting.exchange
+        if self.pair_to_used is None:
+            self.pair_to_used = backtesting.pairlists.whitelist[0]
+            logger.info(
+                f"Using pair {self.pair_to_used} only for recursive analysis. Replacing whitelist."
+            )
         self.local_config["candle_type_def"] = prepare_data_config["candle_type_def"]
+        backtesting.pairlists._whitelist = [self.pair_to_used]
         backtesting._set_strategy(backtesting.strategylist[0])
 
         strat = backtesting.strategy
