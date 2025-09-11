@@ -22,6 +22,7 @@ This is done by not looking at the strategy code itself, but at changed indicato
 - `--dry-run-wallet` is forced to be basically infinite (1 billion).
 - `--stake-amount` is forced to be a static 10000 (10k).
 - `--enable-protections` is forced to be off.
+- `order_types` are forced to be "market" (late entries) unless `--lookahead-allow-limit-orders` is set.
 
 These are set to avoid users accidentally generating false positives.
 
@@ -99,6 +100,9 @@ This would lead to a false-negative, i.e. the strategy will be reported as non-b
 Please don't use any options like enabling position stacking as this will distort the number of checked signals.
 If you decide to do so, then make doubly sure that you won't ever run out of `max_open_trades` slots,
 and that you have enough capital in the backtest wallet configuration.
+- limit orders in combination with `custom_entry_price()` and `custom_exit_price()` callbacks can cause late / delayed entries and exists, causing false positives.
+To avoid this - market orders are forced for this command. This implicitly means that `custom_entry_price()` and `custom_exit_price()` callbacks are not called.
+Using `--lookahead-allow-limit-orders` will skip the override and use your configured order types - however has shown to eventually produce false positives.
 - In the results table, the `biased_indicators` column
 will falsely flag FreqAI target indicators defined in `set_freqai_targets()` as biased.  
 **These are not biased and can safely be ignored.**

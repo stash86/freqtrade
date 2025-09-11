@@ -147,6 +147,17 @@ class LookaheadAnalysisSubFunctions:
                 "Protections were enabled. "
                 "Disabling protections now since they can produce false positives."
             )
+        if not config.get("lookahead_allow_limit_orders", False):
+            logger.info("Forced order_types to market orders.")
+            config["order_types"] = {
+                "entry": "market",
+                "exit": "market",
+                "stoploss": "market",
+                "stoploss_on_exchange": False,
+            }
+        else:
+            logger.info("Using configured order_types, skipping order_types override.")
+
         if config["targeted_trade_amount"] < config["minimum_trade_amount"]:
             # this combo doesn't make any sense.
             raise OperationalException(

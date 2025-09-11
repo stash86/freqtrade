@@ -123,7 +123,7 @@ def test_lookahead_helper_no_strategy_defined(lookahead_conf):
         LookaheadAnalysisSubFunctions.start(conf)
 
 
-def test_lookahead_helper_start(lookahead_conf, mocker) -> None:
+def test_lookahead_helper_start(lookahead_conf, mocker, caplog) -> None:
     single_mock = MagicMock()
     text_table_mock = MagicMock()
     mocker.patch.multiple(
@@ -131,12 +131,21 @@ def test_lookahead_helper_start(lookahead_conf, mocker) -> None:
         initialize_single_lookahead_analysis=single_mock,
         text_table_lookahead_analysis_instances=text_table_mock,
     )
-    LookaheadAnalysisSubFunctions.start(lookahead_conf)
+    LookaheadAnalysisSubFunctions.start(deepcopy(lookahead_conf))
     assert single_mock.call_count == 1
     assert text_table_mock.call_count == 1
+    assert log_has_re("Forced order_types to market orders.", caplog)
+    assert single_mock.call_args_list[0][0][0]["order_types"]["entry"] == "market"
 
     single_mock.reset_mock()
     text_table_mock.reset_mock()
+
+    lookahead_conf["lookahead_allow_limit_orders"] = True
+    LookaheadAnalysisSubFunctions.start(lookahead_conf)
+    assert single_mock.call_count == 1
+    assert text_table_mock.call_count == 1
+    assert log_has_re("Using configured order_types, skipping order_types override.", caplog)
+    assert "order_types" not in single_mock.call_args_list[0][0][0]
 
 
 @pytest.mark.parametrize(

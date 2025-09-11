@@ -109,7 +109,8 @@ class StrategyResolver(IResolver):
             # Ensure Properties are not overwritten
             setattr(strategy, attribute, config[attribute])
             logger.info(
-                f"Override strategy '{attribute}' with value in config file: {config[attribute]}.",
+                f"Override strategy '{attribute}' with value from the configuration: "
+                f"{config[attribute]}.",
             )
         elif hasattr(strategy, attribute):
             val = getattr(strategy, attribute)

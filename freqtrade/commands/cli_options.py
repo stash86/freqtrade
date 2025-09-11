@@ -806,6 +806,14 @@ AVAILABLE_CLI_OPTIONS = {
         help="Specify startup candles to be checked (`199`, `499`, `999`, `1999`).",
         nargs="+",
     ),
+    "lookahead_allow_limit_orders": Arg(
+        "--allow-limit-orders",
+        help=(
+            "Allow limit orders in lookahead analysis (could cause false positives "
+            "in lookahead analysis results)."
+        ),
+        action="store_true",
+    ),
     "show_sensitive": Arg(
         "--show-sensitive",
         help="Show secrets in the output.",

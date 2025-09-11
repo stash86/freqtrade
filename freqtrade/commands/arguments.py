@@ -260,7 +260,12 @@ ARGS_LOOKAHEAD_ANALYSIS = [
     a
     for a in ARGS_BACKTEST
     if a not in ("position_stacking", "backtest_cache", "backtest_breakdown", "backtest_notes")
-] + ["minimum_trade_amount", "targeted_trade_amount", "lookahead_analysis_exportfilename"]
+] + [
+    "minimum_trade_amount",
+    "targeted_trade_amount",
+    "lookahead_analysis_exportfilename",
+    "lookahead_allow_limit_orders",
+]
 
 ARGS_RECURSIVE_ANALYSIS = ["timeframe", "timerange", "dataformat_ohlcv", "pairs", "startup_candle"]
 

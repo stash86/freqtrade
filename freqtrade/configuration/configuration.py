@@ -312,7 +312,6 @@ class Configuration:
                 "recursive_strategy_search",
                 "Recursively searching for a strategy in the strategies folder.",
             ),
-            ("timeframe", "Overriding timeframe with Command line argument"),
             ("export", "Parameter --export detected: {} ..."),
             ("backtest_breakdown", "Parameter --breakdown detected ..."),
             ("backtest_cache", "Parameter --cache={} detected ..."),

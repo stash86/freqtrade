@@ -21,6 +21,7 @@ usage: freqtrade lookahead-analysis [-h] [-v] [--no-color] [--logfile FILE]
                                     [--minimum-trade-amount INT]
                                     [--targeted-trade-amount INT]
                                     [--lookahead-analysis-exportfilename LOOKAHEAD_ANALYSIS_EXPORTFILENAME]
+                                    [--allow-limit-orders]
 
 options:
   -h, --help            show this help message and exit
@@ -79,6 +80,8 @@ options:
   --lookahead-analysis-exportfilename LOOKAHEAD_ANALYSIS_EXPORTFILENAME
                         Use this csv-filename to store lookahead-analysis-
                         results
+  --allow-limit-orders  Allow limit orders in lookahead analysis (could cause
+                        false positives in lookahead analysis results).
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).

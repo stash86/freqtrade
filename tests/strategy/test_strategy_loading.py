@@ -169,7 +169,8 @@ def test_strategy_override_minimal_roi(caplog, default_conf):
 
     assert strategy.minimal_roi[0] == 0.5
     assert log_has(
-        "Override strategy 'minimal_roi' with value in config file: {'20': 0.1, '0': 0.5}.", caplog
+        "Override strategy 'minimal_roi' with value from the configuration: {'20': 0.1, '0': 0.5}.",
+        caplog,
     )
 
 
@@ -179,7 +180,7 @@ def test_strategy_override_stoploss(caplog, default_conf):
     strategy = StrategyResolver.load_strategy(default_conf)
 
     assert strategy.stoploss == -0.5
-    assert log_has("Override strategy 'stoploss' with value in config file: -0.5.", caplog)
+    assert log_has("Override strategy 'stoploss' with value from the configuration: -0.5.", caplog)
 
 
 def test_strategy_override_max_open_trades(caplog, default_conf):
@@ -188,7 +189,9 @@ def test_strategy_override_max_open_trades(caplog, default_conf):
     strategy = StrategyResolver.load_strategy(default_conf)
 
     assert strategy.max_open_trades == 7
-    assert log_has("Override strategy 'max_open_trades' with value in config file: 7.", caplog)
+    assert log_has(
+        "Override strategy 'max_open_trades' with value from the configuration: 7.", caplog
+    )
 
 
 def test_strategy_override_trailing_stop(caplog, default_conf):
@@ -198,7 +201,9 @@ def test_strategy_override_trailing_stop(caplog, default_conf):
 
     assert strategy.trailing_stop
     assert isinstance(strategy.trailing_stop, bool)
-    assert log_has("Override strategy 'trailing_stop' with value in config file: True.", caplog)
+    assert log_has(
+        "Override strategy 'trailing_stop' with value from the configuration: True.", caplog
+    )
 
 
 def test_strategy_override_trailing_stop_positive(caplog, default_conf):
@@ -214,12 +219,14 @@ def test_strategy_override_trailing_stop_positive(caplog, default_conf):
 
     assert strategy.trailing_stop_positive == -0.1
     assert log_has(
-        "Override strategy 'trailing_stop_positive' with value in config file: -0.1.", caplog
+        "Override strategy 'trailing_stop_positive' with value from the configuration: -0.1.",
+        caplog,
     )
 
     assert strategy.trailing_stop_positive_offset == -0.2
     assert log_has(
-        "Override strategy 'trailing_stop_positive' with value in config file: -0.1.", caplog
+        "Override strategy 'trailing_stop_positive' with value from the configuration: -0.1.",
+        caplog,
     )
 
 
@@ -233,7 +240,7 @@ def test_strategy_override_timeframe(caplog, default_conf):
 
     assert strategy.timeframe == 60
     assert strategy.stake_currency == "ETH"
-    assert log_has("Override strategy 'timeframe' with value in config file: 60.", caplog)
+    assert log_has("Override strategy 'timeframe' with value from the configuration: 60.", caplog)
 
 
 def test_strategy_override_process_only_new_candles(caplog, default_conf):
@@ -244,7 +251,8 @@ def test_strategy_override_process_only_new_candles(caplog, default_conf):
 
     assert not strategy.process_only_new_candles
     assert log_has(
-        "Override strategy 'process_only_new_candles' with value in config file: False.", caplog
+        "Override strategy 'process_only_new_candles' with value from the configuration: False.",
+        caplog,
     )
 
 
@@ -265,7 +273,7 @@ def test_strategy_override_order_types(caplog, default_conf):
         assert strategy.order_types[method] == order_types[method]
 
     assert log_has(
-        "Override strategy 'order_types' with value in config file:"
+        "Override strategy 'order_types' with value from the configuration:"
         " {'entry': 'market', 'exit': 'limit', 'stoploss': 'limit',"
         " 'stoploss_on_exchange': True}.",
         caplog,
@@ -299,7 +307,7 @@ def test_strategy_override_order_tif(caplog, default_conf):
         assert strategy.order_time_in_force[method] == order_time_in_force[method]
 
     assert log_has(
-        "Override strategy 'order_time_in_force' with value in config file:"
+        "Override strategy 'order_time_in_force' with value from the configuration:"
         " {'entry': 'FOK', 'exit': 'GTC'}.",
         caplog,
     )
@@ -340,7 +348,9 @@ def test_strategy_override_use_exit_signal(caplog, default_conf):
 
     assert not strategy.use_exit_signal
     assert isinstance(strategy.use_exit_signal, bool)
-    assert log_has("Override strategy 'use_exit_signal' with value in config file: False.", caplog)
+    assert log_has(
+        "Override strategy 'use_exit_signal' with value from the configuration: False.", caplog
+    )
 
 
 def test_strategy_override_use_exit_profit_only(caplog, default_conf):
@@ -367,7 +377,9 @@ def test_strategy_override_use_exit_profit_only(caplog, default_conf):
 
     assert strategy.exit_profit_only
     assert isinstance(strategy.exit_profit_only, bool)
-    assert log_has("Override strategy 'exit_profit_only' with value in config file: True.", caplog)
+    assert log_has(
+        "Override strategy 'exit_profit_only' with value from the configuration: True.", caplog
+    )
 
 
 def test_strategy_max_open_trades_infinity_from_strategy(caplog, default_conf):
