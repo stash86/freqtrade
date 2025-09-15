@@ -1,17 +1,17 @@
-numpy==2.3.2
+numpy==2.3.3
 pandas==2.3.2
-bottleneck==1.5.0
-numexpr==2.11.0
+bottleneck==1.6.0
+numexpr==2.12.1
 # Indicator libraries
 ft-pandas-ta==0.3.15
 ta-lib==0.6.7
 technical==1.5.3
 
-ccxt==4.5.3
+ccxt==4.5.4
 cryptography==45.0.7
 aiohttp==3.12.15
 SQLAlchemy==2.0.43
-python-telegram-bot==22.3
+python-telegram-bot==22.4
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
 httpx>=0.24.1
 humanize==4.13.0

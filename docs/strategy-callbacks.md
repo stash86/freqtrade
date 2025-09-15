@@ -1243,6 +1243,11 @@ class AwesomeStrategy(IStrategy):
 
 ```
 
+!!! Tip "Learn more about storing data"
+    You can learn more about storing data on the [Storing custom trade data](strategy-advanced.md#storing-information-persistent) section.
+    Please keep in mind that this is considered advanced usage, and should be used with care.
+
+
 ## Plot annotations callback
 
 The plot annotations callback is called whenever freqUI requests data to display a chart.

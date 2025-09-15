@@ -247,7 +247,6 @@ class VolumePairList(IPairList):
                 * 1000
             )
 
-            # todo: utc date output for starting date
             self.log_once(
                 f"Using volume range of {self._lookback_period} candles, timeframe: "
                 f"{self._lookback_timeframe}, starting from {format_ms_time(since_ms)} "

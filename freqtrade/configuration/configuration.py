@@ -18,7 +18,10 @@ from freqtrade.constants import Config
 from freqtrade.enums import (
     NON_UTIL_MODES,
     TRADE_MODES,
+    CandleType,
+    MarginMode,
     RunMode,
+    TradingMode,
 )
 from freqtrade.exceptions import OperationalException
 from freqtrade.loggers import setup_logging
@@ -406,6 +409,14 @@ class Configuration:
         self._args_to_config(
             config, argname="trading_mode", logstring="Detected --trading-mode: {}"
         )
+        # TODO: The following 3 lines (candle_type_def, trading_mode, margin_mode) are actually
+        # set in the exchange class. They're however necessary as fallback to avoid
+        # random errors in commands that don't initialize an exchange.
+        config["candle_type_def"] = CandleType.get_default(
+            config.get("trading_mode", "spot") or "spot"
+        )
+        config["trading_mode"] = TradingMode(config.get("trading_mode", "spot") or "spot")
+        config["margin_mode"] = MarginMode(config.get("margin_mode", "") or "")
         self._args_to_config(
             config, argname="candle_types", logstring="Detected --candle-types: {}"
         )

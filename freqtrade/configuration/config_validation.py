@@ -113,7 +113,6 @@ def _validate_price_config(conf: dict[str, Any]) -> None:
     """
     When using market orders, price sides must be using the "other" side of the price
     """
-    # TODO: The below could be an enforced setting when using market orders
     if conf.get("order_types", {}).get("entry") == "market" and conf.get("entry_pricing", {}).get(
         "price_side"
     ) not in ("ask", "other"):

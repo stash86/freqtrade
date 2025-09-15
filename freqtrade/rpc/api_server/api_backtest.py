@@ -63,7 +63,7 @@ def __run_backtest_bg(btconfig: Config):
 
             ApiBG.bt["bt"] = Backtesting(btconfig)
         else:
-            ApiBG.bt["bt"].config = btconfig
+            ApiBG.bt["bt"].config = deep_merge_dicts(btconfig, ApiBG.bt["bt"].config)
             ApiBG.bt["bt"].init_backtest()
         # Only reload data if timeframe changed.
         if (
