@@ -7,6 +7,9 @@ Provides pair white list as it configured in config
 import logging
 from copy import deepcopy
 
+from cachetools import LRUCache
+
+from freqtrade.enums import RunMode
 from freqtrade.exchange.exchange_types import Tickers
 from freqtrade.plugins.pairlist.IPairList import IPairList, PairlistParameter, SupportsBacktesting
 
@@ -22,6 +25,8 @@ class StaticPairList(IPairList):
         super().__init__(*args, **kwargs)
 
         self._allow_inactive = self._pairlistconfig.get("allow_inactive", False)
+        # Pair cache - only used for optimize modes
+        self._bt_pair_cache: LRUCache = LRUCache(maxsize=1)
 
     @property
     def needstickers(self) -> bool:
@@ -60,15 +65,23 @@ class StaticPairList(IPairList):
         :param tickers: Tickers (from exchange.get_tickers). May be cached.
         :return: List of pairs
         """
-        wl = self.verify_whitelist(
-            self._config["exchange"]["pair_whitelist"], logger.info, keep_invalid=True
-        )
-        if self._allow_inactive:
-            return wl
-        else:
-            # Avoid implicit filtering of "verify_whitelist" to keep
-            # proper warnings in the log
-            return self._whitelist_for_active_markets(wl)
+        pairlist = self._bt_pair_cache.get("pairlist")
+
+        if not pairlist:
+            wl = self.verify_whitelist(
+                self._config["exchange"]["pair_whitelist"], logger.info, keep_invalid=True
+            )
+            if self._allow_inactive:
+                pairlist = wl
+            else:
+                # Avoid implicit filtering of "verify_whitelist" to keep
+                # proper warnings in the log
+                pairlist = self._whitelist_for_active_markets(wl)
+
+            if self._config["runmode"] in (RunMode.BACKTEST, RunMode.HYPEROPT):
+                self._bt_pair_cache["pairlist"] = pairlist.copy()
+
+        return pairlist
 
     def filter_pairlist(self, pairlist: list[str], tickers: Tickers) -> list[str]:
         """

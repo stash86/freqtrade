@@ -984,7 +984,7 @@ async def test_telegram_profit_long_short_handle(
 
     mocker.patch("freqtrade.rpc.rpc.CryptoToFiatConverter._find_price", return_value=1.1)
     mocker.patch.multiple(EXMS, fetch_ticker=ticker_usdt, get_fee=fee)
-    telegram, freqtradebot, msg_mock = get_telegram_testobject(mocker, default_conf_usdt)
+    telegram, _freqtradebot, msg_mock = get_telegram_testobject(mocker, default_conf_usdt)
 
     # When there are no trades
     await telegram._profit_long(update=update, context=MagicMock())

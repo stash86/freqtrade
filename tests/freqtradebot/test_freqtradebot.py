@@ -986,7 +986,7 @@ def test_execute_entry(
     # Fail to get price...
     mocker.patch(f"{EXMS}.get_rate", MagicMock(return_value=0.0))
 
-    with pytest.raises(PricingError, match="Could not determine entry price."):
+    with pytest.raises(PricingError, match=r"Could not determine entry price\."):
         freqtrade.execute_entry(pair, stake_amount, is_short=is_short)
 
     # In case of custom entry price

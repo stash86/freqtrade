@@ -988,7 +988,7 @@ def test_auto_hyperopt_interface_loadparams(default_conf, mocker, caplog):
     }
 
     mocker.patch("freqtrade.strategy.hyper.HyperoptTools.load_params", return_value=expected_result)
-    with pytest.raises(OperationalException, match="Invalid parameter file provided."):
+    with pytest.raises(OperationalException, match=r"Invalid parameter file provided\."):
         StrategyResolver.load_strategy(default_conf)
 
     mocker.patch(

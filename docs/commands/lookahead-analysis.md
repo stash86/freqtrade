@@ -11,6 +11,7 @@ usage: freqtrade lookahead-analysis [-h] [-v] [--no-color] [--logfile FILE]
                                     [--stake-amount STAKE_AMOUNT]
                                     [--fee FLOAT] [-p PAIRS [PAIRS ...]]
                                     [--enable-protections]
+                                    [--enable-dynamic-pairlist]
                                     [--dry-run-wallet DRY_RUN_WALLET]
                                     [--timeframe-detail TIMEFRAME_DETAIL]
                                     [--strategy-list STRATEGY_LIST [STRATEGY_LIST ...]]
@@ -44,9 +45,14 @@ options:
                         Limit command to these pairs. Pairs are space-
                         separated.
   --enable-protections, --enableprotections
-                        Enable protections for backtesting.Will slow
+                        Enable protections for backtesting. Will slow
                         backtesting down by a considerable amount, but will
                         include configured protections
+  --enable-dynamic-pairlist
+                        Enables dynamic pairlist refreshes in backtesting. The
+                        pairlist will be generated for each new candle if
+                        you're using a pairlist handler that supports this
+                        feature, for example, ShuffleFilter.
   --dry-run-wallet DRY_RUN_WALLET, --starting-balance DRY_RUN_WALLET
                         Starting balance, used for backtesting / hyperopt and
                         dry-runs.

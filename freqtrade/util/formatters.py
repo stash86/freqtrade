@@ -78,5 +78,5 @@ def format_duration(td: timedelta) -> str:
     """
     d = td.days
     h, r = divmod(td.seconds, 3600)
-    m, s = divmod(r, 60)
+    m, _ = divmod(r, 60)
     return f"{d}d {h:02d}:{m:02d}"

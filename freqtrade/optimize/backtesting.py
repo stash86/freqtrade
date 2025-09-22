@@ -211,6 +211,7 @@ class Backtesting:
         self._can_short = self.trading_mode != TradingMode.SPOT
         self._position_stacking: bool = self.config.get("position_stacking", False)
         self.enable_protections: bool = self.config.get("enable_protections", False)
+        self.dynamic_pairlist: bool = self.config.get("enable_dynamic_pairlist", False)
         migrate_data(config, self.exchange)
 
         self.init_backtest()
@@ -1584,6 +1585,11 @@ class Backtesting:
         for current_time in self._time_generator(start_date, end_date):
             # Loop for each main candle.
             self.check_abort()
+
+            if self.dynamic_pairlist and self.pairlists:
+                self.pairlists.refresh_pairlist()
+                pairs = self.pairlists.whitelist
+
             # Reset open trade count for this candle
             # Critical to avoid exceeding max_open_trades in backtesting
             # when timeframe-detail is used and trades close within the opening candle.

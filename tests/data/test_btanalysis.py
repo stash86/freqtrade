@@ -75,7 +75,7 @@ def test_get_latest_hyperopt_file(testdatadir):
     # Test with absolute path
     with pytest.raises(
         OperationalException,
-        match="--hyperopt-filename expects only the filename, not an absolute path.",
+        match=r"--hyperopt-filename expects only the filename, not an absolute path\.",
     ):
         get_latest_hyperopt_file(str(testdatadir.parent), str(testdatadir.parent))
 
@@ -344,7 +344,7 @@ def test_create_cum_profit1(testdatadir):
     assert cum_profits.iloc[0]["cum_profits"] == 0
     assert pytest.approx(cum_profits.iloc[-1]["cum_profits"]) == 9.0225563e-05
 
-    with pytest.raises(ValueError, match="Trade dataframe empty."):
+    with pytest.raises(ValueError, match=r"Trade dataframe empty\."):
         create_cum_profit(
             df.set_index("date"),
             bt_data[bt_data["pair"] == "NOTAPAIR"],
@@ -369,10 +369,10 @@ def test_calculate_max_drawdown(testdatadir):
     underwater = calculate_underwater(bt_data)
     assert isinstance(underwater, DataFrame)
 
-    with pytest.raises(ValueError, match="Trade dataframe empty."):
+    with pytest.raises(ValueError, match=r"Trade dataframe empty\."):
         calculate_max_drawdown(DataFrame())
 
-    with pytest.raises(ValueError, match="Trade dataframe empty."):
+    with pytest.raises(ValueError, match=r"Trade dataframe empty\."):
         calculate_underwater(DataFrame())
 
 
@@ -391,7 +391,7 @@ def test_calculate_csum(testdatadir):
     assert csum_min1 == csum_min + 5
     assert csum_max1 == csum_max + 5
 
-    with pytest.raises(ValueError, match="Trade dataframe empty."):
+    with pytest.raises(ValueError, match=r"Trade dataframe empty\."):
         csum_min, csum_max = calculate_csum(DataFrame())
 
 

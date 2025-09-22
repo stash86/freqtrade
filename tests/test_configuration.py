@@ -250,7 +250,7 @@ def test_from_recursive_files(testdatadir) -> None:
     assert "test_pricing2_conf.json" in conf["config_files"][3]
 
     files = testdatadir / "testconfigs/recursive.json"
-    with pytest.raises(OperationalException, match="Config loop detected."):
+    with pytest.raises(OperationalException, match=r"Config loop detected\."):
         load_from_files([files])
 
 
@@ -672,7 +672,7 @@ def test_validate_max_open_trades(default_conf):
     default_conf["stake_amount"] = "unlimited"
     with pytest.raises(
         OperationalException,
-        match="`max_open_trades` and `stake_amount` cannot both be unlimited.",
+        match=r"`max_open_trades` and `stake_amount` cannot both be unlimited\.",
     ):
         validate_config_consistency(default_conf)
 
@@ -691,14 +691,15 @@ def test_validate_price_side(default_conf):
     conf["order_types"]["entry"] = "market"
     with pytest.raises(
         OperationalException,
-        match='Market entry orders require entry_pricing.price_side = "other".',
+        match=r'Market entry orders require entry_pricing.price_side = "other"\.',
     ):
         validate_config_consistency(conf)
 
     conf = deepcopy(default_conf)
     conf["order_types"]["exit"] = "market"
     with pytest.raises(
-        OperationalException, match='Market exit orders require exit_pricing.price_side = "other".'
+        OperationalException,
+        match=r'Market exit orders require exit_pricing.price_side = "other"\.',
     ):
         validate_config_consistency(conf)
 
@@ -716,8 +717,8 @@ def test_validate_tsl(default_conf):
     default_conf["stoploss"] = 0.0
     with pytest.raises(
         OperationalException,
-        match="The config stoploss needs to be different "
-        "from 0 to avoid problems with sell orders.",
+        match=r"The config stoploss needs to be different "
+        r"from 0 to avoid problems with sell orders\.",
     ):
         validate_config_consistency(default_conf)
     default_conf["stoploss"] = -0.10
@@ -767,7 +768,7 @@ def test_validate_whitelist(default_conf):
     del conf["exchange"]["pair_whitelist"]
     # Test error case
     with pytest.raises(
-        OperationalException, match="StaticPairList requires pair_whitelist to be set."
+        OperationalException, match=r"StaticPairList requires pair_whitelist to be set\."
     ):
         validate_config_consistency(conf)
 
@@ -969,7 +970,7 @@ def test__validate_consumers(default_conf, caplog) -> None:
     conf = deepcopy(default_conf)
     conf.update({"external_message_consumer": {"enabled": True, "producers": []}})
     with pytest.raises(
-        OperationalException, match="You must specify at least 1 Producer to connect to."
+        OperationalException, match=r"You must specify at least 1 Producer to connect to\."
     ):
         validate_config_consistency(conf)
 
@@ -996,7 +997,7 @@ def test__validate_consumers(default_conf, caplog) -> None:
         }
     )
     with pytest.raises(
-        OperationalException, match="Producer names must be unique. Duplicate: default"
+        OperationalException, match=r"Producer names must be unique\. Duplicate: default"
     ):
         validate_config_consistency(conf)
 
@@ -1026,7 +1027,7 @@ def test__validate_orderflow(default_conf) -> None:
     conf["exchange"]["use_public_trades"] = True
     with pytest.raises(
         ConfigurationError,
-        match="Orderflow is a required configuration key when using public trades.",
+        match=r"Orderflow is a required configuration key when using public trades\.",
     ):
         validate_config_consistency(conf)
 
@@ -1050,7 +1051,7 @@ def test_validate_edge_removal(default_conf):
     }
     with pytest.raises(
         ConfigurationError,
-        match="Edge is no longer supported and has been removed from Freqtrade with 2025.6.",
+        match=r"Edge is no longer supported and has been removed from Freqtrade with 2025\.6\.",
     ):
         validate_config_consistency(default_conf)
 

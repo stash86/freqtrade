@@ -38,7 +38,7 @@ You may also use something like `.*DOWN/BTC` or `.*UP/BTC` to exclude leveraged 
 * [`VolatilityFilter`](#volatilityfilter)
 
 !!! Tip "Testing pairlists"
-    Pairlist configurations can be quite tricky to get right. Best use the [`test-pairlist`](utils.md#test-pairlist) utility sub-command to test your configuration quickly.
+    Pairlist configurations can be quite tricky to get right. Best use freqUI in [webserver mode](freq-ui.md#webserver-mode) or the [`test-pairlist`](utils.md#test-pairlist) utility sub-command to test your Pairlist configuration quickly.
 
 #### Static Pair List
 

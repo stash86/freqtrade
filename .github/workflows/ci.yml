@@ -45,7 +45,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache-dependency-glob: "requirements**.txt"
         cache-suffix: "${{ matrix.python-version }}"
-        prune-cache: false
 
     - name: Installation - *nix
       run: |
@@ -166,30 +165,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache-dependency-glob: "requirements**.txt"
         cache-suffix: "${{ matrix.python-version }}"
-        prune-cache: false
 
     - name: Installation - macOS (Brew)
       run: |
         # brew update
         # TODO: Should be the brew upgrade
-        # homebrew fails to update python due to unlinking failures
-        # https://github.com/actions/runner-images/issues/6817
-        rm /usr/local/bin/2to3 || true
-        rm /usr/local/bin/2to3-3.11 || true
-        rm /usr/local/bin/2to3-3.12 || true
-        rm /usr/local/bin/idle3 || true
-        rm /usr/local/bin/idle3.11 || true
-        rm /usr/local/bin/idle3.12 || true
-        rm /usr/local/bin/pydoc3 || true
-        rm /usr/local/bin/pydoc3.11 || true
-        rm /usr/local/bin/pydoc3.12 || true
-        rm /usr/local/bin/python3 || true
-        rm /usr/local/bin/python3.11 || true
-        rm /usr/local/bin/python3.12 || true
-        rm /usr/local/bin/python3-config || true
-        rm /usr/local/bin/python3.11-config || true
-        rm /usr/local/bin/python3.12-config || true
-
         brew install libomp
 
     - name: Installation (python)
@@ -278,7 +258,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache-dependency-glob: "requirements**.txt"
         cache-suffix: "${{ matrix.python-version }}"
-        prune-cache: false
 
     - name: Installation
       run: |
@@ -428,7 +407,6 @@ jobs:
         python-version: "3.12"
         cache-dependency-glob: "requirements**.txt"
         cache-suffix: "3.12"
-        prune-cache: false
 
     - name: Installation - *nix
       run: |

@@ -355,7 +355,7 @@ def test_api__init__(default_conf, mocker):
     apiserver = ApiServer(default_conf)
     apiserver.add_rpc_handler(RPC(get_patched_freqtradebot(mocker, default_conf)))
     assert apiserver._config == default_conf
-    with pytest.raises(OperationalException, match="RPC Handler already attached."):
+    with pytest.raises(OperationalException, match=r"RPC Handler already attached\."):
         apiserver.add_rpc_handler(RPC(get_patched_freqtradebot(mocker, default_conf)))
 
     apiserver.cleanup()
@@ -534,7 +534,7 @@ def test_api_reloadconf(botclient):
 
 
 def test_api_pause(botclient):
-    ftbot, client = botclient
+    _ftbot, client = botclient
 
     rc = client_post(client, f"{BASE_URI}/pause")
     assert_response(rc)
@@ -3281,7 +3281,7 @@ def test_api_download_data(botclient, mocker, tmp_path):
 
 
 def test_api_markets_live(botclient):
-    ftbot, client = botclient
+    _ftbot, client = botclient
 
     rc = client_get(client, f"{BASE_URI}/markets")
     assert_response(rc, 200)

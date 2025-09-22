@@ -14,6 +14,7 @@ from freqtrade.data.converter import (
     convert_trades_to_ohlcv,
     ohlcv_fill_up_missing_data,
     ohlcv_to_dataframe,
+    order_book_to_dataframe,
     reduce_dataframe_footprint,
     trades_df_remove_duplicates,
     trades_dict_to_list,
@@ -49,7 +50,7 @@ def test_ohlcv_to_dataframe(ohlcv_history_list, caplog):
 
 def test_trades_to_ohlcv(trades_history_df, caplog):
     caplog.set_level(logging.DEBUG)
-    with pytest.raises(ValueError, match="Trade-list empty."):
+    with pytest.raises(ValueError, match=r"Trade-list empty\."):
         trades_to_ohlcv(pd.DataFrame(columns=trades_history_df.columns), "1m")
 
     df = trades_to_ohlcv(trades_history_df, "1m")
@@ -588,3 +589,77 @@ def test_convert_trades_to_ohlcv(testdatadir, tmp_path, caplog):
         candle_type=CandleType.SPOT,
     )
     assert log_has(msg, caplog)
+
+
+def test_order_book_to_dataframe():
+    bids = [
+        [100.0, 5.0],
+        [99.5, 3.0],
+        [99.0, 2.0],
+    ]
+    asks = [
+        [100.5, 4.0],
+        [101.0, 6.0],
+        [101.5, 1.0],
+    ]
+
+    result = order_book_to_dataframe(bids, asks)
+
+    assert isinstance(result, pd.DataFrame)
+
+    expected_columns = ["b_sum", "b_size", "bids", "asks", "a_size", "a_sum"]
+    assert result.columns.tolist() == expected_columns
+
+    assert len(result) == max(len(bids), len(asks))
+
+    assert result["bids"].tolist() == [100.0, 99.5, 99.0]
+    assert result["b_size"].tolist() == [5.0, 3.0, 2.0]
+    assert result["b_sum"].tolist() == [5.0, 8.0, 10.0]
+
+    assert result["asks"].tolist() == [100.5, 101.0, 101.5]
+    assert result["a_size"].tolist() == [4.0, 6.0, 1.0]
+    assert result["a_sum"].tolist() == [4.0, 10.0, 11.0]
+
+
+def test_order_book_to_dataframe_empty():
+    bids = []
+    asks = []
+
+    result = order_book_to_dataframe(bids, asks)
+
+    assert isinstance(result, pd.DataFrame)
+
+    expected_columns = ["b_sum", "b_size", "bids", "asks", "a_size", "a_sum"]
+    assert result.columns.tolist() == expected_columns
+    # Empty input should result in empty dataframe
+    assert len(result) == 0
+
+
+def test_order_book_to_dataframe_unequal_lengths():
+    bids = [
+        [100.0, 5.0],
+        [99.5, 3.0],
+        [99.0, 2.0],
+        [98.5, 1.0],
+    ]
+    asks = [
+        [100.5, 4.0],
+        [101.0, 6.0],
+    ]
+
+    result = order_book_to_dataframe(bids, asks)
+
+    assert len(result) == max(len(bids), len(asks))
+    assert len(result) == 4
+
+    assert result["bids"].tolist() == [100.0, 99.5, 99.0, 98.5]
+    assert result["b_size"].tolist() == [5.0, 3.0, 2.0, 1.0]
+    assert result["b_sum"].tolist() == [5.0, 8.0, 10.0, 11.0]
+
+    assert result["asks"].tolist()[:2] == [100.5, 101.0]
+    # NA for missing asks
+    assert pd.isna(result["asks"].iloc[2])
+    assert pd.isna(result["asks"].iloc[3])
+
+    assert result["a_size"].tolist()[:2] == [4.0, 6.0]
+    assert result["a_sum"].tolist()[:2] == [4.0, 10.0]

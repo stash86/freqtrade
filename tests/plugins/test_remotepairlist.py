@@ -82,7 +82,7 @@ def test_fetch_pairlist_mock_response_html(mocker, rpl_config):
         exchange, pairlistmanager, rpl_config, rpl_config["pairlists"][0], 0
     )
 
-    with pytest.raises(OperationalException, match="RemotePairList is not of type JSON."):
+    with pytest.raises(OperationalException, match=r"RemotePairList is not of type JSON\."):
         remote_pairlist.fetch_pairlist()
 
 

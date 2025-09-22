@@ -859,7 +859,7 @@ def test_validate_pricing(default_conf, mocker):
     default_conf["exchange"]["name"] = "binance"
     ExchangeResolver.load_exchange(default_conf)
     has.update({"fetchTicker": False})
-    with pytest.raises(OperationalException, match="Ticker pricing not available for .*"):
+    with pytest.raises(OperationalException, match=r"Ticker pricing not available for .*"):
         ExchangeResolver.load_exchange(default_conf)
 
     has.update({"fetchTicker": True})
@@ -868,7 +868,7 @@ def test_validate_pricing(default_conf, mocker):
     ExchangeResolver.load_exchange(default_conf)
     has.update({"fetchL2OrderBook": False})
 
-    with pytest.raises(OperationalException, match="Orderbook not available for .*"):
+    with pytest.raises(OperationalException, match=r"Orderbook not available for .*"):
         ExchangeResolver.load_exchange(default_conf)
 
     has.update({"fetchL2OrderBook": True})
@@ -877,7 +877,7 @@ def test_validate_pricing(default_conf, mocker):
     default_conf["trading_mode"] = TradingMode.FUTURES
     default_conf["margin_mode"] = MarginMode.ISOLATED
 
-    with pytest.raises(OperationalException, match="Ticker pricing not available for .*"):
+    with pytest.raises(OperationalException, match=r"Ticker pricing not available for .*"):
         ExchangeResolver.load_exchange(default_conf)
 
 
@@ -3556,7 +3556,7 @@ def test_get_historic_trades_notsupported(
     pair = "ETH/BTC"
 
     with pytest.raises(
-        OperationalException, match="This exchange does not support downloading Trades."
+        OperationalException, match=r"This exchange does not support downloading Trades\."
     ):
         exchange.get_historic_trades(pair, since=trades_history[0][0], until=trades_history[-1][0])
 
@@ -4442,7 +4442,7 @@ def test_get_markets(
 def test_get_markets_error(default_conf, mocker):
     ex = get_patched_exchange(mocker, default_conf)
     mocker.patch(f"{EXMS}.markets", PropertyMock(return_value=None))
-    with pytest.raises(OperationalException, match="Markets were not loaded."):
+    with pytest.raises(OperationalException, match=r"Markets were not loaded\."):
         ex.get_markets("LTC", "USDT", True, False)
 
 
@@ -5243,7 +5243,7 @@ def test__fetch_and_calculate_funding_fees(
     # Return empty "refresh_latest"
     mocker.patch(f"{EXMS}.refresh_latest_ohlcv", return_value={})
     ex = get_patched_exchange(mocker, default_conf, api_mock, exchange=exchange)
-    with pytest.raises(ExchangeError, match="Could not find funding rates."):
+    with pytest.raises(ExchangeError, match=r"Could not find funding rates\."):
         ex._fetch_and_calculate_funding_fees(
             pair="ADA/USDT:USDT", amount=amount, is_short=False, open_date=d1, close_date=d2
         )

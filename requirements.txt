@@ -7,7 +7,7 @@ ft-pandas-ta==0.3.15
 ta-lib==0.6.7
 technical==1.5.3
 
-ccxt==4.5.4
+ccxt==4.5.5
 cryptography==45.0.7
 aiohttp==3.12.15
 SQLAlchemy==2.0.43
@@ -38,12 +38,12 @@ orjson==3.11.3
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.116.1
-pydantic==2.11.7
-uvicorn==0.35.0
+fastapi==0.117.1
+pydantic==2.11.9
+uvicorn==0.36.0
 pyjwt==2.10.1
 aiofiles==24.1.0
-psutil==7.0.0
+psutil==7.1.0
 
 # Building config files interactively
 questionary==2.1.1

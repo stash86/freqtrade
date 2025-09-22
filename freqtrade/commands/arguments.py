@@ -49,6 +49,7 @@ ARGS_BACKTEST = [
     *ARGS_COMMON_OPTIMIZE,
     "position_stacking",
     "enable_protections",
+    "enable_dynamic_pairlist",
     "dry_run_wallet",
     "timeframe_detail",
     "strategy_list",

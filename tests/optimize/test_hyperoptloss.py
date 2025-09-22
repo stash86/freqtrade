@@ -11,8 +11,8 @@ from freqtrade.resolvers.hyperopt_resolver import HyperOptLossResolver
 def test_hyperoptlossresolver_noname(default_conf):
     with pytest.raises(
         OperationalException,
-        match="No Hyperopt loss set. Please use `--hyperopt-loss` to specify "
-        "the Hyperopt-Loss class to use.",
+        match=r"No Hyperopt loss set. Please use `--hyperopt-loss` to specify "
+        r"the Hyperopt-Loss class to use\.",
     ):
         HyperOptLossResolver.load_hyperoptloss(default_conf)
 

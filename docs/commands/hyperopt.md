@@ -44,7 +44,7 @@ options:
                         Allow buying the same pair multiple times (position
                         stacking).
   --enable-protections, --enableprotections
-                        Enable protections for backtesting.Will slow
+                        Enable protections for backtesting. Will slow
                         backtesting down by a considerable amount, but will
                         include configured protections
   --dry-run-wallet DRY_RUN_WALLET, --starting-balance DRY_RUN_WALLET

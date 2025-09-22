@@ -259,7 +259,13 @@ class Configuration:
         self._args_to_config(
             config,
             argname="enable_protections",
-            logstring="Parameter --enable-protections detected, enabling Protections. ...",
+            logstring="Parameter --enable-protections detected, enabling Protections ...",
+        )
+
+        self._args_to_config(
+            config,
+            argname="enable_dynamic_pairlist",
+            logstring="Parameter --enable-dynamic-pairlist detected, enabling dynamic pairlist ...",
         )
 
         if self.args.get("max_open_trades"):

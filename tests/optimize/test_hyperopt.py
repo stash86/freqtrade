@@ -280,7 +280,7 @@ def test_start_no_data(mocker, hyperopt_conf, tmp_path) -> None:
         "5",
     ]
     pargs = get_args(args)
-    with pytest.raises(OperationalException, match="No data found. Terminating."):
+    with pytest.raises(OperationalException, match=r"No data found. Terminating\."):
         start_hyperopt(pargs)
 
     # Cleanup since that failed hyperopt start leaves a lockfile.
@@ -1127,7 +1127,7 @@ def test_in_strategy_auto_hyperopt(mocker, hyperopt_conf, tmp_path, fee) -> None
     assert opt.backtesting.strategy.max_open_trades != 1
 
     opt.custom_hyperopt.generate_estimator = lambda *args, **kwargs: "ET1"
-    with pytest.raises(OperationalException, match="Optuna Sampler ET1 not supported."):
+    with pytest.raises(OperationalException, match=r"Optuna Sampler ET1 not supported\."):
         opt.get_optimizer(42)
 
 

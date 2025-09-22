@@ -5,7 +5,7 @@ PairList manager class
 import logging
 from functools import partial
 
-from cachetools import TTLCache, cached
+from cachetools import LRUCache, TTLCache, cached
 
 from freqtrade.constants import Config, ListPairsWithTimeframes
 from freqtrade.data.dataprovider import DataProvider
@@ -56,6 +56,7 @@ class PairListManager(LoggingMixin):
             )
 
         self._check_backtest()
+        self._not_expiring_cache: LRUCache = LRUCache(maxsize=1)
 
         refresh_period = config.get("pairlist_refresh_period", 3600)
         LoggingMixin.__init__(self, logger, refresh_period)
@@ -109,7 +110,15 @@ class PairListManager(LoggingMixin):
     @property
     def expanded_blacklist(self) -> list[str]:
         """The expanded blacklist (including wildcard expansion)"""
-        return expand_pairlist(self._blacklist, self._exchange.get_markets().keys())
+        eblacklist = self._not_expiring_cache.get("eblacklist")
+
+        if not eblacklist:
+            eblacklist = expand_pairlist(self._blacklist, self._exchange.get_markets().keys())
+
+            if self._config["runmode"] in (RunMode.BACKTEST, RunMode.HYPEROPT):
+                self._not_expiring_cache["eblacklist"] = eblacklist.copy()
+
+        return eblacklist
 
     @property
     def name_list(self) -> list[str]:
@@ -157,16 +166,17 @@ class PairListManager(LoggingMixin):
         :param logmethod: Function that'll be called, `logger.info` or `logger.warning`.
         :return: pairlist - blacklisted pairs
         """
-        try:
-            blacklist = self.expanded_blacklist
-        except ValueError as err:
-            logger.error(f"Pair blacklist contains an invalid Wildcard: {err}")
-            return []
-        log_once = partial(self.log_once, logmethod=logmethod)
-        for pair in pairlist.copy():
-            if pair in blacklist:
-                log_once(f"Pair {pair} in your blacklist. Removing it from whitelist...")
-                pairlist.remove(pair)
+        if self._blacklist:
+            try:
+                blacklist = self.expanded_blacklist
+            except ValueError as err:
+                logger.error(f"Pair blacklist contains an invalid Wildcard: {err}")
+                return []
+            log_once = partial(self.log_once, logmethod=logmethod)
+            for pair in pairlist.copy():
+                if pair in blacklist:
+                    log_once(f"Pair {pair} in your blacklist. Removing it from whitelist...")
+                    pairlist.remove(pair)
         return pairlist
 
     def verify_whitelist(

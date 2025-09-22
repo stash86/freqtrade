@@ -93,6 +93,8 @@ class ShuffleFilter(IPairList):
             return pairlist_new
         # Shuffle is done inplace
         self._random.shuffle(pairlist)
-        self.__pairlist_cache[pairlist_bef] = pairlist
+
+        if self._config.get("runmode") in (RunMode.LIVE, RunMode.DRY_RUN):
+            self.__pairlist_cache[pairlist_bef] = pairlist
 
         return pairlist
