@@ -1365,12 +1365,15 @@ class RPC:
                         # self._freqtrade.active_pair_whitelist = (
                         #     self._freqtrade._refresh_active_whitelist(Trade.get_open_trades())
                         # )
+                        logger.info(self._freqtrade.active_pair_whitelist)
                         self._freqtrade.dataprovider.refresh(
                             self._freqtrade.pairlists.create_pair_list(
                                 self._freqtrade.active_pair_whitelist
                             ),
                             self._freqtrade.strategy.gather_informative_pairs(),
                         )
+                        logger.info(self._freqtrade.active_pair_whitelist)
+                        logger.info(self._freqtrade.pairlists.whitelist)
 
                     except ValueError:
                         errors[pair] = {"error_msg": f"Pair {pair} is not a valid wildcard."}
