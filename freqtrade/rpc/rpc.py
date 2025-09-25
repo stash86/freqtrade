@@ -1360,11 +1360,11 @@ class RPC:
                 if pair not in self._freqtrade.pairlists.whitelist:
                     try:
                         expand_pairlist([pair], list(self._freqtrade.exchange.get_markets().keys()))
-                        # self._freqtrade.active_pair_whitelist.append(pair)
-                        self._freqtrade.pairlists.whitelist.append(pair)
-                        self._freqtrade.active_pair_whitelist = (
-                            self._freqtrade._refresh_active_whitelist(Trade.get_open_trades())
-                        )
+                        self._freqtrade.active_pair_whitelist.append(pair)
+                        # self._freqtrade.pairlists.whitelist.append(pair)
+                        # self._freqtrade.active_pair_whitelist = (
+                        #     self._freqtrade._refresh_active_whitelist(Trade.get_open_trades())
+                        # )
                         self._freqtrade.dataprovider.refresh(
                             self._freqtrade.pairlists.create_pair_list(
                                 self._freqtrade.active_pair_whitelist
