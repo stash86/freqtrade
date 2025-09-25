@@ -439,10 +439,6 @@ class BlacklistResponse(BaseModel):
     method: list[str]
 
 
-class WhitelistPayload(BaseModel):
-    whitelist: list[str]
-
-
 class WhitelistResponse(BaseModel):
     whitelist: list[str]
     length: int

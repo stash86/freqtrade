@@ -53,7 +53,6 @@ from freqtrade.rpc.api_server.api_schemas import (
     StrategyResponse,
     SysInfo,
     Version,
-    WhitelistPayload,
     WhitelistResponse,
 )
 from freqtrade.rpc.api_server.deps import get_config, get_exchange, get_rpc, get_rpc_optional
@@ -385,11 +384,6 @@ def blacklist_delete(pairs_to_delete: list[str] = Query([]), rpc: RPC = Depends(
 @router.get("/whitelist", response_model=WhitelistResponse, tags=["info", "pairlist"])
 def whitelist(rpc: RPC = Depends(get_rpc)):
     return rpc._rpc_whitelist()
-
-
-@router.post("/whitelist", response_model=WhitelistResponse, tags=["info", "pairlist"])
-def whitelist_post(payload: WhitelistPayload, rpc: RPC = Depends(get_rpc)):
-    return rpc._rpc_whitelist(payload.whitelist)
 
 
 @router.get("/locks", response_model=Locks, tags=["info", "locks"])

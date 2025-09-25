@@ -1352,34 +1352,8 @@ class RPC:
         )
         return lock
 
-    def _rpc_whitelist(self, add: list[str] | None = None) -> dict:
+    def _rpc_whitelist(self) -> dict:
         """Returns the currently active whitelist"""
-        errors = {}
-        if add:
-            for pair in add:
-                if pair not in self._freqtrade.pairlists.whitelist:
-                    try:
-                        expand_pairlist([pair], list(self._freqtrade.exchange.get_markets().keys()))
-                        self._freqtrade.active_pair_whitelist.append(pair)
-                        # self._freqtrade.pairlists.whitelist.append(pair)
-                        # self._freqtrade.active_pair_whitelist = (
-                        #     self._freqtrade._refresh_active_whitelist(Trade.get_open_trades())
-                        # )
-                        logger.info(self._freqtrade.active_pair_whitelist)
-                        self._freqtrade.dataprovider.refresh(
-                            self._freqtrade.pairlists.create_pair_list(
-                                self._freqtrade.active_pair_whitelist
-                            ),
-                            self._freqtrade.strategy.gather_informative_pairs(),
-                        )
-                        logger.info(self._freqtrade.active_pair_whitelist)
-                        logger.info(self._freqtrade.pairlists.whitelist)
-
-                    except ValueError:
-                        errors[pair] = {"error_msg": f"Pair {pair} is not a valid wildcard."}
-                else:
-                    errors[pair] = {"error_msg": f"Pair {pair} already in pairlist."}
-
         res = {
             "method": self._freqtrade.pairlists.name_list,
             "length": len(self._freqtrade.active_pair_whitelist),
