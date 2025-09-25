@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime, timedelta
 from random import randint
 from unittest.mock import MagicMock, PropertyMock
@@ -7,7 +8,7 @@ import pandas as pd
 import pytest
 
 from freqtrade.data.converter.trade_converter import trades_dict_to_list
-from freqtrade.enums import CandleType, MarginMode, TradingMode
+from freqtrade.enums import CandleType, MarginMode, RunMode, TradingMode
 from freqtrade.exceptions import DependencyException, InvalidOrderException, OperationalException
 from freqtrade.exchange.exchange_utils_timeframe import timeframe_to_seconds
 from freqtrade.persistence import Trade
@@ -1108,3 +1109,82 @@ async def test__async_get_trade_history_id_binance_fast(
 
     # Clean up event loop to avoid warnings
     exchange.close()
+
+
+def test_check_delisting_time_binance(default_conf_usdt, mocker):
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="binance")
+    exchange._config["runmode"] = RunMode.BACKTEST
+    delist_mock = MagicMock(return_value=None)
+    delist_fut_mock = MagicMock(return_value=None)
+    mocker.patch.object(exchange, "get_spot_pair_delist_time", delist_mock)
+    mocker.patch.object(exchange, "check_delisting_futures", delist_fut_mock)
+
+    # Invalid run mode
+    resp = exchange.check_delisting_time("BTC/USDT")
+    assert resp is None
+    assert delist_mock.call_count == 0
+    assert delist_fut_mock.call_count == 0
+
+    # Delist spot called
+    exchange._config["runmode"] = RunMode.DRY_RUN
+    resp1 = exchange.check_delisting_time("BTC/USDT")
+    assert resp1 is None
+    assert delist_mock.call_count == 1
+    assert delist_fut_mock.call_count == 0
+    delist_mock.reset_mock()
+
+    # Delist futures called
+    exchange.trading_mode = TradingMode.FUTURES
+    resp1 = exchange.check_delisting_time("BTC/USDT:USDT")
+    assert resp1 is None
+    assert delist_mock.call_count == 0
+    assert delist_fut_mock.call_count == 1
+
+
+def test_check_delisting_futures_binance(default_conf_usdt, mocker, markets):
+    markets["BTC/USDT:USDT"] = deepcopy(markets["SOL/BUSD:BUSD"])
+    markets["BTC/USDT:USDT"]["info"]["deliveryDate"] = 4133404800000
+    markets["SOL/BUSD:BUSD"]["info"]["deliveryDate"] = 4133404800000
+    markets["ADA/USDT:USDT"]["info"]["deliveryDate"] = 1760745600000  # 2025-10-18
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="binance")
+    mocker.patch(f"{EXMS}.markets", PropertyMock(return_value=markets))
+
+    resp_sol = exchange.check_delisting_futures("SOL/BUSD:BUSD")
+    # Delisting is equal to BTC
+    assert resp_sol is None
+    # Actually has a delisting date
+    resp_ada = exchange.check_delisting_futures("ADA/USDT:USDT")
+    assert resp_ada == dt_utc(2025, 10, 18)
+
+
+def test_get_spot_delist_schedule_binance(default_conf_usdt, mocker):
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="binance")
+    ret_value = [{"delistTime": 1759114800000, "symbols": ["ETCBTC"]}]
+    schedule_mock = mocker.patch.object(exchange, "get_spot_delist_schedule", return_value=None)
+
+    # None - mode is DRY
+    assert exchange.get_spot_pair_delist_time("ETC/BTC") is None
+    # Switch to live
+    exchange._config["runmode"] = RunMode.LIVE
+    assert exchange.get_spot_pair_delist_time("ETC/BTC") is None
+
+    mocker.patch.object(exchange, "get_spot_delist_schedule", return_value=ret_value)
+    resp = exchange.get_spot_pair_delist_time("ETC/BTC")
+    assert resp == dt_utc(2025, 9, 29, 3, 0)
+    assert schedule_mock.call_count == 1
+    schedule_mock.reset_mock()
+
+    # Caching - don't refresh.
+    assert exchange.get_spot_pair_delist_time("ETC/BTC", refresh=False) == dt_utc(2025, 9, 29, 3, 0)
+    assert schedule_mock.call_count == 0
+
+    api_mock = MagicMock()
+    ccxt_exceptionhandlers(
+        mocker,
+        default_conf_usdt,
+        api_mock,
+        "binance",
+        "get_spot_delist_schedule",
+        "sapi_get_spot_delist_schedule",
+        retries=1,
+    )

@@ -4,7 +4,7 @@ Pairlist Handlers define the list of pairs (pairlist) that the bot should trade.
 
 In your configuration, you can use Static Pairlist (defined by the [`StaticPairList`](#static-pair-list) Pairlist Handler) and Dynamic Pairlist (defined by the [`VolumePairList`](#volume-pair-list) and [`PercentChangePairList`](#percent-change-pair-list) Pairlist Handlers).
 
-Additionally, [`AgeFilter`](#agefilter), [`PrecisionFilter`](#precisionfilter), [`PriceFilter`](#pricefilter), [`ShuffleFilter`](#shufflefilter), [`SpreadFilter`](#spreadfilter) and [`VolatilityFilter`](#volatilityfilter) act as Pairlist Filters, removing certain pairs and/or moving their positions in the pairlist.
+Additionally, [`AgeFilter`](#agefilter), [`DelistFilter`](#delistfilter), [`PrecisionFilter`](#precisionfilter), [`PriceFilter`](#pricefilter), [`ShuffleFilter`](#shufflefilter), [`SpreadFilter`](#spreadfilter) and [`VolatilityFilter`](#volatilityfilter) act as Pairlist Filters, removing certain pairs and/or moving their positions in the pairlist.
 
 If multiple Pairlist Handlers are used, they are chained and a combination of all Pairlist Handlers forms the resulting pairlist the bot uses for trading and backtesting. Pairlist Handlers are executed in the sequence they are configured. You can define either `StaticPairList`, `VolumePairList`, `ProducerPairList`, `RemotePairList`, `MarketCapPairList` or `PercentChangePairList` as the starting Pairlist Handler.
 
@@ -27,6 +27,7 @@ You may also use something like `.*DOWN/BTC` or `.*UP/BTC` to exclude leveraged 
 * [`RemotePairList`](#remotepairlist)
 * [`MarketCapPairList`](#marketcappairlist)
 * [`AgeFilter`](#agefilter)
+* [`DelistFilter`](#delistfilter)
 * [`FullTradesFilter`](#fulltradesfilter)
 * [`OffsetFilter`](#offsetfilter)
 * [`PerformanceFilter`](#performancefilter)
@@ -180,7 +181,7 @@ More sophisticated approach can be used, by using `lookback_timeframe` for candl
 * `refresh_period`: Defines the interval (in seconds) at which the pairlist will be refreshed. The default is 1800 seconds (30 minutes).
 * `lookback_days`: Number of days to look back. When `lookback_days` is selected, the `lookback_timeframe` is defaulted to 1 day.
 * `lookback_timeframe`: Timeframe to use for the lookback period.
-* `lookback_period`: Number of periods to look back at. 
+* `lookback_period`: Number of periods to look back at.
 
 When PercentChangePairList is used after other Pairlist Handlers, it will operate on the outputs of those handlers. If it is the leading Pairlist Handler, it will select pairs from all available markets with the specified stake currency.
 
@@ -270,7 +271,6 @@ You can limit the length of the pairlist with the optional parameter `number_ass
 ],
 ```
 
-
 !!! Tip "Combining pairlists"
     This pairlist can be combined with all other pairlists and filters for further pairlist reduction, and can also act as an "additional" pairlist, on top of already defined pairs.
     `ProducerPairList` can also be used multiple times in sequence, combining the pairs from multiple producers.
@@ -312,7 +312,7 @@ The `pairlist_url` option specifies the URL of the remote server where the pairl
 The `save_to_file` option, when provided with a valid filename, saves the processed pairlist to that file in JSON format. This option is optional, and by default, the pairlist is not saved to a file.
 
 ??? Example "Multi bot with shared pairlist example"
-    
+
     `save_to_file` can be used to save the pairlist to a file with Bot1:
 
     ```json
@@ -407,6 +407,15 @@ be caught out buying before the pair has finished dropping in price.
 
 This filter allows freqtrade to ignore pairs until they have been listed for at least `min_days_listed` days and listed before `max_days_listed`.
 
+#### DelistFilter
+
+Removes pairs that will be delisted on the exchange maximum `max_days_from_now` days from now (defaults to `0` which remove all future delisted pairs no matter how far from now). Currently this filter only supports following exchanges:
+
+* Binance (Spot and Futures)
+
+!!! Warning "Backtesting"
+    `DelistFilter` does not support backtesting mode.
+
 #### FullTradesFilter
 
 Shrink whitelist to consist only in-trade pairs when the trade slots are full (when `max_open_trades` isn't being set to `-1` in the config).
@@ -438,7 +447,7 @@ Example to remove the first 10 pairs from the pairlist, and takes the next 20 (t
 ```
 
 !!! Warning
-    When `OffsetFilter` is used to split a larger pairlist among multiple bots in combination with `VolumeFilter` 
+    When `OffsetFilter` is used to split a larger pairlist among multiple bots in combination with `VolumeFilter`
     it can not be guaranteed that pairs won't overlap due to slightly different refresh intervals for the
     `VolumeFilter`.
 
@@ -601,7 +610,7 @@ Adding `"sort_direction": "asc"` or `"sort_direction": "desc"` enables sorting m
 
 ### Full example of Pairlist Handlers
 
-The below example blacklists `BNB/BTC`, uses `VolumePairList` with `20` assets, sorting pairs by `quoteVolume` and applies [`PrecisionFilter`](#precisionfilter) and [`PriceFilter`](#pricefilter), filtering all assets where 1 price unit is > 1%. Then the [`SpreadFilter`](#spreadfilter) and [`VolatilityFilter`](#volatilityfilter) is applied and pairs are finally shuffled with the random seed set to some predefined value.
+The below example blacklists `BNB/BTC`, uses `VolumePairList` with `20` assets, sorting pairs by `quoteVolume`, then filter future delisted pairs using [`DelistFilter`](#delistfilter) and [`AgeFilter`](#agefilter) to remove pairs that are listed less than 10 days ago. After that [`PrecisionFilter`](#precisionfilter) and [`PriceFilter`](#pricefilter) are applied, filtering all assets where 1 price unit is > 1%. Then the [`SpreadFilter`](#spreadfilter) and [`VolatilityFilter`](#volatilityfilter) are applied and pairs are finally shuffled with the random seed set to some predefined value.
 
 ```json
 "exchange": {
@@ -613,6 +622,10 @@ The below example blacklists `BNB/BTC`, uses `VolumePairList` with `20` assets, 
         "method": "VolumePairList",
         "number_assets": 20,
         "sort_key": "quoteVolume"
+    },
+    {
+        "method": "DelistFilter",
+        "max_days_from_now": 0,
     },
     {"method": "AgeFilter", "min_days_listed": 10},
     {"method": "PrecisionFilter"},

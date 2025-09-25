@@ -28,7 +28,11 @@ EXCHANGES = {
         "leverage_tiers_public": False,
         "leverage_in_spot_market": False,
         "trades_lookback_hours": 4,
-        "private_methods": ["fapiPrivateGetPositionSideDual", "fapiPrivateGetMultiAssetsMargin"],
+        "private_methods": [
+            "fapiPrivateGetPositionSideDual",
+            "fapiPrivateGetMultiAssetsMargin",
+            "sapi_get_spot_delist_schedule",
+        ],
         "sample_order": [
             {
                 "exchange_response": {

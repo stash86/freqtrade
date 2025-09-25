@@ -8,6 +8,7 @@ from freqtrade.data.dataprovider import DataProvider
 from freqtrade.enums import CandleType, RunMode
 from freqtrade.exceptions import ExchangeError, OperationalException
 from freqtrade.plugins.pairlistmanager import PairListManager
+from freqtrade.util import dt_utc
 from tests.conftest import EXMS, generate_test_data, get_patched_exchange
 
 
@@ -449,6 +450,12 @@ def test_no_exchange_mode(default_conf):
     with pytest.raises(OperationalException, match=message):
         dp.available_pairs()
 
+    with pytest.raises(OperationalException, match=message):
+        dp.funding_rate("XRP/USDT:USDT")
+
+    with pytest.raises(OperationalException, match=message):
+        dp.check_delisting("XRP/USDT")
+
 
 def test_dp_send_msg(default_conf):
     default_conf["runmode"] = RunMode.DRY_RUN
@@ -612,3 +619,20 @@ def test_dp_get_required_startup(default_conf_usdt):
     assert dp.get_required_startup("5m") == 51880
     assert dp.get_required_startup("1h") == 4360
     assert dp.get_required_startup("1d") == 220
+
+
+def test_check_delisting(mocker, default_conf_usdt):
+    delist_mock = MagicMock(return_value=None)
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
+    mocker.patch.object(exchange, "check_delisting_time", delist_mock)
+    dp = DataProvider(default_conf_usdt, exchange)
+    res = dp.check_delisting("ETH/USDT")
+    assert res is None
+    assert delist_mock.call_count == 1
+
+    delist_mock2 = MagicMock(return_value=dt_utc(2025, 10, 2))
+    mocker.patch.object(exchange, "check_delisting_time", delist_mock2)
+    res = dp.check_delisting("XRP/USDT")
+    assert res == dt_utc(2025, 10, 2)
+
+    assert delist_mock2.call_count == 1

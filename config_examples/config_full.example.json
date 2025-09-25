@@ -25,10 +25,10 @@
     "trading_mode": "spot",
     "margin_mode": "",
     "minimal_roi": {
-        "40":  0.0,
-        "30":  0.01,
-        "20":  0.02,
-        "0":  0.04
+        "40": 0.0,
+        "30": 0.01,
+        "20": 0.02,
+        "0": 0.04
     },
     "stoploss": -0.10,
     "unfilledtimeout": {
@@ -47,7 +47,7 @@
             "bids_to_ask_delta": 1
         }
     },
-    "exit_pricing":{
+    "exit_pricing": {
         "price_side": "same",
         "use_order_book": true,
         "order_book_top": 1,
@@ -70,18 +70,38 @@
         "exit": "GTC"
     },
     "pairlists": [
-        {"method": "StaticPairList"},
-        {"method": "FullTradesFilter"},
+        {
+            "method": "StaticPairList"
+        },
+        {
+            "method": "DelistFilter",
+            "max_days_from_now": 0,
+        },
+        {
+            "method": "FullTradesFilter"
+        },
         {
             "method": "VolumePairList",
             "number_assets": 20,
             "sort_key": "quoteVolume",
             "refresh_period": 1800
         },
-        {"method": "AgeFilter", "min_days_listed": 10},
-        {"method": "PrecisionFilter"},
-        {"method": "PriceFilter", "low_price_ratio": 0.01, "min_price": 0.00000010},
-        {"method": "SpreadFilter", "max_spread_ratio": 0.005},
+        {
+            "method": "AgeFilter",
+            "min_days_listed": 10
+        },
+        {
+            "method": "PrecisionFilter"
+        },
+        {
+            "method": "PriceFilter",
+            "low_price_ratio": 0.01,
+            "min_price": 0.00000010
+        },
+        {
+            "method": "SpreadFilter",
+            "max_spread_ratio": 0.005
+        },
         {
             "method": "RangeStabilityFilter",
             "lookback_days": 10,
@@ -166,12 +186,12 @@
     "external_message_consumer": {
         "enabled": false,
         "producers": [
-          {
-            "name": "default",
-            "host": "127.0.0.2",
-            "port": 8080,
-            "ws_token": "secret_ws_t0ken."
-          }
+            {
+                "name": "default",
+                "host": "127.0.0.2",
+                "port": 8080,
+                "ws_token": "secret_ws_t0ken."
+            }
         ],
         "wait_timeout": 300,
         "ping_timeout": 10,

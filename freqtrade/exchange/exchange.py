@@ -166,6 +166,7 @@ class Exchange:
         "proxy_coin_mapping": {},  # Mapping for proxy coins
         # Expected to be in the format {"fetchOHLCV": True} or {"fetchOHLCV": False}
         "ws_enabled": False,  # Set to true for exchanges with tested websocket support
+        "has_delisting": False,  # Set to true for exchanges that have delisting pair checks
     }
     _ft_has: FtHas = {}
     _ft_has_futures: FtHas = {}
@@ -3912,3 +3913,14 @@ class Exchange:
             # describes the min amt for a tier, and the lowest tier will always go down to 0
         else:
             raise ExchangeError(f"Cannot get maintenance ratio using {self.name}")
+
+    def check_delisting_time(self, pair: str) -> datetime | None:
+        """
+        Check if the pair gonna be delisted.
+        This function should be overridden by the exchange class if the exchange
+        provides such information.
+        By default, it returns None.
+        :param pair: Market symbol
+        :return: Datetime if the pair gonna be delisted, None otherwise
+        """
+        return None

@@ -84,6 +84,7 @@ Check the [configuration documentation](configuration.md) about how to set the b
 **Always use dry mode when testing as this gives you an idea of how your strategy will work in reality without risking capital.**
 
 ## Diving in deeper
+
 **For the following section we will use the [user_data/strategies/sample_strategy.py](https://github.com/freqtrade/freqtrade/blob/develop/freqtrade/templates/sample_strategy.py)
 file as reference.**
 
@@ -99,9 +100,9 @@ file as reference.**
     Some common patterns for this are listed in the [Common Mistakes](#common-mistakes-when-developing-strategies) section of this document.
 
 ??? Hint "Lookahead and recursive analysis"
-    Freqtrade includes two helpful commands to help assess common lookahead (using future data) and 
-    recursive bias (variance in indicator values) issues. Before running a strategy in dry or live more, 
-    you should always use these commands first. Please check the relevant documentation for 
+    Freqtrade includes two helpful commands to help assess common lookahead (using future data) and
+    recursive bias (variance in indicator values) issues. Before running a strategy in dry or live more,
+    you should always use these commands first. Please check the relevant documentation for
     [lookahead](lookahead-analysis.md) and [recursive](recursive-analysis.md) analysis.
 
 ### Dataframe
@@ -154,7 +155,7 @@ Vectorized operations perform calculations across the whole range of data and ar
 
 !!! Warning "Trade order assumptions"
     In backtesting, signals are generated on candle close. Trades are then initiated immeditely on next candle open.
-    
+
     In dry and live, this may be delayed due to all pair dataframes needing to be analysed first, then trade processing 
     for each of those pairs happens. This means that in dry/live you need to be mindful of having as low a computation 
     delay as possible, usually by running a low number of pairs and having a CPU with a good clock speed.
@@ -284,7 +285,7 @@ It's important to always return the dataframe without removing/modifying the col
 
 This method will also define a new column, `"enter_long"` (`"enter_short"` for shorts), which needs to contain `1` for entries, and `0` for "no action". `enter_long` is a mandatory column that must be set even if the strategy is shorting only.
 
-You can name your entry signals by using the `"enter_tag"` column, which can help debug and assess your strategy later. 
+You can name your entry signals by using the `"enter_tag"` column, which can help debug and assess your strategy later.
 
 Sample from `user_data/strategies/sample_strategy.py`:
 
@@ -555,7 +556,7 @@ A full sample can be found [in the DataProvider section](#complete-dataprovider-
 
 ??? Note "Alternative candle types"
     Informative_pairs can also provide a 3rd tuple element defining the candle type explicitly.
-    Availability of alternative candle-types will depend on the trading-mode and the exchange. 
+    Availability of alternative candle-types will depend on the trading-mode and the exchange.
     In general, spot pairs cannot be used in futures markets, and futures candles can't be used as informative pairs for spot bots.
     Details about this may vary, if they do, this can be found in the exchange documentation.
 
@@ -783,6 +784,7 @@ Please always check the mode of operation to select the correct method to get da
 - `ohlcv(pair, timeframe)` - Currently cached candle (OHLCV) data for the pair, returns DataFrame or empty DataFrame.
 - [`orderbook(pair, maximum)`](#orderbookpair-maximum) - Returns latest orderbook data for the pair, a dict with bids/asks with a total of `maximum` entries.
 - [`ticker(pair)`](#tickerpair) - Returns current ticker data for the pair. See [ccxt documentation](https://github.com/ccxt/ccxt/wiki/Manual#price-tickers) for more details on the Ticker data structure.
+- [`check_delisting(pair)`](#check_delistingpair) - Return Datetime of the pair delisting schedule if any, otherwise return None
 - [`funding_rate(pair)`](#funding_ratepair) - Returns current funding rate data for the pair.
 - `runmode` - Property containing the current runmode.
 
@@ -902,6 +904,22 @@ if self.dp.runmode.value in ('live', 'dry_run'):
     vary for different exchanges. For instance, many exchanges do not return `vwap` values, and some exchanges
     do not always fill in the `last` field (so it can be None), etc. So you need to carefully verify the ticker
     data returned from the exchange and add appropriate error handling / defaults.
+
+!!! Warning "Warning about backtesting"
+    This method will always return up-to-date / real-time values. As such, usage during backtesting / hyperopt without runmode checks will lead to wrong results, e.g. your whole dataframe will contain the same single value in all rows.
+
+### *check_delisting(pair)*
+
+```python
+def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_rate: float, current_profit: float, **kwargs):
+    if self.dp.runmode.value in ('live', 'dry_run'):
+        delisting_dt = self.dp.check_delisting(pair)
+        if delisting_dt is not None:
+            return "delist"
+```
+
+!!! Note "Availabiity of delisting information"
+    This method is only available for certain exchanges and will return `None` in cases this is not available.
 
 !!! Warning "Warning about backtesting"
     This method will always return up-to-date / real-time values. As such, usage during backtesting / hyperopt without runmode checks will lead to wrong results, e.g. your whole dataframe will contain the same single value in all rows.

@@ -18,7 +18,7 @@ from freqtrade.persistence import LocalTrade, Trade
 from freqtrade.plugins.pairlist.pairlist_helpers import dynamic_expand_pairlist, expand_pairlist
 from freqtrade.plugins.pairlistmanager import PairListManager
 from freqtrade.resolvers import PairListResolver
-from freqtrade.util.datetime_helpers import dt_now
+from freqtrade.util import dt_now, dt_utc
 from tests.conftest import (
     EXMS,
     create_mock_trades_usdt,
@@ -1834,6 +1834,17 @@ def test_spreadfilter_invalid_data(mocker, default_conf, markets, tickers, caplo
             "PriceFilter requires max_value to be >= 0",
         ),  # OperationalException expected
         (
+            {"method": "DelistFilter", "max_days_from_now": -1},
+            None,
+            "DelistFilter requires max_days_from_now to be >= 0",
+        ),  # ConfigurationError expected
+        (
+            {"method": "DelistFilter", "max_days_from_now": 1},
+            "[{'DelistFilter': 'DelistFilter - Filtering pairs that will be delisted in the "
+            "next 1 days.'}]",
+            None,
+        ),  # ConfigurationError expected
+        (
             {"method": "RangeStabilityFilter", "lookback_days": 10, "min_rate_of_change": 0.01},
             "[{'RangeStabilityFilter': 'RangeStabilityFilter - Filtering pairs with rate "
             "of change below 0.01 over the last days.'}]",
@@ -2601,3 +2612,63 @@ def test_backtesting_modes(
 
     if expected_warning:
         assert log_has_re(f"Pairlist Handlers {expected_warning}", caplog)
+
+
+def test_DelistFilter_error(whitelist_conf) -> None:
+    whitelist_conf["pairlists"] = [{"method": "StaticPairList"}, {"method": "DelistFilter"}]
+    exchange_mock = MagicMock()
+    exchange_mock._ft_has = {"has_delisting": False}
+    with pytest.raises(
+        OperationalException,
+        match=r"DelistFilter doesn't support this exchange and trading mode combination\.",
+    ):
+        PairListManager(exchange_mock, whitelist_conf, MagicMock())
+
+
+@pytest.mark.usefixtures("init_persistence")
+def test_DelistFilter(mocker, default_conf_usdt, time_machine, caplog) -> None:
+    default_conf_usdt["exchange"]["pair_whitelist"] = [
+        "ETH/USDT",
+        "XRP/USDT",
+        "BTC/USDT",
+        "NEO/USDT",
+    ]
+    default_conf_usdt["pairlists"] = [
+        {"method": "StaticPairList"},
+        {"method": "DelistFilter", "max_days_from_now": 3},
+    ]
+    default_conf_usdt["max_open_trades"] = -1
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
+
+    def delist_mock(pair: str):
+        mock_delist = {
+            "XRP/USDT": dt_utc(2025, 9, 1) + timedelta(days=1),  # Delisting in 1 day
+            "NEO/USDT": dt_utc(2025, 9, 1) + timedelta(days=5, hours=2),  # Delisting in 5 days
+        }
+        return mock_delist.get(pair, None)
+
+    time_machine.move_to("2025-09-01 01:00:00 +00:00", tick=False)
+
+    mocker.patch.object(exchange, "check_delisting_time", delist_mock)
+    pm = PairListManager(exchange, default_conf_usdt)
+    pm.refresh_pairlist()
+    assert pm.whitelist == ["ETH/USDT", "BTC/USDT", "NEO/USDT"]
+    assert log_has(
+        "Removed XRP/USDT from whitelist, because it will be delisted on 2025-09-02 00:00:00.",
+        caplog,
+    )
+    # NEO is kept initially as delisting is in 5 days, but config is 3 days
+
+    time_machine.move_to("2025-09-03 01:00:00 +00:00", tick=False)
+    pm.refresh_pairlist()
+    assert pm.whitelist == ["ETH/USDT", "BTC/USDT", "NEO/USDT"]
+    # NEO not removed yet, expiry falls into the window 1 hour later
+
+    time_machine.move_to("2025-09-03 02:00:00 +00:00", tick=False)
+    pm.refresh_pairlist()
+    assert pm.whitelist == ["ETH/USDT", "BTC/USDT"]
+
+    assert log_has(
+        "Removed NEO/USDT from whitelist, because it will be delisted on 2025-09-06 02:00:00.",
+        caplog,
+    )

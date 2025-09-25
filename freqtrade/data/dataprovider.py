@@ -604,3 +604,19 @@ class DataProvider:
         if always_send or message not in self.__msg_cache:
             self._msg_queue.append(message)
         self.__msg_cache[message] = True
+
+    def check_delisting(self, pair: str) -> datetime | None:
+        """
+        Check if a pair gonna be delisted on the exchange.
+        Will only return datetime if the pair is gonna be delisted.
+        :param pair: Pair to check
+        :return: Datetime of the pair's delisting, None otherwise
+        """
+        if self._exchange is None:
+            raise OperationalException(NO_EXCHANGE_EXCEPTION)
+
+        try:
+            return self._exchange.check_delisting_time(pair)
+        except ExchangeError:
+            logger.warning(f"Could not fetch market data for {pair}. Assuming no delisting.")
+            return None

@@ -5,10 +5,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import ccxt
+from cachetools import TTLCache
 from pandas import DataFrame
 
 from freqtrade.constants import DEFAULT_DATAFRAME_COLUMNS
-from freqtrade.enums import CandleType, MarginMode, PriceType, TradingMode
+from freqtrade.enums import TRADE_MODES, CandleType, MarginMode, PriceType, RunMode, TradingMode
 from freqtrade.exceptions import DDosProtection, OperationalException, TemporaryError
 from freqtrade.exchange import Exchange
 from freqtrade.exchange.binance_public_data import (
@@ -40,6 +41,7 @@ class Binance(Exchange):
         "fetch_orders_limit_minutes": None,
         "l2_limit_range": [5, 10, 20, 50, 100, 500, 1000],
         "ws_enabled": True,
+        "has_delisting": True,
     }
     _ft_has_futures: FtHas = {
         "funding_fee_candle_limit": 1000,
@@ -67,6 +69,10 @@ class Binance(Exchange):
         (TradingMode.FUTURES, MarginMode.CROSS),
         (TradingMode.FUTURES, MarginMode.ISOLATED),
     ]
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._spot_delist_schedule_cache: TTLCache = TTLCache(maxsize=100, ttl=300)
 
     def get_proxy_coin(self) -> str:
         """
@@ -432,3 +438,84 @@ class Binance(Exchange):
         return await super()._async_get_trade_history_id(
             pair, until=until, since=since, from_id=from_id
         )
+
+    def check_delisting_futures(self, pair: str) -> datetime | None:
+        delivery_time = self.markets.get(pair, {}).get("info", {}).get("deliveryDate", None)
+        if delivery_time:
+            if isinstance(delivery_time, str) and (delivery_time != ""):
+                delivery_time = int(delivery_time)
+
+            # Binance set a very high delivery time for all perpetuals.
+            # We compare with delivery time of BTC/USDT:USDT which assumed to never be delisted
+            btc_delivery_time = (
+                self.markets.get("BTC/USDT:USDT", {}).get("info", {}).get("deliveryDate", None)
+            )
+
+            if delivery_time == btc_delivery_time:
+                return None
+
+            delivery_time = dt_from_ts(delivery_time)
+
+        return delivery_time
+
+    def check_delisting_time(self, pair: str) -> datetime | None:
+        if self._config["runmode"] not in TRADE_MODES:
+            return None
+
+        if self.trading_mode == TradingMode.FUTURES:
+            return self.check_delisting_futures(pair)
+        return self.get_spot_pair_delist_time(pair, refresh=False)
+
+    def get_spot_delist_schedule(self):
+        try:
+            delist_schedule = self._api.sapi_get_spot_delist_schedule()
+            return delist_schedule
+        except ccxt.DDoSProtection as e:
+            raise DDosProtection(e) from e
+        except (ccxt.NetworkError, ccxt.OperationFailed, ccxt.ExchangeError) as e:
+            raise TemporaryError(
+                f"Could not get delist schedule {e.__class__.__name__}. Message: {e}"
+            ) from e
+        except ccxt.BaseError as e:
+            raise OperationalException(e) from e
+
+    def get_spot_pair_delist_time(self, pair: str, refresh: bool = False) -> datetime | None:
+        """
+        Get the delisting time for a pair if it will be delisted
+        :param pair: Pair to get the delisting time for
+        :param refresh: true if you need fresh data
+        :return: int: delisting time None if not delisting
+        """
+
+        if not pair or not self._config["runmode"] == RunMode.LIVE:
+            # Endpoint only works in live mode as it requires API keys
+            return None
+
+        cache = self._spot_delist_schedule_cache
+
+        if not refresh:
+            if delist_time := cache.get(pair, None):
+                return delist_time
+
+        delist_schedule = self.get_spot_delist_schedule()
+
+        if delist_schedule is None:
+            return None
+
+        for schedule in delist_schedule:
+            delist_dt = dt_from_ts(int(schedule["delistTime"]))
+            for symbol in schedule["symbols"]:
+                ft_symbol = next(
+                    (
+                        pair
+                        for pair, market in self.markets.items()
+                        if market.get("id", None) == symbol
+                    ),
+                    None,
+                )
+                if ft_symbol is None:
+                    continue
+
+                cache[ft_symbol] = delist_dt
+
+        return cache.get(pair, None)

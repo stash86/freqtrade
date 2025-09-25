@@ -587,6 +587,7 @@
               "RemotePairList",
               "MarketCapPairList",
               "AgeFilter",
+              "DelistFilter",
               "FullTradesFilter",
               "OffsetFilter",
               "PerformanceFilter",
