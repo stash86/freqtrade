@@ -13,6 +13,7 @@ class AnnotationType(TypedDict, total=False):
     y_end: float
     color: str
     label: str
+    z_level: int
 
 
 AnnotationTypeTA = TypeAdapter(AnnotationType)

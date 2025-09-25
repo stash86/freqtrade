@@ -1247,7 +1247,6 @@ class AwesomeStrategy(IStrategy):
     You can learn more about storing data on the [Storing custom trade data](strategy-advanced.md#storing-information-persistent) section.
     Please keep in mind that this is considered advanced usage, and should be used with care.
 
-
 ## Plot annotations callback
 
 The plot annotations callback is called whenever freqUI requests data to display a chart.
@@ -1266,6 +1265,7 @@ The full object looks like this:
     "y_start": 94000.2,  // Price / y axis value
     "y_end": 98000, // Price / y axis value
     "color": "",
+    "z_level": 5, // z-level, higher values are drawn on top of lower values. Positions relative to the Chart elements need to be set in freqUI.
     "label": "some label"
 }
 ```
@@ -1357,6 +1357,7 @@ Entries will be validated, and won't be passed to the UI if they don't correspon
                             "y_end": price * 1.01,
                             "y_start": price * 0.99,
                             "color": "rgba(0, 255, 0, 0.4)",
+                            "z_level": 5,
                         }
                     )
 
