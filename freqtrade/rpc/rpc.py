@@ -1361,6 +1361,7 @@ class RPC:
                     try:
                         expand_pairlist([pair], list(self._freqtrade.exchange.get_markets().keys()))
                         self._freqtrade.pairlists.whitelist.append(pair)
+                        self._freqtrade._refresh_active_whitelist(Trade.get_open_trades())
 
                     except ValueError:
                         errors[pair] = {"error_msg": f"Pair {pair} is not a valid wildcard."}
