@@ -2384,7 +2384,7 @@ class FreqtradeBot(LoggingMixin):
 
         # Update trade with order values
         if not stoploss_order:
-            logger.info(f"Found open order for {trade}")
+            self.log_once(f"Found open order for {trade}", logger.info)
         try:
             order = action_order or self.exchange.fetch_order_or_stoploss_order(
                 order_id, trade.pair, stoploss_order
