@@ -942,7 +942,7 @@ class FreqtradeBot(LoggingMixin):
                 f"{stake_amount} and price: {enter_limit_requested} ..."
             )
         )
-        logger.info(msg)
+        self.log_once(msg, logger.info)
         amount = (stake_amount / enter_limit_requested) * leverage
         order_type = ordertype or self.strategy.order_types["entry"]
 
@@ -958,7 +958,7 @@ class FreqtradeBot(LoggingMixin):
             entry_tag=enter_tag,
             side=trade_side,
         ):
-            logger.info(f"User denied entry for {pair}.")
+            self.log_once(f"User denied entry for {pair}.", logger.info)
             return False
 
         if trade and self.handle_similar_open_order(trade, enter_limit_requested, amount, side):
