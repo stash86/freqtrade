@@ -1,9 +1,9 @@
 {
     "trading_mode": "futures",
     "margin_mode": "isolated",
-    "ignore_buying_expired_candle_after": 120,
+    "ignore_buying_expired_candle_after": 300,
     "unfilledtimeout": {
-        "entry": 7,
+        "entry": 14,
         "exit": 5,
         "unit": "minutes"
     },
