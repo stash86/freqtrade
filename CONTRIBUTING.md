@@ -9,8 +9,10 @@ Issues labeled [good first issue](https://github.com/freqtrade/freqtrade/labels/
 Few pointers for contributions:
 
 - Create your PR against the `develop` branch, not `stable`.
-- New features need to contain unit tests, must conform to PEP8 (max-line-length = 100) and should be documented with the introduction PR.
-- PR's can be declared as `[WIP]` - which signify Work in Progress Pull Requests (which are not finished).
+- Stick to english in both commit messages, PR descriptions and code comments and variable names.
+- New features need to contain unit tests, must pass CI (run pre-commit and pytest to get an early feedback) and should be documented with the introduction PR.
+- PR's can be declared as draft - signaling Work in Progress for Pull Requests (which are not finished). We'll still aim to provide feedback on draft PR's in a timely manner.
+- If you're using AI for your PR, please both mention it in the PR description and do a thorough review of the generated code. The final responsibility for the code with the PR author, not with the AI.
 
 If you are unsure, discuss the feature on our [discord server](https://discord.gg/p7nuUNVfP7) or in a [issue](https://github.com/freqtrade/freqtrade/issues) before a Pull Request.
 
@@ -43,41 +45,41 @@ pytest tests/test_<file_name>.py
 pytest tests/test_<file_name>.py::test_<method_name>
 ```
 
-### 2. Test if your code is PEP8 compliant
+### 2. Test if your code corresponds to our style guide
 
-#### Run Ruff
+We receive a lot of code that fails preliminary CI checks.  
+To help with that, we encourage contributors to install the git pre-commit hook that will let you know immediately when you try to commit code that fails these checks.
+
+You can manually run pre-commit with `pre-commit run -a` - or install the git hook with `pre-commit install` to have it run automatically on each commit.
+
+Running `pre-commit run -a` will run all checks, including `ruff`, `mypy` and `codespell` (among others).
+
+#### Additional styles applied
+
+- Have docstrings on all public methods
+- Use double-quotes for docstrings
+- Multiline docstrings should be indented to the level of the first quote
+- Doc-strings should follow the reST format (`:param xxx: ...`, `:return: ...`, `:raises KeyError: ...`)
+
+#### Manually run the individual checks
+
+The following sections describe how to run the individual checks that are running  as part of the pre-commit hook.
+
+##### Run ruff
+
+Check your code with ruff to ensure that it follows the style guide.
 
 ```bash
 ruff check .
+ruff format .
 ```
 
-We receive a lot of code that fails the `ruff` checks.
-To help with that, we encourage you to install the git pre-commit 
-hook that will warn you when you try to commit code that fails these checks.
+##### Run mypy
 
-you can manually run pre-commit with `pre-commit run -a`.
-
-##### Additional styles applied
-
-* Have docstrings on all public methods
-* Use double-quotes for docstrings
-* Multiline docstrings should be indented to the level of the first quote
-* Doc-strings should follow the reST format (`:param xxx: ...`, `:return: ...`, `:raises KeyError: ... `)
-
-### 3. Test if all type-hints are correct
-
-#### Run mypy
+Check your code with mypy to ensure that it follows the type-hinting rules.
 
 ``` bash
 mypy freqtrade
-```
-
-### 4. Ensure formatting is correct
-
-#### Run ruff
-
-``` bash
-ruff format .
 ```
 
 ## (Core)-Committer Guide
@@ -118,7 +120,7 @@ Exceptions:
 - Ensure cross-platform compatibility for every change that's accepted. Windows, Mac & Linux.
 - Ensure no malicious code is introduced into the core code.
 - Create issues for any major changes and enhancements that you wish to make. Discuss things transparently and get community feedback.
-- Keep feature versions as small as possible, preferably one new feature per version.
+- Keep feature PR's as small as possible, preferably one new feature per PR.
 - Be welcoming to newcomers and encourage diverse new contributors from all backgrounds. See the Python Community Code of Conduct (https://www.python.org/psf/codeofconduct/).
 
 ### Becoming a Committer
@@ -130,6 +132,6 @@ Contributors may be given commit privileges. Preference will be given to those w
 1. Access to resources for cross-platform development and testing.
 1. Time to devote to the project regularly.
 
-Being a Committer does not grant write permission on `develop` or `stable` for security reasons (Users trust Freqtrade with their Exchange API keys).
+Being a Committer does not automatically grant write permission on `develop` or `stable` for security reasons (Users trust Freqtrade with their Exchange API keys).
 
 After being Committer for some time, a Committer may be named Core Committer and given full repository access.

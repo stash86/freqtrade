@@ -919,7 +919,7 @@ def custom_exit(self, pair: str, trade: Trade, current_time: datetime, current_r
 ```
 
 !!! Note "Availabiity of delisting information"
-    This method is only available for certain exchanges and will return `None` in cases this is not available.
+    This method is only available for certain exchanges and will return `None` in cases this is not available or if the pair is not scheduled for delisting.
 
 !!! Warning "Warning about backtesting"
     This method will always return up-to-date / real-time values. As such, usage during backtesting / hyperopt without runmode checks will lead to wrong results, e.g. your whole dataframe will contain the same single value in all rows.

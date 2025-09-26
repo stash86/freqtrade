@@ -143,6 +143,7 @@ class RPC:
             "strategy_version": strategy_version,
             "dry_run": config["dry_run"],
             "trading_mode": config.get("trading_mode", "spot"),
+            "margin_mode": config.get("margin_mode", ""),
             "short_allowed": config.get("trading_mode", "spot") != "spot",
             "stake_currency": config["stake_currency"],
             "stake_currency_decimals": decimals_per_coin(config["stake_currency"]),

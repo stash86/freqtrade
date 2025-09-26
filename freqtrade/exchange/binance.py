@@ -438,7 +438,7 @@ class Binance(Exchange):
             pair, until=until, since=since, from_id=from_id
         )
 
-    def check_delisting_futures(self, pair: str) -> datetime | None:
+    def _check_delisting_futures(self, pair: str) -> datetime | None:
         delivery_time = self.markets.get(pair, {}).get("info", {}).get("deliveryDate", None)
         if delivery_time:
             if isinstance(delivery_time, str) and (delivery_time != ""):
@@ -458,14 +458,35 @@ class Binance(Exchange):
         return delivery_time
 
     def check_delisting_time(self, pair: str) -> datetime | None:
+        """
+        Check if the pair gonna be delisted.
+        By default, it returns None.
+        :param pair: Market symbol
+        :return: Datetime if the pair gonna be delisted, None otherwise
+        """
         if self._config["runmode"] not in TRADE_MODES:
             return None
 
         if self.trading_mode == TradingMode.FUTURES:
-            return self.check_delisting_futures(pair)
-        return self.get_spot_pair_delist_time(pair, refresh=False)
+            return self._check_delisting_futures(pair)
+        return self._get_spot_pair_delist_time(pair, refresh=False)
 
-    def get_spot_delist_schedule(self):
+    def _get_spot_delist_schedule(self):
+        """
+        Get the delisting schedule for spot pairs
+        Only works in live mode as it requires API keys,
+        Return sample:
+        [{
+            "delistTime": "1759114800000",
+            "symbols": [
+                "OMNIBTC",
+                "OMNIFDUSD",
+                "OMNITRY",
+                "OMNIUSDC",
+                "OMNIUSDT"
+            ]
+        }]
+        """
         try:
             delist_schedule = self._api.sapi_get_spot_delist_schedule()
             return delist_schedule
@@ -478,7 +499,7 @@ class Binance(Exchange):
         except ccxt.BaseError as e:
             raise OperationalException(e) from e
 
-    def get_spot_pair_delist_time(self, pair: str, refresh: bool = False) -> datetime | None:
+    def _get_spot_pair_delist_time(self, pair: str, refresh: bool = False) -> datetime | None:
         """
         Get the delisting time for a pair if it will be delisted
         :param pair: Pair to get the delisting time for
@@ -496,7 +517,7 @@ class Binance(Exchange):
             if delist_time := cache.get(pair, None):
                 return delist_time
 
-        delist_schedule = self.get_spot_delist_schedule()
+        delist_schedule = self._get_spot_delist_schedule()
 
         if delist_schedule is None:
             return None

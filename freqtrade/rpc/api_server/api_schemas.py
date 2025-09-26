@@ -229,6 +229,7 @@ class ShowConfig(BaseModel):
     api_version: float
     dry_run: bool
     trading_mode: str
+    margin_mode: str
     short_allowed: bool
     stake_currency: str
     stake_amount: str
