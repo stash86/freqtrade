@@ -268,7 +268,7 @@ class RemotePairList(IPairList):
         # if time_elapsed != 0.0:
         #     self.log_once(f"Pairlist Fetched in {time_elapsed} seconds.", logger.info)
         # else:
-        self.log_once("Fetched Pairlist.", logger.info)
+        #     self.log_once("Fetched Pairlist.", logger.info)
 
         self._last_pairlist = list(pairlist)
 
