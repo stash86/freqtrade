@@ -265,10 +265,10 @@ class RemotePairList(IPairList):
             # If pairlist is empty, set a dummy value to avoid fetching again
             self._pair_cache["pairlist"] = [None]
 
-        if time_elapsed != 0.0:
-            self.log_once(f"Pairlist Fetched in {time_elapsed} seconds.", logger.info)
-        else:
-            self.log_once("Fetched Pairlist.", logger.info)
+        # if time_elapsed != 0.0:
+        #     self.log_once(f"Pairlist Fetched in {time_elapsed} seconds.", logger.info)
+        # else:
+        self.log_once("Fetched Pairlist.", logger.info)
 
         self._last_pairlist = list(pairlist)
 

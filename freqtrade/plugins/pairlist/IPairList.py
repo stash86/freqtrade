@@ -278,7 +278,6 @@ class IPairList(LoggingMixin, ABC):
                 self.log_once(
                     f"Ignoring {pair} from whitelist. Market is not active.",
                     logger.info,
-                    True,
                 )
                 continue
             if pair not in sanitized_whitelist:
