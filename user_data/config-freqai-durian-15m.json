@@ -3,7 +3,7 @@
         "enabled": true,
         "train_period_days": 30,
         "backtest_period_days": 1,
-        "live_retrain_hours": 0,
+        "live_retrain_hours": 0.25,
         "identifier": "durian-15m",
         "activate_tensorboard": false,
         "feature_parameters": {
