@@ -28,7 +28,7 @@
             "random_state": 1
         },
         "model_training_parameters": {
-            "thread_count": 1
+            "nthread ": 1
         },
         "extra_returns_per_train": {
             "DI_value_param1": 0,
