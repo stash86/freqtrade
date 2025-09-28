@@ -441,8 +441,8 @@ def _show_tag_subresults(results: dict[str, Any], stake_currency: str):
     if (enter_tags := results.get("results_per_enter_tag")) is not None:
         text_table_tags("enter_tag", enter_tags, stake_currency)
 
-    # if (exit_reasons := results.get("exit_reason_summary")) is not None:
-    #     text_table_tags("exit_tag", exit_reasons, stake_currency)
+    if (exit_reasons := results.get("exit_reason_summary")) is not None:
+        text_table_tags("exit_tag", exit_reasons, stake_currency)
 
     # if (mix_tag := results.get("mix_tag_stats")) is not None:
     #     text_table_tags("mix_tag", mix_tag, stake_currency)
