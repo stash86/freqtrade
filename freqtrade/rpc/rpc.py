@@ -1080,6 +1080,8 @@ class RPC:
         Handler for forcebuy <asset> <price>
         Buys a pair trade at the given or current price
         """
+        if enter_tag == "listing":
+            self._freqtrade.exchange.reload_markets(force=True, load_leverage_tiers=False)
         self._force_entry_validations(pair, order_side)
 
         # check if valid pair
