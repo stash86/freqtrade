@@ -2,6 +2,10 @@
 
 This page combines common gotchas and Information which are exchange-specific and most likely don't apply to other exchanges.
 
+## Quick overview of supported exchange features
+
+--8<-- "includes/exchange-features.md"
+
 ## Exchange configuration
 
 Freqtrade is based on [CCXT library](https://github.com/ccxt/ccxt) that supports over 100 cryptocurrency
