@@ -894,6 +894,19 @@ class Exchange:
                 f"Freqtrade does not support '{mm_value}' '{trading_mode}' on {self.name}."
             )
 
+    @classmethod
+    def combine_ft_has(cls, include_futures: bool) -> FtHas:
+        """
+        Combine all ft_has options from the class hierarchy.
+        Child classes override parent classes.
+        Doesn't apply overrides from the configuration.
+        """
+        _ft_has = deep_merge_dicts(cls._ft_has, deepcopy(cls._ft_has_default))
+
+        if include_futures:
+            _ft_has = deep_merge_dicts(cls._ft_has_futures, _ft_has)
+        return _ft_has
+
     def build_ft_has(self, exchange_conf: ExchangeConfig) -> None:
         """
         Deep merge ft_has with default ft_has options
@@ -901,9 +914,8 @@ class Exchange:
         This is called on initialization of the exchange object.
         It must be called before ft_has is used.
         """
-        self._ft_has = deep_merge_dicts(self._ft_has, deepcopy(self._ft_has_default))
-        if self.trading_mode == TradingMode.FUTURES:
-            self._ft_has = deep_merge_dicts(self._ft_has_futures, self._ft_has)
+        self._ft_has = self.combine_ft_has(include_futures=self.trading_mode == TradingMode.FUTURES)
+
         if exchange_conf.get("_ft_has_params"):
             self._ft_has = deep_merge_dicts(exchange_conf.get("_ft_has_params"), self._ft_has)
             logger.info("Overriding exchange._ft_has with config params, result: %s", self._ft_has)

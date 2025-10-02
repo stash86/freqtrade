@@ -66,7 +66,7 @@ def start_list_exchanges(args: dict[str, Any]) -> None:
             if exchange["is_alias"]:
                 name.stylize("strike")
                 classname.stylize("strike")
-                classname.append(f" (use {exchange['alias_for']})", style="italic")
+                classname.append(f"\n -> use {exchange['alias_for']}", style="italic")
 
             trade_modes = Text(
                 ", ".join(
