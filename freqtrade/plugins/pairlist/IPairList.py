@@ -275,10 +275,10 @@ class IPairList(LoggingMixin, ABC):
             # Check if market is active
             market = markets[pair]
             if not market_is_active(market):
-                self.log_once(
-                    f"Ignoring {pair} from whitelist. Market is not active.",
-                    logger.info,
-                )
+                # self.log_once(
+                #     f"Ignoring {pair} from whitelist. Market is not active.",
+                #     logger.info,
+                # )
                 continue
             if pair not in sanitized_whitelist:
                 sanitized_whitelist.append(pair)
