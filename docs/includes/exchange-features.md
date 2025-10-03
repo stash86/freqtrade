@@ -11,7 +11,7 @@
 | [Gate.io](exchanges.md#gateio) | futures | isolated | limit |
 | [HTX](exchanges.md#htx) | spot | | limit |
 | [Hyperliquid](exchanges.md#hyperliquid) | spot | | ❌ (not supported) |
-| [Hyperliquid](exchanges.md#hyperliquid) | futures | isolated | limit |
+| [Hyperliquid](exchanges.md#hyperliquid) | futures | isolated, cross | limit |
 | [Kraken](exchanges.md#kraken) | spot | | market, limit |
 | [OKX](exchanges.md#okx) | spot | | limit |
 | [OKX](exchanges.md#okx) | futures | isolated | limit |

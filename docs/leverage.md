@@ -92,6 +92,11 @@ One account is used to share collateral between markets (trading pairs). Margin 
 
 Please read the [exchange specific notes](exchanges.md) for exchanges that support this mode and how they differ.
 
+!!! Warning "Increased risk of liquidation"
+    Cross margin mode increases the risk of full account liquidation, as all trades share the same collateral.
+    A loss on one trade can affect the liquidation price of other trades.  
+    Also, cross-position influence may not be fully simulated in dry-run or backtesting mode.
+
 ## Set leverage to use
 
 Different strategies and risk profiles will require different levels of leverage.

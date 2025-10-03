@@ -419,6 +419,14 @@ EXCHANGES = {
         "timeframe": "1h",
         "candle_count": 1000,
     },
+    "coinex": {
+        "pair": "BTC/USDT",
+        "stake_currency": "USDT",
+        "hasQuoteVolume": False,
+        "timeframe": "1h",
+        "candle_count": 1000,
+        "orderbook_max_entries": 50,
+    },
     # TODO: re-enable htx once certificates work again
     # "htx": {
     #     "pair": "ETH/BTC",
