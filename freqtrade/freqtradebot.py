@@ -1881,10 +1881,10 @@ class FreqtradeBot(LoggingMixin):
             oo = trade.select_order(side, True)
             if oo is not None:
                 if price == oo.price and side == oo.side and amount == oo.amount:
-                    logger.info(
-                        f"A similar open order was found for {trade.pair}. "
-                        f"Keeping existing {trade.exit_side} order. {price=},  {amount=}"
-                    )
+                    # logger.info(
+                    #     f"A similar open order was found for {trade.pair}. "
+                    #     f"Keeping existing {trade.exit_side} order. {price=},  {amount=}"
+                    # )
                     return True
             # cancel open orders of this trade if order is different
             self.cancel_open_orders_of_trade(
@@ -1924,9 +1924,10 @@ class FreqtradeBot(LoggingMixin):
             )
 
             if filled_val > 0 and minstake and filled_stake < minstake:
-                logger.warning(
+                self.log_once(
                     f"Order {order_id} for {trade.pair} not cancelled, "
-                    f"as the filled amount of {filled_val} would result in an unexitable trade."
+                    f"as the filled amount of {filled_val} would result in an unexitable trade.",
+                    logger.warning,
                 )
                 return False
             corder = self.exchange.cancel_order_with_result(order_id, trade.pair, trade.amount)
