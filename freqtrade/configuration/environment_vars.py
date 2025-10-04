@@ -73,7 +73,7 @@ def _flat_vars_to_nested_dict(env_dict: dict[str, Any], prefix: str) -> dict[str
     return relevant_vars
 
 
-def enironment_vars_to_dict() -> dict[str, Any]:
+def environment_vars_to_dict() -> dict[str, Any]:
     """
     Read environment variables and return a nested dict for relevant variables
     Relevant variables must follow the FREQTRADE__{section}__{key} pattern

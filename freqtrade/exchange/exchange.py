@@ -3873,7 +3873,10 @@ class Exchange:
         """
 
         market = self.markets[pair]
-        taker_fee_rate = market["taker"]
+        # default to some default fee if not available from exchange
+        taker_fee_rate = market["taker"] or self._api.describe().get("fees", {}).get(
+            "trading", {}
+        ).get("taker", 0.001)
         mm_ratio, _ = self.get_maintenance_ratio_and_amt(pair, stake_amount)
 
         if self.trading_mode == TradingMode.FUTURES and self.margin_mode == MarginMode.ISOLATED:
