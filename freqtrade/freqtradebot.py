@@ -2287,10 +2287,14 @@ class FreqtradeBot(LoggingMixin):
             "max_profit": trade.max_profit,
             "final_profit_ratio": trade.close_profit if not trade.is_open else None,
             "is_final_exit": trade.is_open is False,
-            "order_tag": order.ft_order_tag or "",
-            "order_stake_amount": order.stake_amount_filled,
+            "order_tag": order.ft_order_tag if order and hasattr(order, "ft_order_tag") else "",
+            "order_stake_amount": order.stake_amount_filled
+            if order and hasattr(order, "stake_amount_filled")
+            else 0.0,
             "full_amount": trade.amount,
-            "order_filled_date": order.order_filled_utc,
+            "order_filled_date": order.order_filled_utc
+            if order and hasattr(order, "order_filled_utc")
+            else None,
         }
 
         # Send the message
