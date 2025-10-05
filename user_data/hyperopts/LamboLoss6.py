@@ -16,8 +16,8 @@ from freqtrade.optimize.hyperopt import IHyperOptLoss
 
 
 # Set maximum expectancy used in the calculation
-max_expectancy = 4
-max_profit_ratio = 10
+max_expectancy = 0.2
+max_profit_ratio = 200
 max_avg_profit = 50
 
 
