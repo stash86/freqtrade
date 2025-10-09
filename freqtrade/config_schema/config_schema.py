@@ -1261,6 +1261,15 @@ CONF_SCHEMA = {
                     "type": "boolean",
                     "default": False,
                 },
+                "override_exchange_check": {
+                    "description": (
+                        "Override the exchange check to force FreqAI to use exchanges "
+                        "that may not have enough historic data. Turn this to True if "
+                        "you know your FreqAI model and strategy do not require historical data."
+                    ),
+                    "type": "boolean",
+                    "default": False,
+                },
                 "feature_parameters": {
                     "description": "The parameters used to engineer the feature set",
                     "type": "object",

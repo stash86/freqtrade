@@ -1680,7 +1680,9 @@ class FreqtradeBot(LoggingMixin):
                     )
                     logger.warning(msg)
                     self.send_dp_message(msg)
-                    self.emergency_exit(trade, order["price"], order["amount"])
+                    # Trade.session.refresh(order_obj)
+
+                    self.emergency_exit(trade, order["price"], order_obj.safe_remaining)
             return canceled
 
     def emergency_exit(
