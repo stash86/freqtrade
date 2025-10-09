@@ -5,6 +5,7 @@ Unit test file for rpc/api_server.py
 import asyncio
 import logging
 import time
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, PropertyMock
@@ -1860,7 +1861,42 @@ def test_api_forceexit(botclient, mocker, ticker, fee, markets):
     assert trade.is_open is False
 
 
-def test_api_pair_candles(botclient, ohlcv_history):
+def gen_annotation_params():
+    area_annotation = {
+        "type": "area",
+        "start": "2024-01-01 15:00:00",
+        "end": "2024-01-01 16:00:00",
+        "y_start": 94000.2,
+        "y_end": 98000,
+        "color": "",
+        "label": "some label",
+    }
+    line_annotation = {
+        "type": "line",
+        "start": "2024-01-01 15:00:00",
+        "end": "2024-01-01 16:00:00",
+        "y_start": 99000.2,
+        "y_end": 98000,
+        "color": "",
+        "label": "some label",
+        "width": 2,
+        "line_style": "dashed",
+    }
+
+    line_wrong = deepcopy(line_annotation)
+    line_wrong["line_style"] = "dashed2222"
+    return [
+        ([area_annotation], [area_annotation]),  # Only area
+        ([line_annotation], [line_annotation]),  # Only line
+        ([area_annotation, line_annotation], [area_annotation, line_annotation]),  # Both together
+        ([], []),  # Empty
+        ([line_wrong], []),  # Invalid line
+        ([area_annotation, line_wrong], [area_annotation]),  # Invalid line
+    ]
+
+
+@pytest.mark.parametrize("annotations,expected", gen_annotation_params())
+def test_api_pair_candles(botclient, ohlcv_history, annotations, expected):
     ftbot, client = botclient
     timeframe = "5m"
     amount = 3
@@ -1892,18 +1928,7 @@ def test_api_pair_candles(botclient, ohlcv_history):
     ohlcv_history["exit_short"] = 0
 
     ftbot.dataprovider._set_cached_df("XRP/BTC", timeframe, ohlcv_history, CandleType.SPOT)
-    fake_plot_annotations = [
-        {
-            "type": "area",
-            "start": "2024-01-01 15:00:00",
-            "end": "2024-01-01 16:00:00",
-            "y_start": 94000.2,
-            "y_end": 98000,
-            "color": "",
-            "label": "some label",
-        }
-    ]
-    plot_annotations_mock = MagicMock(return_value=fake_plot_annotations)
+    plot_annotations_mock = MagicMock(return_value=annotations)
     ftbot.strategy.plot_annotations = plot_annotations_mock
     for call in ("get", "post"):
         plot_annotations_mock.reset_mock()
@@ -1936,7 +1961,7 @@ def test_api_pair_candles(botclient, ohlcv_history):
         assert resp["data_start_ts"] == 1511686200000
         assert resp["data_stop"] == "2017-11-26 09:00:00+00:00"
         assert resp["data_stop_ts"] == 1511686800000
-        assert resp["annotations"] == fake_plot_annotations
+        assert resp["annotations"] == expected
         assert plot_annotations_mock.call_count == 1
         assert isinstance(resp["columns"], list)
         base_cols = {

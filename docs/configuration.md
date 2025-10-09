@@ -571,9 +571,7 @@ Commonly used time in force are:
 
 **GTC (Good Till Canceled):**
 
-This is most of the time the default time in force. It means the order will remain
-on exchange till it is cancelled by the user. It can be fully or partially fulfilled.
-If partially fulfilled, the remaining will stay on the exchange till cancelled.
+This is most of the time the default time in force. It means the order will remain on exchange till it is cancelled by the user. It can be fully or partially fulfilled. If partially fulfilled, the remaining will stay on the exchange till cancelled.
 
 **FOK (Fill Or Kill):**
 
@@ -581,8 +579,9 @@ It means if the order is not executed immediately AND fully then it is cancelled
 
 **IOC (Immediate Or Canceled):**
 
-It is the same as FOK (above) except it can be partially fulfilled. The remaining part
-is automatically cancelled by the exchange.
+It is the same as FOK (above) except it can be partially fulfilled. The remaining part is automatically cancelled by the exchange.
+
+Not necessarily recommended, as this can lead to partial fills below the minimum trade size.
 
 **PO (Post only):**
 
