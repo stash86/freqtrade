@@ -7,15 +7,15 @@ ft-pandas-ta==0.3.16
 ta-lib==0.6.7
 technical==1.5.3
 
-ccxt==4.5.7
+ccxt==4.5.10
 cryptography==46.0.2
-aiohttp==3.12.15
-SQLAlchemy==2.0.43
+aiohttp==3.13.0
+SQLAlchemy==2.0.44
 python-telegram-bot==22.5
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
 httpx>=0.24.1
 humanize==4.13.0
-cachetools==6.2.0
+cachetools==6.2.1
 requests==2.32.5
 urllib3==2.5.0
 certifi==2025.10.5
@@ -24,7 +24,7 @@ tabulate==0.9.0
 pycoingecko==3.2.0
 jinja2==3.1.6
 joblib==1.5.2
-rich==14.1.0
+rich==14.2.0
 pyarrow==21.0.0; platform_machine != 'armv7l' and platform_machine != "aarch64"
 # TODO: downgrade for aarch64 until https://github.com/apache/arrow/issues/47229 is resolved
 pyarrow==20.0.0;  platform_machine == "aarch64"
@@ -38,11 +38,11 @@ orjson==3.11.3
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.118.0
-pydantic==2.11.10
+fastapi==0.119.0
+pydantic==2.12.0
 uvicorn==0.37.0
 pyjwt==2.10.1
-aiofiles==24.1.0
+aiofiles==25.1.0
 psutil==7.1.0
 
 # Building config files interactively

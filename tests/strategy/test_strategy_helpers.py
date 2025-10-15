@@ -34,7 +34,8 @@ def test_merge_informative_pair():
     assert "volume_1h" in result.columns
     assert result["volume"].equals(data["volume"])
 
-    # First 3 rows are empty
+    # First 3 rows are empty.
+    # Pre-fillup doesn't happen as there is no prior candlw in the informative dataframe
     assert result.iloc[0]["date_1h"] is pd.NaT
     assert result.iloc[1]["date_1h"] is pd.NaT
     assert result.iloc[2]["date_1h"] is pd.NaT
@@ -109,12 +110,36 @@ def test_merge_informative_pair_monthly():
     # Candle is empty, as the start-date did fail.
     candle3 = result.loc[(result["date"] == "2022-11-30T22:00:00.000Z")]
     assert candle3.iloc[0]["date"] == pd.Timestamp("2022-11-30T22:00:00.000Z")
-    assert candle3.iloc[0]["date_1M"] is pd.NaT
+    # Merged on prior month
+    assert candle3.iloc[0]["date_1M"] == pd.Timestamp("2022-10-01T00:00:00.000Z")
 
     # First candle with 1M data merged.
     candle4 = result.loc[(result["date"] == "2022-11-30T23:00:00.000Z")]
     assert candle4.iloc[0]["date"] == pd.Timestamp("2022-11-30T23:00:00.000Z")
     assert candle4.iloc[0]["date_1M"] == pd.Timestamp("2022-11-01T00:00:00.000Z")
+
+    # Very first candle in the result dataframe
+    # Merged the latest informative candle before the start-date
+    candle5 = result.iloc[0]
+    assert candle5["date"] == pd.Timestamp("2022-11-28T00:00:00.000Z")
+    assert candle5["date_1M"] == pd.Timestamp("2022-10-01T00:00:00.000Z")
+
+
+def test_merge_informative_pair_no_overlap():
+    # Covers roughly a day
+    data = generate_test_data("1m", 1440, "2022-11-28")
+    # Data stops WAY before the main data starts
+    informative = generate_test_data("1h", 40, "2022-11-01")
+
+    result = merge_informative_pair(data, informative, "1m", "1h", ffill=True)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == len(data)
+    assert "date" in result.columns
+    assert result["date"].equals(data["date"])
+    assert "date_1h" in result.columns
+    # If there's no overlap, forward filling should not fill anything
+    assert result["date_1h"].isnull().all()
 
 
 def test_merge_informative_pair_same():

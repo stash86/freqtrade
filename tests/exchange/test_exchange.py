@@ -170,7 +170,7 @@ def test_init(default_conf, mocker, caplog):
 def test_init_ccxt_kwargs(default_conf, mocker, caplog):
     mocker.patch(f"{EXMS}.reload_markets")
     mocker.patch(f"{EXMS}.validate_stakecurrency")
-    aei_mock = mocker.patch(f"{EXMS}.additional_exchange_init")
+    aei_mock = mocker.patch(f"{EXMS}.ft_additional_exchange_init")
 
     caplog.set_level(logging.INFO)
     conf = copy.deepcopy(default_conf)

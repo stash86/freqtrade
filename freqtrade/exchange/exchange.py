@@ -300,7 +300,7 @@ class Exchange:
 
         if self.trading_mode != TradingMode.SPOT and load_leverage_tiers:
             self.fill_leverage_tiers()
-        self.additional_exchange_init()
+        self.ft_additional_exchange_init()
 
     def __del__(self):
         """
@@ -454,6 +454,12 @@ class Exchange:
         Might need to be updated if https://github.com/ccxt/ccxt/issues/20408 is fixed.
         """
         return self._api.precisionMode
+
+    def ft_additional_exchange_init(self) -> None:
+        """
+        Wrapper around additional_exchange_init to simplify testing
+        """
+        self.additional_exchange_init()
 
     def additional_exchange_init(self) -> None:
         """
