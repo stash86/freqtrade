@@ -4,7 +4,7 @@ usage: freqtrade backtesting-show [-h] [-v] [--no-color] [--logfile FILE] [-V]
                                   [--backtest-filename PATH]
                                   [--backtest-directory PATH]
                                   [--show-pair-list]
-                                  [--breakdown {day,week,month,year} [{day,week,month,year} ...]]
+                                  [--breakdown {day,week,month,year,weekday} [{day,week,month,year,weekday} ...]]
 
 options:
   -h, --help            show this help message and exit
@@ -18,9 +18,9 @@ options:
                         Directory to use for backtest results. Example:
                         `--export-directory=user_data/backtest_results/`.
   --show-pair-list      Show backtesting pairlist sorted by profit.
-  --breakdown {day,week,month,year} [{day,week,month,year} ...]
+  --breakdown {day,week,month,year,weekday} [{day,week,month,year,weekday} ...]
                         Show backtesting breakdown per [day, week, month,
-                        year].
+                        year, weekday].
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).

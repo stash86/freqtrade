@@ -1579,69 +1579,76 @@ class RPC:
         selected_cols: list[str] | None,
         live: bool,
     ) -> dict[str, Any]:
+        """
+        Analyzed dataframe in Dict form, with full history loading and strategy analysis.
+        Loads the full history from disk or exchange, and runs the strategy analysis on it.
+        Should only be used in webserver mode, as it can interfere with a running bot.
+        """
         timerange_parsed = TimeRange.parse_timerange(config.get("timerange"))
 
         from freqtrade.data.converter import trim_dataframe
         from freqtrade.data.dataprovider import DataProvider
+        from freqtrade.persistence.usedb_context import FtNoDBContext
         from freqtrade.resolvers.strategy_resolver import StrategyResolver
 
-        strategy_name = ""
-        startup_candles = 0
-        if config.get("strategy"):
-            strategy = StrategyResolver.load_strategy(config)
-            startup_candles = strategy.startup_candle_count
-            strategy_name = strategy.get_strategy_name()
+        with FtNoDBContext():
+            strategy_name = ""
+            startup_candles = 0
+            if config.get("strategy"):
+                strategy = StrategyResolver.load_strategy(config)
+                startup_candles = strategy.startup_candle_count
+                strategy_name = strategy.get_strategy_name()
 
-        if live:
-            data = exchange.get_historic_ohlcv(
-                pair=pair,
-                timeframe=timeframe,
-                since_ms=timerange_parsed.startts * 1000
-                if timerange_parsed.startts
-                else dt_ts(dt_now() - timedelta(days=30)),
-                is_new_pair=True,  # history is never available - so always treat as new pair
-                candle_type=config.get("candle_type_def", CandleType.SPOT),
-                until_ms=timerange_parsed.stopts,
-            )
-        else:
-            _data = load_data(
-                datadir=config["datadir"],
-                pairs=[pair],
-                timeframe=timeframe,
-                timerange=timerange_parsed,
-                data_format=config["dataformat_ohlcv"],
-                candle_type=config.get("candle_type_def", CandleType.SPOT),
-                startup_candles=startup_candles,
-            )
-            if pair not in _data:
-                raise RPCException(
-                    f"No data for {pair}, {timeframe} in {config.get('timerange')} found."
+            if live:
+                data = exchange.get_historic_ohlcv(
+                    pair=pair,
+                    timeframe=timeframe,
+                    since_ms=timerange_parsed.startts * 1000
+                    if timerange_parsed.startts
+                    else dt_ts(dt_now() - timedelta(days=30)),
+                    is_new_pair=True,  # history is never available - so always treat as new pair
+                    candle_type=config.get("candle_type_def", CandleType.SPOT),
+                    until_ms=timerange_parsed.stopts,
                 )
-            data = _data[pair]
+            else:
+                _data = load_data(
+                    datadir=config["datadir"],
+                    pairs=[pair],
+                    timeframe=timeframe,
+                    timerange=timerange_parsed,
+                    data_format=config["dataformat_ohlcv"],
+                    candle_type=config.get("candle_type_def", CandleType.SPOT),
+                    startup_candles=startup_candles,
+                )
+                if pair not in _data:
+                    raise RPCException(
+                        f"No data for {pair}, {timeframe} in {config.get('timerange')} found."
+                    )
+                data = _data[pair]
 
-        annotations = []
-        if config.get("strategy"):
-            strategy.dp = DataProvider(config, exchange=exchange, pairlists=None)
-            strategy.ft_bot_start()
+            annotations = []
+            if config.get("strategy"):
+                strategy.dp = DataProvider(config, exchange=exchange, pairlists=None)
+                strategy.ft_bot_start()
 
-            df_analyzed = strategy.analyze_ticker(data, {"pair": pair})
-            df_analyzed = trim_dataframe(
-                df_analyzed, timerange_parsed, startup_candles=startup_candles
+                df_analyzed = strategy.analyze_ticker(data, {"pair": pair})
+                df_analyzed = trim_dataframe(
+                    df_analyzed, timerange_parsed, startup_candles=startup_candles
+                )
+                annotations = strategy.ft_plot_annotations(pair=pair, dataframe=df_analyzed)
+
+            else:
+                df_analyzed = data
+
+            return RPC._convert_dataframe_to_dict(
+                strategy_name,
+                pair,
+                timeframe,
+                df_analyzed.copy(),
+                dt_now(),
+                selected_cols,
+                annotations,
             )
-            annotations = strategy.ft_plot_annotations(pair=pair, dataframe=df_analyzed)
-
-        else:
-            df_analyzed = data
-
-        return RPC._convert_dataframe_to_dict(
-            strategy_name,
-            pair,
-            timeframe,
-            df_analyzed.copy(),
-            dt_now(),
-            selected_cols,
-            annotations,
-        )
 
     def _rpc_plot_config(self) -> dict[str, Any]:
         if (

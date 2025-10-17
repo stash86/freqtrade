@@ -273,7 +273,7 @@ class Backtesting:
         self.futures_data: dict[str, DataFrame] = {}
 
     def init_backtest(self):
-        self.prepare_backtest(False)
+        self.reset_backtest(False)
 
         self.wallets = Wallets(self.config, self.exchange, is_backtest=True)
 
@@ -427,7 +427,7 @@ class Backtesting:
     def disable_database_use(self):
         disable_database_use(self.timeframe)
 
-    def prepare_backtest(self, enable_protections):
+    def reset_backtest(self, enable_protections: bool = False):
         """
         Backtesting setup method - called once for every call to "backtest()".
         """
@@ -1692,7 +1692,7 @@ class Backtesting:
         :param end_date: backtesting timerange end datetime
         :return: DataFrame with trades (results of backtesting)
         """
-        self.prepare_backtest(self.enable_protections)
+        self.reset_backtest(self.enable_protections)
         # Ensure wallets are up-to-date (important for --strategy-list)
         self.wallets.update()
         # Use dict of lists with data for performance

@@ -268,7 +268,8 @@
           "day",
           "week",
           "month",
-          "year"
+          "year",
+          "weekday"
         ]
       }
     },

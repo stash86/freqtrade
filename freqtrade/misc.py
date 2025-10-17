@@ -51,7 +51,7 @@ def file_dump_json(filename: Path, data: Any, is_zip: bool = False, log: bool = 
         with filename.open("w") as fp:
             dump_json_to_file(fp, data)
 
-    logger.debug(f'done json to "{filename}"')
+    logger.debug(f'done writing json to "{filename}"')
 
 
 def json_load(datafile: TextIO) -> Any:

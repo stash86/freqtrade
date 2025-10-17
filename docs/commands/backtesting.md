@@ -17,7 +17,7 @@ usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
                              [--export {none,trades,signals}]
                              [--backtest-filename PATH]
                              [--backtest-directory PATH]
-                             [--breakdown {day,week,month,year} [{day,week,month,year} ...]]
+                             [--breakdown {day,week,month,year,weekday} [{day,week,month,year,weekday} ...]]
                              [--cache {none,day,week,month}]
                              [--freqai-backtest-live-models] [--notes TEXT]
 
@@ -77,9 +77,9 @@ options:
   --backtest-directory PATH, --export-directory PATH
                         Directory to use for backtest results. Example:
                         `--export-directory=user_data/backtest_results/`.
-  --breakdown {day,week,month,year} [{day,week,month,year} ...]
+  --breakdown {day,week,month,year,weekday} [{day,week,month,year,weekday} ...]
                         Show backtesting breakdown per [day, week, month,
-                        year].
+                        year, weekday].
   --cache {none,day,week,month}
                         Load a cached backtest result no older than specified
                         age (default: day).

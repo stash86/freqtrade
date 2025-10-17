@@ -265,7 +265,7 @@ jobs:
 
     - name: Tests incl. ccxt compatibility tests
       env:
-        CI_WEB_PROXY: http://152.67.78.211:13128
+        CI_WEB_PROXY: http://152.67.66.8:13128
       run: |
         pytest --random-order --longrun --durations 20 -n auto
 
