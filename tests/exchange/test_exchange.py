@@ -5942,29 +5942,32 @@ def test_get_max_leverage_futures(default_conf, mocker, leverage_tiers):
     assert exchange.get_max_leverage("TIA/USDT:USDT", 130.008) == 40
 
 
-@pytest.mark.parametrize("exchange_name", ["binance", "kraken", "gate", "okx", "bybit"])
-def test__get_params(mocker, default_conf, exchange_name):
+@pytest.mark.parametrize(
+    "exchange_name, add_params_spot, add_params_futures",
+    [
+        ("binance", {}, {}),
+        ("kraken", {}, {"leverage": 3.0}),
+        ("gate", {}, {}),
+        ("okx", {}, {"tdMode": "isolated", "posSide": "net"}),
+        ("bybit", {}, {"position_idx": 0}),
+        ("bitget", {}, {"marginMode": "isolated"}),
+    ],
+)
+def test__get_params(mocker, default_conf, exchange_name, add_params_spot, add_params_futures):
     api_mock = MagicMock()
     mocker.patch(f"{EXMS}.exchange_has", return_value=True)
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange=exchange_name)
     exchange._params = {"test": True}
 
     params1 = {"test": True}
-    params2 = {
+    params1.update(add_params_spot)
+
+    params_fut = {
         "test": True,
         "timeInForce": "IOC",
         "reduceOnly": True,
     }
-
-    if exchange_name == "kraken":
-        params2["leverage"] = 3.0
-
-    if exchange_name == "okx":
-        params2["tdMode"] = "isolated"
-        params2["posSide"] = "net"
-
-    if exchange_name == "bybit":
-        params2["position_idx"] = 0
+    params_fut.update(add_params_futures)
 
     assert (
         exchange._get_params(
@@ -6012,7 +6015,7 @@ def test__get_params(mocker, default_conf, exchange_name):
             time_in_force="IOC",
             leverage=3.0,
         )
-        == params2
+        == params_fut
     )
 
 

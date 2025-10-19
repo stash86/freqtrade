@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class Kraken(Exchange):
+    """Kraken exchange class.
+    Contains adjustments needed for Freqtrade to work with this exchange.
+    """
+
     _params: dict = {"trading_agreement": "agree"}
     _ft_has: FtHas = {
         "stoploss_on_exchange": True,

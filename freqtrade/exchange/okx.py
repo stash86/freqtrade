@@ -296,10 +296,19 @@ class Okx(Exchange):
         return orders
 
 
-class MyOkx(Okx):
-    """
-    MyOkx exchange class.
+class Myokx(Okx):
+    """MyOkx exchange class.
     Minimal adjustment to disable futures trading for the EU subsidiary of Okx
+    """
+
+    _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [
+        (TradingMode.SPOT, MarginMode.NONE),
+    ]
+
+
+class Okxus(Okx):
+    """Okxus exchange class.
+    Minimal adjustment to disable futures trading for the US subsidiary of Okx
     """
 
     _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [

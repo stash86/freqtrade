@@ -27,8 +27,9 @@ hesitate to read the source code and understand the mechanism of this bot.
 Please read the [exchange specific notes](docs/exchanges.md) to learn about eventual, special configurations needed for each exchange.
 
 - [X] [Binance](https://www.binance.com/)
-- [X] [Bitmart](https://bitmart.com/)
 - [X] [BingX](https://bingx.com/invite/0EM9RX)
+- [X] [Bitget](https://www.bitget.com/)
+- [X] [Bitmart](https://bitmart.com/)
 - [X] [Bybit](https://bybit.com/)
 - [X] [Gate.io](https://www.gate.io/ref/6266643)
 - [X] [HTX](https://www.htx.com/)
@@ -41,6 +42,7 @@ Please read the [exchange specific notes](docs/exchanges.md) to learn about even
 ### Supported Futures Exchanges (experimental)
 
 - [X] [Binance](https://www.binance.com/)
+- [X] [Bitget](https://www.bitget.com/)
 - [X] [Gate.io](https://www.gate.io/ref/6266643)
 - [X] [Hyperliquid](https://hyperliquid.xyz/) (A decentralized exchange, or DEX)
 - [X] [OKX](https://okx.com/)

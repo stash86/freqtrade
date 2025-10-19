@@ -28,6 +28,10 @@ logger = logging.getLogger(__name__)
 
 
 class Binance(Exchange):
+    """Binance exchange class.
+    Contains adjustments needed for Freqtrade to work with this exchange.
+    """
+
     _ft_has: FtHas = {
         "stoploss_on_exchange": True,
         "stop_price_param": "stopPrice",

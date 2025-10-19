@@ -47,4 +47,4 @@ from freqtrade.exchange.kucoin import Kucoin
 from freqtrade.exchange.lbank import Lbank
 from freqtrade.exchange.luno import Luno
 from freqtrade.exchange.modetrade import Modetrade
-from freqtrade.exchange.okx import MyOkx, Okx
+from freqtrade.exchange.okx import Myokx, Okx, Okxus

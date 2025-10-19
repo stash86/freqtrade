@@ -9,7 +9,6 @@ import logging
 import random
 from datetime import datetime
 from math import ceil
-from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +20,6 @@ from freqtrade.constants import FTHYPT_FILEVERSION, LAST_BT_RESULT_FN, Config
 from freqtrade.enums import HyperoptState
 from freqtrade.exceptions import OperationalException
 from freqtrade.misc import file_dump_json, plural
-from freqtrade.optimize.hyperopt.hyperopt_logger import logging_mp_handle, logging_mp_setup
 from freqtrade.optimize.hyperopt.hyperopt_optimizer import INITIAL_POINTS, HyperOptimizer
 from freqtrade.optimize.hyperopt.hyperopt_output import HyperoptOutput
 from freqtrade.optimize.hyperopt_tools import (
@@ -33,9 +31,6 @@ from freqtrade.util import get_progress_tracker
 
 
 logger = logging.getLogger(__name__)
-
-
-log_queue: Any
 
 
 class Hyperopt:
@@ -149,15 +144,7 @@ class Hyperopt:
     def run_optimizer_parallel(self, parallel: Parallel, asked: list[list]) -> list[dict[str, Any]]:
         """Start optimizer in a parallel way"""
 
-        def optimizer_wrapper(*args, **kwargs):
-            # global log queue. This must happen in the file that initializes Parallel
-            logging_mp_setup(
-                log_queue, logging.INFO if self.config["verbosity"] < 1 else logging.DEBUG
-            )
-
-            return self.hyperopter.generate_optimizer_wrapped(*args, **kwargs)
-
-        return parallel(optimizer_wrapper(v) for v in asked)
+        return parallel(self.hyperopter.generate_optimizer_wrapped(v) for v in asked)
 
     def _set_random_state(self, random_state: int | None) -> int:
         return random_state or random.randint(1, 2**16 - 1)  # noqa: S311
@@ -236,15 +223,6 @@ class Hyperopt:
 
         self._save_result(val)
 
-    def _setup_logging_mp_workaround(self) -> None:
-        """
-        Workaround for logging in child processes.
-        local_queue must be a global in the file that initializes Parallel.
-        """
-        global log_queue
-        m = Manager()
-        log_queue = m.Queue()
-
     def start(self) -> None:
         self.random_state = self._set_random_state(self.config.get("hyperopt_random_state"))
         logger.info(f"Using optimizer random state: {self.random_state}")
@@ -257,7 +235,6 @@ class Hyperopt:
         logger.info(f"Number of parallel jobs set as: {config_jobs}")
 
         self.opt = self.hyperopter.get_optimizer(self.random_state)
-        self._setup_logging_mp_workaround()
         try:
             with Parallel(n_jobs=config_jobs) as parallel:
                 jobs = parallel._effective_n_jobs()
@@ -307,7 +284,7 @@ class Hyperopt:
 
                             self.evaluate_result(val, current, is_random[j])
                             pbar.update(task, advance=1)
-                        logging_mp_handle(log_queue)
+                        self.hyperopter.handle_mp_logging()
                         gc.collect()
 
                         if (

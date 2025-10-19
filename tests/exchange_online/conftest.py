@@ -422,6 +422,10 @@ EXCHANGES = {
         "hasQuoteVolume": True,
         "timeframe": "1h",
         "candle_count": 1000,
+        "futures": True,
+        "futures_pair": "BTC/USDT:USDT",
+        "leverage_tiers_public": True,
+        "leverage_in_spot_market": True,
     },
     "coinex": {
         "pair": "BTC/USDT",

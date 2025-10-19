@@ -7,6 +7,7 @@ import logging
 import sys
 import warnings
 from datetime import UTC, datetime
+from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +30,7 @@ from freqtrade.optimize.backtesting import Backtesting
 
 # Import IHyperOptLoss to allow unpickling classes from these modules
 from freqtrade.optimize.hyperopt.hyperopt_auto import HyperOptAuto
+from freqtrade.optimize.hyperopt.hyperopt_logger import logging_mp_handle, logging_mp_setup
 from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
 from freqtrade.optimize.hyperopt_tools import HyperoptStateContainer, HyperoptTools
 from freqtrade.optimize.optimize_reports import generate_strategy_stats
@@ -57,6 +59,8 @@ optuna_samplers_dict = {
     "NSGAIIISampler": optuna.samplers.NSGAIIISampler,
     "QMCSampler": optuna.samplers.QMCSampler,
 }
+
+log_queue: Any
 
 
 class HyperOptimizer:
@@ -113,6 +117,24 @@ class HyperOptimizer:
         if HyperoptTools.has_space(self.config, "sell"):
             # Make sure use_exit_signal is enabled
             self.config["use_exit_signal"] = True
+        self._setup_logging_mp_workaround()
+
+    def _setup_logging_mp_workaround(self) -> None:
+        """
+        Workaround for logging in child processes.
+        local_queue must be a global and passed to the child process via inheritance.
+        """
+        global log_queue
+        m = Manager()
+        log_queue = m.Queue()
+        logger.info(f"manager queue {type(log_queue)}")
+
+    def handle_mp_logging(self) -> None:
+        """
+        Handle logging from child processes.
+        Must be called in the parent process to handle log messages from the child process.
+        """
+        logging_mp_handle(log_queue)
 
     def prepare_hyperopt(self) -> None:
         # Initialize spaces ...
@@ -264,6 +286,7 @@ class HyperOptimizer:
     @delayed
     @wrap_non_picklable_objects
     def generate_optimizer_wrapped(self, params_dict: dict[str, Any]) -> dict[str, Any]:
+        logging_mp_setup(log_queue, logging.INFO if self.config["verbosity"] < 1 else logging.DEBUG)
         return self.generate_optimizer(params_dict)
 
     def generate_optimizer(self, params_dict: dict[str, Any]) -> dict[str, Any]:

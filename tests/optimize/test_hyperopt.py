@@ -1132,7 +1132,9 @@ def test_in_strategy_auto_hyperopt(mocker, hyperopt_conf, tmp_path, fee) -> None
 
 
 @pytest.mark.filterwarnings("ignore::DeprecationWarning")
-def test_in_strategy_auto_hyperopt_with_parallel(mocker, hyperopt_conf, tmp_path, fee) -> None:
+def test_in_strategy_auto_hyperopt_with_parallel(
+    mocker, hyperopt_conf, tmp_path, fee, caplog
+) -> None:
     mocker.patch(f"{EXMS}.validate_config", MagicMock())
     mocker.patch(f"{EXMS}.get_fee", fee)
     mocker.patch(f"{EXMS}.reload_markets")
@@ -1175,6 +1177,8 @@ def test_in_strategy_auto_hyperopt_with_parallel(mocker, hyperopt_conf, tmp_path
     assert len(list(buy_rsi_range)) == 51
 
     hyperopt.start()
+    # Test logs from parallel workers are shown.
+    assert log_has("Test: Bot loop started", caplog)
 
 
 def test_in_strategy_auto_hyperopt_per_epoch(mocker, hyperopt_conf, tmp_path, fee) -> None:

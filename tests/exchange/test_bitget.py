@@ -1,10 +1,10 @@
 from datetime import timedelta
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
-from freqtrade.enums import CandleType
-from freqtrade.exceptions import RetryableOrderError
+from freqtrade.enums import CandleType, MarginMode, TradingMode
+from freqtrade.exceptions import OperationalException, RetryableOrderError
 from freqtrade.exchange.common import API_RETRY_COUNT
 from freqtrade.util import dt_now, dt_ts
 from tests.conftest import EXMS, get_patched_exchange
@@ -120,3 +120,76 @@ def test_bitget_ohlcv_candle_limit(mocker, default_conf_usdt):
         assert exch.ohlcv_candle_limit(timeframe, CandleType.FUTURES, start_time) == length
         assert exch.ohlcv_candle_limit(timeframe, CandleType.MARK, start_time) == length
         assert exch.ohlcv_candle_limit(timeframe, CandleType.FUNDING_RATE, start_time) == 200
+
+
+def test_additional_exchange_init_bitget(default_conf, mocker):
+    default_conf["dry_run"] = False
+    default_conf["trading_mode"] = TradingMode.FUTURES
+    default_conf["margin_mode"] = MarginMode.ISOLATED
+    api_mock = MagicMock()
+    api_mock.set_position_mode = MagicMock(return_value={})
+
+    get_patched_exchange(mocker, default_conf, exchange="bitget", api_mock=api_mock)
+    assert api_mock.set_position_mode.call_count == 1
+
+    ccxt_exceptionhandlers(
+        mocker, default_conf, api_mock, "bitget", "additional_exchange_init", "set_position_mode"
+    )
+
+
+def test_dry_run_liquidation_price_cross_bitget(default_conf, mocker):
+    default_conf["dry_run"] = True
+    default_conf["trading_mode"] = TradingMode.FUTURES
+    default_conf["margin_mode"] = MarginMode.CROSS
+    api_mock = MagicMock()
+    mocker.patch(f"{EXMS}.get_maintenance_ratio_and_amt", MagicMock(return_value=(0.005, 0.0)))
+    exchange = get_patched_exchange(mocker, default_conf, exchange="bitget", api_mock=api_mock)
+
+    with pytest.raises(
+        OperationalException, match="Freqtrade currently only supports isolated futures for bitget"
+    ):
+        exchange.dry_run_liquidation_price(
+            "ETH/USDT:USDT",
+            100_000,
+            False,
+            0.1,
+            100,
+            10,
+            100,
+            [],
+        )
+
+
+def test__lev_prep_bitget(default_conf, mocker):
+    api_mock = MagicMock()
+    api_mock.set_margin_mode = MagicMock()
+    api_mock.set_leverage = MagicMock()
+    type(api_mock).has = PropertyMock(return_value={"setMarginMode": True, "setLeverage": True})
+    exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="bitget")
+    exchange._lev_prep("BTC/USDC:USDC", 3.2, "buy")
+
+    assert api_mock.set_margin_mode.call_count == 0
+    assert api_mock.set_leverage.call_count == 0
+
+    # test in futures mode
+    api_mock.set_margin_mode.reset_mock()
+    api_mock.set_leverage.reset_mock()
+    default_conf["dry_run"] = False
+
+    default_conf["trading_mode"] = "futures"
+    default_conf["margin_mode"] = "isolated"
+
+    exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="bitget")
+    exchange._lev_prep("BTC/USDC:USDC", 3.2, "buy")
+
+    assert api_mock.set_margin_mode.call_count == 0
+    assert api_mock.set_leverage.call_count == 1
+    api_mock.set_leverage.assert_called_with(symbol="BTC/USDC:USDC", leverage=3.2)
+
+    api_mock.reset_mock()
+
+    exchange._lev_prep("BTC/USDC:USDC", 19.99, "sell")
+
+    assert api_mock.set_margin_mode.call_count == 0
+    assert api_mock.set_leverage.call_count == 1
+    api_mock.set_leverage.assert_called_with(symbol="BTC/USDC:USDC", leverage=19.99)

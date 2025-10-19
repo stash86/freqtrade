@@ -3,7 +3,8 @@ from datetime import timedelta
 
 import ccxt
 
-from freqtrade.enums import CandleType
+from freqtrade.constants import BuySell
+from freqtrade.enums import CandleType, MarginMode, TradingMode
 from freqtrade.exceptions import (
     DDosProtection,
     OperationalException,
@@ -20,26 +21,29 @@ logger = logging.getLogger(__name__)
 
 
 class Bitget(Exchange):
-    """
-    Bitget exchange class. Contains adjustments needed for Freqtrade to work
-    with this exchange.
-
-    Please note that this exchange is not included in the list of exchanges
-    officially supported by the Freqtrade development team. So some features
-    may still not work as expected.
+    """Bitget exchange class.
+    Contains adjustments needed for Freqtrade to work with this exchange.
     """
 
     _ft_has: FtHas = {
         "stoploss_on_exchange": True,
         "stop_price_param": "stopPrice",
         "stop_price_prop": "stopPrice",
+        "stoploss_blocks_assets": False,  # Stoploss orders do not block assets
         "stoploss_order_types": {"limit": "limit", "market": "market"},
         "ohlcv_candle_limit": 200,  # 200 for historical candles, 1000 for recent ones.
         "order_time_in_force": ["GTC", "FOK", "IOC", "PO"],
     }
     _ft_has_futures: FtHas = {
         "mark_ohlcv_timeframe": "4h",
+        "funding_fee_candle_limit": 100,
     }
+
+    _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [
+        (TradingMode.SPOT, MarginMode.NONE),
+        (TradingMode.FUTURES, MarginMode.ISOLATED),
+        # (TradingMode.FUTURES, MarginMode.CROSS),
+    ]
 
     def ohlcv_candle_limit(
         self, timeframe: str, candle_type: CandleType, since_ms: int | None = None
@@ -126,3 +130,109 @@ class Bitget(Exchange):
 
     def cancel_stoploss_order(self, order_id: str, pair: str, params: dict | None = None) -> dict:
         return self.cancel_order(order_id=order_id, pair=pair, params={"stop": True})
+
+    @retrier
+    def additional_exchange_init(self) -> None:
+        """
+        Additional exchange initialization logic.
+        .api will be available at this point.
+        Must be overridden in child methods if required.
+        """
+        try:
+            if not self._config["dry_run"]:
+                if self.trading_mode == TradingMode.FUTURES:
+                    position_mode = self._api.set_position_mode(False)
+                    self._log_exchange_response("set_position_mode", position_mode)
+        except ccxt.DDoSProtection as e:
+            raise DDosProtection(e) from e
+        except (ccxt.OperationFailed, ccxt.ExchangeError) as e:
+            raise TemporaryError(
+                f"Error in additional_exchange_init due to {e.__class__.__name__}. Message: {e}"
+            ) from e
+        except ccxt.BaseError as e:
+            raise OperationalException(e) from e
+
+    def _lev_prep(self, pair: str, leverage: float, side: BuySell, accept_fail: bool = False):
+        if self.trading_mode != TradingMode.SPOT:
+            # Explicitly setting margin_mode is not necessary as marginMode can be set per order.
+            # self.set_margin_mode(pair, self.margin_mode, accept_fail)
+            self._set_leverage(leverage, pair, accept_fail)
+
+    def _get_params(
+        self,
+        side: BuySell,
+        ordertype: str,
+        leverage: float,
+        reduceOnly: bool,
+        time_in_force: str = "GTC",
+    ) -> dict:
+        params = super()._get_params(
+            side=side,
+            ordertype=ordertype,
+            leverage=leverage,
+            reduceOnly=reduceOnly,
+            time_in_force=time_in_force,
+        )
+        if self.trading_mode == TradingMode.FUTURES and self.margin_mode:
+            params["marginMode"] = self.margin_mode.value.lower()
+        return params
+
+    def dry_run_liquidation_price(
+        self,
+        pair: str,
+        open_rate: float,
+        is_short: bool,
+        amount: float,
+        stake_amount: float,
+        leverage: float,
+        wallet_balance: float,
+        open_trades: list,
+    ) -> float | None:
+        """
+        Important: Must be fetching data from cached values as this is used by backtesting!
+
+
+        https://www.bitget.com/support/articles/12560603808759
+        MMR: Maintenance margin rate of the trading pair.
+
+        CoinMainIndexPrice: The index price for Coin-M futures. For USDT-M futures,
+                            the index price is: 1.
+
+        TakerFeeRatio: The fee rate applied when placing taker orders.
+
+        Position direction: The current position direction of the trading pair.
+                        1 indicates a long position, and -1 indicates a short position.
+
+        Formula:
+
+        Estimated liquidation price = [
+            position margin - position size x average entry price x position direction
+        ] ÷ [position size x (MMR + TakerFeeRatio - position direction)]
+
+        :param pair: Pair to calculate liquidation price for
+        :param open_rate: Entry price of position
+        :param is_short: True if the trade is a short, false otherwise
+        :param amount: Absolute value of position size incl. leverage (in base currency)
+        :param stake_amount: Stake amount - Collateral in settle currency.
+        :param leverage: Leverage used for this position.
+        :param wallet_balance: Amount of margin_mode in the wallet being used to trade
+            Cross-Margin Mode: crossWalletBalance
+            Isolated-Margin Mode: isolatedWalletBalance
+        :param open_trades: List of other open trades in the same wallet
+        """
+        market = self.markets[pair]
+        taker_fee_rate = market["taker"] or self._api.describe().get("fees", {}).get(
+            "trading", {}
+        ).get("taker", 0.001)
+        mm_ratio, _ = self.get_maintenance_ratio_and_amt(pair, stake_amount)
+
+        if self.trading_mode == TradingMode.FUTURES and self.margin_mode == MarginMode.ISOLATED:
+            position_direction = -1 if is_short else 1
+
+            return (wallet_balance - (amount * open_rate * position_direction)) / (
+                amount * (mm_ratio + taker_fee_rate - position_direction)
+            )
+        else:
+            raise OperationalException(
+                "Freqtrade currently only supports isolated futures for bitget"
+            )
