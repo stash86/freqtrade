@@ -143,6 +143,7 @@ def test_extract_data_and_train_model_Standard(
         ("CatboostClassifierMultiTarget", "freqai_test_multimodel_classifier_strat"),
     ],
 )
+@pytest.mark.filterwarnings(r"ignore:.*__sklearn_tags__.*:DeprecationWarning")
 def test_extract_data_and_train_model_MultiTargets(mocker, freqai_conf, model, strat):
     can_run_model(model)
 

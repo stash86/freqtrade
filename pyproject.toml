@@ -85,17 +85,17 @@ hyperopt = [
 freqai = [
   "scikit-learn",
   "joblib",
-  'catboost; platform_machine != "aarch64"',
+  "catboost; platform_machine != 'arm'",
   "lightgbm",
   "xgboost",
   "tensorboard",
   "datasieve>=0.1.5",
 ]
 freqai_rl = [
-  "torch",
+  "torch; sys_platform != 'darwin' or platform_machine != 'x86_64'",
   "gymnasium",
-  "stable-baselines3",
-  "sb3-contrib",
+  "stable-baselines3; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+  "sb3-contrib; sys_platform != 'darwin' or platform_machine != 'x86_64'",
   "tqdm",
 ]
 develop = [
