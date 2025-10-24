@@ -21,8 +21,16 @@ class DelistFilter(IPairList):
         super().__init__(*args, **kwargs)
 
         self._max_days_from_now = self._pairlistconfig.get("max_days_from_now", 0)
-        if self._max_days_from_now < 0:
-            raise ConfigurationError("DelistFilter requires max_days_from_now to be >= 0")
+        self._max_hours_from_now = self._pairlistconfig.get("max_hours_from_now", 0)
+        if self._max_days_from_now < 0 and self._max_hours_from_now < 0:
+            raise ConfigurationError(
+                "DelistFilter requires either max_days_from_now and max_hours_from_now to be >= 0."
+            )
+        if self._max_days_from_now > 0 and self._max_hours_from_now > 0:
+            raise ConfigurationError(
+                "DelistFilter requires only one of "
+                "max_days_from_now and max_hours_from_now to be > 0."
+            )
         if not self._exchange._ft_has["has_delisting"]:
             raise ConfigurationError(
                 "DelistFilter doesn't support this exchange and trading mode combination.",
@@ -48,6 +56,11 @@ class DelistFilter(IPairList):
                 if self._max_days_from_now > 0
                 else ""
             )
+            + (
+                f" in the next {self._max_hours_from_now} hours"
+                if self._max_hours_from_now > 0
+                else ""
+            )
             + "."
         )
 
@@ -66,6 +79,15 @@ class DelistFilter(IPairList):
                     "Remove pairs that will be delisted in the next X days. Set to 0 to remove all."
                 ),
             },
+            "max_hours_from_now": {
+                "type": "number",
+                "default": 0,
+                "description": "Max hours from now",
+                "help": (
+                    "Remove pairs that will be delisted in the next X hours. "
+                    "Set to 0 to remove all."
+                ),
+            },
         }
 
     def _validate_pair(self, pair: str, ticker: Ticker | None) -> bool:
@@ -78,10 +100,15 @@ class DelistFilter(IPairList):
         delist_date = self._exchange.check_delisting_time(pair)
 
         if delist_date is not None:
-            remove_pair = self._max_days_from_now == 0
+            remove_pair = (self._max_days_from_now == 0) and (self._max_hours_from_now == 0)
             if self._max_days_from_now > 0:
                 current_datetime = datetime.now(UTC)
                 max_delist_date = current_datetime + timedelta(days=self._max_days_from_now)
+                remove_pair = delist_date <= max_delist_date
+
+            if self._max_hours_from_now > 0:
+                current_datetime = datetime.now(UTC)
+                max_delist_date = current_datetime + timedelta(hours=self._max_hours_from_now)
                 remove_pair = delist_date <= max_delist_date
 
             if remove_pair:
