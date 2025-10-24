@@ -46,6 +46,7 @@ class StrategyUpdater:
             "aliases": set(),
             "replacements": [
                 ("NaN", "nan"),
+                ("NAN", "nan"),
             ],
         }
     }

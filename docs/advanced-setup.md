@@ -134,10 +134,10 @@ The following systems have been tested and are known to work with freqtrade:
 ### PostgreSQL
 
 Installation:
-`pip install psycopg2-binary`
+`pip install "psycopg[binary]"`
 
 Usage:
-`... --db-url postgresql+psycopg2://<username>:<password>@localhost:5432/<database>`
+`... --db-url postgresql+psycopg://<username>:<password>@localhost:5432/<database>`
 
 Freqtrade will automatically create the tables necessary upon startup.
 

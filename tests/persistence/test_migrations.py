@@ -441,7 +441,8 @@ def test_migrate_pairlocks(mocker, default_conf, fee, caplog):
     "dialect",
     [
         "sqlite",
-        "postgresql",
+        "postgresql",  # test for psycopg2 compat
+        "postgresql.psycopg",  # test for psycopg3 compat
         "mysql",
         "oracle",
         "mssql",

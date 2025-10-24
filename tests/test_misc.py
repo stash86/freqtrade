@@ -168,12 +168,12 @@ def test_plural() -> None:
     "conn_url,expected",
     [
         (
-            "postgresql+psycopg2://scott123:scott123@host:1245/dbname",
-            "postgresql+psycopg2://scott123:*****@host:1245/dbname",
+            "postgresql+psycopg://scott123:scott123@host:1245/dbname",
+            "postgresql+psycopg://scott123:*****@host:1245/dbname",
         ),
         (
-            "postgresql+psycopg2://scott123:scott123@host.name.com/dbname",
-            "postgresql+psycopg2://scott123:*****@host.name.com/dbname",
+            "postgresql+psycopg://scott123:scott123@host.name.com/dbname",
+            "postgresql+psycopg://scott123:*****@host.name.com/dbname",
         ),
         (
             "mariadb+mariadbconnector://app_user:Password123!@127.0.0.1:3306/company",
