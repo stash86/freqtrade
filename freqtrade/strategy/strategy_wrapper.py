@@ -14,6 +14,19 @@ logger = logging.getLogger(__name__)
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+def __format_traceback(error: Exception) -> str:
+    """Format the traceback of an exception into a formatted string."""
+    tb = error.__traceback__
+    while tb:
+        if tb.tb_frame.f_code.co_filename == __file__:
+            # Skip frames from this file
+            tb = tb.tb_next
+            continue
+        return f"{tb.tb_frame.f_code.co_qualname}:{tb.tb_lineno}"
+
+    return ""
+
+
 def strategy_safe_wrapper(f: F, message: str = "", default_retval=None, supress_error=False) -> F:
     """
     Wrapper around user-provided methods and functions.
@@ -31,12 +44,17 @@ def strategy_safe_wrapper(f: F, message: str = "", default_retval=None, supress_
                     kwargs["trade"] = deepcopy(kwargs["trade"])
             return f(*args, **kwargs)
         except ValueError as error:
-            logger.warning(f"{message}Strategy caused the following exception: {error}{f}")
+            traceback = __format_traceback(error)
+            name = f.__name__ if hasattr(f, "__name__") else str(f)
+            logger.warning(
+                f"{message}Strategy caused the following exception: {repr(error)} in "
+                f"{traceback}, calling {name}",
+            )
             if default_retval is None and not supress_error:
                 raise StrategyError(str(error)) from error
             return default_retval
         except Exception as error:
-            logger.exception(f"{message}Unexpected error {error} calling {f}")
+            logger.exception(f"{message}Unexpected error {repr(error)} calling {f}")
             if default_retval is None and not supress_error:
                 raise StrategyError(str(error)) from error
             return default_retval

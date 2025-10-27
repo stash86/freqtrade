@@ -191,6 +191,8 @@ def test_get_trade_stake_amount_unlimited_amount(
         (1000, None, 1000, 10000, None, 1000),  # No min-stake-amount could be determined
         # Rebuy - resulting in too high stake amount. Adjusting.
         (2000, 15, 2000, 3000, 1500, 1500),
+        ("undefined", 15, 100, 10000, None, 0),  # string stake amount
+        ("22.2", 15, 100, 10000, None, 0),  # string stake amount but as float
     ],
 )
 def test_validate_stake_amount(

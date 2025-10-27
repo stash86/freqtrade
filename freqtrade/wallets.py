@@ -394,7 +394,7 @@ class Wallets:
         max_stake_amount: float,
         trade_amount: float | None,
     ):
-        if not stake_amount:
+        if not stake_amount or isinstance(stake_amount, str) or stake_amount <= 0:
             self._local_log(
                 f"Stake amount is {stake_amount}, ignoring possible trade for {pair}.",
                 level="debug",

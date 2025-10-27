@@ -443,13 +443,13 @@ class FtRestClient:
         """Return available pair (backtest data) based on timeframe / stake_currency selection
 
         :param timeframe: Only pairs with this timeframe available.
-        :param stake_currency: Only pairs that include this timeframe
+        :param stake_currency: Only pairs that include this stake currency.
         :return: json object
         """
         return self._get(
             "available_pairs",
             params={
-                "stake_currency": stake_currency if timeframe else "",
+                "stake_currency": stake_currency if stake_currency else "",
                 "timeframe": timeframe if timeframe else "",
             },
         )

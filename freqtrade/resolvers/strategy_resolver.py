@@ -150,7 +150,9 @@ class StrategyResolver(IResolver):
         # Ensure necessary migrations are performed first.
         validate_migrated_strategy_settings(strategy.config)
 
-        if not all(k in strategy.order_types for k in REQUIRED_ORDERTYPES):
+        if not strategy.order_types or not all(
+            k in strategy.order_types for k in REQUIRED_ORDERTYPES
+        ):
             raise ImportError(
                 f"Impossible to load Strategy '{strategy.__class__.__name__}'. "
                 f"Order-types mapping is incomplete."
