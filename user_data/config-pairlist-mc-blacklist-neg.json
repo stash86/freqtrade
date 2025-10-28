@@ -1,0 +1,23 @@
+{
+    "pairlists": [
+        {
+            "method": "VolumePairList",
+            "number_assets": 100,
+            "sort_key": "quoteVolume",
+            "refresh_period": 1800,
+        },
+        {
+            "method": "MarketCapPairList",
+            "max_rank": 100,
+            "mode": "blacklist",
+        },
+        {
+            "method": "PercentChangePairList",
+            "number_assets": 20,
+            "max_value": -5,
+        },
+        {
+            "method": "FullTradesFilter"
+        },
+    ],
+}
