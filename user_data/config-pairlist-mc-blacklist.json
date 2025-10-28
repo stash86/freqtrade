@@ -4,6 +4,7 @@
             "method": "VolumePairList",
             "number_assets": 100,
             "sort_key": "quoteVolume",
+            "refresh_period": 1800,
         },
         {
             "method": "MarketCapPairList",
@@ -11,11 +12,9 @@
             "mode": "blacklist",
         },
         {
-            "method": "VolumePairList",
+            "method": "PercentChangePairList",
             "number_assets": 20,
-            "sort_key": "quoteVolume",
-            "min_value": 0,
-            "refresh_period": 1800
+            "min_value": 5,
         },
         {
             "method": "FullTradesFilter"
