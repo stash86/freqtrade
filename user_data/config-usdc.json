@@ -1,0 +1,27 @@
+{
+    "max_open_trades": 6,
+    "stake_currency": "USDC",
+    "stake_amount": "unlimited",
+    "amend_last_stake_amount ": true,
+    // "tradable_balance_ratio": 0.99,
+    "available_capital": 100,
+    "dry_run": true,
+    "dry_run_wallet": 100,
+    "cancel_open_orders_on_exit": false,
+    "bot_name": "freqtrade_bot",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 3
+    },
+    "db_url": "sqlite:///user_data/tradesv3.sqlite",
+    //"db_url": "sqlite:////freqtrade/user_data/tradesv3-cend-2-kucoin.sqlite", // docker
+    "user_data_dir": "user_data",
+    "strategy": "delist_v5_simple",
+    "strategy_path": "../freqtrade_strategies",
+    "add_config_files": [
+        "config-pairlist-btc-usdc.json",
+        "config-orders-futures-all-market.json",
+        "config-exchange-hyperliquid.json",
+    ]
+}

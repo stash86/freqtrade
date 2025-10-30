@@ -19,14 +19,14 @@ class DoNothing(IStrategy):
     # Stoploss:
     stoploss = -0.99
 
-    timeframe = "15m"
+    timeframe = "1w"
 
     process_only_new_candles = True
     startup_candle_count = 999
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        delist = self.dp.check_delisting(metadata["pair"])
-        logger.info(f"Pair {metadata['pair']} delisting status: {delist}")
+        # delist = self.dp.check_delisting(metadata["pair"])
+        # logger.info(f"Pair {metadata['pair']} delisting status: {delist}")
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:

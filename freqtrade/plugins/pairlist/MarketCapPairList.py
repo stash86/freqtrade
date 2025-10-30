@@ -245,7 +245,7 @@ class MarketCapPairList(IPairList):
                 resolved = self.resolve_marketcap_pair(pair, pairlist, markets, filtered_pairlist)
 
                 if resolved:
-                    if (is_whitelist_mode) == False:
+                    if not is_whitelist_mode:
                         pairlist.remove(resolved)
                         continue
 
@@ -253,8 +253,8 @@ class MarketCapPairList(IPairList):
                     if len(filtered_pairlist) == self._number_assets:
                         break
 
-            if is_whitelist_mode == False:
-                return pairlist
+        if not is_whitelist_mode:
+            return pairlist
 
         # If no pairs are found, return the original pairlist
         return filtered_pairlist
