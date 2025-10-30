@@ -92,9 +92,11 @@ def _set_log_levels(
 
     # Set default levels for third party libraries
     third_party_loggers = {
-        "freqtrade": logging.INFO if verbosity <= 1 else logging.DEBUG,
+        "freqtrade": logging.INFO if verbosity < 1 else logging.DEBUG,
+        "freqtrade.exchange.exchange_ws": logging.INFO if verbosity <= 1 else logging.DEBUG,
         "requests": logging.INFO if verbosity <= 1 else logging.DEBUG,
         "urllib3": logging.INFO if verbosity <= 1 else logging.DEBUG,
+        "asyncio": logging.INFO if verbosity <= 1 else logging.DEBUG,
         "httpcore": logging.INFO if verbosity <= 1 else logging.DEBUG,
         "ccxt.base.exchange": logging.INFO if verbosity <= 2 else logging.DEBUG,
         "telegram": logging.INFO,

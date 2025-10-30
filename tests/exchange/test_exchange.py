@@ -2176,10 +2176,7 @@ def test_get_historic_ohlcv(default_conf, mocker, caplog, exchange_name, candle_
     since = date_minus_candles("5m", candle_limit)
     ret = exchange.get_historic_ohlcv(pair, "5m", dt_ts(since), candle_type=candle_type)
 
-    if exchange_name == "okx" and candle_type == "mark":
-        expected = 4
-    else:
-        expected = 2
+    expected = 2
     assert exchange._async_get_candle_history.call_count == expected
     # Returns twice the above OHLCV data after truncating the open candle.
     assert len(ret) == expected

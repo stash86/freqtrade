@@ -86,13 +86,13 @@ class IResolver:
              Tuple format: [Object, source]
         """
 
-        # Generate spec based on absolute path
-        # Pass object_name as first argument to have logging print a reasonable name.
         with PathModifier(module_path.parent):
             module_name = module_path.stem or ""
+            # Generate spec based on absolute path
+            # Pass object_name as first argument to have logging print a reasonable name.
             spec = importlib.util.spec_from_file_location(module_name, str(module_path))
             if not spec:
-                return iter([None])
+                return iter([])
 
             module = importlib.util.module_from_spec(spec)
             try:
@@ -149,9 +149,7 @@ class IResolver:
                 continue
             module_path = entry.resolve()
 
-            obj = next(cls._get_valid_object(module_path, object_name), None)
-
-            if obj:
+            if obj := next(cls._get_valid_object(module_path, object_name), None):
                 obj[0].__file__ = str(entry)
                 if add_source:
                     obj[0].__source__ = obj[1]
@@ -164,6 +162,10 @@ class IResolver:
     ) -> Any | None:
         """
         Try to load object from path list.
+        :param paths: list of absolute paths to search
+        :param object_name: name of the module to import
+        :param add_source: add the source code as __source__ attribute to theloaded object.
+        :param kwargs: keyword arguments to pass to the object constructor
         """
 
         for _path in paths:

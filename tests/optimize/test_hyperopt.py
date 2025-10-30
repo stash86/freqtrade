@@ -236,28 +236,6 @@ def test_start_not_installed(mocker, default_conf, import_fails) -> None:
         start_hyperopt(pargs)
 
 
-def test_start_no_hyperopt_allowed(mocker, hyperopt_conf, caplog) -> None:
-    start_mock = MagicMock()
-    patched_configuration_load_config_file(mocker, hyperopt_conf)
-    mocker.patch("freqtrade.optimize.hyperopt.Hyperopt.start", start_mock)
-    patch_exchange(mocker)
-
-    args = [
-        "hyperopt",
-        "--config",
-        "config.json",
-        "--hyperopt",
-        "HyperoptTestSepFile",
-        "--hyperopt-loss",
-        "SharpeHyperOptLossDaily",
-        "--epochs",
-        "5",
-    ]
-    pargs = get_args(args)
-    with pytest.raises(OperationalException, match=r"Using separate Hyperopt files has been.*"):
-        start_hyperopt(pargs)
-
-
 def test_start_no_data(mocker, hyperopt_conf, tmp_path) -> None:
     hyperopt_conf["user_data_dir"] = tmp_path
     patched_configuration_load_config_file(mocker, hyperopt_conf)
@@ -708,7 +686,7 @@ def test_print_json_spaces_all(mocker, hyperopt_conf, capsys) -> None:
 
     hyperopt_conf.update(
         {
-            "spaces": "all",
+            "spaces": ["all"],
             "hyperopt_jobs": 1,
             "print_json": True,
         }
@@ -824,7 +802,7 @@ def test_print_json_spaces_roi_stoploss(mocker, hyperopt_conf, capsys) -> None:
 
     hyperopt_conf.update(
         {
-            "spaces": "roi stoploss",
+            "spaces": ["roi", "stoploss"],
             "hyperopt_jobs": 1,
             "print_json": True,
         }
@@ -876,7 +854,7 @@ def test_simplified_interface_roi_stoploss(mocker, hyperopt_conf, capsys) -> Non
     )
     patch_exchange(mocker)
 
-    hyperopt_conf.update({"spaces": "roi stoploss"})
+    hyperopt_conf.update({"spaces": ["roi", "stoploss"]})
 
     hyperopt = Hyperopt(hyperopt_conf)
     hyperopt.hyperopter.backtesting.strategy.advise_all_indicators = MagicMock()
@@ -915,7 +893,7 @@ def test_simplified_interface_all_failed(mocker, hyperopt_conf, caplog) -> None:
 
     hyperopt_conf.update(
         {
-            "spaces": "all",
+            "spaces": ["all"],
         }
     )
 
@@ -969,7 +947,7 @@ def test_simplified_interface_buy(mocker, hyperopt_conf, capsys) -> None:
     )
     patch_exchange(mocker)
 
-    hyperopt_conf.update({"spaces": "buy"})
+    hyperopt_conf.update({"spaces": ["buy"]})
 
     hyperopt = Hyperopt(hyperopt_conf)
     hyperopt.hyperopter.backtesting.strategy.advise_all_indicators = MagicMock()
@@ -1025,7 +1003,7 @@ def test_simplified_interface_sell(mocker, hyperopt_conf, capsys) -> None:
 
     hyperopt_conf.update(
         {
-            "spaces": "sell",
+            "spaces": ["sell"],
         }
     )
 
@@ -1076,7 +1054,7 @@ def test_simplified_interface_failed(mocker, hyperopt_conf, space) -> None:
 
     patch_exchange(mocker)
 
-    hyperopt_conf.update({"spaces": space})
+    hyperopt_conf.update({"spaces": [space]})
 
     hyperopt = Hyperopt(hyperopt_conf)
     hyperopt.hyperopter.backtesting.strategy.advise_all_indicators = MagicMock()

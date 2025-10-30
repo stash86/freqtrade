@@ -17,13 +17,15 @@ F = TypeVar("F", bound=Callable[..., Any])
 def __format_traceback(error: Exception) -> str:
     """Format the traceback of an exception into a formatted string."""
     tb = error.__traceback__
-    while tb:
-        if tb.tb_frame.f_code.co_filename == __file__:
-            # Skip frames from this file
-            tb = tb.tb_next
-            continue
-        return f"{tb.tb_frame.f_code.co_qualname}:{tb.tb_lineno}"
-
+    try:
+        while tb:
+            if tb.tb_frame.f_code.co_filename == __file__:
+                # Skip frames from this file
+                tb = tb.tb_next
+                continue
+            return f"{tb.tb_frame.f_code.co_qualname}:{tb.tb_lineno}"
+    except Exception:
+        return "<unavailable>"
     return ""
 
 

@@ -64,7 +64,6 @@ ARGS_BACKTEST = [
 
 ARGS_HYPEROPT = [
     *ARGS_COMMON_OPTIMIZE,
-    "hyperopt",
     "hyperopt_path",
     "position_stacking",
     "enable_protections",

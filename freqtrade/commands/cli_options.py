@@ -2,7 +2,7 @@
 Definition of cli arguments used in arguments.py
 """
 
-from argparse import SUPPRESS, ArgumentTypeError
+from argparse import ArgumentTypeError
 
 from freqtrade import constants
 from freqtrade.constants import HYPEROPT_LOSS_BUILTIN
@@ -256,12 +256,6 @@ AVAILABLE_CLI_OPTIONS = {
         choices=constants.BACKTEST_CACHE_AGE,
     ),
     # Hyperopt
-    "hyperopt": Arg(
-        "--hyperopt",
-        help=SUPPRESS,
-        metavar="NAME",
-        required=False,
-    ),
     "hyperopt_path": Arg(
         "--hyperopt-path",
         help="Specify additional lookup path for Hyperopt Loss functions.",

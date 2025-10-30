@@ -17,7 +17,7 @@ If you already have an existing strategy, please read the [strategy migration gu
 
 ## Shorting
 
-Shorting is not possible when trading with [`trading_mode`](#leverage-trading-modes) set to `spot`. To short trade, `trading_mode` must be set to `margin`(currently unavailable) or [`futures`](#futures), with [`margin_mode`](#margin-mode) set to `cross`(currently unavailable) or [`isolated`](#isolated-margin-mode)
+Shorting is not possible when trading with [`trading_mode`](#leverage-trading-modes) set to `spot`. To short trade, `trading_mode` must be set to `margin`(currently unavailable) or [`futures`](#futures), with [`margin_mode`](#margin-mode) set to [`cross`](#cross-margin-mode) or [`isolated`](#isolated-margin-mode)
 
 For a strategy to short, the strategy class must set the class variable `can_short = True`
 
@@ -72,7 +72,7 @@ A futures pair will therefore have the naming of `base/quote:settle` (e.g. `ETH/
 On top of `trading_mode` - you will also have to configure your `margin_mode`.
 While freqtrade currently only supports one margin mode, this will change, and by configuring it now you're all set for future updates.
 
-The possible values are: `isolated`, or `cross`(*currently unavailable*).
+The possible values are: `isolated`, or `cross`.
 
 #### Isolated margin mode
 

@@ -336,7 +336,6 @@ class Configuration:
         # Hyperopt section
 
         configurations = [
-            ("hyperopt", "Using Hyperopt class name: {}"),
             ("hyperopt_path", "Using additional Hyperopt lookup path: {}"),
             ("hyperoptexportfilename", "Using hyperopt file: {}"),
             ("lookahead_analysis_exportfilename", "Saving lookahead analysis results into {} ..."),

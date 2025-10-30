@@ -89,13 +89,7 @@ class HyperOptimizer:
         self.custom_hyperopt: HyperOptAuto
         self.analyze_per_epoch = self.config.get("analyze_per_epoch", False)
 
-        if not self.config.get("hyperopt"):
-            self.custom_hyperopt = HyperOptAuto(self.config)
-        else:
-            raise OperationalException(
-                "Using separate Hyperopt files has been removed in 2021.9. Please convert "
-                "your existing Hyperopt file to the new Hyperoptable strategy interface"
-            )
+        self.custom_hyperopt = HyperOptAuto(self.config)
 
         self.backtesting._set_strategy(self.backtesting.strategylist[0])
         self.custom_hyperopt.strategy = self.backtesting.strategy

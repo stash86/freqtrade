@@ -18,7 +18,6 @@ from optuna.trial import FrozenTrial, Trial, TrialState
 
 from freqtrade.constants import FTHYPT_FILEVERSION, LAST_BT_RESULT_FN, Config
 from freqtrade.enums import HyperoptState
-from freqtrade.exceptions import OperationalException
 from freqtrade.misc import file_dump_json, plural
 from freqtrade.optimize.hyperopt.hyperopt_optimizer import INITIAL_POINTS, HyperOptimizer
 from freqtrade.optimize.hyperopt.hyperopt_output import HyperoptOutput
@@ -49,12 +48,6 @@ class Hyperopt:
 
         self.analyze_per_epoch = self.config.get("analyze_per_epoch", False)
         HyperoptStateContainer.set_state(HyperoptState.STARTUP)
-
-        if self.config.get("hyperopt"):
-            raise OperationalException(
-                "Using separate Hyperopt files has been removed in 2021.9. Please convert "
-                "your existing Hyperopt file to the new Hyperoptable strategy interface"
-            )
 
         time_now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         strategy = str(self.config["strategy"])
