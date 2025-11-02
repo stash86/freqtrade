@@ -693,6 +693,9 @@ def download_data(
     """
     Download data function. Used from both cli and API.
     """
+    exchange.validate_trading_mode_and_margin_mode(
+        config.get("trading_mode", TradingMode.SPOT), None, allow_none_margin_mode=True
+    )
     timerange = TimeRange()
     if "days" in config and config["days"] is not None:
         time_since = (datetime.now() - timedelta(days=config["days"])).strftime("%Y%m%d")

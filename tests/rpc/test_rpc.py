@@ -848,11 +848,11 @@ def test_rpc_force_exit(default_conf, ticker, fee, mocker) -> None:
 
     freqtradebot.state = State.STOPPED
     with pytest.raises(RPCException, match=r".*trader is not running*"):
-        rpc._rpc_force_exit(None)
+        rpc._rpc_force_exit("22222")
 
     freqtradebot.state = State.RUNNING
     with pytest.raises(RPCException, match=r".*invalid argument*"):
-        rpc._rpc_force_exit(None)
+        rpc._rpc_force_exit("22222")
 
     msg = rpc._rpc_force_exit("all")
     assert msg == {"result": "Created exit orders for all open trades."}
@@ -867,7 +867,7 @@ def test_rpc_force_exit(default_conf, ticker, fee, mocker) -> None:
 
     freqtradebot.state = State.STOPPED
     with pytest.raises(RPCException, match=r".*trader is not running*"):
-        rpc._rpc_force_exit(None)
+        rpc._rpc_force_exit("22222")
 
     with pytest.raises(RPCException, match=r".*trader is not running*"):
         rpc._rpc_force_exit("all")

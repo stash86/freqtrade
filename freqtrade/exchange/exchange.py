@@ -891,6 +891,7 @@ class Exchange:
         self,
         trading_mode: TradingMode,
         margin_mode: MarginMode | None,  # Only None when trading_mode = TradingMode.SPOT
+        allow_none_margin_mode: bool = False,
     ):
         """
         Checks if freqtrade can perform trades using the configured
@@ -898,7 +899,18 @@ class Exchange:
         Throws OperationalException:
             If the trading_mode/margin_mode type are not supported by freqtrade on this exchange
         """
-        if trading_mode != TradingMode.SPOT and (
+        if trading_mode == TradingMode.SPOT:
+            return
+        if allow_none_margin_mode and margin_mode is None:
+            # Verify trading mode independent of margin mode
+            if not any(
+                trading_mode == pair[0] for pair in self._supported_trading_mode_margin_pairs
+            ):
+                raise ConfigurationError(
+                    f"Freqtrade does not support '{trading_mode}' on {self.name}."
+                )
+
+        if not allow_none_margin_mode and (
             (trading_mode, margin_mode) not in self._supported_trading_mode_margin_pairs
         ):
             mm_value = margin_mode and margin_mode.value

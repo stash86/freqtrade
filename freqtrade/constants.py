@@ -41,6 +41,18 @@ HYPEROPT_LOSS_BUILTIN = [
     "ProfitDrawDownHyperOptLoss",
     "MultiMetricHyperOptLoss",
 ]
+HYPEROPT_BUILTIN_SPACES = [
+    "all",
+    "buy",
+    "sell",
+    "roi",
+    "stoploss",
+    "trailing",
+    "protection",
+    "trades",
+    "default",
+]
+
 AVAILABLE_PAIRLISTS = [
     "StaticPairList",
     "VolumePairList",
