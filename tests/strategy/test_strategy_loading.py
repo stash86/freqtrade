@@ -96,6 +96,16 @@ def test_load_strategy_invalid_directory(caplog, default_conf, tmp_path):
     assert log_has_re(r"Path .*" + r"some.*path.*" + r".* does not exist", caplog)
 
 
+def test_load_strategy_skip_other_files(caplog, default_conf, tmp_path):
+    default_conf["user_data_dir"] = tmp_path
+    caplog.set_level(logging.DEBUG)
+
+    s = StrategyResolver._load_strategy("StrategyTestV3", config=default_conf)
+    assert isinstance(s, IStrategy)
+
+    assert log_has_re(r"Skipping .* as it does not contain class StrategyTestV3\.", caplog)
+
+
 def test_load_not_found_strategy(default_conf, tmp_path):
     default_conf["user_data_dir"] = tmp_path
     default_conf["strategy"] = "NotFoundStrategy"
