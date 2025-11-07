@@ -1029,12 +1029,16 @@ class RPC:
                 return {"result": "Created exit orders for all open trades."}
 
             # Query for trade
-            trade = Trade.get_trades(
-                trade_filter=[
-                    Trade.id == trade_id,
-                    Trade.is_open.is_(True),
-                ]
-            ).first()
+            trade = (
+                Trade.get_trades(
+                    trade_filter=[
+                        Trade.id == int(trade_id),
+                        Trade.is_open.is_(True),
+                    ]
+                ).first()
+                if trade_id.isdigit()
+                else None
+            )
             if not trade:
                 logger.warning("force_exit: Invalid argument received")
                 raise RPCException("invalid argument")

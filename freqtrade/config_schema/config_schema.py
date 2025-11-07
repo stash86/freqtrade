@@ -1,11 +1,15 @@
 # Required json-schema for user specified config
 
+
 from freqtrade.constants import (
     AVAILABLE_DATAHANDLERS,
     AVAILABLE_PAIRLISTS,
     BACKTEST_BREAKDOWNS,
+    BACKTEST_CACHE_AGE,
     DRY_RUN_WALLET,
     EXPORT_OPTIONS,
+    HYPEROPT_BUILTIN_SPACES,
+    HYPEROPT_LOSS_BUILTIN,
     MARGIN_MODES,
     ORDERTIF_POSSIBILITIES,
     ORDERTYPE_POSSIBILITIES,
@@ -228,6 +232,76 @@ CONF_SCHEMA = {
             "type": "array",
             "items": {"type": "string", "enum": BACKTEST_BREAKDOWNS},
         },
+        "backtest_cache": {
+            "description": "Load a cached backtest result no older than specified age.",
+            "type": "string",
+            "enum": BACKTEST_CACHE_AGE,
+        },
+        # Hyperopt
+        "hyperopt_path": {
+            "description": "Specify additional lookup path for Hyperopt Loss functions.",
+            "type": "string",
+        },
+        "epochs": {
+            "description": "Number of training epochs for Hyperopt.",
+            "type": "integer",
+            "minimum": 1,
+        },
+        "early_stop": {
+            "description": (
+                "Early stop hyperopt if no improvement after <epochs>. Set to 0 to disable."
+            ),
+            "type": "integer",
+            "minimum": 0,
+        },
+        "spaces": {
+            "description": (
+                "Hyperopt parameter spaces to optimize. Default is the default set and"
+                "includes all spaces except for 'trailing', 'protection', and 'trades'."
+            ),
+            "type": "array",
+            "items": {"type": "string", "enum": HYPEROPT_BUILTIN_SPACES},
+            "default": ["default"],
+        },
+        "analyze_per_epoch": {
+            "description": "Perform analysis after each epoch in Hyperopt.",
+            "type": "boolean",
+        },
+        "print_all": {
+            "description": "Print all hyperopt trials, not just the best ones.",
+            "type": "boolean",
+            "default": False,
+        },
+        "hyperopt_jobs": {
+            "description": (
+                "The number of concurrently running jobs for hyperoptimization "
+                "(hyperopt worker processes). "
+                "If -1 (default), all CPUs are used, for -2, all CPUs but one are used, etc. "
+                "If 1 is given, no parallel computing is used."
+            ),
+            "type": "integer",
+            "default": -1,
+        },
+        "hyperopt_random_state": {
+            "description": "Random state for hyperopt trials.",
+            "type": "integer",
+            "minimum": 0,
+        },
+        "hyperopt_min_trades": {
+            "description": "Minimum number of trades per epoch for hyperopt.",
+            "type": "integer",
+            "minimum": 0,
+        },
+        "hyperopt_loss": {
+            "description": (
+                "The class name of the hyperopt loss function class (IHyperOptLoss). "
+                "Different functions can generate completely different results, "
+                "since the target for optimization is different. "
+                f"Built-in Hyperopt-loss-functions are: {', '.join(HYPEROPT_LOSS_BUILTIN)}"
+            ),
+            "type": "string",
+        },
+        # end hyperopt
         "bot_name": {
             "description": "Name of the trading bot. Passed via API to a client.",
             "type": "string",

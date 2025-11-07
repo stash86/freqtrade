@@ -120,8 +120,9 @@ class MarketCapPairList(IPairList):
                 "help": "Refresh period in seconds",
             },
             "mode": {
-                "type": "string",
+                "type": "option",
                 "default": "whitelist",
+                "options": ["whitelist", "blacklist"],
                 "description": "Mode of operation",
                 "help": "Mode of operation (whitelist/blacklist)",
             },

@@ -7,9 +7,11 @@ ft-pandas-ta==0.3.16
 ta-lib==0.6.8
 technical==1.5.3
 
-ccxt==4.5.12
+ccxt==4.5.16
+# for fast ECDSA signatures/verification
+coincurve==21.0.0
 cryptography==46.0.3
-aiohttp==3.13.1
+aiohttp==3.13.2
 SQLAlchemy==2.0.44
 python-telegram-bot==22.5
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
@@ -25,25 +27,24 @@ pycoingecko==3.2.0
 jinja2==3.1.6
 joblib==1.5.2
 rich==14.2.0
-pyarrow==21.0.0; platform_machine != 'armv7l' and platform_machine != "aarch64"
-# TODO: downgrade for aarch64 until https://github.com/apache/arrow/issues/47229 is resolved
-pyarrow==20.0.0;  platform_machine == "aarch64"
+pyarrow==22.0.0; platform_machine != 'armv7l'
+
 
 # Load ticker files 30% faster
 python-rapidjson==1.22
 # Properly format api responses
-orjson==3.11.3
+orjson==3.11.4
 
 # Notify systemd
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.119.1
+fastapi==0.120.2
 pydantic==2.12.3
 uvicorn==0.38.0
 pyjwt==2.10.1
 aiofiles==25.1.0
-psutil==7.1.1
+psutil==7.1.2
 
 # Building config files interactively
 questionary==2.1.1
