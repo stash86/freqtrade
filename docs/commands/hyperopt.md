@@ -11,12 +11,11 @@ usage: freqtrade hyperopt [-h] [-v] [--no-color] [--logfile FILE] [-V]
                           [--eps] [--enable-protections]
                           [--dry-run-wallet DRY_RUN_WALLET]
                           [--timeframe-detail TIMEFRAME_DETAIL] [-e INT]
-                          [--spaces {all,buy,sell,roi,stoploss,trailing,protection,trades,default} [{all,buy,sell,roi,stoploss,trailing,protection,trades,default} ...]]
-                          [--print-all] [--print-json] [-j JOBS]
-                          [--random-state INT] [--min-trades INT]
-                          [--hyperopt-loss NAME] [--disable-param-export]
-                          [--ignore-missing-spaces] [--analyze-per-epoch]
-                          [--early-stop INT]
+                          [--spaces SPACES [SPACES ...]] [--print-all]
+                          [--print-json] [-j JOBS] [--random-state INT]
+                          [--min-trades INT] [--hyperopt-loss NAME]
+                          [--disable-param-export] [--ignore-missing-spaces]
+                          [--analyze-per-epoch] [--early-stop INT]
 
 options:
   -h, --help            show this help message and exit
@@ -54,9 +53,12 @@ options:
                         Specify detail timeframe for backtesting (`1m`, `5m`,
                         `30m`, `1h`, `1d`).
   -e INT, --epochs INT  Specify number of epochs (default: 100).
-  --spaces {all,buy,sell,roi,stoploss,trailing,protection,trades,default} [{all,buy,sell,roi,stoploss,trailing,protection,trades,default} ...]
+  --spaces SPACES [SPACES ...]
                         Specify which parameters to hyperopt. Space-separated
-                        list.
+                        list. Available options: all, buy, sell, roi,
+                        stoploss, trailing, protection, trades, default.
+                        Default: `default` - which includes all spaces except
+                        for 'trailing', 'protection', and 'trades'.
   --print-all           Print all results, not only the best ones.
   --print-json          Print output in JSON format.
   -j JOBS, --job-workers JOBS

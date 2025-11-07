@@ -38,7 +38,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
+      uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
       with:
         activate-environment: true
         enable-cache: true
@@ -248,7 +248,7 @@ jobs:
         python-version: "3.12"
 
     - name: Install uv
-      uses: astral-sh/setup-uv@3259c6206f993105e3a61b142c2d97bf4b9ef83d # v7.1.0
+      uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
       with:
         activate-environment: true
         enable-cache: true
@@ -324,7 +324,7 @@ jobs:
         python -m build --sdist --wheel
 
     - name: Upload artifacts 📦
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: freqtrade-build
         path: |
@@ -337,7 +337,7 @@ jobs:
         python -m build --sdist --wheel ft_client
 
     - name: Upload artifacts 📦
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: freqtrade-client-build
         path: |
@@ -361,7 +361,7 @@ jobs:
         persist-credentials: false
 
     - name: Download artifact  📦
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         pattern: freqtrade*-build
         path: dist
@@ -390,7 +390,7 @@ jobs:
         persist-credentials: false
 
     - name: Download artifact  📦
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         pattern: freqtrade*-build
         path: dist

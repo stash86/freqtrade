@@ -1,5 +1,5 @@
 """
-Freqtrade is the main module of this bot. It contains the class Freqtrade()
+Freqtrade is the main module of this bot. It contains the FreqtradeBot class.
 """
 
 import logging

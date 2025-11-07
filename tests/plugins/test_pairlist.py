@@ -2334,6 +2334,36 @@ def test_FullTradesFilter(mocker, default_conf_usdt, fee, caplog) -> None:
             ["ETH/USDT:USDT", "ADA/USDT:USDT"],
             ["layer-1", "protocol"],
         ),
+        (
+            [
+                # Blacklist high MC pairs
+                {"method": "StaticPairList", "allow_inactive": True},
+                {"method": "MarketCapPairList", "mode": "blacklist"},
+            ],
+            "spot",
+            ["LTC/USDT", "NEO/USDT", "TKN/USDT", "ETC/USDT"],
+            1,
+        ),
+        (
+            [
+                # Blacklist high MC pairs
+                {"method": "StaticPairList", "allow_inactive": True},
+                {"method": "MarketCapPairList", "mode": "blacklist", "max_rank": 2},
+            ],
+            "spot",
+            ["LTC/USDT", "XRP/USDT", "NEO/USDT", "TKN/USDT", "ETC/USDT", "ADA/USDT"],
+            1,
+        ),
+        (
+            [
+                # Blacklist top 6 MarketCap pairs - removes XRP which is at spot 6.
+                {"method": "StaticPairList", "allow_inactive": True},
+                {"method": "MarketCapPairList", "mode": "blacklist", "max_rank": 6},
+            ],
+            "spot",
+            ["LTC/USDT", "NEO/USDT", "TKN/USDT", "ETC/USDT", "ADA/USDT"],
+            1,
+        ),
     ],
 )
 def test_MarketCapPairList_filter(

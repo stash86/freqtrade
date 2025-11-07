@@ -367,7 +367,7 @@ The optional `bearer_token` will be included in the requests Authorization Heade
 
 #### MarketCapPairList
 
-`MarketCapPairList` employs sorting/filtering of pairs by their marketcap rank based of CoinGecko. The returned pairlist will be sorted based of their marketcap ranks.
+`MarketCapPairList` employs sorting/filtering of pairs by their marketcap rank based of CoinGecko. The returned pairlist will be sorted based of their marketcap ranks if used in whitelist `mode`.
 
 ```json
 "pairlists": [
@@ -376,15 +376,20 @@ The optional `bearer_token` will be included in the requests Authorization Heade
         "number_assets": 20,
         "max_rank": 50,
         "refresh_period": 86400,
+        "mode": "whitelist",
         "categories": ["layer-1"]
     }
 ]
 ```
 
-`number_assets` defines the maximum number of pairs returned by the pairlist. `max_rank` will determine the maximum rank used in creating/filtering the pairlist. It's expected that some coins within the top `max_rank` marketcap will not be included in the resulting pairlist since not all pairs will have active trading pairs in your preferred market/stake/exchange combination.  
+`number_assets` defines the maximum number of pairs returned by the pairlist if used in whitelist `mode`. In blacklist `mode`, this setting will be ignored.
+
+`max_rank` will determine the maximum rank used in creating/filtering the pairlist. It's expected that some coins within the top `max_rank` marketcap will not be included in the resulting pairlist since not all pairs will have active trading pairs in your preferred market/stake/exchange combination.  
 While using a `max_rank` bigger than 250 is supported, it's not recommended, as it'll cause multiple API calls to CoinGecko, which can lead to rate limit issues.
 
 The `refresh_period` setting defines the interval (in seconds) at which the marketcap rank data will be refreshed. The default is 86,400 seconds (1 day). The pairlist cache (`refresh_period`) applies to both generating pairlists (when in the first position in the list) and filtering instances (when not in the first position in the list).
+
+The `mode` setting defines whether the plugin will filters in (whitelist `mode`) or filters out (blacklist `mode`) top marketcap ranked coins. By default, the plugin will be in whitelist mode.
 
 The `categories` setting specifies the [coingecko categories](https://www.coingecko.com/en/categories) from which to select coins from. The default is an empty list `[]`, meaning no category filtering is applied.
 If an incorrect category string is chosen, the plugin will print the available categories from CoinGecko and fail. The category should be the ID of the category, for example, for `https://www.coingecko.com/en/categories/layer-1`, the category ID would be `layer-1`. You can pass multiple categories such as `["layer-1", "meme-token"]` to select from several categories.
