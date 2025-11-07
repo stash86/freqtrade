@@ -4,15 +4,21 @@ import numpy as np
 from pandas import DataFrame
 
 from freqtrade.constants import Config
-from freqtrade.data.metrics import calculate_expectancy, calculate_sharpe, calculate_sortino, calculate_calmar, calculate_sqn
+from freqtrade.data.metrics import (
+    calculate_expectancy,
+    calculate_sharpe,
+    calculate_sortino,
+    calculate_calmar,
+    calculate_sqn,
+)
 from freqtrade.optimize.hyperopt import IHyperOptLoss
 import math
 
 
 # Set maximum values for metrics used in the calculation
-max_expectancy = 4
-max_profit_ratio = 10
-max_avg_profit = 50
+max_expectancy = 1
+max_profit_ratio = 5
+max_avg_profit = 5
 max_sharpe_ratio = 5
 max_sortino_ratio = 5
 # max_calmar_ratio = 5
@@ -20,7 +26,6 @@ max_sqn = 5
 
 
 class JetLoss3(IHyperOptLoss):
-
     @staticmethod
     def hyperopt_loss_function(
         results: DataFrame,
@@ -31,7 +36,6 @@ class JetLoss3(IHyperOptLoss):
         *args,
         **kwargs,
     ) -> float:
-        
         starting_balance = config["dry_run_wallet"]
         max_profit_abs = (max_avg_profit / 100) * results["stake_amount"]
 
