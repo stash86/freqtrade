@@ -501,7 +501,7 @@ def test_populate_indicators(hyperopt, testdatadir) -> None:
 def test_generate_optimizer(mocker, hyperopt_conf) -> None:
     hyperopt_conf.update(
         {
-            "spaces": "all",
+            "spaces": ["all"],
             "hyperopt_min_trades": 1,
         }
     )
@@ -569,6 +569,8 @@ def test_generate_optimizer(mocker, hyperopt_conf) -> None:
         "buy_rsi": 35,
         "sell_minusdi": 0.02,
         "sell_rsi": 75,
+        "exit_rsi": 7,
+        "exitaaa": 7,
         "protection_cooldown_lookback": 20,
         "protection_enabled": True,
         "roi_t1": 60.0,
@@ -597,6 +599,12 @@ def test_generate_optimizer(mocker, hyperopt_conf) -> None:
                 "buy_plusdi": 0.02,
                 "buy_rsi": 35,
             },
+            "exitaspace": {
+                "exitaaa": 7,
+            },
+            "exit": {
+                "exit_rsi": 7,
+            },
             "roi": {"0": 0.12, "20.0": 0.02, "50.0": 0.01, "110.0": 0},
             "protection": {
                 "protection_cooldown_lookback": 20,
@@ -616,7 +624,7 @@ def test_generate_optimizer(mocker, hyperopt_conf) -> None:
             "max_open_trades": {"max_open_trades": 3},
         },
         "params_dict": optimizer_param,
-        "params_not_optimized": {"buy": {}, "protection": {}, "sell": {}},
+        "params_not_optimized": {},
         "results_metrics": ANY,
         "total_profit": 3.1e-08,
     }
@@ -897,23 +905,48 @@ def test_simplified_interface_all_failed(mocker, hyperopt_conf, caplog) -> None:
         }
     )
 
-    mocker.patch(
-        "freqtrade.optimize.hyperopt.hyperopt_auto.HyperOptAuto._generate_indicator_space",
-        return_value=[],
-    )
-
     hyperopt = Hyperopt(hyperopt_conf)
     hyperopt.hyperopter.backtesting.strategy.advise_all_indicators = MagicMock()
+    hyperopt.hyperopter.backtesting.strategy.enumerate_parameters = MagicMock(return_value=[])
     hyperopt.hyperopter.custom_hyperopt.generate_roi_table = MagicMock(return_value={})
 
-    with pytest.raises(OperationalException, match=r"The 'protection' space is included into *"):
+    # The first one to fail raises the exception
+    with pytest.raises(OperationalException, match=r"The 'buy' space is included into *"):
         hyperopt.hyperopter.init_spaces()
 
     hyperopt.config["hyperopt_ignore_missing_space"] = True
     caplog.clear()
     hyperopt.hyperopter.init_spaces()
     assert log_has_re(r"The 'protection' space is included into *", caplog)
-    assert hyperopt.hyperopter.protection_space == []
+    assert hyperopt.hyperopter.spaces["protection"] == []
+
+
+def test_simplified_interface_none_selected(mocker, hyperopt_conf, caplog) -> None:
+    mocker.patch("freqtrade.optimize.hyperopt.hyperopt_optimizer.dump", MagicMock())
+    mocker.patch("freqtrade.optimize.hyperopt.hyperopt.file_dump_json")
+    mocker.patch(
+        "freqtrade.optimize.backtesting.Backtesting.load_bt_data",
+        MagicMock(return_value=(MagicMock(), None)),
+    )
+    mocker.patch(
+        "freqtrade.optimize.hyperopt.hyperopt_optimizer.get_timerange",
+        MagicMock(return_value=(datetime(2017, 12, 10), datetime(2017, 12, 13))),
+    )
+
+    patch_exchange(mocker)
+
+    hyperopt_conf.update(
+        {
+            "spaces": [],
+        }
+    )
+
+    hyperopt = Hyperopt(hyperopt_conf)
+    hyperopt.hyperopter.backtesting.strategy.advise_all_indicators = MagicMock()
+    hyperopt.hyperopter.custom_hyperopt.generate_roi_table = MagicMock(return_value={})
+
+    with pytest.raises(OperationalException, match=r"No hyperopt parameters found to optimize\..*"):
+        hyperopt.hyperopter.init_spaces()
 
 
 def test_simplified_interface_buy(mocker, hyperopt_conf, capsys) -> None:
@@ -1047,16 +1080,13 @@ def test_simplified_interface_failed(mocker, hyperopt_conf, space) -> None:
         "freqtrade.optimize.hyperopt.hyperopt_optimizer.get_timerange",
         MagicMock(return_value=(datetime(2017, 12, 10), datetime(2017, 12, 13))),
     )
-    mocker.patch(
-        "freqtrade.optimize.hyperopt.hyperopt_auto.HyperOptAuto._generate_indicator_space",
-        return_value=[],
-    )
 
     patch_exchange(mocker)
 
     hyperopt_conf.update({"spaces": [space]})
 
     hyperopt = Hyperopt(hyperopt_conf)
+    hyperopt.hyperopter.backtesting.strategy.enumerate_parameters = MagicMock(return_value=[])
     hyperopt.hyperopter.backtesting.strategy.advise_all_indicators = MagicMock()
     hyperopt.hyperopter.custom_hyperopt.generate_roi_table = MagicMock(return_value={})
 

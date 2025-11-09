@@ -9,7 +9,7 @@ import numpy as np
 import rapidjson
 from pandas import isna, json_normalize
 
-from freqtrade.constants import FTHYPT_FILEVERSION, Config
+from freqtrade.constants import FTHYPT_FILEVERSION, HYPEROPT_BUILTIN_SPACES, Config
 from freqtrade.enums import HyperoptState
 from freqtrade.exceptions import OperationalException
 from freqtrade.misc import deep_merge_dicts, round_dict, safe_value_fallback2
@@ -219,21 +219,22 @@ class HyperoptTools:
             print(rapidjson.dumps(result_dict, default=str, number_mode=HYPER_PARAMS_FILE_FORMAT))
 
         else:
-            HyperoptTools._params_pretty_print(
-                params, "buy", "Buy hyperspace params:", non_optimized
-            )
-            HyperoptTools._params_pretty_print(
-                params, "sell", "Sell hyperspace params:", non_optimized
-            )
-            HyperoptTools._params_pretty_print(
-                params, "protection", "Protection hyperspace params:", non_optimized
-            )
-            HyperoptTools._params_pretty_print(params, "roi", "ROI table:", non_optimized)
-            HyperoptTools._params_pretty_print(params, "stoploss", "Stoploss:", non_optimized)
-            HyperoptTools._params_pretty_print(params, "trailing", "Trailing stop:", non_optimized)
-            HyperoptTools._params_pretty_print(
-                params, "max_open_trades", "Max Open Trades:", non_optimized
-            )
+            all_spaces = list(params.keys() | non_optimized.keys())
+            # Explicitly listed to keep original sort order
+            spaces = ["buy", "sell", "protection", "roi", "stoploss", "trailing", "max_open_trades"]
+            spaces += [s for s in all_spaces if s not in spaces]
+            lookup = {
+                "roi": "ROI",
+                "trailing": "Trailing stop",
+            }
+            for space in spaces:
+                name = lookup.get(
+                    space, space.capitalize() if space in HYPEROPT_BUILTIN_SPACES else space
+                )
+
+                HyperoptTools._params_pretty_print(
+                    params, space, f"{name} parameters:", non_optimized
+                )
 
     @staticmethod
     def _params_update_for_json(result_dict, params, non_optimized, space: str) -> None:

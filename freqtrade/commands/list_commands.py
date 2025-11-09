@@ -101,7 +101,7 @@ def _print_objs_tabular(objs: list, print_colorized: bool) -> None:
     names = [s["name"] for s in objs]
     objs_to_print: list[dict[str, Text | str]] = [
         {
-            "name": Text(s["name"] if s["name"] else "--"),
+            "Strategy name": Text(s["name"] if s["name"] else "--"),
             "location": s["location_rel"],
             "status": (
                 Text("LOAD FAILED", style="bold red")
@@ -115,11 +115,19 @@ def _print_objs_tabular(objs: list, print_colorized: bool) -> None:
     ]
     for idx, s in enumerate(objs):
         if "hyperoptable" in s:
+            custom_params = [
+                f"{space}: {len(params)}"
+                for space, params in s["hyperoptable"].items()
+                if space not in ["buy", "sell", "protection"]
+            ]
+            hyp = s["hyperoptable"]
             objs_to_print[idx].update(
                 {
-                    "hyperoptable": "Yes" if s["hyperoptable"]["count"] > 0 else "No",
-                    "buy-Params": str(len(s["hyperoptable"].get("buy", []))),
-                    "sell-Params": str(len(s["hyperoptable"].get("sell", []))),
+                    "hyperoptable": "Yes" if len(hyp) > 0 else "No",
+                    "buy-Params": str(len(hyp.get("buy", []))),
+                    "sell-Params": str(len(hyp.get("sell", []))),
+                    "protection-Params": str(len(hyp.get("protection", []))),
+                    "custom-Params": ", ".join(custom_params) if custom_params else "",
                 }
             )
     table = Table()
@@ -140,6 +148,7 @@ def start_list_strategies(args: dict[str, Any]) -> None:
     """
     from freqtrade.configuration import setup_utils_configuration
     from freqtrade.resolvers import StrategyResolver
+    from freqtrade.strategy.hyper import detect_all_parameters
 
     config = setup_utils_configuration(args, RunMode.UTIL_NO_EXCHANGE)
 
@@ -153,9 +162,9 @@ def start_list_strategies(args: dict[str, Any]) -> None:
     strategy_objs = sorted(strategy_objs, key=lambda x: x["name"])
     for obj in strategy_objs:
         if obj["class"]:
-            obj["hyperoptable"] = obj["class"].detect_all_parameters()
+            obj["hyperoptable"] = detect_all_parameters(obj["class"])
         else:
-            obj["hyperoptable"] = {"count": 0}
+            obj["hyperoptable"] = {}
 
     if args["print_one_column"]:
         print("\n".join([s["name"] for s in strategy_objs]))

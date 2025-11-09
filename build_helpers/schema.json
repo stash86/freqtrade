@@ -301,18 +301,7 @@
       "description": "Hyperopt parameter spaces to optimize. Default is the default set andincludes all spaces except for 'trailing', 'protection', and 'trades'.",
       "type": "array",
       "items": {
-        "type": "string",
-        "enum": [
-          "all",
-          "buy",
-          "sell",
-          "roi",
-          "stoploss",
-          "trailing",
-          "protection",
-          "trades",
-          "default"
-        ]
+        "type": "string"
       },
       "default": [
         "default"

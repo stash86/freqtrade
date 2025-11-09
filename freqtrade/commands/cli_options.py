@@ -5,7 +5,10 @@ Definition of cli arguments used in arguments.py
 from argparse import ArgumentTypeError
 
 from freqtrade import constants
-from freqtrade.constants import HYPEROPT_BUILTIN_SPACES, HYPEROPT_LOSS_BUILTIN
+from freqtrade.constants import (
+    HYPEROPT_BUILTIN_SPACE_OPTIONS,
+    HYPEROPT_LOSS_BUILTIN,
+)
 from freqtrade.enums import CandleType
 
 
@@ -278,9 +281,12 @@ AVAILABLE_CLI_OPTIONS = {
     ),
     "spaces": Arg(
         "--spaces",
-        help="Specify which parameters to hyperopt. Space-separated list. Available options: "
-        f"{', '.join(HYPEROPT_BUILTIN_SPACES)}. Default: `default` - "
-        "which includes all spaces except for 'trailing', 'protection', and 'trades'.",
+        help=(
+            "Specify which parameters to hyperopt. Space-separated list. "
+            "Available builtin options (custom spaces will not be listed here): "
+            f"{', '.join(HYPEROPT_BUILTIN_SPACE_OPTIONS)}. Default: `default` - "
+            "which includes all spaces except for 'trailing', 'protection', and 'trades'."
+        ),
         nargs="+",
     ),
     "analyze_per_epoch": Arg(

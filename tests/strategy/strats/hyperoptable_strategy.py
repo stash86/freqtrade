@@ -35,6 +35,9 @@ class HyperoptableStrategy(StrategyTestV3):
     sell_minusdi = DecimalParameter(
         low=0, high=1, default=0.5001, decimals=3, space="sell", load=False
     )
+    exitaaa = IntParameter(low=0, high=10, default=5, space="exitaspace")
+
+    exit_rsi = IntParameter(low=0, high=10, default=5)
     protection_enabled = BooleanParameter(default=True)
     protection_cooldown_lookback = IntParameter([0, 50], default=30)
 

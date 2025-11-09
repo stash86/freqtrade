@@ -296,14 +296,14 @@ def test_show_epoch_details(capsys):
 
     HyperoptTools.show_epoch_details(test_result, 5, False, no_header=True)
     captured = capsys.readouterr()
-    assert "# Trailing stop:" in captured.out
+    assert "# Trailing stop parameters:" in captured.out
     # re.match(r"Pairs for .*", captured.out)
     assert re.search(r"^\s+trailing_stop = True$", captured.out, re.MULTILINE)
     assert re.search(r"^\s+trailing_stop_positive = 0.02$", captured.out, re.MULTILINE)
     assert re.search(r"^\s+trailing_stop_positive_offset = 0.04$", captured.out, re.MULTILINE)
     assert re.search(r"^\s+trailing_only_offset_is_reached = True$", captured.out, re.MULTILINE)
 
-    assert "# ROI table:" in captured.out
+    assert "# ROI parameters:" in captured.out
     assert re.search(r"^\s+minimal_roi = \{$", captured.out, re.MULTILINE)
     assert re.search(r"^\s+\"90\"\:\s0.14,\s*$", captured.out, re.MULTILINE)
 

@@ -7,6 +7,7 @@ This module implements a convenience auto-hyperopt class, which can be used toge
 import logging
 from collections.abc import Callable
 from contextlib import suppress
+from typing import Literal
 
 from freqtrade.exceptions import OperationalException
 
@@ -37,9 +38,16 @@ def _format_exception_message(space: str, ignore_missing_space: bool) -> None:
 class HyperOptAuto(IHyperOpt):
     """
     This class delegates functionality to Strategy(IHyperStrategy) and Strategy.HyperOpt classes.
-     Most of the time Strategy.HyperOpt class would only implement indicator_space and
-     sell_indicator_space methods, but other hyperopt methods can be overridden as well.
+    Most of the time Strategy.HyperOpt class would only implement indicator_space and
+    sell_indicator_space methods, but other hyperopt methods can be overridden as well.
     """
+
+    def get_available_spaces(self) -> list[str]:
+        """
+        Get list of available spaces defined in strategy.
+        :return: list of available spaces.
+        """
+        return list(self.strategy._ft_hyper_params)
 
     def _get_func(self, name) -> Callable:
         """
@@ -54,30 +62,25 @@ class HyperOptAuto(IHyperOpt):
         else:
             return default_func
 
-    def _generate_indicator_space(self, category):
-        for attr_name, attr in self.strategy.enumerate_parameters(category):
-            if attr.optimize:
-                yield attr.get_space(attr_name)
-
-    def _get_indicator_space(self, category) -> list:
-        # TODO: is this necessary, or can we call "generate_space" directly?
-        indicator_space = list(self._generate_indicator_space(category))
+    def get_indicator_space(
+        self, space: Literal["buy", "sell", "enter", "exit", "protection"] | str
+    ) -> list:
+        """
+        Get indicator space for a given space.
+        :param space: parameter space to get.
+        """
+        indicator_space = [
+            attr.get_space(attr_name)
+            for attr_name, attr in self.strategy.enumerate_parameters(space)
+            if attr.optimize
+        ]
         if len(indicator_space) > 0:
             return indicator_space
         else:
             _format_exception_message(
-                category, self.config.get("hyperopt_ignore_missing_space", False)
+                space, self.config.get("hyperopt_ignore_missing_space", False)
             )
             return []
-
-    def buy_indicator_space(self) -> list["Dimension"]:
-        return self._get_indicator_space("buy")
-
-    def sell_indicator_space(self) -> list["Dimension"]:
-        return self._get_indicator_space("sell")
-
-    def protection_space(self) -> list["Dimension"]:
-        return self._get_indicator_space("protection")
 
     def generate_roi_table(self, params: dict) -> dict[int, float]:
         return self._get_func("generate_roi_table")(params)

@@ -1319,10 +1319,10 @@ def test_hyperopt_list(mocker, capsys, caplog, tmp_path):
             " 2/12",
             " 10/12",
             "Best result:",
-            "Buy hyperspace params",
-            "Sell hyperspace params",
-            "ROI table",
-            "Stoploss",
+            "Buy parameters",
+            "Sell parameters",
+            "ROI parameters",
+            "Stoploss parameters",
         ]
     )
     assert all(

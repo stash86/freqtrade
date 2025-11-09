@@ -8,7 +8,6 @@ from freqtrade.constants import (
     BACKTEST_CACHE_AGE,
     DRY_RUN_WALLET,
     EXPORT_OPTIONS,
-    HYPEROPT_BUILTIN_SPACES,
     HYPEROPT_LOSS_BUILTIN,
     MARGIN_MODES,
     ORDERTIF_POSSIBILITIES,
@@ -260,7 +259,7 @@ CONF_SCHEMA = {
                 "includes all spaces except for 'trailing', 'protection', and 'trades'."
             ),
             "type": "array",
-            "items": {"type": "string", "enum": HYPEROPT_BUILTIN_SPACES},
+            "items": {"type": "string"},
             "default": ["default"],
         },
         "analyze_per_epoch": {

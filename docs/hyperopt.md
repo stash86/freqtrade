@@ -46,9 +46,16 @@ Depending on the space you want to optimize, only some of the below are required
 
 * define parameters with `space='buy'` - for entry signal optimization
 * define parameters with `space='sell'` - for exit signal optimization
+* define parameters with `space='enter'` - for entry signal optimization
+* define parameters with `space='exit'` - for exit signal optimization
+* define parameters with `space='protection'` - for protection optimization
+* define parameters with `space='random_spacename'` - for better control over which parameters are optimized together
+
+Pick the space name that suits the parameter best. We recommend to use either `buy` / `sell` or `enter` / `exit` for clarity (however there's no technical limitation in this regard).
 
 !!! Note
     `populate_indicators` needs to create all indicators any of the spaces may use, otherwise hyperopt will not work.
+
 
 Rarely you may also need to create a [nested class](advanced-hyperopt.md#overriding-pre-defined-spaces) named `HyperOpt` and implement
 
@@ -79,15 +86,15 @@ Based on the loss function result, hyperopt will determine the next set of param
 
 ### Configure your Guards and Triggers
 
-There are two places you need to change in your strategy file to add a new buy hyperopt for testing:
+There are two places you need to change in your strategy file to add a new hyperopt parameter for optimization:
 
 * Define the parameters at the class level hyperopt shall be optimizing.
 * Within `populate_entry_trend()` - use defined parameter values instead of raw constants.
 
 There you have two different types of indicators: 1. `guards` and 2. `triggers`.
 
-1. Guards are conditions like "never buy if ADX < 10", or never buy if current price is over EMA10.
-2. Triggers are ones that actually trigger buy in specific moment, like "buy when EMA5 crosses over EMA10" or "buy when close price touches lower Bollinger band".
+1. Guards are conditions like "never enter if ADX < 10", or never enter if current price is over EMA10.
+2. Triggers are ones that actually trigger entry in specific moment, like "enter when EMA5 crosses over EMA10" or "enter when close price touches lower Bollinger band".
 
 !!! Hint "Guards and Triggers"
     Technically, there is no difference between Guards and Triggers.  
@@ -160,9 +167,11 @@ We use these to either enable or disable the ADX and RSI guards.
 The last one we call `trigger` and use it to decide which buy trigger we want to use.
 
 !!! Note "Parameter space assignment"
-    Parameters must either be assigned to a variable named `buy_*` or `sell_*` - or contain `space='buy'` | `space='sell'` to be assigned to a space correctly.
-    If no parameter is available for a space, you'll receive the error that no space was found when running hyperopt.  
+    - Parameters must either be assigned to a variable named `buy_*`, `sell_*`, `enter_*` or `exit_*` or `protection_*` - or contain have a space assigned explicitly via parameter (`space='buy'`, `space='sell'`, `space='protection'`).  
+    - Parameters with conflicting assignments (e.g. `buy_adx = IntParameter(4, 24, default=14, space='sell')`) will use the explicit space assignment.  
+    - If no parameter is available for a space, you'll receive the error that no space was found when running hyperopt.  
     Parameters with unclear space (e.g. `adx_period = IntParameter(4, 24, default=14)` - no explicit nor implicit space) will not be detected and will therefore be ignored.
+    Spaces can also be custom named (e.g. `space='my_custom_space'`), with the only limitation that the space name cannot be `all`, `default` - and must result in a valid python identifier.
 
 So let's write the buy strategy using these values:
 
@@ -520,21 +529,24 @@ freqtrade hyperopt --strategy <strategyname> --timerange 20210101-20210201
 ### Running Hyperopt with Smaller Search Space
 
 Use the `--spaces` option to limit the search space used by hyperopt.
-Letting Hyperopt optimize everything is a huuuuge search space.
-Often it might make more sense to start by just searching for initial buy algorithm.
-Or maybe you just want to optimize your stoploss or roi table for that awesome new buy strategy you have.
+Letting Hyperopt optimize everything is often a huuuuge search space.
+Often it might make more sense to start by just searching for initial entry algorithm.
+Or maybe you just want to optimize your stoploss or roi table for that awesome new strategy you have.
 
 Legal values are:
 
-* `all`: optimize everything
+* `all`: optimize everything (including custom spaces)
 * `buy`: just search for a new buy strategy
 * `sell`: just search for a new sell strategy
+* `enter`: just search for a new entry logic
+* `exit`: just search for a new entry logic
 * `roi`: just optimize the minimal profit table for your strategy
 * `stoploss`: search for the best stoploss value
 * `trailing`: search for the best trailing stop values
 * `trades`: search for the best max open trades values
 * `protection`: search for the best protection parameters (read the [protections section](#optimizing-protections) on how to properly define these)
 * `default`: `all` except `trailing`, `trades` and `protection`
+* `custom_space_name`: any custom space used by any parameter in your strategy
 * space-separated list of any of the above values for example `--spaces roi stoploss`
 
 The default Hyperopt Search Space, used when no `--space` command line option is specified, does not include the `trailing` hyperspace. We recommend you to run optimization for the `trailing` hyperspace separately, when the best parameters for other hyperspaces were found, validated and pasted into your custom strategy.

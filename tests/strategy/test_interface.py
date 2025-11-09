@@ -16,7 +16,7 @@ from freqtrade.enums import ExitCheckTuple, ExitType, SignalDirection
 from freqtrade.exceptions import OperationalException, StrategyError
 from freqtrade.persistence import PairLocks, Trade
 from freqtrade.resolvers import StrategyResolver
-from freqtrade.strategy.hyper import detect_parameters
+from freqtrade.strategy.hyper import detect_all_parameters
 from freqtrade.strategy.parameters import (
     IntParameter,
 )
@@ -928,8 +928,7 @@ def test_auto_hyperopt_interface(default_conf):
     PairLocks.timeframe = default_conf["timeframe"]
     strategy = StrategyResolver.load_strategy(default_conf)
     strategy.ft_bot_start()
-    with pytest.raises(OperationalException):
-        next(strategy.enumerate_parameters("deadBeef"))
+    assert list(strategy.enumerate_parameters("deadBeef")) == []
 
     assert strategy.buy_rsi.value == strategy.buy_params["buy_rsi"]
     # PlusDI is NOT in the buy-params, so default should be used
@@ -940,20 +939,52 @@ def test_auto_hyperopt_interface(default_conf):
 
     # Parameter is disabled - so value from sell_param dict will NOT be used.
     assert strategy.sell_minusdi.value == 0.5
-    all_params = strategy.detect_all_parameters()
+    all_params = detect_all_parameters(strategy.__class__)
     assert isinstance(all_params, dict)
     # Only one buy param at class level
     assert len(all_params["buy"]) == 1
     # Running detect params at instance level reveals both parameters.
-    assert len(list(detect_parameters(strategy, "buy"))) == 2
-    assert len(all_params["sell"]) == 2
-    # Number of Hyperoptable parameters
-    assert all_params["count"] == 5
+    params_inst = detect_all_parameters(strategy)
+    assert len(params_inst["buy"]) == 2
+    assert len(params_inst["sell"]) == 2
 
     strategy.__class__.sell_rsi = IntParameter([0, 10], default=5, space="buy")
 
-    with pytest.raises(OperationalException, match=r"Inconclusive parameter.*"):
-        [x for x in detect_parameters(strategy, "sell")]
+    spaces = detect_all_parameters(strategy.__class__)
+    assert "buy" in spaces
+    assert spaces["buy"]["sell_rsi"] == strategy.sell_rsi
+    del strategy.__class__.sell_rsi
+
+    strategy.__class__.exit22_rsi = IntParameter([0, 10], default=5)
+
+    with pytest.raises(
+        OperationalException, match=r"Cannot determine parameter space for exit22_rsi\."
+    ):
+        detect_all_parameters(strategy.__class__)
+
+    # Invalid parameter space
+    strategy.__class__.exit22_rsi = IntParameter([0, 10], default=5, space="all")
+    with pytest.raises(
+        OperationalException, match=r"'all' is not a valid space\. Parameter: exit22_rsi\."
+    ):
+        detect_all_parameters(strategy.__class__)
+
+    strategy.__class__.exit22_rsi = IntParameter([0, 10], default=5, space="hello:world:22")
+    with pytest.raises(
+        OperationalException,
+        match=r"'hello:world:22' is not a valid space\. Parameter: exit22_rsi\.",
+    ):
+        detect_all_parameters(strategy.__class__)
+    del strategy.__class__.exit22_rsi
+
+    # Valid exit parameter
+    strategy.__class__.exit_rsi = IntParameter([0, 10], default=5)
+    strategy.__class__.enter_rsi = IntParameter([0, 10], default=5)
+    spaces = detect_all_parameters(strategy.__class__)
+    assert "exit" in spaces
+    assert "enter" in spaces
+    del strategy.__class__.exit_rsi
+    del strategy.__class__.enter_rsi
 
 
 def test_auto_hyperopt_interface_loadparams(default_conf, mocker, caplog):

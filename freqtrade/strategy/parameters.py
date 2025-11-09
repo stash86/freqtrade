@@ -32,7 +32,7 @@ class BaseParameter(ABC):
     Defines a parameter that can be optimized by hyperopt.
     """
 
-    category: str | None
+    space: str | None
     default: Any
     value: Any
     in_space: bool = False
@@ -49,9 +49,9 @@ class BaseParameter(ABC):
     ):
         """
         Initialize hyperopt-optimizable parameter.
-        :param space: A parameter category. Can be 'buy' or 'sell'. This parameter is optional if
-         parameter field
-         name is prefixed with 'buy_' or 'sell_'.
+        :param space: The parameter space. Can be 'buy', 'sell', or a string that's also a
+                valid python identifier.
+                This parameter is optional if parameter name is prefixed with 'buy_' or 'sell_'.
         :param optimize: Include parameter in hyperopt optimizations.
         :param load: Load parameter value from {space}_params.
         :param kwargs: Extra parameters to optuna.distributions.
@@ -61,7 +61,7 @@ class BaseParameter(ABC):
             raise OperationalException(
                 "Name is determined by parameter field name and can not be specified manually."
             )
-        self.category = space
+        self.space = space
         self._space_params = kwargs
         self.value = default
         self.optimize = optimize
@@ -109,8 +109,9 @@ class NumericParameter(BaseParameter):
         :param high: Upper end (inclusive) of optimization space.
                      Must be none of entire range is passed first parameter.
         :param default: A default value.
-        :param space: A parameter category. Can be 'buy' or 'sell'. This parameter is optional if
-                      parameter fieldname is prefixed with 'buy_' or 'sell_'.
+        :param space: The parameter space. Can be 'buy', 'sell', or a string that's also a
+                valid python identifier.
+                This parameter is optional if parameter name is prefixed with 'buy_' or 'sell_'.
         :param optimize: Include parameter in hyperopt optimizations.
         :param load: Load parameter value from {space}_params.
         :param kwargs: Extra parameters to optuna.distributions.*.
@@ -151,8 +152,9 @@ class IntParameter(NumericParameter):
         :param high: Upper end (inclusive) of optimization space.
                      Must be none of entire range is passed first parameter.
         :param default: A default value.
-        :param space: A parameter category. Can be 'buy' or 'sell'. This parameter is optional if
-                      parameter fieldname is prefixed with 'buy_' or 'sell_'.
+        :param space: The parameter space. Can be 'buy', 'sell', or a string that's also a
+                valid python identifier.
+                This parameter is optional if parameter name is prefixed with 'buy_' or 'sell_'.
         :param optimize: Include parameter in hyperopt optimizations.
         :param load: Load parameter value from {space}_params.
         :param kwargs: Extra parameters to optuna.distributions.IntDistribution.
@@ -205,8 +207,9 @@ class RealParameter(NumericParameter):
         :param high: Upper end (inclusive) of optimization space.
                      Must be none if entire range is passed first parameter.
         :param default: A default value.
-        :param space: A parameter category. Can be 'buy' or 'sell'. This parameter is optional if
-                      parameter fieldname is prefixed with 'buy_' or 'sell_'.
+        :param space: The parameter space. Can be 'buy', 'sell', or a string that's also a
+                valid python identifier.
+                This parameter is optional if parameter name is prefixed with 'buy_' or 'sell_'.
         :param optimize: Include parameter in hyperopt optimizations.
         :param load: Load parameter value from {space}_params.
         :param kwargs: Extra parameters to optuna.distributions.FloatDistribution.
@@ -245,8 +248,9 @@ class DecimalParameter(NumericParameter):
                      Must be none if entire range is passed first parameter.
         :param default: A default value.
         :param decimals: A number of decimals after floating point to be included in testing.
-        :param space: A parameter category. Can be 'buy' or 'sell'. This parameter is optional if
-                      parameter fieldname is prefixed with 'buy_' or 'sell_'.
+        :param space: The parameter space. Can be 'buy', 'sell', or a string that's also a
+                valid python identifier.
+                This parameter is optional if parameter name is prefixed with 'buy_' or 'sell_'.
         :param optimize: Include parameter in hyperopt optimizations.
         :param load: Load parameter value from {space}_params.
         :param kwargs: Extra parameters to optuna's NumericParameter.
@@ -310,10 +314,10 @@ class CategoricalParameter(BaseParameter):
         Initialize hyperopt-optimizable parameter.
         :param categories: Optimization space, [a, b, ...].
         :param default: A default value. If not specified, first item from specified space will be
-         used.
-        :param space: A parameter category. Can be 'buy' or 'sell'. This parameter is optional if
-         parameter field
-         name is prefixed with 'buy_' or 'sell_'.
+                used.
+        :param space: The parameter space. Can be 'buy', 'sell', or a string that's also a
+                valid python identifier.
+                This parameter is optional if parameter name is prefixed with 'buy_' or 'sell_'.
         :param optimize: Include parameter in hyperopt optimizations.
         :param load: Load parameter value from {space}_params.
         :param kwargs: Compatibility. Optuna's CategoricalDistribution does not
@@ -361,10 +365,10 @@ class BooleanParameter(CategoricalParameter):
         Initialize hyperopt-optimizable Boolean Parameter.
         It's a shortcut to `CategoricalParameter([True, False])`.
         :param default: A default value. If not specified, first item from specified space will be
-         used.
-        :param space: A parameter category. Can be 'buy' or 'sell'. This parameter is optional if
-         parameter field
-         name is prefixed with 'buy_' or 'sell_'.
+                used.
+        :param space: The parameter space. Can be 'buy', 'sell', or a string that's also a
+                valid python identifier.
+                This parameter is optional if parameter name is prefixed with 'buy_' or 'sell_'.
         :param optimize: Include parameter in hyperopt optimizations.
         :param load: Load parameter value from {space}_params.
         :param kwargs: Extra parameters to optuna.distributions.CategoricalDistribution.
