@@ -1,4 +1,4 @@
-```
+``` output
 usage: freqtrade download-data [-h] [-v] [--no-color] [--logfile FILE] [-V]
                                [-c PATH] [-d PATH] [--userdir PATH]
                                [-p PAIRS [PAIRS ...]] [--pairs-file FILE]
@@ -15,7 +15,7 @@ usage: freqtrade download-data [-h] [-v] [--no-color] [--logfile FILE] [-V]
 
 options:
   -h, --help            show this help message and exit
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
+  -p, --pairs PAIRS [PAIRS ...]
                         Limit command to these pairs. Pairs are space-
                         separated.
   --pairs-file FILE     File containing a list of pairs. Takes precedence over
@@ -37,7 +37,7 @@ options:
                         OHLCV (e.g. Kraken). If not provided, use `trades-to-
                         ohlcv` to convert trades data to OHLCV data.
   --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
-  -t TIMEFRAMES [TIMEFRAMES ...], --timeframes TIMEFRAMES [TIMEFRAMES ...]
+  -t, --timeframes TIMEFRAMES [TIMEFRAMES ...]
                         Specify which tickers to download. Space-separated
                         list. Default: `1m 5m`.
   --erase               Clean all existing data for the selected
@@ -48,7 +48,7 @@ options:
   --data-format-trades {json,jsongz,feather,parquet}
                         Storage format for downloaded trades data. (default:
                         `feather`).
-  --trading-mode {spot,margin,futures}, --tradingmode {spot,margin,futures}
+  --trading-mode, --tradingmode {spot,margin,futures}
                         Select Trading mode
   --prepend             Allow data prepending. (Data-appending is disabled)
 
@@ -56,21 +56,20 @@ Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
   --no-color            Disable colorization of hyperopt results. May be
                         useful if you are redirecting output to a file.
-  --logfile FILE, --log-file FILE
+  --logfile, --log-file FILE
                         Log to the file specified. Special values are:
                         'syslog', 'journald'. See the documentation for more
                         details.
   -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
+  -c, --config PATH     Specify configuration file (default:
                         `userdir/config.json` or `config.json` whichever
                         exists). Multiple --config options may be used. Can be
                         set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
+  -d, --datadir, --data-dir PATH
                         Path to the base directory of the exchange with
                         historical backtesting data. To see futures data, use
                         trading-mode additionally.
-  --userdir PATH, --user-data-dir PATH
+  --userdir, --user-data-dir PATH
                         Path to userdata directory.
 
 ```

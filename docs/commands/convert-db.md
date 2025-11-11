@@ -1,4 +1,4 @@
-```
+``` output
 usage: freqtrade convert-db [-h] [--db-url PATH] [--db-url-from PATH]
 
 options:

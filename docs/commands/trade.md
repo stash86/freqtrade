@@ -1,4 +1,4 @@
-```
+``` output
 usage: freqtrade trade [-h] [-v] [--no-color] [--logfile FILE] [-V] [-c PATH]
                        [-d PATH] [--userdir PATH] [-s NAME]
                        [--strategy-path PATH] [--recursive-strategy-search]
@@ -15,7 +15,7 @@ options:
   --sd-notify           Notify systemd service manager.
   --dry-run             Enforce dry-run for trading (removes Exchange secrets
                         and simulates trades).
-  --dry-run-wallet DRY_RUN_WALLET, --starting-balance DRY_RUN_WALLET
+  --dry-run-wallet, --starting-balance DRY_RUN_WALLET
                         Starting balance, used for backtesting / hyperopt and
                         dry-runs.
   --fee FLOAT           Specify fee ratio. Will be applied twice (on trade
@@ -25,26 +25,24 @@ Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
   --no-color            Disable colorization of hyperopt results. May be
                         useful if you are redirecting output to a file.
-  --logfile FILE, --log-file FILE
+  --logfile, --log-file FILE
                         Log to the file specified. Special values are:
                         'syslog', 'journald'. See the documentation for more
                         details.
   -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
+  -c, --config PATH     Specify configuration file (default:
                         `userdir/config.json` or `config.json` whichever
                         exists). Multiple --config options may be used. Can be
                         set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
+  -d, --datadir, --data-dir PATH
                         Path to the base directory of the exchange with
                         historical backtesting data. To see futures data, use
                         trading-mode additionally.
-  --userdir PATH, --user-data-dir PATH
+  --userdir, --user-data-dir PATH
                         Path to userdata directory.
 
 Strategy arguments:
-  -s NAME, --strategy NAME
-                        Specify strategy class name which will be used by the
+  -s, --strategy NAME   Specify strategy class name which will be used by the
                         bot.
   --strategy-path PATH  Specify additional strategy lookup path.
   --recursive-strategy-search

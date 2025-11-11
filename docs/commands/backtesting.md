@@ -1,4 +1,4 @@
-```
+``` output
 usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
                              [-c PATH] [-d PATH] [--userdir PATH] [-s NAME]
                              [--strategy-path PATH]
@@ -23,7 +23,7 @@ usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
 
 options:
   -h, --help            show this help message and exit
-  -i TIMEFRAME, --timeframe TIMEFRAME
+  -i, --timeframe TIMEFRAME
                         Specify timeframe (`1m`, `5m`, `30m`, `1h`, `1d`).
   --timerange TIMERANGE
                         Specify what timerange of data to use.
@@ -38,7 +38,7 @@ options:
                         setting.
   --fee FLOAT           Specify fee ratio. Will be applied twice (on trade
                         entry and exit).
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
+  -p, --pairs PAIRS [PAIRS ...]
                         Limit command to these pairs. Pairs are space-
                         separated.
   --eps, --enable-position-stacking
@@ -53,7 +53,7 @@ options:
                         pairlist will be generated for each new candle if
                         you're using a pairlist handler that supports this
                         feature, for example, ShuffleFilter.
-  --dry-run-wallet DRY_RUN_WALLET, --starting-balance DRY_RUN_WALLET
+  --dry-run-wallet, --starting-balance DRY_RUN_WALLET
                         Starting balance, used for backtesting / hyperopt and
                         dry-runs.
   --timeframe-detail TIMEFRAME_DETAIL
@@ -68,13 +68,13 @@ options:
                         becomes `backtest-data-SampleStrategy.json`
   --export {none,trades,signals}
                         Export backtest results (default: trades).
-  --backtest-filename PATH, --export-filename PATH
+  --backtest-filename, --export-filename PATH
                         Use this filename for backtest results.Example:
                         `--backtest-
                         filename=backtest_results_2020-09-27_16-20-48.json`.
                         Assumes either `user_data/backtest_results/` or
                         `--export-directory` as base directory.
-  --backtest-directory PATH, --export-directory PATH
+  --backtest-directory, --export-directory PATH
                         Directory to use for backtest results. Example:
                         `--export-directory=user_data/backtest_results/`.
   --breakdown {day,week,month,year,weekday} [{day,week,month,year,weekday} ...]
@@ -91,26 +91,24 @@ Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
   --no-color            Disable colorization of hyperopt results. May be
                         useful if you are redirecting output to a file.
-  --logfile FILE, --log-file FILE
+  --logfile, --log-file FILE
                         Log to the file specified. Special values are:
                         'syslog', 'journald'. See the documentation for more
                         details.
   -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
+  -c, --config PATH     Specify configuration file (default:
                         `userdir/config.json` or `config.json` whichever
                         exists). Multiple --config options may be used. Can be
                         set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
+  -d, --datadir, --data-dir PATH
                         Path to the base directory of the exchange with
                         historical backtesting data. To see futures data, use
                         trading-mode additionally.
-  --userdir PATH, --user-data-dir PATH
+  --userdir, --user-data-dir PATH
                         Path to userdata directory.
 
 Strategy arguments:
-  -s NAME, --strategy NAME
-                        Specify strategy class name which will be used by the
+  -s, --strategy NAME   Specify strategy class name which will be used by the
                         bot.
   --strategy-path PATH  Specify additional strategy lookup path.
   --recursive-strategy-search

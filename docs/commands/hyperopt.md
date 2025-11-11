@@ -1,4 +1,4 @@
-```
+``` output
 usage: freqtrade hyperopt [-h] [-v] [--no-color] [--logfile FILE] [-V]
                           [-c PATH] [-d PATH] [--userdir PATH] [-s NAME]
                           [--strategy-path PATH] [--recursive-strategy-search]
@@ -19,7 +19,7 @@ usage: freqtrade hyperopt [-h] [-v] [--no-color] [--logfile FILE] [-V]
 
 options:
   -h, --help            show this help message and exit
-  -i TIMEFRAME, --timeframe TIMEFRAME
+  -i, --timeframe TIMEFRAME
                         Specify timeframe (`1m`, `5m`, `30m`, `1h`, `1d`).
   --timerange TIMERANGE
                         Specify what timerange of data to use.
@@ -34,7 +34,7 @@ options:
                         setting.
   --fee FLOAT           Specify fee ratio. Will be applied twice (on trade
                         entry and exit).
-  -p PAIRS [PAIRS ...], --pairs PAIRS [PAIRS ...]
+  -p, --pairs PAIRS [PAIRS ...]
                         Limit command to these pairs. Pairs are space-
                         separated.
   --hyperopt-path PATH  Specify additional lookup path for Hyperopt Loss
@@ -46,13 +46,13 @@ options:
                         Enable protections for backtesting. Will slow
                         backtesting down by a considerable amount, but will
                         include configured protections
-  --dry-run-wallet DRY_RUN_WALLET, --starting-balance DRY_RUN_WALLET
+  --dry-run-wallet, --starting-balance DRY_RUN_WALLET
                         Starting balance, used for backtesting / hyperopt and
                         dry-runs.
   --timeframe-detail TIMEFRAME_DETAIL
                         Specify detail timeframe for backtesting (`1m`, `5m`,
                         `30m`, `1h`, `1d`).
-  -e INT, --epochs INT  Specify number of epochs (default: 100).
+  -e, --epochs INT      Specify number of epochs (default: 100).
   --spaces SPACES [SPACES ...]
                         Specify which parameters to hyperopt. Space-separated
                         list. Available builtin options (custom spaces will
@@ -62,7 +62,7 @@ options:
                         for 'trailing', 'protection', and 'trades'.
   --print-all           Print all results, not only the best ones.
   --print-json          Print output in JSON format.
-  -j JOBS, --job-workers JOBS
+  -j, --job-workers JOBS
                         The number of concurrently running jobs for
                         hyperoptimization (hyperopt worker processes). If -1
                         (default), all CPUs are used, for -2, all CPUs but one
@@ -72,7 +72,7 @@ options:
                         reproducible hyperopt results.
   --min-trades INT      Set minimal desired number of trades for evaluations
                         in the hyperopt optimization path (default: 1).
-  --hyperopt-loss NAME, --hyperoptloss NAME
+  --hyperopt-loss, --hyperoptloss NAME
                         Specify the class name of the hyperopt loss function
                         class (IHyperOptLoss). Different functions can
                         generate completely different results, since the
@@ -98,26 +98,24 @@ Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).
   --no-color            Disable colorization of hyperopt results. May be
                         useful if you are redirecting output to a file.
-  --logfile FILE, --log-file FILE
+  --logfile, --log-file FILE
                         Log to the file specified. Special values are:
                         'syslog', 'journald'. See the documentation for more
                         details.
   -V, --version         show program's version number and exit
-  -c PATH, --config PATH
-                        Specify configuration file (default:
+  -c, --config PATH     Specify configuration file (default:
                         `userdir/config.json` or `config.json` whichever
                         exists). Multiple --config options may be used. Can be
                         set to `-` to read config from stdin.
-  -d PATH, --datadir PATH, --data-dir PATH
+  -d, --datadir, --data-dir PATH
                         Path to the base directory of the exchange with
                         historical backtesting data. To see futures data, use
                         trading-mode additionally.
-  --userdir PATH, --user-data-dir PATH
+  --userdir, --user-data-dir PATH
                         Path to userdata directory.
 
 Strategy arguments:
-  -s NAME, --strategy NAME
-                        Specify strategy class name which will be used by the
+  -s, --strategy NAME   Specify strategy class name which will be used by the
                         bot.
   --strategy-path PATH  Specify additional strategy lookup path.
   --recursive-strategy-search

@@ -1,4 +1,4 @@
-```
+``` output
 usage: freqtrade install-ui [-h] [--erase] [--prerelease]
                             [--ui-version UI_VERSION]
 

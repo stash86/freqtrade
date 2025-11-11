@@ -91,12 +91,12 @@ jobs:
 
     - name: Run command docs partials extract
       # This should be kept before the repository check to ensure that the docs are up-to-date
+      if: ${{ (matrix.python-version == '3.13') }}
       run: |
         python build_helpers/create_command_partials.py
 
     - name: Check for repository changes - *nix
-      # TODO: python 3.13 slightly changed the output of argparse.
-      if: ${{ (matrix.python-version != '3.13') && (runner.os != 'Windows') }}
+      if: ${{ (runner.os != 'Windows') }}
       run: |
         if [ -n "$(git status --porcelain)" ]; then
           echo "Repository is dirty, changes detected:"

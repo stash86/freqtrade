@@ -150,184 +150,16 @@ This method will work for all arguments - check the "show" command for a list of
 
     For a full list of available commands, please refer to the list below.
 
+#### Freqtrade client- available commands
+
 Possible commands can be listed from the rest-client script using the `help` command.
 
 ``` bash
 freqtrade-client help
 ```
 
-``` output
-Possible commands:
+--8<-- "commands/freqtrade-client.md"
 
-available_pairs
-    Return available pair (backtest data) based on timeframe / stake_currency selection
-
-        :param timeframe: Only pairs with this timeframe available.
-        :param stake_currency: Only pairs that include this timeframe
-
-balance
-    Get the account balance.
-
-blacklist
-    Show the current blacklist.
-
-        :param add: List of coins to add (example: "BNB/BTC")
-
-cancel_open_order
-    Cancel open order for trade.
-
-        :param trade_id: Cancels open orders for this trade.
-
-count
-    Return the amount of open trades.
-
-daily
-    Return the profits for each day, and amount of trades.
-
-delete_lock
-    Delete (disable) lock from the database.
-
-        :param lock_id: ID for the lock to delete
-
-delete_trade
-    Delete trade from the database.
-        Tries to close open orders. Requires manual handling of this asset on the exchange.
-
-        :param trade_id: Deletes the trade with this ID from the database.
-
-forcebuy
-    Buy an asset.
-
-        :param pair: Pair to buy (ETH/BTC)
-        :param price: Optional - price to buy
-
-forceenter
-    Force entering a trade
-
-        :param pair: Pair to buy (ETH/BTC)
-        :param side: 'long' or 'short'
-        :param price: Optional - price to buy
-
-forceexit
-    Force-exit a trade.
-
-        :param tradeid: Id of the trade (can be received via status command)
-        :param ordertype: Order type to use (must be market or limit)
-        :param amount: Amount to sell. Full sell if not given
-
-health
-    Provides a quick health check of the running bot.
-
-lock_add
-    Manually lock a specific pair
-
-        :param pair: Pair to lock
-        :param until: Lock until this date (format "2024-03-30 16:00:00Z")
-        :param side: Side to lock (long, short, *)
-        :param reason: Reason for the lock        
-
-locks
-    Return current locks
-
-logs
-    Show latest logs.
-
-        :param limit: Limits log messages to the last <limit> logs. No limit to get the entire log.
-
-pair_candles
-    Return live dataframe for <pair><timeframe>.
-
-        :param pair: Pair to get data for
-        :param timeframe: Only pairs with this timeframe available.
-        :param limit: Limit result to the last n candles.
-
-pair_history
-    Return historic, analyzed dataframe
-
-        :param pair: Pair to get data for
-        :param timeframe: Only pairs with this timeframe available.
-        :param strategy: Strategy to analyze and get values for
-        :param timerange: Timerange to get data for (same format than --timerange endpoints)
-
-performance
-    Return the performance of the different coins.
-
-ping
-    simple ping
-
-plot_config
-    Return plot configuration if the strategy defines one.
-
-profit
-    Return the profit summary.
-
-reload_config
-    Reload configuration.
-
-show_config
-    Returns part of the configuration, relevant for trading operations.
-
-start
-    Start the bot if it's in the stopped state.
-
-pause
-    Pause the bot if it's in the running state. If triggered on stopped state will handle open positions.
-
-stats
-    Return the stats report (durations, sell-reasons).
-
-status
-    Get the status of open trades.
-
-stop
-    Stop the bot. Use `start` to restart.
-
-stopbuy
-    Stop buying (but handle sells gracefully). Use `reload_config` to reset.
-
-strategies
-    Lists available strategies
-
-strategy
-    Get strategy details
-
-        :param strategy: Strategy class name
-
-sysinfo
-    Provides system information (CPU, RAM usage)
-
-trade
-    Return specific trade
-
-        :param trade_id: Specify which trade to get.
-
-trades
-    Return trades history, sorted by id
-
-        :param limit: Limits trades to the X last trades. Max 500 trades.
-        :param offset: Offset by this amount of trades.
-
-list_open_trades_custom_data
-    Return a dict containing open trades custom-datas
-
-        :param key: str, optional - Key of the custom-data
-        :param limit: Limits trades to X trades.
-        :param offset: Offset by this amount of trades.
-
-list_custom_data
-    Return a dict containing custom-datas of a specified trade
-
-        :param trade_id: int - ID of the trade
-        :param key: str, optional - Key of the custom-data
-
-version
-    Return the version of the bot.
-
-whitelist
-    Show the current whitelist.
-
-
-```
 
 ### Available endpoints
 
@@ -359,7 +191,7 @@ All endpoints in the below table need to be prefixed with the base URL of the AP
 | `/locks/<lockid>` | DELETE | Deletes (disables) the lock by id.<br/>*Params:*<br/>- `lockid` (`int`)
 | `/profit` | GET | Display a summary of your profit/loss from close trades and some stats about your performance.
 | `/forceexit` | POST | Instantly exits the given trade (ignoring `minimum_roi`), using the given order type ("market" or "limit", uses your config setting if not specified), and the chosen amount (full sell if not specified). If `all` is supplied as the `tradeid`, then all currently open trades will be forced to exit.<br/>*Params:*<br/>- `<tradeid>` (`int` or `str`)<br/>- `<ordertype>` (`str`)<br/>- `[amount]` (`float`)
-| `/forceenter` | POST | Instantly enters the given pair. Side is optional and is either `long` or `short` (default is `long`). Rate is optional. (`force_entry_enable` must be set to True)<br/>*Params:*<br/>- `<pair>` (`str`)<br/>- `<side>` (`str`)<br/>- `[rate]` (`float`)
+| `/forceenter` | POST | Instantly enters the given pair. Side is optional and is either `long` or `short` (default is `long`). Price, stake amount, entry tag and leverage are optional. Order type is optional and is either `market` or `long` (default using the value set in config). (`force_entry_enable` must be set to True)<br/>*Params:*<br/>- `<pair>` (`str`)<br/>- `<side>` (`str`)<br/>- `[price]` (`float`)<br/>- `[ordertype]` (`str`)<br/>- `[stakeamount]` (`float`)<br/>- `[entry_tag]` (`str`)<br/>- `[leverage]` (`float`)
 | `/performance` | GET | Show performance of each finished trade grouped by pair.
 | `/balance` | GET | Show account balance per currency.
 | `/daily` | GET | Shows profit or loss per day, over the last n days (n defaults to 7).<br/>*Params:*<br/>- `timescale` (`int`)

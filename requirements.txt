@@ -7,9 +7,7 @@ ft-pandas-ta==0.3.16
 ta-lib==0.6.8
 technical==1.5.3
 
-ccxt==4.5.16
-# for fast ECDSA signatures/verification
-coincurve==21.0.0
+ccxt==4.5.17
 cryptography==46.0.3
 aiohttp==3.13.2
 SQLAlchemy==2.0.44
@@ -39,12 +37,12 @@ orjson==3.11.4
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.120.2
-pydantic==2.12.3
+fastapi==0.121.0
+pydantic==2.12.4
 uvicorn==0.38.0
 pyjwt==2.10.1
 aiofiles==25.1.0
-psutil==7.1.2
+psutil==7.1.3
 
 # Building config files interactively
 questionary==2.1.1
