@@ -11,7 +11,7 @@ import pytest
 
 from freqtrade.enums import CandleType
 from freqtrade.exchange import timeframe_to_minutes, timeframe_to_prev_date
-from freqtrade.exchange.exchange import timeframe_to_msecs
+from freqtrade.exchange.exchange import Exchange, timeframe_to_msecs
 from freqtrade.util import dt_floor_day, dt_now, dt_ts
 from tests.exchange_online.conftest import EXCHANGE_FIXTURE_TYPE, EXCHANGES
 
@@ -422,14 +422,22 @@ class TestCCXTExchange:
             trades_orig = nvspy.call_args_list[2][0][0]
             assert len(trades_orig[-1].get("info")) > len(trades_orig[-2].get("info"))
 
-    def test_ccxt_get_fee(self, exchange: EXCHANGE_FIXTURE_TYPE):
-        exch, exchangename = exchange
-        pair = EXCHANGES[exchangename]["pair"]
+    def _ccxt_get_fee(self, exch: Exchange, pair: str):
         threshold = 0.01
         assert 0 < exch.get_fee(pair, "limit", "buy") < threshold
         assert 0 < exch.get_fee(pair, "limit", "sell") < threshold
         assert 0 < exch.get_fee(pair, "market", "buy") < threshold
         assert 0 < exch.get_fee(pair, "market", "sell") < threshold
+
+    def test_ccxt_get_fee_spot(self, exchange: EXCHANGE_FIXTURE_TYPE):
+        exch, exchangename = exchange
+        pair = EXCHANGES[exchangename]["pair"]
+        self._ccxt_get_fee(exch, pair)
+
+    def test_ccxt_get_fee_futures(self, exchange_futures: EXCHANGE_FIXTURE_TYPE):
+        exch, exchangename = exchange_futures
+        pair = EXCHANGES[exchangename].get("futures_pair", EXCHANGES[exchangename]["pair"])
+        self._ccxt_get_fee(exch, pair)
 
     def test_ccxt_get_max_leverage_spot(self, exchange: EXCHANGE_FIXTURE_TYPE):
         spot, spot_name = exchange

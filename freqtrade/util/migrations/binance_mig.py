@@ -14,6 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 def migrate_binance_futures_names(config: Config):
+    """
+    Migrate binance futures names in both database and data files.
+    This is needed because ccxt naming changed from "BTC/USDT" to "BTC/USDT:USDT"
+    """
     if not (
         config.get("trading_mode", TradingMode.SPOT) == TradingMode.FUTURES
         and config["exchange"]["name"] == "binance"

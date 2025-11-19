@@ -63,7 +63,7 @@ from freqtrade.rpc.rpc_types import (
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
 from freqtrade.util import FtPrecise, MeasureTime, PeriodicCache, dt_from_ts, dt_now
-from freqtrade.util.migrations.binance_mig import migrate_binance_futures_names
+from freqtrade.util.migrations import migrate_live_content
 from freqtrade.wallets import Wallets
 
 
@@ -257,7 +257,7 @@ class FreqtradeBot(LoggingMixin):
         Called on startup and after reloading the bot - triggers notifications and
         performs startup tasks
         """
-        migrate_binance_futures_names(self.config)
+        migrate_live_content(self.config, self.exchange)
         set_startup_time()
 
         self.rpc.startup_messages(self.config, self.pairlists, self.protections)

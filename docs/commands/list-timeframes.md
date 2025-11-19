@@ -2,11 +2,14 @@
 usage: freqtrade list-timeframes [-h] [-v] [--no-color] [--logfile FILE] [-V]
                                  [-c PATH] [-d PATH] [--userdir PATH]
                                  [--exchange EXCHANGE] [-1]
+                                 [--trading-mode {spot,margin,futures}]
 
 options:
   -h, --help            show this help message and exit
   --exchange EXCHANGE   Exchange name. Only valid if no config is provided.
   -1, --one-column      Print output in one column.
+  --trading-mode, --tradingmode {spot,margin,futures}
+                        Select Trading mode
 
 Common arguments:
   -v, --verbose         Verbose mode (-vv for more, -vvv to get all messages).

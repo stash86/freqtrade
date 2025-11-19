@@ -1,4 +1,5 @@
 import subprocess  # noqa: S404, RUF100
+import sys
 from pathlib import Path
 
 
@@ -62,4 +63,9 @@ def extract_command_partials():
 
 
 if __name__ == "__main__":
+    if sys.version_info < (3, 13):  # pragma: no cover
+        sys.exit(
+            "argparse output changed in Python 3.13+. "
+            "To keep command partials up to date, please run this script with Python 3.13+."
+        )
     extract_command_partials()

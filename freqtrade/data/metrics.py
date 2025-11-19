@@ -143,6 +143,20 @@ def _calc_drawdown_series(
         max_drawdown_df["drawdown_relative"] = (
             max_drawdown_df["high_value"] - max_drawdown_df["cumulative"]
         ) / max_drawdown_df["high_value"]
+
+    # Add zero row at start to account for edge-cases with no winning / losing trades - so high/low
+    # will be 0.0 in such cases.
+    zero_row = pd.DataFrame(
+        {
+            "cumulative": [0.0],
+            "high_value": [0.0],
+            "drawdown": [0.0],
+            "drawdown_relative": [0.0],
+            "date": [profit_results.loc[0, date_col]],
+        }
+    )
+
+    max_drawdown_df = pd.concat([zero_row, max_drawdown_df], ignore_index=True)
     return max_drawdown_df
 
 
@@ -215,6 +229,7 @@ def calculate_max_drawdown(
     max_drawdown_df = _calc_drawdown_series(
         profit_results, date_col=date_col, value_col=value_col, starting_balance=starting_balance
     )
+    # max_drawdown_df has an extra zero row at the start
 
     # Calculate maximum drawdown
     idxmin = (
@@ -223,15 +238,15 @@ def calculate_max_drawdown(
         else max_drawdown_df["drawdown"].idxmin()
     )
     high_idx = max_drawdown_df.iloc[: idxmin + 1]["high_value"].idxmax()
-    high_date = profit_results.loc[high_idx, date_col]
-    low_date = profit_results.loc[idxmin, date_col]
-    high_val = max_drawdown_df.loc[high_idx, "cumulative"]
-    low_val = max_drawdown_df.loc[idxmin, "cumulative"]
-    max_drawdown_rel = max_drawdown_df.loc[idxmin, "drawdown_relative"]
+    high_date = profit_results.at[max(high_idx - 1, 0), date_col]
+    low_date = profit_results.at[max(idxmin - 1, 0), date_col]
+    high_val = max_drawdown_df.at[high_idx, "cumulative"]
+    low_val = max_drawdown_df.at[idxmin, "cumulative"]
+    max_drawdown_rel = max_drawdown_df.at[idxmin, "drawdown_relative"]
 
     # Calculate current drawdown
     current_high_idx = max_drawdown_df["high_value"].iloc[:-1].idxmax()
-    current_high_date = profit_results.loc[current_high_idx, date_col]
+    current_high_date = profit_results.at[max(current_high_idx - 1, 0), date_col]
     current_high_value = max_drawdown_df.iloc[-1]["high_value"]
     current_cumulative = max_drawdown_df.iloc[-1]["cumulative"]
     current_drawdown_abs = current_high_value - current_cumulative

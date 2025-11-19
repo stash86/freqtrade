@@ -104,7 +104,7 @@ ARGS_BACKTEST_SHOW = [
 
 ARGS_LIST_EXCHANGES = ["print_one_column", "list_exchanges_all", "trading_mode", "dex_exchanges"]
 
-ARGS_LIST_TIMEFRAMES = ["exchange", "print_one_column"]
+ARGS_LIST_TIMEFRAMES = ["exchange", "print_one_column", "trading_mode"]
 
 ARGS_LIST_PAIRS = [
     "exchange",
