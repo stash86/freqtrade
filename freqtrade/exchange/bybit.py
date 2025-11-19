@@ -318,9 +318,12 @@ class Bybit(Exchange):
             if isinstance(delivery_time, str) and (delivery_time != ""):
                 delivery_time = int(delivery_time)
 
-            max_delivery: any = int(time.time() * 1000) + (
-                30 * 24 * 60 * 60 * 1000
-            )  # Assume exchange don't announce delisting more than 30 days in advance
+            if not isinstance(delivery_time, int) or delivery_time <= 0:
+                return None
+
+            max_delivery = int(time.time() * 1000) + (
+                14 * 24 * 60 * 60 * 1000
+            )  # Assume exchange don't announce delisting more than 14 days in advance
 
             if delivery_time < max_delivery:
                 return dt_from_ts(delivery_time)
