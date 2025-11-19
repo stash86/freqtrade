@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timedelta
 
 import ccxt
@@ -238,19 +239,6 @@ class Bitget(Exchange):
                 "Freqtrade currently only supports isolated futures for bitget"
             )
 
-    def _check_delisting_futures(self, pair: str) -> datetime | None:
-        delivery_time = self.markets.get(pair, {}).get("info", {}).get("limitOpenTime", None)
-        if delivery_time:
-            if delivery_time == "-1":
-                return None
-
-            if isinstance(delivery_time, str) and (delivery_time != ""):
-                delivery_time = int(delivery_time)
-
-            delivery_time = dt_from_ts(delivery_time)
-
-        return delivery_time
-
     def check_delisting_time(self, pair: str) -> datetime | None:
         """
         Check if the pair gonna be delisted.
@@ -263,4 +251,25 @@ class Bitget(Exchange):
 
         if self.trading_mode == TradingMode.FUTURES:
             return self._check_delisting_futures(pair)
+        return None
+
+    def _check_delisting_futures(self, pair: str) -> datetime | None:
+        delivery_time = self.markets.get(pair, {}).get("info", {}).get("limitOpenTime", None)
+        if delivery_time:
+            if delivery_time == "-1":
+                return None
+
+            if isinstance(delivery_time, str) and (delivery_time != ""):
+                delivery_time = int(delivery_time)
+
+            if not isinstance(delivery_time, int) or delivery_time <= 0:
+                return None
+
+            max_delivery = int(time.time() * 1000) + (
+                14 * 24 * 60 * 60 * 1000
+            )  # Assume exchange don't announce delisting more than 14 days in advance
+
+            if delivery_time < max_delivery:
+                return dt_from_ts(delivery_time)
+
         return None
