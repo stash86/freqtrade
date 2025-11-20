@@ -1,11 +1,10 @@
 import logging
-import time
 from datetime import datetime, timedelta
 
 import ccxt
 
 from freqtrade.constants import BuySell
-from freqtrade.enums import TRADE_MODES, CandleType, MarginMode, TradingMode
+from freqtrade.enums import OPTIMIZE_MODES, CandleType, MarginMode, TradingMode
 from freqtrade.exceptions import (
     DDosProtection,
     OperationalException,
@@ -246,7 +245,7 @@ class Bitget(Exchange):
         :param pair: Market symbol
         :return: Datetime if the pair gonna be delisted, None otherwise
         """
-        if self._config["runmode"] not in TRADE_MODES:
+        if self._config["runmode"] in OPTIMIZE_MODES:
             return None
 
         if self.trading_mode == TradingMode.FUTURES:
@@ -256,16 +255,13 @@ class Bitget(Exchange):
     def _check_delisting_futures(self, pair: str) -> datetime | None:
         delivery_time = self.markets.get(pair, {}).get("info", {}).get("limitOpenTime", None)
         if delivery_time:
-            if delivery_time == "-1":
-                return None
-
             if isinstance(delivery_time, str) and (delivery_time != ""):
                 delivery_time = int(delivery_time)
 
             if not isinstance(delivery_time, int) or delivery_time <= 0:
                 return None
 
-            max_delivery = int(time.time() * 1000) + (
+            max_delivery = dt_ts() + (
                 14 * 24 * 60 * 60 * 1000
             )  # Assume exchange don't announce delisting more than 14 days in advance
 
