@@ -10,7 +10,7 @@ from freqtrade.exchange import Exchange
 from freqtrade.exchange.common import retrier
 from freqtrade.exchange.exchange_types import CcxtOrder, FtHas
 from freqtrade.misc import deep_merge_dicts
-from freqtrade.util.datetime_helpers import dt_from_ts, dt_ts
+from freqtrade.util import dt_from_ts, dt_ts
 
 
 logger = logging.getLogger(__name__)

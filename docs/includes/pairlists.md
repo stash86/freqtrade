@@ -417,7 +417,7 @@ This filter allows freqtrade to ignore pairs until they have been listed for at 
 Removes pairs that will be delisted on the exchange maximum `max_days_from_now` days from now (defaults to `0` which remove all future delisted pairs no matter how far from now). Currently this filter only supports following exchanges:
 
 !!! Note "Available exchanges"
-    Delist filter is only available on Binance, where Binance Futures will work for both dry and live modes, while Binance Spot is limited to live mode (for technical reasons).
+    Delist filter is available on Bybit Futures, Bitget Futures and Binance, where Binance Futures will work for both dry and live modes, while Binance Spot is limited to live mode (for technical reasons).
 
 !!! Warning "Backtesting"
     `DelistFilter` does not support backtesting mode.

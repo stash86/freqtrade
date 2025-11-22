@@ -1,10 +1,11 @@
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
-from freqtrade.enums.marginmode import MarginMode
-from freqtrade.enums.tradingmode import TradingMode
+from freqtrade.enums import MarginMode, RunMode, TradingMode
+from freqtrade.util import dt_utc
 from tests.conftest import EXMS, get_mock_coro, get_patched_exchange, log_has
 from tests.exchange.test_exchange import ccxt_exceptionhandlers
 
@@ -214,3 +215,43 @@ def test_bybit__order_needs_price(
     exchange.unified_account = uta
 
     assert exchange._order_needs_price(side, order_type) == expected
+
+
+def test_check_delisting_time_bybit(default_conf_usdt, mocker):
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="bybit")
+    exchange._config["runmode"] = RunMode.BACKTEST
+    delist_fut_mock = MagicMock(return_value=None)
+    mocker.patch.object(exchange, "_check_delisting_futures", delist_fut_mock)
+
+    # Invalid run mode
+    resp = exchange.check_delisting_time("BTC/USDT:USDT")
+    assert resp is None
+    assert delist_fut_mock.call_count == 0
+
+    # Delist spot called
+    exchange._config["runmode"] = RunMode.DRY_RUN
+    resp1 = exchange.check_delisting_time("BTC/USDT")
+    assert resp1 is None
+    assert delist_fut_mock.call_count == 0
+
+    # Delist futures called
+    exchange.trading_mode = TradingMode.FUTURES
+    resp1 = exchange.check_delisting_time("BTC/USDT:USDT")
+    assert resp1 is None
+    assert delist_fut_mock.call_count == 1
+
+
+def test__check_delisting_futures_bybit(default_conf_usdt, mocker, markets):
+    markets["BTC/USDT:USDT"] = deepcopy(markets["SOL/BUSD:BUSD"])
+    markets["BTC/USDT:USDT"]["info"]["deliveryTime"] = "0"
+    markets["SOL/BUSD:BUSD"]["info"]["deliveryTime"] = "0"
+    markets["ADA/USDT:USDT"]["info"]["deliveryTime"] = "1760745600000"  # 2025-10-18
+    exchange = get_patched_exchange(mocker, default_conf_usdt, exchange="bybit")
+    mocker.patch(f"{EXMS}.markets", PropertyMock(return_value=markets))
+
+    resp_sol = exchange._check_delisting_futures("SOL/BUSD:BUSD")
+    # SOL has no delisting date
+    assert resp_sol is None
+    # Actually has a delisting date
+    resp_ada = exchange._check_delisting_futures("ADA/USDT:USDT")
+    assert resp_ada == dt_utc(2025, 10, 18)

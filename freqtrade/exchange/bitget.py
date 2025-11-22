@@ -14,7 +14,7 @@ from freqtrade.exceptions import (
 from freqtrade.exchange import Exchange
 from freqtrade.exchange.common import API_RETRY_COUNT, retrier
 from freqtrade.exchange.exchange_types import CcxtOrder, FtHas
-from freqtrade.util.datetime_helpers import dt_from_ts, dt_now, dt_ts
+from freqtrade.util import dt_from_ts, dt_now, dt_ts
 
 
 logger = logging.getLogger(__name__)
