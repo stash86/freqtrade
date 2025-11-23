@@ -39,6 +39,7 @@ class RecursiveAnalysis(BaseAnalysis):
         self.dict_recursive: dict[str, Any] = dict()
 
         self.pair_to_used: str | None = None
+        self._strat_scc: int | None = None
 
     # For recursive bias check
     # analyzes two data frames with processed indicators and shows differences between them.
@@ -151,7 +152,8 @@ class RecursiveAnalysis(BaseAnalysis):
         backtesting._set_strategy(backtesting.strategylist[0])
 
         strat = backtesting.strategy
-        self._strat_scc = strat.startup_candle_count
+        if self._strat_scc is None:
+            self._strat_scc = strat.startup_candle_count
 
         if self._strat_scc < 1:
             raise ConfigurationError(
