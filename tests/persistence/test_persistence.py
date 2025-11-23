@@ -1479,6 +1479,8 @@ def test_to_json(fee):
         "contract_size": 1,
         "orders": [],
         "has_open_orders": False,
+        "nr_of_successful_entries": 0,
+        "nr_of_successful_exits": 0,
     }
 
     # Simulate dry_run entries
@@ -1570,6 +1572,8 @@ def test_to_json(fee):
         "contract_size": 1,
         "orders": [],
         "has_open_orders": False,
+        "nr_of_successful_entries": 0,
+        "nr_of_successful_exits": 0,
     }
 
 

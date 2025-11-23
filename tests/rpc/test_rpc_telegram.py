@@ -421,7 +421,8 @@ async def test_telegram_status_multi_entry(default_conf, update, mocker, fee) ->
     assert msg_mock.call_count == 4
     msg = msg_mock.call_args_list[3][0][0]
     assert re.search(r"Number of Entries.*2", msg)
-    assert re.search(r"Number of Exits.*1", msg)
+    # Exit order is still open, hence not a successful exit
+    assert re.search(r"Number of Exits.*0", msg)
     assert re.search(r"Close Date:", msg) is None
     assert re.search(r"Close Profit:", msg) is None
 

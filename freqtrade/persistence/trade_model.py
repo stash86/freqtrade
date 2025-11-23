@@ -757,6 +757,8 @@ class LocalTrade:
             "precision_mode": self.precision_mode,
             "precision_mode_price": self.precision_mode_price,
             "contract_size": self.contract_size,
+            "nr_of_successful_entries": self.nr_of_successful_entries,
+            "nr_of_successful_exits": self.nr_of_successful_exits,
             "has_open_orders": self.has_open_orders,
             "orders": orders_json,
         }
