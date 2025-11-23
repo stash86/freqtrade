@@ -388,8 +388,10 @@ def refresh_backtest_ohlcv_data(
             for timeframe in timeframes:
                 # Get fast candles via parallel method on first loop through per timeframe
                 # and candle type. Downloads all the pairs in the list and stores them.
+                # Also skips if only 1 pair/timeframe combination is scheduled for download.
                 if (
                     not no_parallel_download
+                    and (len(pairs) + len(timeframes)) > 2
                     and exchange.get_option("download_data_parallel_quick", True)
                     and (
                         ((pair, timeframe, candle_type) not in fast_candles)
@@ -474,7 +476,7 @@ def _download_all_pairs_history_parallel(
     :return: Candle pairs with timeframes
     """
     candles: dict[PairWithTimeframe, DataFrame] = {}
-    since = 0
+    since: int | None = None
     if timerange:
         if timerange.starttype == "date":
             since = timerange.startts * 1000
@@ -482,10 +484,12 @@ def _download_all_pairs_history_parallel(
     candle_limit = exchange.ohlcv_candle_limit(timeframe, candle_type)
     one_call_min_time_dt = dt_ts(date_minus_candles(timeframe, candle_limit))
     # check if we can get all candles in one go, if so then we can download them in parallel
-    if since > one_call_min_time_dt:
+    if since is None or since > one_call_min_time_dt:
         logger.info(
-            f"Downloading parallel candles for {timeframe} for all pairs "
-            f"since {format_ms_time(since)}"
+            f"Downloading parallel candles for {timeframe} for all pairs"
+            f" since {format_ms_time(since)}"
+            if since
+            else "."
         )
         needed_pairs: ListPairsWithTimeframes = [
             (p, timeframe, candle_type) for p in [p for p in pairs]

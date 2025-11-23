@@ -1,6 +1,13 @@
 from datetime import timedelta
 
-from freqtrade.util import decimals_per_coin, fmt_coin, fmt_coin2, format_duration, round_value
+from freqtrade.util import (
+    decimals_per_coin,
+    fmt_coin,
+    fmt_coin2,
+    format_duration,
+    format_pct,
+    round_value,
+)
 
 
 def test_decimals_per_coin():
@@ -25,6 +32,7 @@ def test_fmt_coin():
     assert fmt_coin(0.1274512123, "BTC", False) == "0.12745121"
     assert fmt_coin(0.1274512123, "ETH", False) == "0.12745"
     assert fmt_coin(222.2, "USDT", False, True) == "222.200"
+    assert fmt_coin(float("nan"), "USDT", False, True) == "N/A"
 
 
 def test_fmt_coin2():
@@ -35,6 +43,7 @@ def test_fmt_coin2():
     assert fmt_coin2(0.1274512123, "BTC") == "0.12745121 BTC"
     assert fmt_coin2(0.1274512123, "ETH") == "0.12745121 ETH"
     assert fmt_coin2(0.00001245, "PEPE") == "0.00001245 PEPE"
+    assert fmt_coin2(float("nan"), "PEPE") == "N/A PEPE"
 
 
 def test_round_value():
@@ -46,6 +55,8 @@ def test_round_value():
     assert round_value(0.1274512123, 5) == "0.12745"
     assert round_value(222.2, 3, True) == "222.200"
     assert round_value(222.2, 0, True) == "222"
+    assert round_value(float("nan"), 0, True) == "N/A"
+    assert round_value(float("nan"), 10, True) == "N/A"
 
 
 def test_format_duration():
@@ -55,3 +66,13 @@ def test_format_duration():
     assert format_duration(timedelta(minutes=1445)) == "1d 00:05"
     assert format_duration(timedelta(minutes=11445)) == "7d 22:45"
     assert format_duration(timedelta(minutes=101445)) == "70d 10:45"
+
+
+def test_format_pct():
+    assert format_pct(0.1234) == "12.34%"
+    assert format_pct(0.1) == "10.00%"
+    assert format_pct(0.0) == "0.00%"
+    assert format_pct(-0.0567) == "-5.67%"
+    assert format_pct(-1.5567) == "-155.67%"
+    assert format_pct(None) == "N/A"
+    assert format_pct(float("nan")) == "N/A"
