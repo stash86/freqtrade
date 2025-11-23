@@ -159,12 +159,22 @@ def reduce_mem_usage(pair: str, dataframe: DataFrame) -> DataFrame:
                 elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
                     df[col] = df[col].astype(np.int64)
             elif str(col_type)[:5] == "float":
-                if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-                    df[col] = df[col].astype(np.float16)
-                elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-                    df[col] = df[col].astype(np.float32)
-                else:
-                    df[col] = df[col].astype(np.float64)
+                # Safe float16 check with overflow protection
+                try:
+                    float16_min = np.float16(np.finfo(np.float16).min)
+                    float16_max = np.float16(np.finfo(np.float16).max)
+                    if c_min > float16_min and c_max < float16_max:
+                        df[col] = df[col].astype(np.float16)
+                    elif c_min >= np.finfo(np.float32).min and c_max <= np.finfo(np.float32).max:
+                        df[col] = df[col].astype(np.float32)
+                    else:
+                        df[col] = df[col].astype(np.float64)
+                except (OverflowError, RuntimeWarning):
+                    # If overflow occurs, skip float16
+                    if c_min >= np.finfo(np.float32).min and c_max <= np.finfo(np.float32).max:
+                        df[col] = df[col].astype(np.float32)
+                    else:
+                        df[col] = df[col].astype(np.float64)
             # else:
             #     logger.info(f"Column not optimized because the type is {str(col_type)}")
         # else:
