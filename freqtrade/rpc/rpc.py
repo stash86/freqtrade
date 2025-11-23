@@ -54,6 +54,7 @@ from freqtrade.util import (
     dt_ts,
     dt_ts_def,
     format_date,
+    format_pct,
     shorten_date,
 )
 from freqtrade.wallets import PositionWallet, Wallet
@@ -312,7 +313,7 @@ class RPC:
         fiat_total_profit_sum = nan
         for trade in self._rpc_trade_status():
             # Format profit as a string with the right sign
-            profit = f"{trade['profit_ratio']:.2%}"
+            profit = f"{format_pct(trade['profit_ratio'])}"
             fiat_profit = trade.get("profit_fiat", None)
             if fiat_profit is None or isnan(fiat_profit):
                 fiat_profit = trade.get("profit_abs", 0.0)

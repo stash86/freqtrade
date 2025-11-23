@@ -18,6 +18,7 @@ from freqtrade.util.formatters import (
     fmt_coin,
     fmt_coin2,
     format_duration,
+    format_pct,
     round_value,
 )
 from freqtrade.util.ft_precise import FtPrecise
@@ -44,6 +45,7 @@ __all__ = [
     "format_date",
     "format_ms_time",
     "format_ms_time_det",
+    "format_pct",
     "get_dry_run_wallet",
     "FtPrecise",
     "PeriodicCache",

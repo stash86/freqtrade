@@ -582,6 +582,23 @@ def test_refresh_backtest_ohlcv_data(
         assert log_has_re(r"Downloading pair ETH/BTC, funding_rate, interval 8h\.", caplog)
         assert log_has_re(r"Downloading pair ETH/BTC, mark, interval 4h\.", caplog)
 
+    # Test with only one pair - no parallel download should happen 1 pair/timeframe combination
+    # doesn't justify parallelization
+    parallel_mock.reset_mock()
+    dl_mock.reset_mock()
+    refresh_backtest_ohlcv_data(
+        exchange=ex,
+        pairs=[
+            "ETH/BTC",
+        ],
+        timeframes=["5m"],
+        datadir=testdatadir,
+        timerange=timerange,
+        erase=False,
+        trading_mode=trademode,
+    )
+    assert parallel_mock.call_count == 0
+
 
 def test_download_data_no_markets(mocker, default_conf, caplog, testdatadir):
     dl_mock = mocker.patch(
@@ -780,6 +797,7 @@ def test_download_all_pairs_history_parallel(mocker, default_conf_usdt):
     exchange.refresh_latest_ohlcv.reset_mock()
 
     # Test without timerange
+    # expected to call refresh_latest_ohlcv - as we can't know how much will be required.
     result3 = _download_all_pairs_history_parallel(
         exchange=exchange,
         pairs=pairs,
@@ -787,8 +805,8 @@ def test_download_all_pairs_history_parallel(mocker, default_conf_usdt):
         candle_type=candle_type,
         timerange=None,
     )
-    assert result3 == {}
-    assert exchange.refresh_latest_ohlcv.call_count == 0
+    assert result3 == expected
+    assert exchange.refresh_latest_ohlcv.call_count == 1
 
 
 def test_download_pair_history_with_pair_candles(mocker, default_conf, tmp_path, caplog) -> None:

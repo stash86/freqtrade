@@ -310,7 +310,7 @@ def test_rpc_status_table(default_conf, ticker, fee, mocker, time_machine) -> No
     )
     assert "now" == result[0][2]
     assert "ETH/BTC" in result[0][1]
-    assert "nan%" == result[0][3]
+    assert "N/A" == result[0][3]
     assert isnan(fiat_profit_sum)
 
 
