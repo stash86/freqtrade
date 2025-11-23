@@ -342,6 +342,8 @@ class TradeSchema(BaseModel):
     max_rate: float | None = None
     min_profit: float | None = None
     max_profit: float | None = None
+    nr_of_successful_entries: int
+    nr_of_successful_exits: int
     has_open_orders: bool
     orders: list[OrderSchema]
 

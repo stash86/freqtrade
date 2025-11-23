@@ -1605,6 +1605,8 @@ def test_api_status(
         "precision_mode": None,
         "orders": [ANY],
         "has_open_orders": True,
+        "nr_of_successful_entries": ANY,
+        "nr_of_successful_exits": ANY,
     }
 
     mocker.patch(
@@ -1817,6 +1819,8 @@ def test_api_force_entry(botclient, mocker, fee, endpoint):
         "price_precision": None,
         "precision_mode": None,
         "has_open_orders": False,
+        "nr_of_successful_entries": ANY,
+        "nr_of_successful_exits": ANY,
         "orders": [],
     }
 
