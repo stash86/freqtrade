@@ -1,15 +1,34 @@
 {
     "exchange": {
-        "pair_whitelist": [
-            "BTC/USDT:USDT","ETH/USDT:USDT","BNB/USDT:USDT","SOL/USDT:USDT","XRP/USDT:USDT",
-            "ADA/USDT:USDT","AVAX/USDT:USDT","LINK/USDT:USDT","TRX/USDT:USDT","DOT/USDT:USDT",
-            "ICP/USDT:USDT","LTC/USDT:USDT","UNI/USDT:USDT","BCH/USDT:USDT",
-            "ETC/USDT:USDT","ATOM/USDT:USDT","OP/USDT:USDT","XLM/USDT:USDT","IMX/USDT:USDT",
-            "TON/USDT:USDT","HBAR/USDT:USDT","SUI/USDT:USDT","APT/USDT:USDT","NEAR/USDT:USDT",
-        ],
+        "pair_whitelist": [],
         "pair_blacklist": []
     },
     "pairlists": [
-        {"method": "StaticPairList"},
+        {
+            "method": "MarketCapPairList",
+            "number_assets": 40,
+            "max_rank": 60,
+            "refresh_period": 86400
+        },
+        {
+            "method": "MarketCapPairList",
+            "max_rank": 60,
+            "mode": "blacklist",
+            "categories": [
+                "stablecoins",
+                "meme-token",
+                "exchange-based-tokens",
+                "stablecoin-issuer",
+                "trump-affiliated-tokens"
+            ]
+        },
+        {
+            "method": "FullTradesFilter"
+        },
+        {
+            "method": "VolumePairList",
+            "number_assets": 15,
+            "sort_key": "quoteVolume",
+        },
     ],
 }
