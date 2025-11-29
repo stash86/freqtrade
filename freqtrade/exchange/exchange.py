@@ -16,7 +16,6 @@ from typing import Any, Literal, TypeGuard, TypeVar
 
 import ccxt
 import ccxt.pro as ccxt_pro
-from cachetools import TTLCache
 from ccxt import TICK_SIZE
 from dateutil import parser
 from pandas import DataFrame, concat
@@ -107,9 +106,8 @@ from freqtrade.misc import (
     file_load_json,
     safe_value_fallback2,
 )
-from freqtrade.util import dt_from_ts, dt_now
+from freqtrade.util import FtTTLCache, PeriodicCache, dt_from_ts, dt_now
 from freqtrade.util.datetime_helpers import dt_humanize_delta, dt_ts, format_ms_time
-from freqtrade.util.periodic_cache import PeriodicCache
 
 
 logger = logging.getLogger(__name__)
@@ -230,13 +228,13 @@ class Exchange:
 
         self._cache_lock = Lock()
         # Cache for 10 minutes ...
-        self._fetch_tickers_cache: TTLCache = TTLCache(maxsize=4, ttl=60 * 10)
+        self._fetch_tickers_cache: FtTTLCache = FtTTLCache(maxsize=4, ttl=60 * 10)
         # Cache values for 300 to avoid frequent polling of the exchange for prices
         # Caching only applies to RPC methods, so prices for open trades are still
         # refreshed once every iteration.
         # Shouldn't be too high either, as it'll freeze UI updates in case of open orders.
-        self._exit_rate_cache: TTLCache = TTLCache(maxsize=100, ttl=300)
-        self._entry_rate_cache: TTLCache = TTLCache(maxsize=100, ttl=300)
+        self._exit_rate_cache: FtTTLCache = FtTTLCache(maxsize=100, ttl=300)
+        self._entry_rate_cache: FtTTLCache = FtTTLCache(maxsize=100, ttl=300)
 
         # Holds candles
         self._klines: dict[PairWithTimeframe, DataFrame] = {}
@@ -1771,7 +1769,7 @@ class Exchange:
             balances.pop("total", None)
             balances.pop("used", None)
 
-            self._log_exchange_response("fetch_balances", balances)
+            self._log_exchange_response("fetch_balance", balances)
             return balances
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
@@ -2164,7 +2162,9 @@ class Exchange:
         name = side.capitalize()
         strat_name = "entry_pricing" if side == "entry" else "exit_pricing"
 
-        cache_rate: TTLCache = self._entry_rate_cache if side == "entry" else self._exit_rate_cache
+        cache_rate: FtTTLCache = (
+            self._entry_rate_cache if side == "entry" else self._exit_rate_cache
+        )
         if not refresh:
             with self._cache_lock:
                 rate = cache_rate.get(pair)

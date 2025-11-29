@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import ccxt
-from cachetools import TTLCache
 from pandas import DataFrame
 
 from freqtrade.constants import DEFAULT_DATAFRAME_COLUMNS
@@ -21,6 +20,7 @@ from freqtrade.exchange.common import retrier
 from freqtrade.exchange.exchange_types import FtHas, Tickers
 from freqtrade.exchange.exchange_utils_timeframe import timeframe_to_msecs
 from freqtrade.misc import deep_merge_dicts, json_load
+from freqtrade.util import FtTTLCache
 from freqtrade.util.datetime_helpers import dt_from_ts, dt_ts
 
 
@@ -75,7 +75,7 @@ class Binance(Exchange):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._spot_delist_schedule_cache: TTLCache = TTLCache(maxsize=100, ttl=300)
+        self._spot_delist_schedule_cache: FtTTLCache = FtTTLCache(maxsize=100, ttl=300)
 
     def get_proxy_coin(self) -> str:
         """

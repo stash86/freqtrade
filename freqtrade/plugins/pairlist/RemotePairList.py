@@ -10,7 +10,6 @@ from typing import Any
 
 import rapidjson
 import requests
-from cachetools import TTLCache
 
 from freqtrade import __version__
 from freqtrade.configuration.load_config import CONFIG_PARSE_MODE
@@ -18,6 +17,7 @@ from freqtrade.exceptions import OperationalException
 from freqtrade.exchange.exchange_types import Tickers
 from freqtrade.plugins.pairlist.IPairList import IPairList, PairlistParameter, SupportsBacktesting
 from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
+from freqtrade.util import FtTTLCache
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class RemotePairList(IPairList):
         self._number_pairs = self._pairlistconfig["number_assets"]
         self._refresh_period: int = self._pairlistconfig.get("refresh_period", 1800)
         self._keep_pairlist_on_failure = self._pairlistconfig.get("keep_pairlist_on_failure", True)
-        self._pair_cache: TTLCache = TTLCache(maxsize=1, ttl=self._refresh_period)
+        self._pair_cache: FtTTLCache = FtTTLCache(maxsize=1, ttl=self._refresh_period)
         self._pairlist_url = self._pairlistconfig.get("pairlist_url", "")
         self._read_timeout = self._pairlistconfig.get("read_timeout", 60)
         self._bearer_token = self._pairlistconfig.get("bearer_token", "")
@@ -159,7 +159,7 @@ class RemotePairList(IPairList):
             )
 
             self._refresh_period = remote_refresh_period
-            self._pair_cache = TTLCache(maxsize=1, ttl=remote_refresh_period)
+            self._pair_cache = FtTTLCache(maxsize=1, ttl=remote_refresh_period)
 
         self._init_done = True
 

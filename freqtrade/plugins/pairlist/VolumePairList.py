@@ -8,14 +8,12 @@ import logging
 from datetime import timedelta
 from typing import Any, Literal
 
-from cachetools import TTLCache
-
 from freqtrade.constants import ListPairsWithTimeframes
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange import timeframe_to_minutes, timeframe_to_prev_date
 from freqtrade.exchange.exchange_types import Tickers
 from freqtrade.plugins.pairlist.IPairList import IPairList, PairlistParameter, SupportsBacktesting
-from freqtrade.util import dt_now, format_ms_time
+from freqtrade.util import FtTTLCache, dt_now, format_ms_time
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +41,7 @@ class VolumePairList(IPairList):
         self._min_value = self._pairlistconfig.get("min_value", 0)
         self._max_value = self._pairlistconfig.get("max_value", None)
         self._refresh_period = self._pairlistconfig.get("refresh_period", 1800)
-        self._pair_cache: TTLCache = TTLCache(maxsize=1, ttl=self._refresh_period)
+        self._pair_cache: FtTTLCache = FtTTLCache(maxsize=1, ttl=self._refresh_period)
         self._lookback_days = self._pairlistconfig.get("lookback_days", 0)
         self._lookback_timeframe = self._pairlistconfig.get("lookback_timeframe", "1d")
         self._lookback_period = self._pairlistconfig.get("lookback_period", 0)

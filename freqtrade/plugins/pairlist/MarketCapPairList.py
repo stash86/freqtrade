@@ -7,11 +7,10 @@ Provides dynamic pair list based on Market Cap
 import logging
 import math
 
-from cachetools import TTLCache
-
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange.exchange_types import Tickers
 from freqtrade.plugins.pairlist.IPairList import IPairList, PairlistParameter, SupportsBacktesting
+from freqtrade.util import FtTTLCache
 from freqtrade.util.coin_gecko import FtCoinGeckoApi
 
 
@@ -38,7 +37,7 @@ class MarketCapPairList(IPairList):
         self._max_rank = self._pairlistconfig.get("max_rank", 30)
         self._refresh_period = self._pairlistconfig.get("refresh_period", 86400)
         self._categories = self._pairlistconfig.get("categories", [])
-        self._marketcap_cache: TTLCache = TTLCache(maxsize=1, ttl=self._refresh_period)
+        self._marketcap_cache: FtTTLCache = FtTTLCache(maxsize=1, ttl=self._refresh_period)
 
         _coingecko_config = self._config.get("coingecko", {})
 

@@ -7,11 +7,11 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from cachetools import TTLCache
 from requests.exceptions import RequestException
 
 from freqtrade.constants import SUPPORTED_FIAT, Config
 from freqtrade.mixins.logging_mixin import LoggingMixin
+from freqtrade.util import FtTTLCache
 from freqtrade.util.coin_gecko import FtCoinGeckoApi
 
 
@@ -54,7 +54,7 @@ class CryptoToFiatConverter(LoggingMixin):
 
     def __init__(self, config: Config) -> None:
         # Timeout: 6h
-        self._pair_price: TTLCache = TTLCache(maxsize=500, ttl=6 * 60 * 60)
+        self._pair_price: FtTTLCache = FtTTLCache(maxsize=500, ttl=6 * 60 * 60)
 
         _coingecko_config = config.get("coingecko", {})
         self._coingecko = FtCoinGeckoApi(

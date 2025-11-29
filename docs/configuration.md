@@ -675,7 +675,7 @@ Should you experience problems you suspect are caused by websockets, you can dis
 Should you be required to use a proxy, please refer to the [proxy section](#using-a-proxy-with-freqtrade) for more information.
 
 !!! Info "Rollout"
-    We're implementing this out slowly, ensuring stability of your bots.
+    We're rolling this out slowly, ensuring stability of your bots.
     Currently, usage is limited to ohlcv data streams.
     It's also limited to a few exchanges, with new exchanges being added on an ongoing basis.
 

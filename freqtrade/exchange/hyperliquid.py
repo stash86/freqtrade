@@ -3,6 +3,7 @@
 import logging
 from copy import deepcopy
 from datetime import datetime
+from typing import Any
 
 from freqtrade.constants import BuySell
 from freqtrade.enums import MarginMode, TradingMode
@@ -55,6 +56,13 @@ class Hyperliquid(Exchange):
             config.update({"options": {"defaultType": "spot"}})
         config.update(super()._ccxt_config)
         return config
+
+    def market_is_tradable(self, market: dict[str, Any]) -> bool:
+        parent_check = super().market_is_tradable(market)
+
+        # Exclude hip3 markets for now - which have the format XYZ:GOOGL/USDT:USDT -
+        # and XYZ:GOOGL as base
+        return parent_check and ":" not in market["base"]
 
     def get_max_leverage(self, pair: str, stake_amount: float | None) -> float:
         # There are no leverage tiers

@@ -1,6 +1,8 @@
 from collections.abc import Callable
 
-from cachetools import TTLCache, cached
+from cachetools import cached
+
+from freqtrade.util import FtTTLCache
 
 
 class LoggingMixin:
@@ -18,7 +20,7 @@ class LoggingMixin:
         """
         self.logger = logger
         self.refresh_period = refresh_period
-        self._log_cache: TTLCache = TTLCache(maxsize=1024, ttl=self.refresh_period)
+        self._log_cache: FtTTLCache = FtTTLCache(maxsize=1024, ttl=self.refresh_period)
 
     def log_once(self, message: str, logmethod: Callable, force_show: bool = False) -> None:
         """

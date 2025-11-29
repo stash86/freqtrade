@@ -37,7 +37,7 @@ class ApiBG:
 
     # Generic background jobs
 
-    # TODO: Change this to TTLCache
+    # TODO: Change this to FtTTLCache
     jobs: dict[str, JobsContainer] = {}
     # Pairlist evaluate things
     pairlist_running: bool = False

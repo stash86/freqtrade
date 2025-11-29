@@ -22,6 +22,7 @@ from freqtrade.util.formatters import (
     round_value,
 )
 from freqtrade.util.ft_precise import FtPrecise
+from freqtrade.util.ft_ttlcache import FtTTLCache
 from freqtrade.util.measure_time import MeasureTime
 from freqtrade.util.periodic_cache import PeriodicCache
 from freqtrade.util.progress_tracker import (  # noqa F401
@@ -59,4 +60,5 @@ __all__ = [
     "print_rich_table",
     "print_df_rich_table",
     "CustomProgress",
+    "FtTTLCache",
 ]

@@ -126,6 +126,7 @@ class Backtesting:
 
         self.config["dry_run"] = True
         self.price_pair_prec: dict[str, Series] = {}
+        self.available_pairs: list[str] = []
         self.run_ids: dict[str, str] = {}
         self.strategylist: list[IStrategy] = []
         self.all_bt_content: dict[str, BacktestContentType] = {}
@@ -176,7 +177,8 @@ class Backtesting:
         self._validate_pairlists_for_backtesting()
 
         self.dataprovider.add_pairlisthandler(self.pairlists)
-        self.pairlists.refresh_pairlist()
+        self.dynamic_pairlist: bool = self.config.get("enable_dynamic_pairlist", False)
+        self.pairlists.refresh_pairlist(only_first=self.dynamic_pairlist)
 
         if len(self.pairlists.whitelist) == 0:
             raise OperationalException("No pair in whitelist.")
@@ -211,7 +213,6 @@ class Backtesting:
         self._can_short = self.trading_mode != TradingMode.SPOT
         self._position_stacking: bool = self.config.get("position_stacking", False)
         self.enable_protections: bool = self.config.get("enable_protections", False)
-        self.dynamic_pairlist: bool = self.config.get("enable_dynamic_pairlist", False)
         migrate_data(config, self.exchange)
 
         self.init_backtest()
@@ -335,10 +336,12 @@ class Backtesting:
         self.progress.set_new_value(1)
         self._load_bt_data_detail()
         self.price_pair_prec = {}
+
         for pair in self.pairlists.whitelist:
             if pair in data:
                 # Load price precision logic
                 self.price_pair_prec[pair] = get_tick_size_over_time(data[pair])
+                self.available_pairs.append(pair)
         return data, self.timerange
 
     def _load_bt_data_detail(self) -> None:
@@ -1587,7 +1590,7 @@ class Backtesting:
             self.check_abort()
 
             if self.dynamic_pairlist and self.pairlists:
-                self.pairlists.refresh_pairlist()
+                self.pairlists.refresh_pairlist(pairs=self.available_pairs)
                 pairs = self.pairlists.whitelist
 
             # Reset open trade count for this candle

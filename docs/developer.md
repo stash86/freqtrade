@@ -26,10 +26,19 @@ Alternatively (e.g. if your system is not supported by the setup.sh script), fol
 
 This will install all required tools for development, including `pytest`, `ruff`, `mypy`, and `coveralls`.
 
-Then install the git hook scripts by running `pre-commit install`, so your changes will be verified locally before committing.
-This avoids a lot of waiting for CI already, as some basic formatting checks are done locally on your machine.
+Run the following command to install the git hook scripts:
 
-Before opening a pull request, please familiarize yourself with our [Contributing Guidelines](https://github.com/freqtrade/freqtrade/blob/develop/CONTRIBUTING.md).
+``` bash
+pre-commit install
+```
+
+These pre-commit scripts check your changes automatically before each commit.  
+If any formatting issues are found, the commit will fail and will prompt for fixes.
+This reduces unnecessary CI failures, reduces maintenance burden, and improves code quality.
+
+You can run the checks manually when necessary with `pre-commit run -a`.  
+
+Before opening a pull request, please also familiarize yourself with our [Contributing Guidelines](https://github.com/freqtrade/freqtrade/blob/develop/CONTRIBUTING.md).
 
 ### Devcontainer setup
 

@@ -2772,7 +2772,7 @@ def test_time_pair_generator_open_trades_first(mocker, default_conf, dynamic_pai
     dummy_row = (end_date, 1.0, 1.1, 0.9, 1.0, 0, 0, 0, 0, None, None)
     data = {pair: [dummy_row] for pair in pairs}
 
-    def mock_refresh(self):
+    def mock_refresh(self, **kwargs):
         # Simulate shuffle
         self._whitelist = pairs[::-1]  # ['ETH/BTC', 'NEO/BTC', 'LTC/BTC', 'XRP/BTC']
 
