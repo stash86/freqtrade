@@ -2,7 +2,7 @@ version: 2
 updates:
 - package-ecosystem: docker
   cooldown:
-    default-days: 4
+    default-days: 7
   directories:
     - "/"
     - "/docker"
@@ -16,7 +16,7 @@ updates:
 - package-ecosystem: devcontainers
   directory: "/"
   cooldown:
-    default-days: 4
+    default-days: 7
   schedule:
     interval: daily
   open-pull-requests-limit: 10
@@ -24,7 +24,7 @@ updates:
 - package-ecosystem: pip
   directory: "/"
   cooldown:
-    default-days: 4
+    default-days: 7
     exclude:
       - ccxt
   schedule:
@@ -51,7 +51,7 @@ updates:
 - package-ecosystem: "github-actions"
   directory: "/"
   cooldown:
-    default-days: 4
+    default-days: 7
   schedule:
     interval: "weekly"
   open-pull-requests-limit: 10

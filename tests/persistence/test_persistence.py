@@ -372,8 +372,8 @@ def test_borrowed(fee, is_short, lev, borrowed, trading_mode):
 @pytest.mark.parametrize(
     "is_short,open_rate,close_rate,lev,profit,trading_mode",
     [
-        (False, 2.0, 2.2, 1.0, 0.09451372, spot),
-        (True, 2.2, 2.0, 3.0, 0.25894253, margin),
+        (False, 2, 2.2, 1, 0.09451372, spot),
+        (True, 2.2, 2.0, 3, 0.25894253, margin),
     ],
 )
 @pytest.mark.usefixtures("init_persistence")
@@ -493,8 +493,8 @@ def test_update_limit_order(
     assert trade.close_date is None
     assert log_has_re(
         f"LIMIT_{entry_side.upper()} has been fulfilled for "
-        r"Trade\(id=2, pair=ADA/USDT, amount=30.00000000, "
-        f"is_short={is_short}, leverage={lev}, open_rate={open_rate}0000000, "
+        r"Trade\(id=2, pair=ADA/USDT, amount=30, "
+        f"is_short={is_short}, leverage={lev}, open_rate={open_rate}, "
         r"open_since=.*\).",
         caplog,
     )
@@ -511,8 +511,8 @@ def test_update_limit_order(
     assert trade.close_date is not None
     assert log_has_re(
         f"LIMIT_{exit_side.upper()} has been fulfilled for "
-        r"Trade\(id=2, pair=ADA/USDT, amount=30.00000000, "
-        f"is_short={is_short}, leverage={lev}, open_rate={open_rate}0000000, "
+        r"Trade\(id=2, pair=ADA/USDT, amount=30, "
+        f"is_short={is_short}, leverage={lev}, open_rate={open_rate}, "
         r"open_since=.*\).",
         caplog,
     )
@@ -545,8 +545,8 @@ def test_update_market_order(market_buy_order_usdt, market_sell_order_usdt, fee,
     assert trade.close_date is None
     assert log_has_re(
         r"MARKET_BUY has been fulfilled for Trade\(id=1, "
-        r"pair=ADA/USDT, amount=30.00000000, is_short=False, leverage=1.0, "
-        r"open_rate=2.00000000, open_since=.*\).",
+        r"pair=ADA/USDT, amount=30, is_short=False, leverage=1, "
+        r"open_rate=2, open_since=.*\).",
         caplog,
     )
 
@@ -561,8 +561,8 @@ def test_update_market_order(market_buy_order_usdt, market_sell_order_usdt, fee,
     assert trade.close_date is not None
     assert log_has_re(
         r"MARKET_SELL has been fulfilled for Trade\(id=1, "
-        r"pair=ADA/USDT, amount=30.00000000, is_short=False, leverage=1.0, "
-        r"open_rate=2.00000000, open_since=.*\).",
+        r"pair=ADA/USDT, amount=30, is_short=False, leverage=1, "
+        r"open_rate=2, open_since=.*\).",
         caplog,
     )
 

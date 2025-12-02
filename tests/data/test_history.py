@@ -896,7 +896,7 @@ def test_download_pair_history_with_pair_candles(mocker, default_conf, tmp_path,
     assert get_historic_ohlcv_mock.call_count == 0
 
     # Verify the log message indicating parallel method was used (line 315-316)
-    assert log_has("Downloaded data for TEST/BTC with length 3. Parallel Method.", caplog)
+    assert log_has("Downloaded data for TEST/BTC, 5m, spot with length 3. Parallel Method.", caplog)
 
     # Verify data was stored
     assert data_handler_mock.ohlcv_store.call_count == 1

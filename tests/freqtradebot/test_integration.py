@@ -50,7 +50,14 @@ def test_may_execute_exit_stoploss_on_exchange_multi(default_conf, ticker, fee, 
     stoploss_order_mock = MagicMock(side_effect=stop_orders)
     # Sell 3rd trade (not called for the first trade)
     should_sell_mock = MagicMock(side_effect=[[], [ExitCheckTuple(exit_type=ExitType.EXIT_SIGNAL)]])
-    cancel_order_mock = MagicMock()
+
+    def patch_stoploss(order_id, *args, **kwargs):
+        slo = stoploss_order_open.copy()
+        slo["id"] = order_id
+        slo["status"] = "canceled"
+        return slo
+
+    cancel_order_mock = MagicMock(side_effect=patch_stoploss)
     mocker.patch.multiple(
         EXMS,
         create_stoploss=stoploss,
@@ -793,9 +800,13 @@ def test_dca_handle_similar_open_order(
     # Should Create a new exit order
     freqtrade.exchange.amount_to_contract_precision = MagicMock(return_value=2)
     freqtrade.strategy.adjust_trade_position = MagicMock(return_value=-2)
+    msg = r"Skipping cancelling stoploss on exchange for.*"
 
     mocker.patch(f"{EXMS}._dry_is_price_crossed", return_value=False)
+    assert not log_has_re(msg, caplog)
     freqtrade.process()
+    assert log_has_re(msg, caplog)
+
     trade = Trade.get_trades().first()
 
     assert trade.orders[-2].status == "closed"

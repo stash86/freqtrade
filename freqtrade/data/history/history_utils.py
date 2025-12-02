@@ -308,11 +308,15 @@ def _download_pair_history(
                 candle_type=candle_type,
                 until_ms=until_ms if until_ms else None,
             )
-            logger.info(f"Downloaded data for {pair} with length {len(new_dataframe)}.")
+            logger.info(
+                f"Downloaded data for {pair}, {timeframe}, {candle_type} with length "
+                f"{len(new_dataframe)}."
+            )
         else:
             new_dataframe = pair_candles
             logger.info(
-                f"Downloaded data for {pair} with length {len(new_dataframe)}. Parallel Method."
+                f"Downloaded data for {pair}, {timeframe}, {candle_type} with length "
+                f"{len(new_dataframe)}. Parallel Method."
             )
 
         if data.empty:

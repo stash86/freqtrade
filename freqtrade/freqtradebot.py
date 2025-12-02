@@ -1099,7 +1099,16 @@ class FreqtradeBot(LoggingMixin):
 
         return True
 
-    def cancel_stoploss_on_exchange(self, trade: Trade) -> Trade:
+    def cancel_stoploss_on_exchange(self, trade: Trade, allow_nonblocking: bool = False) -> Trade:
+        """
+        Cancels on exchange stoploss orders for the given trade.
+        :param trade: Trade for which to cancel stoploss order
+        :param allow_nonblocking: If True, will skip cancelling stoploss on exchange
+                                   if the exchange supports blocking stoploss orders.
+        """
+        if allow_nonblocking and not self.exchange.get_option("stoploss_blocks_assets", True):
+            logger.info(f"Skipping cancelling stoploss on exchange for {trade}.")
+            return trade
         # First cancelling stoploss on exchange ...
         for oslo in trade.open_sl_orders:
             try:
@@ -2154,7 +2163,7 @@ class FreqtradeBot(LoggingMixin):
         limit = self.get_valid_price(custom_exit_price, proposed_limit_rate)
 
         # First cancelling stoploss on exchange ...
-        trade = self.cancel_stoploss_on_exchange(trade)
+        trade = self.cancel_stoploss_on_exchange(trade, allow_nonblocking=True)
 
         order_type = ordertype or self.strategy.order_types[exit_type]
         if exit_check.exit_type == ExitType.EMERGENCY_EXIT:
@@ -2459,6 +2468,8 @@ class FreqtradeBot(LoggingMixin):
                 self.strategy.ft_stoploss_adjust(
                     current_rate, trade, datetime.now(UTC), profit, 0, after_fill=True
                 )
+            if not trade.is_open:
+                self.cancel_stoploss_on_exchange(trade)
             # Updating wallets when order is closed
             self.wallets.update()
         return trade

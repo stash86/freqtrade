@@ -48,7 +48,7 @@ from freqtrade.leverage import interest
 from freqtrade.misc import safe_value_fallback
 from freqtrade.persistence.base import ModelBase, SessionType
 from freqtrade.persistence.custom_data import CustomDataWrapper, _CustomData
-from freqtrade.util import FtPrecise, dt_from_ts, dt_now, dt_ts, dt_ts_none
+from freqtrade.util import FtPrecise, dt_from_ts, dt_now, dt_ts, dt_ts_none, round_value
 
 
 logger = logging.getLogger(__name__)
@@ -654,9 +654,10 @@ class LocalTrade:
         )
 
         return (
-            f"Trade(id={self.id}, pair={self.pair}, amount={self.amount:.8f}, "
-            f"is_short={self.is_short or False}, leverage={self.leverage or 1.0}, "
-            f"open_rate={self.open_rate:.8f}, open_since={open_since})"
+            f"Trade(id={self.id}, pair={self.pair}, amount={round_value(self.amount, 8)}, "
+            f"is_short={self.is_short or False}, "
+            f"leverage={round_value(self.leverage or 1.0, 1)}, "
+            f"open_rate={round_value(self.open_rate, 8)}, open_since={open_since})"
         )
 
     def to_json(self, minified: bool = False) -> dict[str, Any]:

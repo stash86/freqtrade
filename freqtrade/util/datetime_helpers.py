@@ -90,15 +90,16 @@ def dt_humanize_delta(dt: datetime):
     return humanize.naturaltime(dt)
 
 
-def format_date(date: datetime | None) -> str:
+def format_date(date: datetime | None, fallback: str = "") -> str:
     """
     Return a formatted date string.
     Returns an empty string if date is None.
     :param date: datetime to format
+    :param fallback: value to return if date is None
     """
     if date:
         return date.strftime(DATETIME_PRINT_FORMAT)
-    return ""
+    return fallback
 
 
 def format_ms_time(date: int | float) -> str:

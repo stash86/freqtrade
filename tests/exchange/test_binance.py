@@ -157,7 +157,8 @@ def test_create_stoploss_order_dry_run_binance(default_conf, mocker):
     assert "type" in order
 
     assert order["type"] == order_type
-    assert order["price"] == 220
+    assert order["price"] == 217.8
+    assert order["stopPrice"] == 220
     assert order["amount"] == 1
 
 

@@ -23,7 +23,7 @@ def strip_trailing_zeros(value: str) -> str:
     return value.rstrip("0").rstrip(".")
 
 
-def round_value(value: float, decimals: int, keep_trailing_zeros=False) -> str:
+def round_value(value: float | None, decimals: int, keep_trailing_zeros=False) -> str:
     """
     Round value to given decimals
     :param value: Value to be rounded
@@ -31,7 +31,7 @@ def round_value(value: float, decimals: int, keep_trailing_zeros=False) -> str:
     :param keep_trailing_zeros: Keep trailing zeros "222.200" vs. "222.2"
     :return: Rounded value as string
     """
-    if isnan(value):
+    if value is None or isnan(value):
         return "N/A"
     val = f"{value:.{decimals}f}"
     if not keep_trailing_zeros:

@@ -57,6 +57,8 @@ def test_round_value():
     assert round_value(222.2, 0, True) == "222"
     assert round_value(float("nan"), 0, True) == "N/A"
     assert round_value(float("nan"), 10, True) == "N/A"
+    assert round_value(None, 10, True) == "N/A"
+    assert round_value(None, 1, True) == "N/A"
 
 
 def test_format_duration():

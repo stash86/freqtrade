@@ -104,6 +104,7 @@ from freqtrade.misc import (
     deep_merge_dicts,
     file_dump_json,
     file_load_json,
+    safe_value_fallback,
     safe_value_fallback2,
 )
 from freqtrade.util import FtTTLCache, PeriodicCache, dt_from_ts, dt_now
@@ -1119,6 +1120,7 @@ class Exchange:
         leverage: float,
         params: dict | None = None,
         stop_loss: bool = False,
+        stop_price: float | None = None,
     ) -> CcxtOrder:
         now = dt_now()
         order_id = f"dry_run_{side}_{pair}_{now.timestamp()}"
@@ -1145,7 +1147,7 @@ class Exchange:
         }
         if stop_loss:
             dry_order["info"] = {"stopPrice": dry_order["price"]}
-            dry_order[self._ft_has["stop_price_prop"]] = dry_order["price"]
+            dry_order[self._ft_has["stop_price_prop"]] = stop_price or dry_order["price"]
             # Workaround to avoid filling stoploss orders immediately
             dry_order["ft_order_type"] = "stoploss"
         orderbook: OrderBook | None = None
@@ -1163,7 +1165,11 @@ class Exchange:
 
         if dry_order["type"] == "market" and not dry_order.get("ft_order_type"):
             # Update market order pricing
-            average = self.get_dry_market_fill_price(pair, side, amount, rate, orderbook)
+            slippage = 0.05
+            worst_rate = rate * ((1 + slippage) if side == "buy" else (1 - slippage))
+            average = self.get_dry_market_fill_price(
+                pair, side, amount, rate, worst_rate, orderbook
+            )
             dry_order.update(
                 {
                     "average": average,
@@ -1203,7 +1209,13 @@ class Exchange:
         return dry_order
 
     def get_dry_market_fill_price(
-        self, pair: str, side: str, amount: float, rate: float, orderbook: OrderBook | None
+        self,
+        pair: str,
+        side: str,
+        amount: float,
+        rate: float,
+        worst_rate: float,
+        orderbook: OrderBook | None,
     ) -> float:
         """
         Get the market order fill price based on orderbook interpolation
@@ -1212,8 +1224,6 @@ class Exchange:
             if not orderbook:
                 orderbook = self.fetch_l2_order_book(pair, 20)
             ob_type: OBLiteral = "asks" if side == "buy" else "bids"
-            slippage = 0.05
-            max_slippage_val = rate * ((1 + slippage) if side == "buy" else (1 - slippage))
 
             remaining_amount = amount
             filled_value = 0.0
@@ -1237,11 +1247,10 @@ class Exchange:
             forecast_avg_filled_price = max(filled_value, 0) / amount
             # Limit max. slippage to specified value
             if side == "buy":
-                forecast_avg_filled_price = min(forecast_avg_filled_price, max_slippage_val)
+                forecast_avg_filled_price = min(forecast_avg_filled_price, worst_rate)
 
             else:
-                forecast_avg_filled_price = max(forecast_avg_filled_price, max_slippage_val)
-
+                forecast_avg_filled_price = max(forecast_avg_filled_price, worst_rate)
             return self.price_to_precision(pair, forecast_avg_filled_price)
 
         return rate
@@ -1253,13 +1262,15 @@ class Exchange:
         limit: float,
         orderbook: OrderBook | None = None,
         offset: float = 0.0,
+        is_stop: bool = False,
     ) -> bool:
         if not self.exchange_has("fetchL2OrderBook"):
-            return True
+            # True unless checking a stoploss order
+            return not is_stop
         if not orderbook:
             orderbook = self.fetch_l2_order_book(pair, 1)
         try:
-            if side == "buy":
+            if (side == "buy" and not is_stop) or (side == "sell" and is_stop):
                 price = orderbook["asks"][0][0]
                 if limit * (1 - offset) >= price:
                     return True
@@ -1278,6 +1289,38 @@ class Exchange:
         """
         Check dry-run limit order fill and update fee (if it filled).
         """
+        if order["status"] != "closed" and order.get("ft_order_type") == "stoploss":
+            pair = order["symbol"]
+            if not orderbook and self.exchange_has("fetchL2OrderBook"):
+                orderbook = self.fetch_l2_order_book(pair, 20)
+            price = safe_value_fallback(order, self._ft_has["stop_price_prop"], "price")
+            crossed = self._dry_is_price_crossed(
+                pair, order["side"], price, orderbook, is_stop=True
+            )
+            if crossed:
+                average = self.get_dry_market_fill_price(
+                    pair,
+                    order["side"],
+                    order["amount"],
+                    price,
+                    worst_rate=order["price"],
+                    orderbook=orderbook,
+                )
+                order.update(
+                    {
+                        "status": "closed",
+                        "filled": order["amount"],
+                        "remaining": 0,
+                        "average": average,
+                        "cost": order["amount"] * average,
+                    }
+                )
+                self.add_dry_order_fee(
+                    pair,
+                    order,
+                    "taker" if immediate else "maker",
+                )
+            return order
         if (
             order["status"] != "closed"
             and order["type"] in ["limit"]
@@ -1517,8 +1560,9 @@ class Exchange:
                 ordertype,
                 side,
                 amount,
-                stop_price_norm,
+                limit_rate or stop_price_norm,
                 stop_loss=True,
+                stop_price=stop_price_norm,
                 leverage=leverage,
             )
             return dry_order
@@ -3740,10 +3784,11 @@ class Exchange:
         :param mark_rates: Dataframe containing Mark rates (Type mark_ohlcv_price)
         :param futures_funding_rate: Fake funding rate to use if funding_rates are not available
         """
+        relevant_cols = ["date", "open_mark", "open_fund"]
         if futures_funding_rate is None:
             return mark_rates.merge(
                 funding_rates, on="date", how="inner", suffixes=["_mark", "_fund"]
-            )
+            )[relevant_cols]
         else:
             if len(funding_rates) == 0:
                 # No funding rate candles - full fillup with fallback variable
@@ -3756,7 +3801,7 @@ class Exchange:
                         "low": "low_mark",
                         "volume": "volume_mark",
                     }
-                )
+                )[relevant_cols]
 
             else:
                 # Fill up missing funding_rate candles with fallback value
@@ -3764,7 +3809,7 @@ class Exchange:
                     funding_rates, on="date", how="left", suffixes=["_mark", "_fund"]
                 )
                 combined["open_fund"] = combined["open_fund"].fillna(futures_funding_rate)
-                return combined
+                return combined[relevant_cols]
 
     def calculate_funding_fees(
         self,
