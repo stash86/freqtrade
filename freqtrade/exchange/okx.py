@@ -41,8 +41,8 @@ class Okx(Exchange):
         "stop_price_type_field": "slTriggerPxType",
         "stop_price_type_value_mapping": {
             PriceType.LAST: "last",
-            PriceType.MARK: "index",
-            PriceType.INDEX: "mark",
+            PriceType.MARK: "mark",
+            PriceType.INDEX: "index",
         },
         "stoploss_blocks_assets": False,
         "ws_enabled": True,

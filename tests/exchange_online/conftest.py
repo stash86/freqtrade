@@ -515,7 +515,8 @@ EXCHANGES = {
         ],
     },
     "hyperliquid": {
-        "pair": "UBTC/USDC",
+        # TODO: Should be UBTC/USDC - probably needs a fix in ccxt
+        "pair": "BTC/USDC",
         "stake_currency": "USDC",
         "hasQuoteVolume": False,
         "timeframe": "30m",
