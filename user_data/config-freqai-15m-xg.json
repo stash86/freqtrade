@@ -4,7 +4,7 @@
         "purge_old_models": 2,
         "train_period_days": 15,
         "backtest_period_days": 1,
-        "live_retrain_hours": 0,
+        "live_retrain_hours": 0.25,
         "identifier": "15m-xg",
         "save_backtest_models": false,
         "activate_tensorboard": false,
