@@ -1,5 +1,5 @@
 ARG sourceimage=stash86/freqtrade
-ARG sourcetag=linux-arm64-v8
+ARG sourcetag=latest
 FROM ${sourceimage}:${sourcetag}
 
 # Install dependencies
