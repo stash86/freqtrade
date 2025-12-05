@@ -1,18 +1,43 @@
 {
+    "exchange": {
+        "pair_whitelist": [],
+        "pair_blacklist": []
+    },
     "pairlists": [
         {
+            "method": "VolumePairList",
+            "number_assets": 40,
+            "sort_key": "quoteVolume",
+        },
+        {
+            "method": "PriceFilter",
+            "low_price_ratio": 0.000010
+        },
+        {
             "method": "MarketCapPairList",
-            "number_assets": 30,
-            "max_rank": 50,
+            "number_assets": 40,
+            "max_rank": 60,
             "refresh_period": 86400
         },
         {
-            "method": "VolumePairList",
-            "number_assets": 20,
-            "sort_key": "quoteVolume",
-            "min_value": 0,
-            "refresh_period": 1800
+            "method": "MarketCapPairList",
+            "max_rank": 60,
+            "mode": "blacklist",
+            "categories": [
+                "stablecoins",
+                "meme-token",
+                "exchange-based-tokens",
+                "stablecoin-issuer",
+                "trump-affiliated-tokens"
+            ]
         },
-        {"method": "FullTradesFilter"},
+        {
+            "method": "FullTradesFilter"
+        },
+        {
+            "method": "OffsetFilter",
+            "offset": 0,
+            "number_assets": 12
+        },
     ],
 }
