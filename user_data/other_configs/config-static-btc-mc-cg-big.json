@@ -1,0 +1,125 @@
+{
+    "max_open_trades": -1,
+    "stake_currency": "BTC",
+    "stake_amount": 0.5,
+    "amend_last_stake_amount ": true,
+    "tradable_balance_ratio": 0.99,
+    "dry_run": true,
+    "dry_run_wallet": 115,
+    "trading_mode": "spot",
+    "cancel_open_orders_on_exit": false,
+    "unfilledtimeout": {
+        "entry": 10,
+        "exit": 10,
+        "exit_timeout_count": 0,
+        "unit": "minutes"
+    },
+    "order_types": {
+        "entry": "market",
+        "exit": "market",
+        "emergency_exit": "market",
+        "force_exit": "market",
+        "force_entry": "market",
+        "stoploss": "market",
+        "stoploss_on_exchange": false,
+        "stoploss_on_exchange_interval": 60
+    },
+    "entry_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1,
+        "price_last_balance": 0.0,
+        "check_depth_of_market": {
+            "enabled": false,
+            "bids_to_ask_delta": 1
+        }
+    },
+    "exit_pricing": {
+        "price_side": "other",
+        "use_order_book": true,
+        "order_book_top": 1
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList"
+        },
+    ],
+    "exchange": {
+        "name": "binance",
+        "key": "1",
+        "secret": "2",
+        "ccxt_config": {
+            "enableRateLimit": true
+        },
+        "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 200
+        },
+        "pair_whitelist": [
+            "ETH/BTC",
+            "XRP/BTC",
+            "SOL/BTC",
+            "TRX/BTC",
+            "ADA/BTC",
+            "BCH/BTC",
+            "LINK/BTC",
+            "ZEC/BTC",
+            "XLM/BTC",
+            "XMR/BTC",
+            "LTC/BTC",
+            "AVAX/BTC",
+            "HBAR/BTC",
+            "SUI/BTC",
+            "TON/BTC",
+            "DOT/BTC",
+            "CC/BTC",
+            "TAO/BTC",
+            "NEAR/BTC",
+            "ICP/BTC",
+            "ETC/BTC",
+            "APT/BTC",
+            "ONDO/BTC",
+            "KAS/BTC",
+            "WLD/BTC",
+            "POL/BTC",
+            "BNB/BTC",
+            "UNI/BTC",
+            "ATOM/BTC",
+            "OP/BTC",
+            "IMX/BTC",
+            "VET/BTC",
+            "OM/BTC",
+            "ALGO/BTC",
+            "FIL/BTC",
+            "TIA/BTC",
+            "INJ/BTC",
+            "THETA/BTC",
+            "SEI/BTC",
+            "GALA/BTC",
+            "KAIA/BTC",
+            "XTZ/BTC",
+            "IOTA/BTC",
+            "FLOW/BTC",
+            "AR/BTC",
+            "EGLD/BTC",
+            "DYDX/BTC",
+            "CHZ/BTC",
+            "KAVA/BTC",
+            "ROSE/BTC",
+            "ASTR/BTC",
+            "FET/BTC",
+            "STX/BTC",
+            "ARB/BTC",
+            "FTM/BTC",
+            "S/BTC",
+            "AAVE/BTC"
+        ],
+        "pair_blacklist": []
+    },
+    "bot_name": "freqtrade_bot",
+    "initial_state": "running",
+    "force_entry_enable": false,
+    "internals": {
+        "process_throttle_secs": 5
+    }
+}
