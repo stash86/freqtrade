@@ -290,20 +290,23 @@ def test_combine_dataframes_with_mean(testdatadir):
 
 
 def test_combined_dataframes_with_rel_mean(testdatadir):
-    pairs = ["ETH/BTC", "ADA/BTC"]
+    pairs = ["BTC/USDT", "XRP/USDT"]
     data = load_data(datadir=testdatadir, pairs=pairs, timeframe="5m")
     df = combined_dataframes_with_rel_mean(
-        data, datetime(2018, 1, 12, tzinfo=UTC), datetime(2018, 1, 28, tzinfo=UTC)
+        data,
+        fromdt=data["BTC/USDT"].at[0, "date"],
+        todt=data["BTC/USDT"].at[data["BTC/USDT"].index[-1], "date"],
     )
     assert isinstance(df, DataFrame)
-    assert "ETH/BTC" not in df.columns
-    assert "ADA/BTC" not in df.columns
+    assert "BTC/USDT" not in df.columns
+    assert "XRP/USDT" not in df.columns
     assert "mean" in df.columns
     assert "rel_mean" in df.columns
     assert "count" in df.columns
     assert df.iloc[0]["count"] == 2
     assert df.iloc[-1]["count"] == 2
-    assert len(df) < len(data["ETH/BTC"])
+    assert len(df) < len(data["BTC/USDT"])
+    assert df["rel_mean"].between(-0.5, 0.5).all()
 
 
 def test_combine_dataframes_with_mean_no_data(testdatadir):

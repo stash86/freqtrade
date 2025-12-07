@@ -40,6 +40,8 @@ def test_datahandler_ohlcv_get_pairs(testdatadir):
         "NXT/BTC",
         "DASH/BTC",
         "XRP/ETH",
+        "BTC/USDT",
+        "XRP/USDT",
     }
 
     pairs = JsonGzDataHandler.ohlcv_get_pairs(testdatadir, "8m", candle_type=CandleType.SPOT)
@@ -111,6 +113,8 @@ def test_datahandler_ohlcv_get_available_data(testdatadir):
         ("DASH/BTC", "5m", CandleType.SPOT),
         ("XRP/ETH", "1m", CandleType.SPOT),
         ("XRP/ETH", "5m", CandleType.SPOT),
+        ("BTC/USDT", "5m", CandleType.SPOT),
+        ("XRP/USDT", "5m", CandleType.SPOT),
         ("UNITTEST/BTC", "30m", CandleType.SPOT),
         ("UNITTEST/BTC", "8m", CandleType.SPOT),
     }

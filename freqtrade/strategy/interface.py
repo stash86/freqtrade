@@ -1732,7 +1732,7 @@ class IStrategy(ABC, HyperStrategyMixin):
             timeout_unit = self.config.get("unfilledtimeout", {}).get("unit", "minutes")
             timeout_kwargs = {timeout_unit: -timeout}
             timeout_threshold = current_time + timedelta(**timeout_kwargs)
-            timedout = order.status == "open" and order.order_date_utc < timeout_threshold
+            timedout = order.status == "open" and order.order_date_utc <= timeout_threshold
             if timedout:
                 return True
         time_method = (

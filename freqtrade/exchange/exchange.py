@@ -1834,9 +1834,9 @@ class Exchange:
         if self._config["dry_run"] or self.trading_mode != TradingMode.FUTURES:
             return []
         try:
-            symbols = []
+            symbols = None
             if pair:
-                symbols.append(pair)
+                symbols = [pair]
             positions: list[CcxtPosition] = self._api.fetch_positions(symbols)
             self._log_exchange_response("fetch_positions", positions)
             return positions
