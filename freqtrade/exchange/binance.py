@@ -543,3 +543,26 @@ class Binance(Exchange):
                 cache[ft_symbol] = delist_dt
 
         return cache.get(pair, None)
+
+
+class Binanceusdm(Binance):
+    """Binacne USDM Exchange
+    Same as Binance - only futures trading is supported (via ccxt).
+
+    Not actually necessary, binance should be preferred.
+    """
+
+    _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [
+        (TradingMode.FUTURES, MarginMode.CROSS),
+        (TradingMode.FUTURES, MarginMode.ISOLATED),
+    ]
+
+
+class Binanceus(Binance):
+    """Binance US exchange class.
+    Minimal adjustment to disable futures trading for the US subsidiary of Binance
+    """
+
+    _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [
+        (TradingMode.SPOT, MarginMode.NONE),
+    ]
