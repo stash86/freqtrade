@@ -11,7 +11,7 @@
         },
         {
             "method": "PriceFilter",
-            "low_price_ratio": 0.000010
+            "min_price": 0.000010
         },
         {
             "method": "MarketCapPairList",
