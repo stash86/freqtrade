@@ -126,8 +126,7 @@ def test_datahandler_ohlcv_get_available_data(testdatadir):
         ("XRP/USDT:USDT", "5m", "futures"),
         ("XRP/USDT:USDT", "1h", "futures"),
         ("XRP/USDT:USDT", "1h", "mark"),
-        ("XRP/USDT:USDT", "8h", "mark"),
-        ("XRP/USDT:USDT", "8h", "funding_rate"),
+        ("XRP/USDT:USDT", "1h", "funding_rate"),
     }
 
     paircombs = JsonGzDataHandler.ohlcv_get_available_data(testdatadir, TradingMode.SPOT)

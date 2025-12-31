@@ -40,12 +40,6 @@ def populate_dataframe_with_trades_trades(testdatadir):
 
 
 @pytest.fixture
-def candles(testdatadir):
-    # TODO: this fixture isn't really necessary and could be removed
-    return pd.read_json(testdatadir / "orderflow/candles.json").copy()
-
-
-@pytest.fixture
 def public_trades_list(testdatadir):
     return read_csv(testdatadir / "orderflow/public_trades_list.csv").copy()
 
@@ -293,7 +287,7 @@ def test_public_trades_trades_mock_populate_dataframe_with_trades__check_trades(
     assert t["price"] == 234.72
 
 
-def test_public_trades_put_volume_profile_into_ohlcv_candles(public_trades_list_simple, candles):
+def test_public_trades_put_volume_profile_into_ohlcv_candles(public_trades_list_simple):
     """
     Tests the integration of volume profile data into OHLCV candles.
 
@@ -412,13 +406,11 @@ def test_public_trades_config_max_trades(
 
 
 def test_public_trades_testdata_sanity(
-    candles,
     public_trades_list,
     public_trades_list_simple,
     populate_dataframe_with_trades_dataframe,
     populate_dataframe_with_trades_trades,
 ):
-    assert 10999 == len(candles)
     assert 1000 == len(public_trades_list)
     assert 999 == len(populate_dataframe_with_trades_dataframe)
     assert 293532 == len(populate_dataframe_with_trades_trades)

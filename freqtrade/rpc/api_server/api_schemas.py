@@ -428,6 +428,7 @@ class ForceExitPayload(BaseModel):
     tradeid: str | int
     ordertype: OrderTypeValues | None = None
     amount: float | None = None
+    price: float | None = None
 
 
 class BlacklistPayload(BaseModel):
@@ -508,6 +509,7 @@ class DownloadDataPayload(ExchangeModePayloadMixin, BaseModel):
     timerange: str | None = None
     erase: bool = False
     download_trades: bool = False
+    candle_types: list[str] | None = None
 
     @model_validator(mode="before")
     def check_mutually_exclusive(cls, values):

@@ -64,7 +64,6 @@ def test_hyperopt_real_parameter():
 
 def test_hyperopt_decimal_parameter():
     HyperoptStateContainer.set_state(HyperoptState.INDICATORS)
-    # TODO: Check for get_space??
     from freqtrade.optimize.space import SKDecimal
 
     with pytest.raises(OperationalException, match=r"DecimalParameter space must be.*"):

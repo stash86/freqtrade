@@ -33,9 +33,20 @@ jobs:
     if: github.repository == 'freqtrade/freqtrade'
 
     steps:
-    - uses: actions/checkout@v6.0.0
+    - uses: actions/checkout@v6.0.1
       with:
         persist-credentials: false
+
+    - name: Visualize disk usage before build
+      run: df -h
+
+    - name: Cleanup some disk space
+      run: |
+        docker system prune -a --force || true
+        docker builder prune -af || true
+
+    - name: Visualize disk usage after cleanup
+      run: df -h
 
     - name: Set docker tag names
       id: tags
@@ -54,7 +65,7 @@ jobs:
 
     - name: Set up Docker Buildx
       id: buildx
-      uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 #v3.11.1
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f #v3.12.0
 
     - name: Available platforms
       run: echo ${PLATFORMS}
@@ -142,6 +153,9 @@ jobs:
       run: |
         docker images
 
+    - name: Visualize disk usage after build
+      run: df -h
+
   deploy-arm:
     name: "Deploy Docker ARM64"
     permissions:
@@ -152,7 +166,7 @@ jobs:
     if: github.repository == 'freqtrade/freqtrade'
 
     steps:
-    - uses: actions/checkout@v6.0.0
+    - uses: actions/checkout@v6.0.1
       with:
         persist-credentials: false
 
@@ -276,6 +290,7 @@ jobs:
         docker buildx imagetools create \
           --tag ${GHCR_IMAGE_NAME}:${TAG} \
           --tag ${GHCR_IMAGE_NAME}:latest \
+          --tag ${IMAGE_NAME}:latest \
           ${IMAGE_NAME}:${TAG}
 
     - name: Docker images

@@ -5,13 +5,13 @@ from freqtrade.util.migrations import migrate_funding_fee_timeframe
 
 def test_migrate_funding_rate_timeframe(default_conf_usdt, tmp_path, testdatadir):
     copytree(testdatadir / "futures", tmp_path / "futures")
-    file_4h = tmp_path / "futures" / "XRP_USDT_USDT-4h-funding_rate.feather"
-    file_8h = tmp_path / "futures" / "XRP_USDT_USDT-8h-funding_rate.feather"
+    file_30m = tmp_path / "futures" / "XRP_USDT_USDT-30m-funding_rate.feather"
+    file_1h_fr = tmp_path / "futures" / "XRP_USDT_USDT-1h-funding_rate.feather"
     file_1h = tmp_path / "futures" / "XRP_USDT_USDT-1h-futures.feather"
-    file_8h.rename(file_4h)
+    file_1h_fr.rename(file_30m)
     assert file_1h.exists()
-    assert file_4h.exists()
-    assert not file_8h.exists()
+    assert file_30m.exists()
+    assert not file_1h_fr.exists()
 
     default_conf_usdt["datadir"] = tmp_path
 
@@ -22,7 +22,7 @@ def test_migrate_funding_rate_timeframe(default_conf_usdt, tmp_path, testdatadir
 
     migrate_funding_fee_timeframe(default_conf_usdt, None)
 
-    assert not file_4h.exists()
-    assert file_8h.exists()
+    assert not file_30m.exists()
+    assert file_1h_fr.exists()
     # futures files is untouched.
     assert file_1h.exists()

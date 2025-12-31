@@ -31,11 +31,11 @@ class Bitget(Exchange):
         "stop_price_prop": "stopPrice",
         "stoploss_blocks_assets": False,  # Stoploss orders do not block assets
         "stoploss_order_types": {"limit": "limit", "market": "market"},
+        "stoploss_query_requires_stop_flag": True,
         "ohlcv_candle_limit": 200,  # 200 for historical candles, 1000 for recent ones.
         "order_time_in_force": ["GTC", "FOK", "IOC", "PO"],
     }
     _ft_has_futures: FtHas = {
-        "mark_ohlcv_timeframe": "4h",
         "funding_fee_candle_limit": 100,
         "has_delisting": True,
     }
@@ -128,9 +128,6 @@ class Bitget(Exchange):
             return self.fetch_dry_run_order(order_id)
 
         return self._fetch_stop_order_fallback(order_id, pair)
-
-    def cancel_stoploss_order(self, order_id: str, pair: str, params: dict | None = None) -> dict:
-        return self.cancel_order(order_id=order_id, pair=pair, params={"stop": True})
 
     @retrier
     def additional_exchange_init(self) -> None:

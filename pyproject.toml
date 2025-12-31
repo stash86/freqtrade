@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: MacOS",
     "Operating System :: Unix",
     "Topic :: Office/Business :: Financial :: Investment",
@@ -85,7 +86,6 @@ hyperopt = [
 freqai = [
   "scikit-learn",
   "joblib",
-  "catboost; platform_machine != 'arm'",
   "lightgbm",
   "xgboost",
   "tensorboard",

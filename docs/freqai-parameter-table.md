@@ -107,7 +107,6 @@ Mandatory parameters are marked as **Required** and have to be set in one of the
 | `n_steps`    | An alternative way of setting `n_epochs` -  the number of training iterations to run. Iteration here refer to the number of times we call `optimizer.step()`. Ignored if `n_epochs` is set. A simplified version of the function: <br><br> n_epochs = n_steps / (n_obs / batch_size) <br><br> The motivation here is that `n_steps` is easier to optimize and keep stable across different n_obs - the number of data points.  <br> <br> **Datatype:** int. optional. <br> Default: `None`.
 | `batch_size` | The size of the batches to use during training. <br><br> **Datatype:** int. <br> Default: `64`.
 
-
 ### Additional parameters
 
 |  Parameter | Description |
@@ -116,3 +115,4 @@ Mandatory parameters are marked as **Required** and have to be set in one of the
 | `freqai.keras` | If the selected model makes use of Keras (typical for TensorFlow-based prediction models), this flag needs to be activated so that the model save/loading follows Keras standards. <br> **Datatype:** Boolean. <br> Default: `False`.
 | `freqai.conv_width` | The width of a neural network input tensor. This replaces the need for shifting candles (`include_shifted_candles`) by feeding in historical data points as the second dimension of the tensor. Technically, this parameter can also be used for regressors, but it only adds computational overhead and does not change the model training/prediction. <br> **Datatype:** Integer. <br> Default: `2`.
 | `freqai.reduce_df_footprint` | Recast all numeric columns to float32/int32, with the objective of reducing ram/disk usage and decreasing train/inference timing. This parameter is set in the main level of the Freqtrade configuration file (not inside FreqAI). <br> **Datatype:** Boolean. <br> Default: `False`.
+| `freqai.override_exchange_check` | Override the exchange check to force FreqAI to use exchanges that may not have enough historic data. Turn this to True if you know your FreqAI model and strategy do not require historical data. <br> **Datatype:** Boolean. <br> Default: `False`.

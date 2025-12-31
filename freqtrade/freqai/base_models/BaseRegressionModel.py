@@ -18,7 +18,7 @@ class BaseRegressionModel(IFreqaiModel):
     """
     Base class for regression type models (e.g. Catboost, LightGBM, XGboost etc.).
     User *must* inherit from this class and set fit(). See example scripts
-    such as prediction_models/CatboostRegressor.py for guidance.
+    such as prediction_models/XGBoostRegressor.py for guidance.
     """
 
     def train(self, unfiltered_df: DataFrame, pair: str, dk: FreqaiDataKitchen, **kwargs) -> Any:

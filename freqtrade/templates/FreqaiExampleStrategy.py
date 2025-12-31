@@ -205,8 +205,8 @@ class FreqaiExampleStrategy(IStrategy):
         # If user wishes to use multiple targets, they can add more by
         # appending more columns with '&'. User should keep in mind that multi targets
         # requires a multioutput prediction model such as
-        # freqai/prediction_models/CatboostRegressorMultiTarget.py,
-        # freqtrade trade --freqaimodel CatboostRegressorMultiTarget
+        # freqai/prediction_models/LightGBMClassifierMultiTarget.py,
+        # freqtrade trade --freqaimodel LightGBMClassifierMultiTarget
 
         # df["&-s_range"] = (
         #     df["close"]

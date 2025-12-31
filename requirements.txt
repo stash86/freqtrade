@@ -1,4 +1,4 @@
-numpy==2.3.5
+numpy==2.4.0
 pandas==2.3.3
 bottleneck==1.6.0
 numexpr==2.14.1
@@ -7,39 +7,39 @@ ft-pandas-ta==0.3.16
 ta-lib==0.6.8
 technical==1.5.3
 
-ccxt==4.5.26
+ccxt==4.5.30
 cryptography==46.0.3
 aiohttp==3.13.2
-SQLAlchemy==2.0.44
+SQLAlchemy==2.0.45
 python-telegram-bot==22.5
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
 httpx>=0.24.1
-humanize==4.14.0
-cachetools==6.2.2
+humanize==4.15.0
+cachetools==6.2.4
 requests==2.32.5
-urllib3==2.6.0
+urllib3==2.6.2
 certifi==2025.11.12
 jsonschema==4.25.1
 tabulate==0.9.0
 pycoingecko==3.2.0
 jinja2==3.1.6
-joblib==1.5.2
+joblib==1.5.3
 rich==14.2.0
 pyarrow==22.0.0; platform_machine != 'armv7l'
 
 
 # Load ticker files 30% faster
-python-rapidjson==1.22
+python-rapidjson==1.23
 # Properly format api responses
-orjson==3.11.4
+orjson==3.11.5
 
 # Notify systemd
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.123.0
+fastapi==0.127.0
 pydantic==2.12.5
-uvicorn==0.38.0
+uvicorn==0.40.0
 pyjwt==2.10.1
 aiofiles==25.1.0
 psutil==7.1.3

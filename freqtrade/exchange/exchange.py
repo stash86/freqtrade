@@ -132,6 +132,7 @@ class Exchange:
         "stop_price_prop": "stopLossPrice",  # Used for stoploss_on_exchange response parsing
         "stoploss_order_types": {},
         "stoploss_blocks_assets": True,  # By default stoploss orders block assets
+        "stoploss_query_requires_stop_flag": False,  # Require "stop": True" to fetch stop orders
         "order_time_in_force": ["GTC"],
         "ohlcv_params": {},
         "ohlcv_has_history": True,  # Some exchanges (Kraken) don't provide history via ohlcv
@@ -153,8 +154,8 @@ class Exchange:
         "l2_limit_range_required": True,  # Allow Empty L2 limit (kucoin)
         "l2_limit_upper": None,  # Upper limit for L2 limit
         "mark_ohlcv_price": "mark",
-        "mark_ohlcv_timeframe": "8h",
-        "funding_fee_timeframe": "8h",
+        "mark_ohlcv_timeframe": "1h",
+        "funding_fee_timeframe": "1h",
         "ccxt_futures_name": "swap",
         "needs_trading_fees": False,  # use fetch_trading_fees to cache fees
         "order_props_in_contracts": ["amount", "filled", "remaining"],
@@ -708,7 +709,7 @@ class Exchange:
             self._markets = self._api_async.markets
             self._api.set_markets_from_exchange(self._api_async)
             # Assign options array, as it contains some temporary information from the exchange.
-            # TODO: investigate with ccxt if it's safe to remove `.options`
+            # ccxt does not implicitly copy options over in set_markets_from_exchange
             self._api.options = self._api_async.options
             if self._exchange_ws:
                 # Set markets to avoid reloading on websocket api
@@ -878,19 +879,20 @@ class Exchange:
                 # Only allow 5 calls per pair to somewhat limit the impact
                 raise ConfigurationError(
                     f"This strategy requires {startup_candles} candles to start, "
-                    "which is more than 5x "
+                    f"which is more than 5x ({candle_limit * 5 - 1} candles) "
                     f"the amount of candles {self.name} provides for {timeframe}."
                 )
         elif required_candle_call_count > 1:
             raise ConfigurationError(
-                f"This strategy requires {startup_candles} candles to start, which is more than "
+                f"This strategy requires {startup_candles} candles to start, "
+                f"which is more than ({candle_limit - 1} candles) "
                 f"the amount of candles {self.name} provides for {timeframe}."
             )
         if required_candle_call_count > 1:
             logger.warning(
                 f"Using {required_candle_call_count} calls to get OHLCV. "
                 f"This can result in slower operations for the bot. Please check "
-                f"if you really need {startup_candles} candles for your strategy"
+                f"if you really need {startup_candles} candles for your strategy."
             )
         return required_candle_call_count
 
@@ -1405,8 +1407,9 @@ class Exchange:
         amount: float,
         rate: float,
         leverage: float,
-        reduceOnly: bool = False,
         time_in_force: str = "GTC",
+        reduceOnly: bool = False,
+        initial_order: bool = True,
     ) -> CcxtOrder:
         if self._config["dry_run"]:
             dry_order = self.create_dry_run_order(
@@ -1423,7 +1426,7 @@ class Exchange:
             rate_for_order = self.price_to_precision(pair, rate) if needs_price else None
 
             if not reduceOnly:
-                self._lev_prep(pair, leverage, side)
+                self._lev_prep(pair, leverage, side, accept_fail=not initial_order)
 
             order = self._api.create_order(
                 pair,
@@ -1686,7 +1689,24 @@ class Exchange:
     def fetch_stoploss_order(
         self, order_id: str, pair: str, params: dict | None = None
     ) -> CcxtOrder:
-        return self.fetch_order(order_id, pair, params)
+        if self.get_option("stoploss_query_requires_stop_flag"):
+            params = params or {}
+            params["stop"] = True
+        order = self.fetch_order(order_id, pair, params)
+        val = self.get_option("stoploss_algo_order_info_id")
+        if val and order.get("status", "open") == "closed":
+            if new_orderid := order.get("info", {}).get(val):
+                # Fetch real order, which was placed by the algo order.
+                actual_order = self.fetch_order(order_id=new_orderid, pair=pair, params=None)
+                actual_order["id_stop"] = actual_order["id"]
+                actual_order["id"] = order_id
+                actual_order["type"] = "stoploss"
+                actual_order["stopPrice"] = order.get("stopPrice")
+                actual_order["status_stop"] = "triggered"
+
+                return actual_order
+
+        return order
 
     def fetch_order_or_stoploss_order(
         self, order_id: str, pair: str, stoploss_order: bool = False
@@ -1740,6 +1760,9 @@ class Exchange:
             raise OperationalException(e) from e
 
     def cancel_stoploss_order(self, order_id: str, pair: str, params: dict | None = None) -> dict:
+        if self.get_option("stoploss_query_requires_stop_flag"):
+            params = params or {}
+            params["stop"] = True
         return self.cancel_order(order_id, pair, params)
 
     def is_cancel_order_result_suitable(self, corder) -> TypeGuard[CcxtOrder]:
@@ -1804,16 +1827,16 @@ class Exchange:
         return order
 
     @retrier
-    def get_balances(self) -> CcxtBalances:
+    def get_balances(self, params: dict | None = None) -> CcxtBalances:
         try:
-            balances = self._api.fetch_balance()
+            balances = self._api.fetch_balance(params or {})
             # Remove additional info from ccxt results
             balances.pop("info", None)
             balances.pop("free", None)
             balances.pop("total", None)
             balances.pop("used", None)
 
-            self._log_exchange_response("fetch_balance", balances)
+            self._log_exchange_response("fetch_balance", balances, add_info=params)
             return balances
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
@@ -1825,7 +1848,9 @@ class Exchange:
             raise OperationalException(e) from e
 
     @retrier
-    def fetch_positions(self, pair: str | None = None) -> list[CcxtPosition]:
+    def fetch_positions(
+        self, pair: str | None = None, params: dict | None = None
+    ) -> list[CcxtPosition]:
         """
         Fetch positions from the exchange.
         If no pair is given, all positions are returned.
@@ -1837,7 +1862,7 @@ class Exchange:
             symbols = None
             if pair:
                 symbols = [pair]
-            positions: list[CcxtPosition] = self._api.fetch_positions(symbols)
+            positions: list[CcxtPosition] = self._api.fetch_positions(symbols, params=params or {})
             self._log_exchange_response("fetch_positions", positions)
             return positions
         except ccxt.DDoSProtection as e:
@@ -2690,24 +2715,25 @@ class Exchange:
         input_coroutines: list[Coroutine[Any, Any, OHLCVResponse]] = []
         cached_pairs = []
         for pair, timeframe, candle_type in set(pair_list):
-            invalid_funding = (
-                candle_type == CandleType.FUNDING_RATE
-                and timeframe != self.get_option("funding_fee_timeframe")
-            )
+            if candle_type == CandleType.FUNDING_RATE and timeframe != (
+                ff_tf := self.get_option("funding_fee_timeframe")
+            ):
+                # TODO: does this message make sense? would docs be better?
+                # if any, this should be cached to avoid log spam!
+                logger.warning(
+                    f"Wrong funding rate timeframe {timeframe} for pair {pair}, "
+                    f"downloading {ff_tf} instead."
+                )
+                timeframe = ff_tf
             invalid_timeframe = timeframe not in self.timeframes and candle_type in (
                 CandleType.SPOT,
                 CandleType.FUTURES,
             )
-            if invalid_timeframe or invalid_funding:
-                timeframes_ = (
-                    ", ".join(self.timeframes)
-                    if candle_type != CandleType.FUNDING_RATE
-                    else self.get_option("funding_fee_timeframe")
-                )
+            if invalid_timeframe:
                 logger.warning(
                     f"Cannot download ({pair}, {timeframe}, {candle_type}) combination as this "
                     f"timeframe is not available on {self.name}. Available timeframes are "
-                    f"{timeframes_}."
+                    f"{', '.join(self.timeframes)}."
                 )
                 continue
 
@@ -2744,7 +2770,11 @@ class Exchange:
         has_cache = cache and (pair, timeframe, c_type) in self._klines
         # in case of existing cache, fill_missing happens after concatenation
         ohlcv_df = ohlcv_to_dataframe(
-            ticks, timeframe, pair=pair, fill_missing=not has_cache, drop_incomplete=drop_incomplete
+            ticks,
+            timeframe,
+            pair=pair,
+            fill_missing=not has_cache and c_type != CandleType.FUNDING_RATE,
+            drop_incomplete=drop_incomplete,
         )
         # keeping parsed dataframe in cache
         if cache:
@@ -2755,7 +2785,7 @@ class Exchange:
                     concat([old, ohlcv_df], axis=0),
                     timeframe,
                     pair,
-                    fill_missing=True,
+                    fill_missing=c_type != CandleType.FUNDING_RATE,
                     drop_incomplete=False,
                 )
                 candle_limit = self.ohlcv_candle_limit(timeframe, self._config["candle_type_def"])
@@ -2890,9 +2920,10 @@ class Exchange:
                 timeframe, candle_type=candle_type, since_ms=since_ms
             )
 
-            if candle_type and candle_type not in (CandleType.SPOT, CandleType.FUTURES):
-                params.update({"price": candle_type.value})
             if candle_type != CandleType.FUNDING_RATE:
+                if candle_type and candle_type not in (CandleType.SPOT, CandleType.FUTURES):
+                    self.verify_candle_type_support(candle_type)
+                    params.update({"price": str(candle_type)})
                 data = await self._api_async.fetch_ohlcv(
                     pair, timeframe=timeframe, since=since_ms, limit=candle_limit, params=params
                 )
@@ -2956,6 +2987,38 @@ class Exchange:
         # Convert funding rate to candle pattern
         data = [[x["timestamp"], x["fundingRate"], 0, 0, 0, 0] for x in data]
         return data
+
+    def check_candle_type_support(self, candle_type: CandleType) -> bool:
+        """
+        Check that the exchange supports the given candle type.
+        :param candle_type: CandleType to verify
+        :return: True if supported, False otherwise
+        """
+        if candle_type == CandleType.FUNDING_RATE:
+            if not self.exchange_has("fetchFundingRateHistory"):
+                return False
+        elif candle_type not in (CandleType.SPOT, CandleType.FUTURES):
+            mapping = {
+                CandleType.MARK: "fetchMarkOHLCV",
+                CandleType.INDEX: "fetchIndexOHLCV",
+                CandleType.PREMIUMINDEX: "fetchPremiumIndexOHLCV",
+                CandleType.FUNDING_RATE: "fetchFundingRateHistory",
+            }
+            _method = mapping.get(candle_type, "fetchOHLCV")
+            if not self.exchange_has(_method):
+                return False
+        return True
+
+    def verify_candle_type_support(self, candle_type: CandleType) -> None:
+        """
+        Verify that the exchange supports the given candle type.
+        :param candle_type: CandleType to verify
+        :raises OperationalException: if the candle type is not supported
+        """
+        if not self.check_candle_type_support(candle_type):
+            raise OperationalException(
+                f"Exchange {self._api.name} does not support fetching {candle_type} candles."
+            )
 
     # fetch Trade data stuff
 
@@ -3808,8 +3871,16 @@ class Exchange:
                 combined = mark_rates.merge(
                     funding_rates, on="date", how="left", suffixes=["_mark", "_fund"]
                 )
-                combined["open_fund"] = combined["open_fund"].fillna(futures_funding_rate)
-                return combined[relevant_cols]
+                # Fill only leading missing funding rates so gaps stay untouched
+                first_valid_idx = combined["open_fund"].first_valid_index()
+                if first_valid_idx is None:
+                    combined["open_fund"] = futures_funding_rate
+                else:
+                    is_leading_na = (combined.index <= first_valid_idx) & combined[
+                        "open_fund"
+                    ].isna()
+                    combined.loc[is_leading_na, "open_fund"] = futures_funding_rate
+                return combined[relevant_cols].dropna()
 
     def calculate_funding_fees(
         self,

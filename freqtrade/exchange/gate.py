@@ -30,6 +30,8 @@ class Gate(Exchange):
         "stoploss_order_types": {"limit": "limit"},
         "stop_price_param": "stopPrice",
         "stop_price_prop": "stopPrice",
+        "stoploss_query_requires_stop_flag": True,
+        "stoploss_algo_order_info_id": "fired_order_id",
         "l2_limit_upper": 1000,
         "marketOrderRequiresPrice": True,
         "trades_has_history": False,  # Endpoint would support this - but ccxt doesn't.
@@ -42,6 +44,7 @@ class Gate(Exchange):
         "stop_price_type_field": "price_type",
         "l2_limit_upper": 300,
         "stoploss_blocks_assets": False,
+        "stoploss_algo_order_info_id": "trade_id",
         "stop_price_type_value_mapping": {
             PriceType.LAST: 0,
             PriceType.MARK: 1,
@@ -132,25 +135,3 @@ class Gate(Exchange):
 
     def get_order_id_conditional(self, order: CcxtOrder) -> str:
         return safe_value_fallback2(order, order, "id_stop", "id")
-
-    def fetch_stoploss_order(
-        self, order_id: str, pair: str, params: dict | None = None
-    ) -> CcxtOrder:
-        order = self.fetch_order(order_id=order_id, pair=pair, params={"stop": True})
-        if order.get("status", "open") == "closed":
-            # Places a real order - which we need to fetch explicitly.
-            val = "trade_id" if self.trading_mode == TradingMode.FUTURES else "fired_order_id"
-
-            if new_orderid := order.get("info", {}).get(val):
-                order1 = self.fetch_order(order_id=new_orderid, pair=pair, params=params)
-                order1["id_stop"] = order1["id"]
-                order1["id"] = order_id
-                order1["type"] = "stoploss"
-                order1["stopPrice"] = order.get("stopPrice")
-                order1["status_stop"] = "triggered"
-
-                return order1
-        return order
-
-    def cancel_stoploss_order(self, order_id: str, pair: str, params: dict | None = None) -> dict:
-        return self.cancel_order(order_id=order_id, pair=pair, params={"stop": True})

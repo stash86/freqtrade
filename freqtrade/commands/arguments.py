@@ -3,6 +3,7 @@ This module contains the argument manager class
 """
 
 from argparse import ArgumentParser, Namespace, _ArgumentGroup
+from copy import deepcopy
 from functools import partial
 from pathlib import Path
 from typing import Any
@@ -174,6 +175,7 @@ ARGS_DOWNLOAD_DATA = [
     "dataformat_ohlcv",
     "dataformat_trades",
     "trading_mode",
+    "candle_types",
     "prepend_data",
 ]
 
@@ -348,7 +350,11 @@ class Arguments:
     def _build_args(self, optionlist: list[str], parser: ArgumentParser | _ArgumentGroup) -> None:
         for val in optionlist:
             opt = AVAILABLE_CLI_OPTIONS[val]
-            parser.add_argument(*opt.cli, dest=val, **opt.kwargs)
+            options = deepcopy(opt.kwargs)
+            help_text = options.pop("help", None)
+            if opt.fthelp and isinstance(opt.fthelp, dict) and hasattr(parser, "prog"):
+                help_text = opt.fthelp.get(parser.prog, help_text)
+            parser.add_argument(*opt.cli, dest=val, help=help_text, **options)
 
     def _build_subcommands(self) -> None:
         """

@@ -970,8 +970,8 @@ def test_backtest_one_detail(default_conf_usdt, mocker, testdatadir, use_detail)
 @pytest.mark.parametrize(
     "use_detail,exp_funding_fee, exp_ff_updates",
     [
-        (True, -0.018054162, 10),
-        (False, -0.01780296, 6),
+        (True, -0.0180457882, 15),
+        (False, -0.0178000543, 12),
     ],
 )
 def test_backtest_one_detail_futures(
@@ -1081,8 +1081,8 @@ def test_backtest_one_detail_futures(
 @pytest.mark.parametrize(
     "use_detail,entries,max_stake,ff_updates,expected_ff",
     [
-        (True, 50, 3000, 55, -1.18038144),
-        (False, 6, 360, 11, -0.14679994),
+        (True, 50, 3000, 78, -1.17988972),
+        (False, 6, 360, 34, -0.14673681),
     ],
 )
 def test_backtest_one_detail_futures_funding_fees(
@@ -2382,13 +2382,12 @@ def test_backtest_start_nomock_futures(default_conf_usdt, mocker, caplog, testda
         f"Using data directory: {testdatadir} ...",
         "Loading data from 2021-11-17 01:00:00 up to 2021-11-21 04:00:00 (4 days).",
         "Backtesting with data from 2021-11-17 21:00:00 up to 2021-11-21 04:00:00 (3 days).",
-        "XRP/USDT:USDT, funding_rate, 8h, data starts at 2021-11-18 00:00:00",
-        "XRP/USDT:USDT, mark, 8h, data starts at 2021-11-18 00:00:00",
+        "XRP/USDT:USDT, funding_rate, 1h, data starts at 2021-11-18 00:00:00",
         f"Running backtesting for Strategy {CURRENT_TEST_STRATEGY}",
     ]
 
     for line in exists:
-        assert log_has(line, caplog)
+        assert log_has(line, caplog), line
 
     captured = capsys.readouterr()
     assert "BACKTESTING REPORT" in captured.out

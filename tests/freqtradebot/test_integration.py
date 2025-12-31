@@ -60,13 +60,10 @@ def test_may_execute_exit_stoploss_on_exchange_multi(default_conf, ticker, fee, 
     cancel_order_mock = MagicMock(side_effect=patch_stoploss)
     mocker.patch.multiple(
         EXMS,
-        create_stoploss=stoploss,
         fetch_ticker=ticker,
         get_fee=fee,
         amount_to_precision=lambda s, x, y: y,
         price_to_precision=lambda s, x, y: y,
-        fetch_stoploss_order=stoploss_order_mock,
-        cancel_stoploss_order_with_result=cancel_order_mock,
     )
 
     mocker.patch.multiple(
@@ -80,6 +77,12 @@ def test_may_execute_exit_stoploss_on_exchange_multi(default_conf, ticker, fee, 
     mocker.patch("freqtrade.wallets.Wallets.check_exit_amount", return_value=True)
 
     freqtrade = get_patched_freqtradebot(mocker, default_conf)
+    mocker.patch.multiple(
+        freqtrade.exchange,
+        create_stoploss=stoploss,
+        fetch_stoploss_order=stoploss_order_mock,
+        cancel_stoploss_order_with_result=cancel_order_mock,
+    )
     freqtrade.strategy.order_types["stoploss_on_exchange"] = True
     # Switch ordertype to market to close trade immediately
     freqtrade.strategy.order_types["exit"] = "market"

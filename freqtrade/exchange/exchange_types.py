@@ -19,6 +19,8 @@ class FtHas(TypedDict, total=False):
     stop_price_type_value_mapping: dict
     stoploss_order_types: dict[str, str]
     stoploss_blocks_assets: bool
+    stoploss_query_requires_stop_flag: bool
+    stoploss_algo_order_info_id: str
     # ohlcv
     ohlcv_params: dict
     ohlcv_candle_limit: int

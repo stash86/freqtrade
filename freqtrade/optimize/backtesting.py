@@ -374,6 +374,7 @@ class Backtesting:
                 timerange=self.timerange,
                 startup_candles=0,
                 fail_without_data=True,
+                fill_up_missing=False,
                 data_format=self.config["dataformat_ohlcv"],
                 candle_type=CandleType.FUNDING_RATE,
             )

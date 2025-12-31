@@ -16,9 +16,9 @@ def test_fetch_stoploss_order_gate(default_conf, mocker):
 
     exchange.fetch_stoploss_order("1234", "ETH/BTC")
     assert fetch_order_mock.call_count == 1
-    assert fetch_order_mock.call_args_list[0][1]["order_id"] == "1234"
-    assert fetch_order_mock.call_args_list[0][1]["pair"] == "ETH/BTC"
-    assert fetch_order_mock.call_args_list[0][1]["params"] == {"stop": True}
+    assert fetch_order_mock.call_args_list[0][0][0] == "1234"
+    assert fetch_order_mock.call_args_list[0][0][1] == "ETH/BTC"
+    assert fetch_order_mock.call_args_list[0][0][2] == {"stop": True}
 
     default_conf["trading_mode"] = "futures"
     default_conf["margin_mode"] = "isolated"
@@ -36,21 +36,19 @@ def test_fetch_stoploss_order_gate(default_conf, mocker):
 
     exchange.fetch_stoploss_order("1234", "ETH/BTC")
     assert exchange.fetch_order.call_count == 2
-    assert exchange.fetch_order.call_args_list[0][1]["order_id"] == "1234"
+    assert exchange.fetch_order.call_args_list[0][0][0] == "1234"
     assert exchange.fetch_order.call_args_list[1][1]["order_id"] == "222555"
 
 
 def test_cancel_stoploss_order_gate(default_conf, mocker):
     exchange = get_patched_exchange(mocker, default_conf, exchange="gate")
-
-    cancel_order_mock = MagicMock()
-    exchange.cancel_order = cancel_order_mock
+    cancel_order_mock = mocker.patch.object(exchange, "cancel_order", autospec=True)
 
     exchange.cancel_stoploss_order("1234", "ETH/BTC")
     assert cancel_order_mock.call_count == 1
-    assert cancel_order_mock.call_args_list[0][1]["order_id"] == "1234"
-    assert cancel_order_mock.call_args_list[0][1]["pair"] == "ETH/BTC"
-    assert cancel_order_mock.call_args_list[0][1]["params"] == {"stop": True}
+    assert cancel_order_mock.call_args_list[0][0][0] == "1234"
+    assert cancel_order_mock.call_args_list[0][0][1] == "ETH/BTC"
+    assert cancel_order_mock.call_args_list[0][0][2] == {"stop": True}
 
 
 @pytest.mark.parametrize(

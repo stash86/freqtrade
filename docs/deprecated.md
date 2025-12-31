@@ -98,3 +98,50 @@ Please use configuration based [log setup](advanced-setup.md#advanced-logging) i
 
 The edge module has been deprecated in 2023.9 and removed in 2025.6.
 All functionalities of edge have been removed, and having edge configured will result in an error.
+
+## Adjustment to dynamic funding rate handling
+
+With version 2025.12, the handling of dynamic funding rates has been adjusted to also support dynamic funding rates down to 1h funding intervals.
+As a consequence, the mark and funding rate timeframes have been changed to 1h for every supported futures exchange.
+
+As the timeframe for both mark and funding_fee candles has changed (usually from 8h to 1h) - already downloaded data will have to be adjusted or partially re-downloaded.
+You can either re-download everything (`freqtrade download-data [...] --erase` - :warning: can take a long time) - or download the updated data selectively.
+
+### Strategy
+
+Most strategies should not need adjustments to continue to work as expected - however, strategies using `@informative("8h", candle_type="funding_rate")` or similar will have to switch the timeframe to 1h.
+The same is true for `dp.get_pair_dataframe(metadata["pair"], "8h", candle_type="funding_rate")` - which will need to be switched to 1h.
+
+freqtrade will auto-adjust the timeframe and return `funding_rates` despite the wrongly given timeframe. It'll issue a warning - and may still break your strategy.
+
+### Selective data re-download
+
+The script below should serve as an example - you may need to adjust the timeframe and exchange to your needs!
+
+``` bash
+# Cleanup no longer needed data
+rm user_data/data/<exchange>/futures/*-mark-*
+rm user_data/data/<exchange>/futures/*-funding_rate-*
+
+# download new data (only required once to fix the mark and funding fee data)
+freqtrade download-data -t 1h --trading-mode futures --candle-types funding_rate mark [...] --timerange <full timerange you've got other data for>
+
+```
+
+The result of the above will be that your funding_rates and mark data will have the 1h timeframe.
+you can verify this with `freqtrade list-data --exchange <yourexchange> --show`.
+
+!!! Note "Additional arguments"
+    Additional arguments to the above commands may be necessary, like configuration files or explicit user_data if they deviate from the default.
+
+**Hyperliquid** is a special case now - which will no longer require 1h mark data - but will use regular candles instead (this data never existed and is identical to 1h futures candles). As we don't support download-data for hyperliquid (they don't provide historic data) - there won't be actions necessary for hyperliquid users.
+
+## Catboost models in freqAI
+
+CatBoost models have been removed with version 2025.12 and are no longer actively supported.
+If you have existing bots using CatBoost models, you can still use them in your custom models by copy/pasting them from the git history (as linked below) and installing the Catboost library manually.
+We do however recommend switching to other supported model libraries like LightGBM or XGBoost for better support and future compatibility.
+
+* [CatboostRegressor](https://github.com/freqtrade/freqtrade/blob/c6f3b0081927e161a16b116cc47fb663f7831d30/freqtrade/freqai/prediction_models/CatboostRegressor.py)
+* [CatboostClassifier](https://github.com/freqtrade/freqtrade/blob/c6f3b0081927e161a16b116cc47fb663f7831d30/freqtrade/freqai/prediction_models/CatboostClassifier.py)
+* [CatboostClassifierMultiTarget](https://github.com/freqtrade/freqtrade/blob/c6f3b0081927e161a16b116cc47fb663f7831d30/freqtrade/freqai/prediction_models/CatboostClassifierMultiTarget.py)

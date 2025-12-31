@@ -41,7 +41,9 @@ options:
                         functions.
   --eps, --enable-position-stacking
                         Allow buying the same pair multiple times (position
-                        stacking).
+                        stacking). Only applicable to backtesting and
+                        hyperopt. Results archived by this cannot be
+                        reproduced in dry/live trading.
   --enable-protections, --enableprotections
                         Enable protections for backtesting. Will slow
                         backtesting down by a considerable amount, but will

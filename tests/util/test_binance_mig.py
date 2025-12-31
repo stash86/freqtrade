@@ -20,8 +20,8 @@ def test_binance_mig_data_conversion(default_conf_usdt, tmp_path, testdatadir):
     files = [
         "-1h-mark.feather",
         "-1h-futures.feather",
-        "-8h-funding_rate.feather",
-        "-8h-mark.feather",
+        "-1h-funding_rate.feather",
+        "-1h-mark.feather",
     ]
 
     # Copy files to tmpdir and rename to old naming

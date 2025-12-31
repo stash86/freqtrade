@@ -3092,7 +3092,7 @@ def test_execute_trade_exit_custom_exit_price(
         "exit_reason": "foo",
         "open_date": ANY,
         "close_date": ANY,
-        "close_rate": ANY,
+        "close_rate": 2.25,  # the custom exit price
         "sub_trade": False,
         "cumulative_profit": 0.0,
         "stake_amount": pytest.approx(60),

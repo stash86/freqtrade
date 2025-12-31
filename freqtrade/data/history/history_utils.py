@@ -353,6 +353,7 @@ def _download_pair_history(
 
 def refresh_backtest_ohlcv_data(
     exchange: Exchange,
+    *,
     pairs: list[str],
     timeframes: list[str],
     datadir: Path,
@@ -363,6 +364,7 @@ def refresh_backtest_ohlcv_data(
     data_format: str | None = None,
     prepend: bool = False,
     progress_tracker: CustomProgress | None = None,
+    candle_types: list[CandleType] | None = None,
     no_parallel_download: bool = False,
 ) -> list[str]:
     """
@@ -375,10 +377,44 @@ def refresh_backtest_ohlcv_data(
     pairs_not_available = []
     fast_candles: dict[PairWithTimeframe, DataFrame] = {}
     data_handler = get_datahandler(datadir, data_format)
-    candle_type = CandleType.get_default(trading_mode)
+    def_candletype = CandleType.SPOT if trading_mode != "futures" else CandleType.FUTURES
+    if trading_mode != "futures":
+        # Ignore user passed candle types for non-futures trading
+        timeframes_with_candletype = [(tf, def_candletype) for tf in timeframes]
+    else:
+        # Filter out SPOT candle type for futures trading
+        candle_types = (
+            [ct for ct in candle_types if ct != CandleType.SPOT] if candle_types else None
+        )
+        fr_candle_type = CandleType.from_string(exchange.get_option("mark_ohlcv_price"))
+        tf_funding_rate = exchange.get_option("funding_fee_timeframe")
+        tf_mark = exchange.get_option("mark_ohlcv_timeframe")
+
+        if candle_types:
+            for ct in candle_types:
+                exchange.verify_candle_type_support(ct)
+            timeframes_with_candletype = [
+                (tf, ct)
+                for ct in candle_types
+                for tf in timeframes
+                if ct != CandleType.FUNDING_RATE
+            ]
+        else:
+            # Default behavior
+            timeframes_with_candletype = [(tf, def_candletype) for tf in timeframes]
+            timeframes_with_candletype.append((tf_mark, fr_candle_type))
+        if not candle_types or CandleType.FUNDING_RATE in candle_types:
+            # All exchanges need FundingRate for futures trading.
+            # The timeframe is aligned to the mark-price timeframe.
+            timeframes_with_candletype.append((tf_funding_rate, CandleType.FUNDING_RATE))
+    # Deduplicate list ...
+    timeframes_with_candletype = list(dict.fromkeys(timeframes_with_candletype))
+    logger.debug(
+        "Downloading %s.", ", ".join(f'"{tf} {ct}"' for tf, ct in timeframes_with_candletype)
+    )
+
     with progress_tracker as progress:
-        tf_length = len(timeframes) if trading_mode != "futures" else len(timeframes) + 2
-        timeframe_task = progress.add_task("Timeframe", total=tf_length)
+        timeframe_task = progress.add_task("Timeframe", total=len(timeframes_with_candletype))
         pair_task = progress.add_task("Downloading data...", total=len(pairs))
 
         for pair in pairs:
@@ -389,7 +425,7 @@ def refresh_backtest_ohlcv_data(
                 pairs_not_available.append(f"{pair}: Pair not available on exchange.")
                 logger.info(f"Skipping pair {pair}...")
                 continue
-            for timeframe in timeframes:
+            for timeframe, candle_type in timeframes_with_candletype:
                 # Get fast candles via parallel method on first loop through per timeframe
                 # and candle type. Downloads all the pairs in the list and stores them.
                 # Also skips if only 1 pair/timeframe combination is scheduled for download.
@@ -416,7 +452,7 @@ def refresh_backtest_ohlcv_data(
                 # get the already downloaded pair candles if they exist
                 pair_candles = fast_candles.pop((pair, timeframe, candle_type), None)
 
-                progress.update(timeframe_task, description=f"Timeframe {timeframe}")
+                progress.update(timeframe_task, description=f"Timeframe {timeframe} {candle_type}")
                 logger.debug(f"Downloading pair {pair}, {candle_type}, interval {timeframe}.")
                 _download_pair_history(
                     pair=pair,
@@ -432,33 +468,6 @@ def refresh_backtest_ohlcv_data(
                     pair_candles=pair_candles,  # optional pass of dataframe of parallel candles
                 )
                 progress.update(timeframe_task, advance=1)
-            if trading_mode == "futures":
-                # Predefined candletype (and timeframe) depending on exchange
-                # Downloads what is necessary to backtest based on futures data.
-                tf_mark = exchange.get_option("mark_ohlcv_timeframe")
-                tf_funding_rate = exchange.get_option("funding_fee_timeframe")
-
-                fr_candle_type = CandleType.from_string(exchange.get_option("mark_ohlcv_price"))
-                # All exchanges need FundingRate for futures trading.
-                # The timeframe is aligned to the mark-price timeframe.
-                combs = ((CandleType.FUNDING_RATE, tf_funding_rate), (fr_candle_type, tf_mark))
-                for candle_type_f, tf in combs:
-                    logger.debug(f"Downloading pair {pair}, {candle_type_f}, interval {tf}.")
-                    _download_pair_history(
-                        pair=pair,
-                        datadir=datadir,
-                        exchange=exchange,
-                        timerange=timerange,
-                        data_handler=data_handler,
-                        timeframe=str(tf),
-                        new_pairs_days=new_pairs_days,
-                        candle_type=candle_type_f,
-                        erase=erase,
-                        prepend=prepend,
-                    )
-                    progress.update(
-                        timeframe_task, advance=1, description=f"Timeframe {candle_type_f}, {tf}"
-                    )
 
             progress.update(pair_task, advance=1)
             progress.update(timeframe_task, description="Timeframe")
@@ -804,6 +813,7 @@ def download_data(
                 trading_mode=config.get("trading_mode", "spot"),
                 prepend=config.get("prepend_data", False),
                 progress_tracker=progress_tracker,
+                candle_types=config.get("candle_types"),
                 no_parallel_download=config.get("no_parallel_download", False),
             )
     finally:

@@ -960,7 +960,11 @@ class RPC:
         return {"status": "Reloaded from orders from exchange"}
 
     def __exec_force_exit(
-        self, trade: Trade, ordertype: str | None, amount: float | None = None
+        self,
+        trade: Trade,
+        ordertype: str | None,
+        amount: float | None = None,
+        price: float | None = None,
     ) -> bool:
         # Check if there is there are open orders
         trade_entry_cancelation_registry = []
@@ -984,8 +988,13 @@ class RPC:
                 # Order cancellation failed, so we can't exit.
                 return False
             # Get current rate and execute sell
-            current_rate = self._freqtrade.exchange.get_rate(
-                trade.pair, side="exit", is_short=trade.is_short, refresh=True
+
+            current_rate = (
+                self._freqtrade.exchange.get_rate(
+                    trade.pair, side="exit", is_short=trade.is_short, refresh=True
+                )
+                if ordertype == "market" or price is None
+                else price
             )
             exit_check = ExitCheckTuple(exit_type=ExitType.FORCE_EXIT)
             order_type = ordertype or self._freqtrade.strategy.order_types.get(
@@ -1003,18 +1012,28 @@ class RPC:
                 sub_amount = amount
 
             self._freqtrade.execute_trade_exit(
-                trade, current_rate, exit_check, ordertype=order_type, sub_trade_amt=sub_amount
+                trade,
+                current_rate,
+                exit_check,
+                ordertype=order_type,
+                sub_trade_amt=sub_amount,
+                skip_custom_exit_price=price is not None and ordertype == "limit",
             )
 
             return True
         return False
 
     def _rpc_force_exit(
-        self, trade_id: str, ordertype: str | None = None, *, amount: float | None = None
+        self,
+        trade_id: str,
+        ordertype: str | None = None,
+        *,
+        amount: float | None = None,
+        price: float | None = None,
     ) -> dict[str, str]:
         """
         Handler for forceexit <id>.
-        Sells the given trade at current price
+        exits the given trade. Uses current price if price is None.
         """
 
         if self._freqtrade.state == State.STOPPED:
@@ -1044,7 +1063,7 @@ class RPC:
                 logger.warning("force_exit: Invalid argument received")
                 raise RPCException("invalid argument")
 
-            result = self.__exec_force_exit(trade, ordertype, amount)
+            result = self.__exec_force_exit(trade, ordertype, amount, price)
             Trade.commit()
             self._freqtrade.wallets.update()
             if not result:

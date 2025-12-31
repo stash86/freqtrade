@@ -28,9 +28,9 @@ updates:
     exclude:
       - ccxt
   schedule:
-    interval: weekly
-    time: "03:00"
-    timezone: "Etc/UTC"
+    interval: "cron"
+    # Monday at 03:00
+    cronjob: "0 3 * * 1"
   open-pull-requests-limit: 15
   target-branch: develop
   groups:
@@ -53,6 +53,13 @@ updates:
   cooldown:
     default-days: 7
   schedule:
-    interval: "weekly"
+    interval: "cron"
+    # Monday at 03:00
+    cronjob: "0 3 * * 1"
   open-pull-requests-limit: 10
   target-branch: develop
+  groups:
+    actions:
+      patterns:
+        # Combine updates for github provided actions
+        - "actions/*"

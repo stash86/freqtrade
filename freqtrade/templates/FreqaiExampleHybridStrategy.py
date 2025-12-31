@@ -20,7 +20,7 @@ class FreqaiExampleHybridStrategy(IStrategy):
     Launching this strategy would be:
 
     freqtrade trade --strategy FreqaiExampleHybridStrategy --strategy-path freqtrade/templates
-    --freqaimodel CatboostClassifier --config config_examples/config_freqai.example.json
+    --freqaimodel XGBoostClassifier --config config_examples/config_freqai.example.json
 
     or the user simply adds this to their config:
 

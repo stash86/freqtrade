@@ -97,6 +97,9 @@ EXCHANGE_HAS_OPTIONAL = [
     # 'fetchLeverageTiers',  # Futures initialization
     # 'fetchMarketLeverageTiers',  # Futures initialization
     # 'fetchOpenOrders', 'fetchClosedOrders',  # 'fetchOrders',  # Refinding balance...
+    # "fetchPremiumIndexOHLCV",  # Futures additional data
+    # "fetchMarkOHLCV",  # Futures additional data
+    # "fetchIndexOHLCV",  # Futures additional data
     # ccxt.pro
     "watchOHLCV",
 ]
