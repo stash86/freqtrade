@@ -35,19 +35,19 @@ class VolumePairList(IPairList):
                 'for "pairlist.config.number_assets"'
             )
 
-        self._stake_currency = self._config["stake_currency"]
-        self._number_pairs = self._pairlistconfig["number_assets"]
+        self._stake_currency: str = self._config["stake_currency"]
+        self._number_pairs: int = self._pairlistconfig["number_assets"]
         self._sort_key: Literal["quoteVolume"] = self._pairlistconfig.get("sort_key", "quoteVolume")
-        self._min_value = self._pairlistconfig.get("min_value", 0)
-        self._max_value = self._pairlistconfig.get("max_value", None)
+        self._min_value: float | None = self._pairlistconfig.get("min_value", 0)
+        self._max_value: float | None = self._pairlistconfig.get("max_value", None)
         self._refresh_period = self._pairlistconfig.get("refresh_period", 1800)
         self._pair_cache: FtTTLCache = FtTTLCache(maxsize=1, ttl=self._refresh_period)
-        self._lookback_days = self._pairlistconfig.get("lookback_days", 0)
-        self._lookback_timeframe = self._pairlistconfig.get("lookback_timeframe", "1d")
-        self._lookback_period = self._pairlistconfig.get("lookback_period", 0)
+        self._lookback_days: int = self._pairlistconfig.get("lookback_days", 0)
+        self._lookback_timeframe: str = self._pairlistconfig.get("lookback_timeframe", "1d")
+        self._lookback_period: int = self._pairlistconfig.get("lookback_period", 0)
         self._def_candletype = self._config["candle_type_def"]
 
-        if (self._lookback_days > 0) & (self._lookback_period > 0):
+        if (self._lookback_days > 0) and (self._lookback_period > 0):
             raise OperationalException(
                 "Ambiguous configuration: lookback_days and lookback_period both set in pairlist "
                 "config. Please set lookback_days only or lookback_period and lookback_timeframe "
@@ -64,9 +64,9 @@ class VolumePairList(IPairList):
         _tf_in_sec = self._tf_in_min * 60
 
         # whether to use range lookback or not
-        self._use_range = (self._tf_in_min > 0) & (self._lookback_period > 0)
+        self._use_range = (self._tf_in_min > 0) and (self._lookback_period > 0)
 
-        if self._use_range & (self._refresh_period < _tf_in_sec):
+        if self._use_range and (self._refresh_period < _tf_in_sec):
             raise OperationalException(
                 f"Refresh period of {self._refresh_period} seconds is smaller than one "
                 f"timeframe of {self._lookback_timeframe}. Please adjust refresh_period "
@@ -297,7 +297,7 @@ class VolumePairList(IPairList):
             # Tickers mode - filter based on incoming pairlist.
             filtered_tickers = [v for k, v in tickers.items() if k in pairlist]
 
-        if self._min_value > 0:
+        if self._min_value and self._min_value > 0:
             filtered_tickers = [v for v in filtered_tickers if v[self._sort_key] > self._min_value]
         if self._max_value is not None:
             filtered_tickers = [v for v in filtered_tickers if v[self._sort_key] < self._max_value]
