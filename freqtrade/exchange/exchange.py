@@ -105,7 +105,6 @@ from freqtrade.misc import (
     file_dump_json,
     file_load_json,
     safe_value_fallback,
-    safe_value_fallback2,
 )
 from freqtrade.util import FtTTLCache, PeriodicCache, dt_from_ts, dt_now
 from freqtrade.util.datetime_helpers import dt_humanize_delta, dt_ts, format_ms_time
@@ -200,24 +199,25 @@ class Exchange:
         # Due to funding fee fetching.
         self._loop_lock = Lock()
         self.loop = self._init_async_loop()
-        self._config: Config = {}
+        self._config: Config = config
 
         # Leverage properties
         self.trading_mode: TradingMode = TradingMode(
-            config.get("trading_mode", self._supported_trading_mode_margin_pairs[0][0])
+            self._config.get("trading_mode", self._supported_trading_mode_margin_pairs[0][0])
         )
         self.margin_mode: MarginMode = MarginMode(
-            MarginMode(config.get("margin_mode"))
-            if config.get("margin_mode")
+            MarginMode(self._config.get("margin_mode"))
+            if self._config.get("margin_mode")
             else self._supported_trading_mode_margin_pairs[0][1]
         )
-        config["trading_mode"] = self.trading_mode
-        config["margin_mode"] = self.margin_mode
-        config["candle_type_def"] = CandleType.get_default(self.trading_mode)
-        self._config.update(config)
-        self.liquidation_buffer = config.get("liquidation_buffer", 0.05)
+        self._config["trading_mode"] = self.trading_mode
+        self._config["margin_mode"] = self.margin_mode
+        self._config["candle_type_def"] = CandleType.get_default(self.trading_mode)
+        self.liquidation_buffer = self._config.get("liquidation_buffer", 0.05)
 
-        exchange_conf: ExchangeConfig = exchange_config if exchange_config else config["exchange"]
+        exchange_conf: ExchangeConfig = (
+            exchange_config if exchange_config else self._config["exchange"]
+        )
 
         # Deep merge ft_has with default ft_has options
         # Must be called before ft_has is used.
@@ -248,14 +248,14 @@ class Exchange:
         # Holds all open sell orders for dry_run
         self._dry_run_open_orders: dict[str, Any] = {}
 
-        if config["dry_run"]:
+        if self._config["dry_run"]:
             logger.info("Instance is running with dry_run enabled")
         logger.info(f"Using CCXT {ccxt.__version__}")
 
         # Don't remove exchange credentials for dry-run or if always_require_api_keys is set
         remove_exchange_credentials(
             exchange_conf,
-            not self._ft_has["always_require_api_keys"] and config.get("dry_run", False),
+            not self._ft_has["always_require_api_keys"] and self._config.get("dry_run", False),
         )
         self.log_responses = exchange_conf.get("log_responses", False)
 
@@ -296,7 +296,7 @@ class Exchange:
         if validate:
             # Initial markets load
             self.reload_markets(True, load_leverage_tiers=False)
-            self.validate_config(config)
+            self.validate_config(self._config)
 
         if self.trading_mode != TradingMode.SPOT and load_leverage_tiers:
             self.fill_leverage_tiers()
@@ -2093,7 +2093,7 @@ class Exchange:
                     )
                     ticker = tickers_other.get(pair, None)
                 if ticker:
-                    rate: float | None = safe_value_fallback2(ticker, ticker, "last", "ask", None)
+                    rate: float | None = safe_value_fallback(ticker, "last", "ask", None)
                     if rate and pair.startswith(currency) and not pair.endswith(currency):
                         rate = 1.0 / rate
                     return rate
@@ -2393,6 +2393,16 @@ class Exchange:
             raise OperationalException(e) from e
 
     def get_order_id_conditional(self, order: CcxtOrder) -> str:
+        """
+        Return order id or id_stop (for conditional orders) based on exchange settings
+
+        :param order: ccxt order dict
+        :return: correct order id
+        """
+        if self.get_option("stoploss_query_requires_stop_flag") and (
+            order["type"] in ("stoploss", "stop")
+        ):
+            return safe_value_fallback(order, "id_stop", "id")
         return order["id"]
 
     @retrier

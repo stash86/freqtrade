@@ -21,11 +21,13 @@ from freqtrade.constants import CANCEL_REASON, DEFAULT_DATAFRAME_COLUMNS, Config
 from freqtrade.data.history import load_data
 from freqtrade.data.metrics import (
     DrawDownResult,
+    calculate_cagr,
     calculate_calmar,
     calculate_expectancy,
     calculate_max_drawdown,
     calculate_sharpe,
     calculate_sortino,
+    calculate_sqn,
 )
 from freqtrade.enums import (
     CandleType,
@@ -706,6 +708,34 @@ class RPC:
         sharpe = calculate_sharpe(trades_df, first_date, last_date, starting_balance)
         calmar = calculate_calmar(trades_df, first_date, last_date, starting_balance)
         bot_start = KeyValueStore.get_datetime_value("bot_start_time")
+
+        sharpe = calculate_sharpe(
+            trades=trades_df,
+            min_date=first_date,
+            max_date=last_date,
+            starting_balance=starting_balance,
+        )
+        sortino = calculate_sortino(
+            trades=trades_df,
+            min_date=first_date,
+            max_date=last_date,
+            starting_balance=starting_balance,
+        )
+        sqn = calculate_sqn(trades=trades_df, starting_balance=starting_balance)
+        calmar = calculate_calmar(
+            trades=trades_df,
+            min_date=first_date,
+            max_date=last_date,
+            starting_balance=starting_balance,
+        )
+        current_balance = self._freqtrade.wallets.get_total_stake_amount()
+        days_passed = max(1, (last_date - first_date).days) if first_date and last_date else 1
+        cagr = calculate_cagr(
+            starting_balance=starting_balance,
+            final_balance=current_balance,
+            days_passed=days_passed,
+        )
+
         return {
             "profit_closed_coin": profit_closed_coin_sum,
             "profit_closed_percent_mean": round(profit_closed_ratio_mean * 100, 2),
@@ -742,6 +772,11 @@ class RPC:
             "winrate": winrate,
             "expectancy": expectancy,
             "expectancy_ratio": expectancy_ratio,
+            "sharpe": sharpe,
+            "sortino": sortino,
+            "sqn": sqn,
+            "calmar": calmar,
+            "cagr": cagr,
             "max_drawdown": drawdown.relative_account_drawdown,
             "max_drawdown_abs": drawdown.drawdown_abs,
             "max_drawdown_start": format_date(drawdown.high_date),
@@ -756,9 +791,6 @@ class RPC:
             "current_drawdown_start": format_date(drawdown.current_high_date),
             "current_drawdown_start_timestamp": dt_ts_def(drawdown.current_high_date),
             "trading_volume": trading_volume,
-            "sortino": sortino,
-            "sharpe": sharpe,
-            "calmar": calmar,
             "bot_start_timestamp": dt_ts_def(bot_start, 0),
             "bot_start_date": format_date(bot_start),
         }
@@ -824,12 +856,9 @@ class RPC:
             if is_stake_currency:
                 trade_amount = self._freqtrade.wallets.get_available_stake_amount()
 
-            try:
-                est_stake, est_stake_bot = self.__balance_get_est_stake(
-                    coin, stake_currency, trade_amount, balance
-                )
-            except ValueError:
-                continue
+            est_stake, est_stake_bot = self.__balance_get_est_stake(
+                coin, stake_currency, trade_amount, balance
+            )
 
             total += est_stake
 
@@ -852,10 +881,10 @@ class RPC:
                 }
             )
         symbol: str
-        position: PositionWallet
-        for symbol, position in self._freqtrade.wallets.get_all_positions().items():
-            total += position.collateral
-            total_bot += position.collateral
+        pos: PositionWallet
+        for symbol, pos in self._freqtrade.wallets.get_all_positions().items():
+            total += pos.collateral
+            total_bot += pos.collateral
 
             currencies.append(
                 {
@@ -863,11 +892,11 @@ class RPC:
                     "free": 0,
                     "balance": 0,
                     "used": 0,
-                    "position": position.position,
-                    "est_stake": position.collateral,
-                    "est_stake_bot": position.collateral,
+                    "position": pos.position,
+                    "est_stake": pos.collateral,
+                    "est_stake_bot": pos.collateral,
                     "stake": stake_currency,
-                    "side": position.side,
+                    "side": pos.side,
                     "is_bot_managed": True,
                     "is_position": True,
                 }

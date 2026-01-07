@@ -55,7 +55,7 @@ Perpetual swaps (also known as Perpetual Futures) are contracts traded at a pric
 In addition to the gains/losses from the change in price of the futures contract, traders also exchange _funding fees_, which are gains/losses worth an amount that is derived from the difference in price between the futures contract and the underlying asset. The difference in price between a futures contract and the underlying asset varies between exchanges.
 
 To trade in futures markets, you'll have to set `trading_mode` to "futures".
-You will also have to pick a "margin mode" (explanation below) - with freqtrade currently only supporting isolated margin.
+You will also have to pick a "margin mode" (explanation below).
 
 ``` json
 "trading_mode": "futures",

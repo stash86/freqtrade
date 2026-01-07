@@ -230,11 +230,7 @@ def test_rpc_trade_status(default_conf, ticker, fee, mocker) -> None:
 
 def test_rpc_status_table(default_conf, ticker, fee, mocker, time_machine) -> None:
     time_machine.move_to("2024-05-10 11:15:00 +00:00", tick=False)
-    mocker.patch.multiple(
-        "freqtrade.rpc.fiat_convert.FtCoinGeckoApi",
-        get_price=MagicMock(return_value={"bitcoin": {"usd": 15000.0}}),
-    )
-    mocker.patch("freqtrade.rpc.rpc.CryptoToFiatConverter._find_price", return_value=15000.0)
+
     mocker.patch("freqtrade.rpc.telegram.Telegram", MagicMock())
     mocker.patch.multiple(
         EXMS,
@@ -279,6 +275,8 @@ def test_rpc_status_table(default_conf, ticker, fee, mocker, time_machine) -> No
     # Test with fiat convert
     rpc._config["fiat_display_currency"] = "USD"
     rpc._fiat_converter = CryptoToFiatConverter({})
+    mocker.patch.object(rpc._fiat_converter, "get_price", return_value=15000.0)
+
     result, headers, fiat_profit_sum, total_sum = rpc._rpc_status_table(
         default_conf["stake_currency"], "USD"
     )
@@ -447,7 +445,6 @@ def test_rpc_delete_trade(mocker, default_conf, fee, markets, caplog, is_short):
 
 
 def test_rpc_trade_statistics(default_conf_usdt, ticker, fee, mocker) -> None:
-    mocker.patch("freqtrade.rpc.rpc.CryptoToFiatConverter._find_price", return_value=1.1)
     mocker.patch("freqtrade.rpc.telegram.Telegram", MagicMock())
     mocker.patch.multiple(
         EXMS,
@@ -461,6 +458,7 @@ def test_rpc_trade_statistics(default_conf_usdt, ticker, fee, mocker) -> None:
 
     rpc = RPC(freqtradebot)
     rpc._fiat_converter = CryptoToFiatConverter({})
+    mocker.patch.object(rpc._fiat_converter, "get_price", return_value=1.1)
 
     res = rpc._rpc_trade_statistics(stake_currency, fiat_display_currency)
     assert res["trade_count"] == 0
@@ -520,11 +518,6 @@ def test_rpc_balance_handle_error(default_conf, mocker):
     }
     # ETH will be skipped due to mocked Error below
 
-    mocker.patch.multiple(
-        "freqtrade.rpc.fiat_convert.FtCoinGeckoApi",
-        get_price=MagicMock(return_value={"bitcoin": {"usd": 15000.0}}),
-    )
-    mocker.patch("freqtrade.rpc.rpc.CryptoToFiatConverter._find_price", return_value=15000.0)
     mocker.patch("freqtrade.rpc.telegram.Telegram", MagicMock())
     mocker.patch.multiple(
         EXMS,
@@ -536,6 +529,7 @@ def test_rpc_balance_handle_error(default_conf, mocker):
     patch_get_signal(freqtradebot)
     rpc = RPC(freqtradebot)
     rpc._fiat_converter = CryptoToFiatConverter({})
+    mocker.patch.object(rpc._fiat_converter, "get_price", return_value=15000.0)
     res = rpc._rpc_balance(default_conf["stake_currency"], default_conf["fiat_display_currency"])
     assert res["stake"] == "BTC"
 
@@ -606,11 +600,6 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers, proxy_coin, marg
         }
     ]
 
-    mocker.patch.multiple(
-        "freqtrade.rpc.fiat_convert.FtCoinGeckoApi",
-        get_price=MagicMock(return_value={"bitcoin": {"usd": 1.2}}),
-    )
-    mocker.patch("freqtrade.rpc.rpc.CryptoToFiatConverter._find_price", return_value=1.2)
     mocker.patch("freqtrade.rpc.telegram.Telegram", MagicMock())
     mocker.patch.multiple(
         EXMS,
@@ -629,6 +618,7 @@ def test_rpc_balance_handle(default_conf_usdt, mocker, tickers, proxy_coin, marg
     patch_get_signal(freqtradebot)
     rpc = RPC(freqtradebot)
     rpc._fiat_converter = CryptoToFiatConverter({})
+    mocker.patch.object(rpc._fiat_converter, "get_price", return_value=1.2)
 
     result = rpc._rpc_balance(
         default_conf_usdt["stake_currency"], default_conf_usdt["fiat_display_currency"]
