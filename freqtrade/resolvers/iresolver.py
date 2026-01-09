@@ -139,7 +139,7 @@ class IResolver:
         :return: object class
         """
         logger.debug(f"Searching for {cls.object_type.__name__} {object_name} in '{directory}'")
-        for entry in directory.iterdir():
+        for entry in sorted(directory.iterdir()):
             # Only consider python files
             if entry.suffix != ".py":
                 logger.debug("Ignoring %s", entry)

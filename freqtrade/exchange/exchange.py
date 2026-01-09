@@ -2062,12 +2062,13 @@ class Exchange:
         """
         return self._config["stake_currency"]
 
-    def get_conversion_rate(self, coin: str, currency: str) -> float | None:
+    def get_conversion_rate(self, coin: str, currency: str, *, cached=True) -> float | None:
         """
         Quick and cached way to get conversion rate one currency to the other.
         Can then be used as "rate * amount" to convert between currencies.
         :param coin: Coin to convert
         :param currency: Currency to convert to
+        :param cached: Allow cached tickers, default True
         :returns: Conversion rate from coin to currency
         :raises: ExchangeErrors
         """
@@ -2078,13 +2079,13 @@ class Exchange:
             currency = proxy_currency
         if coin == currency:
             return 1.0
-        tickers = self.get_tickers(cached=True)
+        tickers = self.get_tickers(cached=cached)
         try:
             for pair in self.get_valid_pair_combination(coin, currency):
                 ticker: Ticker | None = tickers.get(pair, None)
                 if not ticker:
                     tickers_other: Tickers = self.get_tickers(
-                        cached=True,
+                        cached=cached,
                         market_type=(
                             TradingMode.SPOT
                             if self.trading_mode != TradingMode.SPOT

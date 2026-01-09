@@ -133,7 +133,7 @@ class MyAwesomeStrategy(IStrategy):
         ]
 
         # Define a custom max_open_trades space
-        def max_open_trades_space(self) -> List[Dimension]:
+        def max_open_trades_space() -> List[Dimension]:
             return [
                 Integer(-1, 10, name='max_open_trades'),
             ]
@@ -207,7 +207,6 @@ Some research will be necessary to find additional Samplers (from optunahub) for
     ```
 
     Obviously the same approach will work for all other Samplers optuna supports.
-
 
 ## Space options
 
