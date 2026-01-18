@@ -1931,16 +1931,34 @@ def gen_annotation_params():
         "width": 2,
         "line_style": "dashed",
     }
+    point_annotation = {
+        "type": "point",
+        "x": "2024-01-01 15:30:00",
+        "y": 97000,
+        "color": "",
+        "label": "some label",
+        "size": 10,
+        "shape": "circle",
+    }
 
     line_wrong = deepcopy(line_annotation)
     line_wrong["line_style"] = "dashed2222"
+    point_wrong = deepcopy(point_annotation)
+    point_wrong["shape"] = "circle2222"
+    # annotations / expected
     return [
         ([area_annotation], [area_annotation]),  # Only area
         ([line_annotation], [line_annotation]),  # Only line
-        ([area_annotation, line_annotation], [area_annotation, line_annotation]),  # Both together
+        ([point_annotation], [point_annotation]),  # Only point
+        ([area_annotation, line_annotation], [area_annotation, line_annotation]),  # mark and line
+        (
+            [area_annotation, line_annotation, point_annotation],
+            [area_annotation, line_annotation, point_annotation],
+        ),  # all together
         ([], []),  # Empty
         ([line_wrong], []),  # Invalid line
         ([area_annotation, line_wrong], [area_annotation]),  # Invalid line
+        ([point_wrong], []),  # Invalid point
     ]
 
 

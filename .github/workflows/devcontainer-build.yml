@@ -43,3 +43,14 @@ jobs:
         imageName: ghcr.io/${{ github.repository }}-devcontainer
         cacheFrom: ghcr.io/${{ github.repository }}-devcontainer
         push: always
+
+
+  packages-cleanup:
+    name: "Docker Package Cleanup"
+    uses: ./.github/workflows/packages-cleanup.yml
+    # Only run on push, schedule, or release events
+    if: (github.event_name == 'push' || github.event_name == 'schedule') && github.repository == 'freqtrade/freqtrade'
+    permissions:
+      packages: write # Needed to delete package versions
+    with:
+      package_name: 'freqtrade-devcontainer'
