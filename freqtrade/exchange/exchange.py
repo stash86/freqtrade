@@ -1156,7 +1156,7 @@ class Exchange:
         orderbook: OrderBook | None = None
         if self.exchange_has("fetchL2OrderBook"):
             orderbook = self.fetch_l2_order_book(pair, 20)
-        if ordertype == "limit" and orderbook:
+        if not stop_loss and ordertype == "limit" and orderbook:
             # Allow a 1% price difference
             allowed_diff = 0.01
             if self._dry_is_price_crossed(pair, side, rate, orderbook, allowed_diff):
@@ -2896,8 +2896,11 @@ class Exchange:
         }
         pairs_to_download = [p for p in pairs if p not in candles]
         if pairs_to_download:
-            candles = self.refresh_latest_ohlcv(pairs_to_download, since_ms=since_ms, cache=False)
-            for c, val in candles.items():
+            candles_new = self.refresh_latest_ohlcv(
+                pairs_to_download, since_ms=since_ms, cache=False
+            )
+            for c, val in candles_new.items():
+                candles[c] = val
                 self._expiring_candle_cache[(c[1], since_ms)][c] = val
         return candles
 
