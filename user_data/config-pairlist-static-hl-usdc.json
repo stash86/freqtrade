@@ -1,0 +1,15 @@
+{
+    "exchange": {
+        "pair_whitelist": [
+            "XYZ100/USDC:USDC",
+            "GOLD/USDC:USDC",
+            "SILVER/USDC:USDC",
+        ],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {
+            "method": "StaticPairList"
+        },
+    ],
+}
