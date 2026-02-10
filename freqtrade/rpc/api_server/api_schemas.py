@@ -515,6 +515,7 @@ class DownloadDataPayload(ExchangeModePayloadMixin, BaseModel):
     erase: bool = False
     download_trades: bool = False
     candle_types: list[str] | None = None
+    prepend_data: bool = False
 
     @model_validator(mode="before")
     def check_mutually_exclusive(cls, values):
