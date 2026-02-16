@@ -27,7 +27,7 @@
         },
         {
             "method": "VolumePairList",
-            "number_assets": 15,
+            "number_assets": 12,
             "sort_key": "quoteVolume",
         },
     ],

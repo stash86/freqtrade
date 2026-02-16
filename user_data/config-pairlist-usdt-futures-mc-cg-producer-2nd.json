@@ -27,13 +27,13 @@
         },
         {
             "method": "VolumePairList",
-            "number_assets": 30,
+            "number_assets": 24,
             "sort_key": "quoteVolume",
         },
         {
             "method": "OffsetFilter",
-            "offset": 15,
-            "number_assets": 15
+            "offset": 13,
+            "number_assets": 12
         }
     ],
 }
