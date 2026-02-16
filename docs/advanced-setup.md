@@ -73,7 +73,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     # Expose api on port 8080 (localhost only)
-    # Please read the https://www.freqtrade.io/en/latest/rest-api/ documentation
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
     # before enabling this.
      ports:
      - "127.0.0.1:8080:8080"
@@ -100,7 +100,7 @@ services:
     volumes:
       - "./user_data:/freqtrade/user_data"
     # Expose api on port 8080 (localhost only)
-    # Please read the https://www.freqtrade.io/en/latest/rest-api/ documentation
+    # Please read the https://www.freqtrade.io/en/stable/rest-api/ documentation
     # before enabling this.
     ports:
       - "127.0.0.1:8081:8080"

@@ -125,6 +125,27 @@ def round_dict(d, n):
 DictMap = dict[str, Any] | Mapping[str, Any]
 
 
+def safe_value_nested(obj: DictMap, keys: str, default_value=None):
+    """
+    Search a nested dict for a value.
+    :param obj: dict to search in
+    :param keys: dot separated keys to search for
+    :param default_value: value to return if the key is not found or value is None
+    :return: value found in dict or default_value
+     Sample:
+    >>> d = { 'first' : { 'rows' : { 'pass' : 'dog', 'number' : '1' } } }
+    >>> safe_value_nested(d, "first.rows.pass") == "dog"
+    True
+    """
+    nested_obj = obj
+    for key in keys.split("."):
+        if key in nested_obj and nested_obj[key] is not None:
+            nested_obj = nested_obj[key]
+        else:
+            return default_value
+    return nested_obj
+
+
 def safe_value_fallback(obj: DictMap, key1: str, key2: str | None = None, default_value=None):
     """
     Search a value in obj, return this if it's not None.
@@ -210,12 +231,12 @@ def remove_entry_exit_signals(dataframe: pd.DataFrame):
 
     :param dataframe: The DataFrame to remove signals from
     """
-    dataframe[SignalType.ENTER_LONG.value] = 0
-    dataframe[SignalType.EXIT_LONG.value] = 0
-    dataframe[SignalType.ENTER_SHORT.value] = 0
-    dataframe[SignalType.EXIT_SHORT.value] = 0
-    dataframe[SignalTagType.ENTER_TAG.value] = None
-    dataframe[SignalTagType.EXIT_TAG.value] = None
+    dataframe[SignalType.ENTER_LONG] = 0
+    dataframe[SignalType.EXIT_LONG] = 0
+    dataframe[SignalType.ENTER_SHORT] = 0
+    dataframe[SignalType.EXIT_SHORT] = 0
+    dataframe[SignalTagType.ENTER_TAG] = None
+    dataframe[SignalTagType.EXIT_TAG] = None
 
     return dataframe
 

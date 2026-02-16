@@ -24,7 +24,7 @@ hesitate to read the source code and understand the mechanism of this bot.
 
 ## Supported Exchange marketplaces
 
-Please read the [exchange-specific notes](docs/exchanges.md) to learn about special configurations that maybe needed for each exchange.
+Please read the [exchange-specific notes](https://www.freqtrade.io/en/stable/exchanges/) to learn about special configurations that maybe needed for each exchange.
 
 ### Supported Spot Exchanges
 
@@ -50,7 +50,7 @@ Please read the [exchange-specific notes](docs/exchanges.md) to learn about spec
 - [X] [OKX](https://okx.com/)
 - [X] [Bybit](https://bybit.com/)
 
-Please make sure to read the [exchange specific notes](docs/exchanges.md), as well as the [trading with leverage](docs/leverage.md) documentation before diving in.
+Please make sure to read the [exchange specific notes](https://www.freqtrade.io/en/stable/exchanges/), as well as the [trading with leverage](https://www.freqtrade.io/en/stable/leverage/) documentation before diving in.
 
 ### Community tested
 
@@ -142,7 +142,7 @@ options:
 
 ### Telegram RPC commands
 
-Telegram is not mandatory. However, this is a great way to control your bot. More details and the full command list on the [documentation](https://www.freqtrade.io/en/latest/telegram-usage/)
+Telegram is not mandatory. However, this is a great way to control your bot. More details and the full command list on the [documentation](https://www.freqtrade.io/en/stable/telegram-usage/)
 
 - `/start`: Starts the trader.
 - `/stop`: Stops the trader.

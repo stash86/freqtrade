@@ -19,6 +19,7 @@ from freqtrade.misc import (
     plural,
     safe_value_fallback,
     safe_value_fallback2,
+    safe_value_nested,
 )
 
 
@@ -91,6 +92,13 @@ def test_is_file_in_dir(tmp_path):
 def test_pair_to_filename(pair, expected_result):
     pair_s = pair_to_filename(pair)
     assert pair_s == expected_result
+
+
+def test_safe_value_nested():
+    dict1 = {"first": {"rows": {"pass": "dog", "number": "1"}}}
+    assert safe_value_nested(dict1, "first.rows.pass") == "dog"
+    assert safe_value_nested(dict1, "first.rows.fail", default_value="cat") == "cat"
+    assert safe_value_nested(dict1, "first") == dict1["first"]
 
 
 def test_safe_value_fallback():

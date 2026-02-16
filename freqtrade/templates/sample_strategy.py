@@ -40,7 +40,7 @@ from technical import qtpylib
 class SampleStrategy(IStrategy):
     """
     This is a sample strategy to inspire you.
-    More information in https://www.freqtrade.io/en/latest/strategy-customization/
+    More information in https://www.freqtrade.io/en/stable/strategy-customization/
 
     You can:
         :return: a Dataframe with all mandatory indicators for the strategies

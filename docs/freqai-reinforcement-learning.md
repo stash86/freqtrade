@@ -45,7 +45,7 @@ where `ReinforcementLearner` will use the templated `ReinforcementLearner` from 
 
         More details about feature engineering available:
 
-        https://www.freqtrade.io/en/latest/freqai-feature-engineering
+        https://www.freqtrade.io/en/stable/freqai-feature-engineering
 
         :param df: strategy dataframe which will receive the targets
         usage example: dataframe["&-target"] = dataframe["close"].shift(-1) / dataframe["close"]

@@ -360,25 +360,53 @@ def test_migrate_get_last_sequence_ids():
     engine = MagicMock()
     engine.begin = MagicMock()
     engine.name = "postgresql"
-    get_last_sequence_ids(engine, "trades_bak", "orders_bak")
+    get_last_sequence_ids(engine, "trades_id_seq", "trades_bak")
 
     assert engine.begin.call_count == 2
     engine.reset_mock()
     engine.begin.reset_mock()
 
     engine.name = "somethingelse"
-    get_last_sequence_ids(engine, "trades_bak", "orders_bak")
+    get_last_sequence_ids(engine, "trades_id_seq", "trades_bak")
 
     assert engine.begin.call_count == 0
 
 
 def test_migrate_set_sequence_ids():
     engine = MagicMock()
-    engine.begin = MagicMock()
+    # make engine.begin() usable as a context manager that returns `conn`
+    conn = MagicMock()
+    engine.begin = MagicMock(
+        return_value=MagicMock(
+            __enter__=MagicMock(return_value=conn),
+        )
+    )
     engine.name = "postgresql"
-    set_sequence_ids(engine, 22, 55, 5)
 
+    set_sequence_ids(engine, 22, 55, 5, 3, 1)
+
+    # begin called once and connection.execute invoked for each provided sequence id
     assert engine.begin.call_count == 1
+    assert conn.execute.call_count == 5
+    assert (
+        conn.execute.call_args_list[0][0][0].text == "ALTER SEQUENCE orders_id_seq RESTART WITH 22"
+    )
+    assert (
+        conn.execute.call_args_list[1][0][0].text == "ALTER SEQUENCE trades_id_seq RESTART WITH 55"
+    )
+    assert (
+        conn.execute.call_args_list[2][0][0].text
+        == "ALTER SEQUENCE pairlocks_id_seq RESTART WITH 5"
+    )
+    assert (
+        conn.execute.call_args_list[3][0][0].text
+        == 'ALTER SEQUENCE "KeyValueStore_id_seq" RESTART WITH 3'
+    )
+    assert (
+        conn.execute.call_args_list[4][0][0].text
+        == "ALTER SEQUENCE trade_custom_data_id_seq RESTART WITH 1"
+    )
+
     engine.reset_mock()
     engine.begin.reset_mock()
 

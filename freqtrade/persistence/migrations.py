@@ -30,25 +30,39 @@ def get_backup_name(tabs: list[str], backup_prefix: str):
     return table_back_name
 
 
-def get_last_sequence_ids(engine, trade_back_name: str, order_back_name: str):
-    order_id: int | None = None
-    trade_id: int | None = None
+def get_last_sequence_ids(engine, sequence_name: str, table_back_name: str) -> int | None:
+    last_id: int | None = None
 
     if engine.name == "postgresql":
         with engine.begin() as connection:
-            trade_id = connection.execute(text("select nextval('trades_id_seq')")).fetchone()[0]
-            order_id = connection.execute(text("select nextval('orders_id_seq')")).fetchone()[0]
+            last_id = connection.execute(text(f"select nextval('{sequence_name}')")).fetchone()[0]
         with engine.begin() as connection:
             connection.execute(
-                text(f"ALTER SEQUENCE orders_id_seq rename to {order_back_name}_id_seq_bak")
+                text(f"ALTER SEQUENCE {sequence_name} rename to {table_back_name}_id_seq_bak")
             )
-            connection.execute(
-                text(f"ALTER SEQUENCE trades_id_seq rename to {trade_back_name}_id_seq_bak")
-            )
-    return order_id, trade_id
+
+    return last_id
 
 
-def set_sequence_ids(engine, order_id, trade_id, pairlock_id=None):
+def set_sequence_ids(
+    engine,
+    order_id: int | None = None,
+    trade_id: int | None = None,
+    pairlock_id: int | None = None,
+    kv_id: int | None = None,
+    custom_data_id: int | None = None,
+):
+    """
+    Set sequence ids to the given values.
+    The id's given should be the next id to use, so the current max id + 1 - or current id
+    if using nextval before migration.
+    :param engine: SQLAlchemy engine
+    :param order_id: value to set for orders_id_seq (optional)
+    :param trade_id: value to set for trades_id_seq (optional)
+    :param pairlock_id: value to set for pairlocks_id_seq (optional)
+    :param kv_id: value to set for KeyValueStore_id_seq (optional)
+    :param custom_data_id: value to set for trade_custom_data_id_seq (optional)
+    """
     if engine.name == "postgresql":
         with engine.begin() as connection:
             if order_id:
@@ -58,6 +72,14 @@ def set_sequence_ids(engine, order_id, trade_id, pairlock_id=None):
             if pairlock_id:
                 connection.execute(
                     text(f"ALTER SEQUENCE pairlocks_id_seq RESTART WITH {pairlock_id}")
+                )
+            if kv_id:
+                connection.execute(
+                    text(f'ALTER SEQUENCE "KeyValueStore_id_seq" RESTART WITH {kv_id}')
+                )
+            if custom_data_id:
+                connection.execute(
+                    text(f"ALTER SEQUENCE trade_custom_data_id_seq RESTART WITH {custom_data_id}")
                 )
 
 
@@ -157,7 +179,8 @@ def migrate_trades_and_orders_table(
 
     drop_index_on_table(engine, inspector, trade_back_name)
 
-    order_id, trade_id = get_last_sequence_ids(engine, trade_back_name, order_back_name)
+    order_id = get_last_sequence_ids(engine, "order_id_seq", order_back_name)
+    trade_id = get_last_sequence_ids(engine, "trades_id_seq", trade_back_name)
 
     drop_orders_table(engine, order_back_name)
 
@@ -269,6 +292,7 @@ def migrate_pairlocks_table(decl_base, inspector, engine, pairlock_back_name: st
         connection.execute(text(f"alter table pairlocks rename to {pairlock_back_name}"))
 
     drop_index_on_table(engine, inspector, pairlock_back_name)
+    pairlock_id = get_last_sequence_ids(engine, "pairlocks_id_seq", pairlock_back_name)
 
     side = get_column_def(cols, "side", "'*'")
 
@@ -287,6 +311,8 @@ def migrate_pairlocks_table(decl_base, inspector, engine, pairlock_back_name: st
         """
             )
         )
+
+    set_sequence_ids(engine, pairlock_id=pairlock_id)
 
 
 def set_sqlite_to_wal(engine):

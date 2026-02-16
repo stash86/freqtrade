@@ -239,7 +239,7 @@ Kucoin supports [time_in_force](configuration.md#understand-order_time_in_force)
 
 ### Kucoin Blacklists
 
-For Kucoin, it is suggested to add `"KCS/<STAKE>"` to your blacklist to avoid issues, unless you are willing to maintain enough extra `KCS` on the account or unless you're willing to disable using `KCS` for fees. 
+For Kucoin, it is suggested to add `"KCS/<STAKE>"` to your blacklist to avoid issues, unless you are willing to maintain enough extra `KCS` on the account or unless you're willing to disable using `KCS` for fees.
 Kucoin accounts may use `KCS` for fees, and if a trade happens to be on `KCS`, further trades may consume this position and make the initial `KCS` trade unsellable as the expected amount is not there anymore.
 
 ## HTX
@@ -318,7 +318,6 @@ API Keys for live futures trading must have the following permissions:
 * Contract - Positions
 
 We do strongly recommend to limit all API keys to the IP you're going to use it from.
-
 
 ## Bitmart
 
@@ -458,6 +457,8 @@ Replace `"dex_name_1"` and `"dex_name_2"` with the actual names of the HIP-3 DEX
 !!! Note
     HIP-3 DEXes share the same wallet and free amount of collateral as your main Hyperliquid account. Trades on different DEXes will affect your overall account balance and margin.
 
+    The pair name for HIP-3 pairs will be slightly different than non HIP-3 pairs. Please use `list-pairs` subcommand to get the correct pair naming for all pairs for the specified dexes.
+
 ## Bitvavo
 
 If your account is required to use an operatorId, you can set it in the configuration file as follows:
@@ -521,5 +522,5 @@ For example, to test the order type `FOK` with Kraken, and modify candle limit t
 
 !!! Warning
     Please make sure to fully understand the impacts of these settings before modifying them.
-    Using `_ft_has_params` overrides may lead to unexpected behavior, and may even break your bot. 
+    Using `_ft_has_params` overrides may lead to unexpected behavior, and may even break your bot.
     We will not be able to provide support for issues caused by custom settings in `_ft_has_params`.

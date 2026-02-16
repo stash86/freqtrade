@@ -7,8 +7,8 @@ ft-pandas-ta==0.3.16
 ta-lib==0.6.8
 technical==1.5.4
 
-ccxt==4.5.36
-cryptography==46.0.4
+ccxt==4.5.38
+cryptography==46.0.5
 aiohttp==3.13.3
 SQLAlchemy==2.0.46
 python-telegram-bot==22.6
@@ -31,13 +31,13 @@ pyarrow==23.0.0; platform_machine != 'armv7l'
 # Load ticker files 30% faster
 python-rapidjson==1.23
 # Properly format api responses
-orjson==3.11.6
+orjson==3.11.7
 
 # Notify systemd
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.128.0
+fastapi==0.128.5
 pydantic==2.12.5
 uvicorn==0.40.0
 pyjwt==2.11.0
