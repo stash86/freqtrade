@@ -1,0 +1,39 @@
+{
+    "exchange": {
+        "pair_whitelist": [],
+        "pair_blacklist": []
+    },
+    "pairlists": [
+        {
+            "method": "MarketCapPairList",
+            "number_assets": 40,
+            "max_rank": 60,
+            "refresh_period": 86400
+        },
+        {
+            "method": "MarketCapPairList",
+            "max_rank": 60,
+            "mode": "blacklist",
+            "categories": [
+                "stablecoins",
+                "meme-token",
+                "exchange-based-tokens",
+                "stablecoin-issuer",
+                "trump-affiliated-tokens"
+            ]
+        },
+        {
+            "method": "FullTradesFilter"
+        },
+        {
+            "method": "VolumePairList",
+            "number_assets": 30,
+            "sort_key": "quoteVolume",
+        },
+        {
+            "method": "OffsetFilter",
+            "offset": 15,
+            "number_assets": 15
+        }
+    ],
+}
