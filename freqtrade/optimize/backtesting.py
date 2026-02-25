@@ -136,6 +136,7 @@ class Backtesting:
             "exited": {},
         }
         self.rejected_dict: dict[str, list] = {}
+        self.starting_balance: float = 0.0
 
         self._exchange_name = self.config["exchange"]["name"]
         self.__initial_backtest = exchange is None
@@ -277,6 +278,7 @@ class Backtesting:
         self.reset_backtest(False)
 
         self.wallets = Wallets(self.config, self.exchange, is_backtest=True)
+        self.starting_balance = self.wallets.get_starting_balance()
 
         self.progress = BTProgress()
         self.abort = False
@@ -1271,8 +1273,8 @@ class Backtesting:
 
     def run_protections(self, pair: str, current_time: datetime, side: LongShort):
         if self.enable_protections:
-            self.protections.stop_per_pair(pair, current_time, side)
-            self.protections.global_stop(current_time, side)
+            self.protections.stop_per_pair(pair, current_time, side, self.starting_balance)
+            self.protections.global_stop(current_time, side, self.starting_balance)
 
     def manage_open_orders(self, trade: LocalTrade, current_time: datetime, row: tuple) -> bool:
         """

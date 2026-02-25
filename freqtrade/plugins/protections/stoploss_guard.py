@@ -86,7 +86,9 @@ class StoplossGuard(IProtection):
             lock_side=(side if self._only_per_side else "*"),
         )
 
-    def global_stop(self, date_now: datetime, side: LongShort) -> ProtectionReturn | None:
+    def global_stop(
+        self, date_now: datetime, side: LongShort, starting_balance: float
+    ) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for all pairs
         This must evaluate to true for the whole period of the "cooldown period".
@@ -98,7 +100,7 @@ class StoplossGuard(IProtection):
         return self._stoploss_guard(date_now, None, side)
 
     def stop_per_pair(
-        self, pair: str, date_now: datetime, side: LongShort
+        self, pair: str, date_now: datetime, side: LongShort, starting_balance: float
     ) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for this pair

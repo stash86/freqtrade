@@ -221,6 +221,9 @@ def test_setup_bt_configuration_with_arguments(mocker, default_conf, caplog) -> 
     assert "exportfilename" in config
     assert isinstance(config["exportfilename"], Path)
     assert log_has("Storing backtest results to {} ...".format(config["exportfilename"]), caplog)
+    assert log_has_re(
+        "DEPRECATED: Using `--export-filename` has no impact when backtesting.*", caplog
+    )
 
     assert "fee" in config
     assert log_has("Parameter --fee detected, setting fee to: {} ...".format(config["fee"]), caplog)

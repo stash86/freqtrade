@@ -37,7 +37,8 @@ class ApiBG:
 
     # Generic background jobs
 
-    # TODO: Change this to FtTTLCache
+    # TODO: Change this to FtTTLCache -> must be more intelligent than FtTTLCache - as we can't
+    # evict still running jobs.
     jobs: dict[str, JobsContainer] = {}
     # Pairlist evaluate things
     pairlist_running: bool = False

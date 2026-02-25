@@ -30,7 +30,7 @@ from freqtrade.rpc.api_server.api_schemas import (
     BacktestRequest,
     BacktestResponse,
 )
-from freqtrade.rpc.api_server.deps import get_config
+from freqtrade.rpc.api_server.deps import get_config, verify_strategy
 from freqtrade.rpc.api_server.webserver_bgwork import ApiBG
 from freqtrade.rpc.rpc import RPCException
 
@@ -134,8 +134,7 @@ async def api_start_backtest(
     if ApiBG.bgtask_running:
         raise RPCException("Bot Background task already running")
 
-    if ":" in bt_settings.strategy:
-        raise HTTPException(status_code=500, detail="base64 encoded strategies are not allowed.")
+    verify_strategy(bt_settings.strategy)
 
     btconfig = deepcopy(config)
     remove_exchange_credentials(btconfig["exchange"], True)

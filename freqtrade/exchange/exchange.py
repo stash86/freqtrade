@@ -314,9 +314,12 @@ class Exchange:
         if self._exchange_ws:
             self._exchange_ws.cleanup()
         logger.debug("Exchange object destroyed, closing async loop")
-        generic_loop = asyncio.get_event_loop()
+        try:
+            generic_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            generic_loop = None
         loop_running = (getattr(self, "loop", None) and self.loop.is_running()) or (
-            generic_loop and generic_loop.is_running()
+            generic_loop is not None and generic_loop.is_running()
         )
 
         if (

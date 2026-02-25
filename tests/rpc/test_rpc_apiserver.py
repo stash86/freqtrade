@@ -8,7 +8,7 @@ import time
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import ANY, MagicMock, PropertyMock
+from unittest.mock import ANY, MagicMock, PropertyMock, patch
 
 import pandas as pd
 import pytest
@@ -180,11 +180,12 @@ def test_api_ui_fallback(botclient, mocker):
     # Allow both fallback or real UI
     assert "`freqtrade install-ui`" in rc.text or "<!DOCTYPE html>" in rc.text
 
-    mocker.patch.object(Path, "is_file", MagicMock(side_effect=[True, False]))
-    rc = client_get(client, "%2F%2F%2Fetc/passwd")
-    assert rc.status_code == 200
+    for test_string in ["%2F%2F%2Fetc/passwd", "assets%2F..%2F..%2F..%2Fdeps.py"]:
+        with patch.object(Path, "is_file", MagicMock(side_effect=[True, False])):
+            rc = client_get(client, test_string)
+            assert rc.status_code == 200
 
-    assert "`freqtrade install-ui`" in rc.text
+            assert "`freqtrade install-ui`" in rc.text
 
 
 def test_api_ui_version(botclient, mocker):
@@ -2421,6 +2422,31 @@ def test_api_pair_history(botclient, tmp_path, mocker):
     assert "enter_long" not in result["columns"]
     assert result["columns"] == ["date", "open", "high", "low", "close", "volume", "__date_ts"]
 
+    # Disallow base64 strategies
+    base64_dummy = "xx:cHJpbnQoImhlbGxvIHdvcmxkIik="
+    rc = client_post(
+        client,
+        f"{BASE_URI}/pair_history",
+        data={
+            "pair": "UNITTEST/BTC",
+            "timeframe": timeframe,
+            "timerange": "20180111-20180112",
+            "strategy": base64_dummy,
+            "columns": ["rsi", "fastd", "fastk"],
+        },
+    )
+    assert_response(rc, 422)
+    assert rc.json()["detail"] == "base64 encoded strategies are not allowed."
+
+    # Disallow base64 strategies
+    rc = client_get(
+        client,
+        f"{BASE_URI}/pair_history?pair=UNITTEST%2FBTC&timeframe={timeframe}"
+        f"&timerange=20200111-20200112&strategy={base64_dummy}",
+    )
+    assert_response(rc, 422)
+    assert rc.json()["detail"] == "base64 encoded strategies are not allowed."
+
 
 def test_api_pair_history_live_mode(botclient, tmp_path, mocker):
     _ftbot, client = botclient
@@ -3078,7 +3104,7 @@ def test_api_backtesting(botclient, mocker, fee, caplog, tmp_path):
         # Disallow base64 strategies
         data["strategy"] = "xx:cHJpbnQoImhlbGxvIHdvcmxkIik="
         rc = client_post(client, f"{BASE_URI}/backtest", data=data)
-        assert_response(rc, 500)
+        assert_response(rc, 422)
     finally:
         Backtesting.cleanup()
 

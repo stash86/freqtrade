@@ -22,7 +22,13 @@ from freqtrade.rpc.api_server.api_schemas import (
     SysInfo,
     Version,
 )
-from freqtrade.rpc.api_server.deps import get_config, get_exchange, get_rpc, get_rpc_optional
+from freqtrade.rpc.api_server.deps import (
+    get_config,
+    get_exchange,
+    get_rpc,
+    get_rpc_optional,
+    verify_strategy,
+)
 from freqtrade.rpc.rpc import RPCException
 
 
@@ -71,7 +77,7 @@ router_public = APIRouter()
 router = APIRouter()
 
 
-@router_public.get("/ping", response_model=Ping, tags=["Info"])
+@router_public.api_route("/ping", methods=["GET", "HEAD"], response_model=Ping, tags=["Info"])
 def ping():
     """simple ping"""
     return {"status": "pong"}
@@ -146,8 +152,7 @@ def markets(
 def get_strategy(
     strategy: str, config=Depends(get_config), rpc: RPC | None = Depends(get_rpc_optional)
 ):
-    if ":" in strategy:
-        raise HTTPException(status_code=422, detail="base64 encoded strategies are not allowed.")
+    verify_strategy(strategy)
 
     if not rpc or config["runmode"] == RunMode.WEBSERVER:
         # webserver mode

@@ -81,7 +81,9 @@ class LowProfitPairs(IProtection):
 
         return None
 
-    def global_stop(self, date_now: datetime, side: LongShort) -> ProtectionReturn | None:
+    def global_stop(
+        self, date_now: datetime, side: LongShort, starting_balance: float
+    ) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for all pairs
         This must evaluate to true for the whole period of the "cooldown period".
@@ -91,7 +93,7 @@ class LowProfitPairs(IProtection):
         return None
 
     def stop_per_pair(
-        self, pair: str, date_now: datetime, side: LongShort
+        self, pair: str, date_now: datetime, side: LongShort, starting_balance: float
     ) -> ProtectionReturn | None:
         """
         Stops trading (position entering) for this pair

@@ -62,10 +62,7 @@ options:
   --strategy-list STRATEGY_LIST [STRATEGY_LIST ...]
                         Provide a space-separated list of strategies to
                         backtest. Please note that timeframe needs to be set
-                        either in config or via command line. When using this
-                        together with `--export trades`, the strategy-name is
-                        injected into the filename (so `backtest-data.json`
-                        becomes `backtest-data-SampleStrategy.json`
+                        either in config or via command line.
   --export {none,trades,signals}
                         Export backtest results (default: trades).
   --backtest-filename, --export-filename PATH

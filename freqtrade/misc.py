@@ -84,7 +84,12 @@ def file_load_json(file: Path):
 
 def is_file_in_dir(file: Path, directory: Path) -> bool:
     """
-    Helper function to check if file is in directory.
+    Helper function to check if file is directly within a directory.
+    :param file: File to check
+    :param directory: Directory to check against
+        When used in the API, this parameter cannot be user controlled (outside of the config)
+        to avoid security issues.
+    :return: True if file is directly within directory, False otherwise
     """
     return file.is_file() and file.parent.samefile(directory)
 
@@ -139,7 +144,7 @@ def safe_value_nested(obj: DictMap, keys: str, default_value=None):
     """
     nested_obj = obj
     for key in keys.split("."):
-        if key in nested_obj and nested_obj[key] is not None:
+        if isinstance(nested_obj, Mapping) and key in nested_obj and nested_obj[key] is not None:
             nested_obj = nested_obj[key]
         else:
             return default_value

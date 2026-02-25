@@ -12,7 +12,8 @@ Few pointers for contributions:
 - Stick to english in both commit messages, PR descriptions and code comments and variable names.
 - New features need to contain unit tests, must pass CI (run pre-commit and pytest to get an early feedback) and should be documented with the introduction PR.
 - PR's can be declared as draft - signaling Work in Progress for Pull Requests (which are not finished). We'll still aim to provide feedback on draft PR's in a timely manner.
-- If you're using AI for your PR, please both mention it in the PR description and do a thorough review of the generated code. The final responsibility for the code with the PR author, not with the AI.
+- If you're using AI for your PR, please both mention it in the PR description and do a thorough review of the generated code yourself.  
+  The final responsibility for the code with the PR author, not with the AI, which also means that commits must be linked to your (human) account, not some generic AI account.
 
 If you are unsure, discuss the feature on our [discord server](https://discord.gg/p7nuUNVfP7) or in a [issue](https://github.com/freqtrade/freqtrade/issues) before a Pull Request.
 
@@ -24,8 +25,7 @@ Best start by reading the [documentation](https://www.freqtrade.io/) to get a fe
 
 ### 1. Run unit tests
 
-All unit tests must pass. If a unit test is broken, change your code to 
-make it pass. It means you have introduced a regression.
+All unit tests must pass. If a unit test is broken, change your code to make it pass. It means you have introduced a regression.
 
 #### Test the whole project
 

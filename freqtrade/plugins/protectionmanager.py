@@ -47,13 +47,17 @@ class ProtectionManager:
         """
         return [{p.name: p.short_desc()} for p in self._protection_handlers]
 
-    def global_stop(self, now: datetime | None = None, side: LongShort = "long") -> PairLock | None:
+    def global_stop(
+        self, now: datetime | None = None, side: LongShort = "long", starting_balance: float = 0.0
+    ) -> PairLock | None:
         if not now:
             now = datetime.now(UTC)
         result = None
         for protection_handler in self._protection_handlers:
             if protection_handler.has_global_stop:
-                lock = protection_handler.global_stop(date_now=now, side=side)
+                lock = protection_handler.global_stop(
+                    date_now=now, side=side, starting_balance=starting_balance
+                )
                 if lock and lock.until:
                     if not PairLocks.is_global_lock(lock.until, side=lock.lock_side):
                         result = PairLocks.lock_pair(
@@ -62,14 +66,20 @@ class ProtectionManager:
         return result
 
     def stop_per_pair(
-        self, pair, now: datetime | None = None, side: LongShort = "long"
+        self,
+        pair,
+        now: datetime | None = None,
+        side: LongShort = "long",
+        starting_balance: float = 0.0,
     ) -> PairLock | None:
         if not now:
             now = datetime.now(UTC)
         result = None
         for protection_handler in self._protection_handlers:
             if protection_handler.has_local_stop:
-                lock = protection_handler.stop_per_pair(pair=pair, date_now=now, side=side)
+                lock = protection_handler.stop_per_pair(
+                    pair=pair, date_now=now, side=side, starting_balance=starting_balance
+                )
                 if lock and lock.until:
                     if not PairLocks.is_pair_locked(pair, lock.until, lock.lock_side):
                         result = PairLocks.lock_pair(

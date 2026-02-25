@@ -221,29 +221,29 @@ class Configuration:
                 config, argname="exportfilename", logstring="Storing backtest results to {} ..."
             )
             config["exportfilename"] = Path(config["exportfilename"])
-            if config.get("exportdirectory") and Path(config["exportdirectory"]).is_dir():
-                logger.warning(
-                    "DEPRECATED: Using `--export-filename` with directories is deprecated, "
-                    "use `--backtest-directory` instead."
-                )
-                if config.get("exportdirectory") is None:
-                    # Fallback - assign export-directory directly.
-                    config["exportdirectory"] = config["exportfilename"]
+            if config.get("exportfilename"):
+                if Path(config["exportfilename"]).is_dir():
+                    logger.warning(
+                        "DEPRECATED: Using `--export-filename` with directories is deprecated, "
+                        "use `--backtest-directory` instead."
+                    )
+                    if config.get("exportdirectory") is None:
+                        # Fallback - assign export-directory directly.
+                        config["exportdirectory"] = config["exportfilename"]
+                elif config.get("runmode") == RunMode.BACKTEST:
+                    logger.warning(
+                        "DEPRECATED: Using `--export-filename` has no impact when backtesting. "
+                        "Please use `--notes` to annotate backtest results and "
+                        "`--backtest-directory` to specify the output directory. "
+                    )
         if not config.get("exportdirectory"):
             config["exportdirectory"] = config["user_data_dir"] / "backtest_results"
-        if not config.get("exportfilename"):
-            config["exportfilename"] = None
+
+        config["exportfilename"] = config.get("exportfilename", None)
         if config.get("exportfilename"):
             # ensure exportfilename is a Path object
             config["exportfilename"] = Path(config["exportfilename"])
         config["exportdirectory"] = Path(config["exportdirectory"])
-
-        if self.args.get("show_sensitive"):
-            logger.warning(
-                "Sensitive information will be shown in the upcoming output. "
-                "Please make sure to never share this output without redacting "
-                "the information yourself."
-            )
 
     def _process_optimize_options(self, config: Config) -> None:
         # This will override the strategy configuration
@@ -311,6 +311,13 @@ class Configuration:
         self._args_to_config_loop(config, configurations)
 
         self._process_datadir_options(config)
+
+        if self.args.get("show_sensitive"):
+            logger.warning(
+                "Sensitive information will be shown in the upcoming output. "
+                "Please make sure to never share this output without redacting "
+                "the information yourself."
+            )
 
         self._args_to_config(
             config,
