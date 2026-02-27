@@ -7,6 +7,7 @@ Provides dynamic pair list based on Market Cap
 import logging
 import math
 
+from freqtrade.constants import PairPrefixes
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange.exchange_types import Tickers
 from freqtrade.plugins.pairlist.IPairList import IPairList, PairlistParameter, SupportsBacktesting
@@ -162,9 +163,6 @@ class MarketCapPairList(IPairList):
 
         return pairlist
 
-    # Prefixes to test to discover coins like 1000PEPE/USDDT:USDT or KPEPE/USDC (hyperliquid)
-    prefixes = ("1000", "K")
-
     def resolve_marketcap_pair(
         self,
         pair: str,
@@ -179,7 +177,7 @@ class MarketCapPairList(IPairList):
             return pair
 
         if pair not in markets:
-            for prefix in self.prefixes:
+            for prefix in PairPrefixes:
                 test_prefix = f"{prefix}{pair}"
 
                 if test_prefix in pairlist:

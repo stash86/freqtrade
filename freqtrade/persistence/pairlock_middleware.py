@@ -86,7 +86,7 @@ class PairLocks:
                 lock
                 for lock in PairLocks.locks
                 if (
-                    lock.lock_end_time >= now
+                    lock.lock_end_time > now
                     and lock.active is True
                     and (pair is None or lock.pair == pair)
                     and (side is None or lock.side == "*" or lock.side == side)

@@ -1346,11 +1346,11 @@ def test_backtest_pricecontours_protections(default_conf, fee, mocker, testdatad
     mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.00001)
     mocker.patch(f"{EXMS}.get_max_pair_stake_amount", return_value=float("inf"))
     tests = [
-        ["sine", 9],
-        ["raise", 10],
+        ["sine", 10],
+        ["raise", 11],
         ["lower", 0],
-        ["sine", 9],
-        ["raise", 10],
+        ["sine", 10],
+        ["raise", 11],
     ]
     backtesting = Backtesting(default_conf)
     backtesting._set_strategy(backtesting.strategylist[0])
@@ -1380,11 +1380,11 @@ def test_backtest_pricecontours_protections(default_conf, fee, mocker, testdatad
         (None, "lower", 0),
         (None, "sine", 35),
         (None, "raise", 19),
-        ([{"method": "CooldownPeriod", "stop_duration": 3}], "sine", 9),
-        ([{"method": "CooldownPeriod", "stop_duration": 3}], "raise", 10),
+        ([{"method": "CooldownPeriod", "stop_duration": 3}], "sine", 10),
+        ([{"method": "CooldownPeriod", "stop_duration": 3}], "raise", 11),
         ([{"method": "CooldownPeriod", "stop_duration": 3}], "lower", 0),
-        ([{"method": "CooldownPeriod", "stop_duration": 3}], "sine", 9),
-        ([{"method": "CooldownPeriod", "stop_duration": 3}], "raise", 10),
+        ([{"method": "CooldownPeriod", "stop_duration": 3}], "sine", 10),
+        ([{"method": "CooldownPeriod", "stop_duration": 3}], "raise", 11),
     ],
 )
 def test_backtest_pricecontours(
