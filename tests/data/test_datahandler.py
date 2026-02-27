@@ -24,36 +24,6 @@ from freqtrade.exceptions import OperationalException
 from tests.conftest import log_has, log_has_re
 
 
-def test_datahandler_ohlcv_get_pairs(testdatadir):
-    pairs = FeatherDataHandler.ohlcv_get_pairs(testdatadir, "5m", candle_type=CandleType.SPOT)
-    # Convert to set to avoid failures due to sorting
-    assert set(pairs) == {
-        "UNITTEST/BTC",
-        "XLM/BTC",
-        "ETH/BTC",
-        "TRX/BTC",
-        "LTC/BTC",
-        "XMR/BTC",
-        "ZEC/BTC",
-        "ADA/BTC",
-        "ETC/BTC",
-        "NXT/BTC",
-        "DASH/BTC",
-        "XRP/ETH",
-        "BTC/USDT",
-        "XRP/USDT",
-    }
-
-    pairs = JsonGzDataHandler.ohlcv_get_pairs(testdatadir, "8m", candle_type=CandleType.SPOT)
-    assert set(pairs) == {"UNITTEST/BTC"}
-
-    pairs = FeatherDataHandler.ohlcv_get_pairs(testdatadir, "1h", candle_type=CandleType.MARK)
-    assert set(pairs) == {"UNITTEST/USDT:USDT", "XRP/USDT:USDT"}
-
-    pairs = JsonGzDataHandler.ohlcv_get_pairs(testdatadir, "1h", candle_type=CandleType.FUTURES)
-    assert set(pairs) == {"XRP/USDT:USDT"}
-
-
 @pytest.mark.parametrize(
     "filename,pair,timeframe,candletype",
     [

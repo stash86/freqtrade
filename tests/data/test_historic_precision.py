@@ -173,7 +173,6 @@ def test_get_tick_size_over_time_small_numbers():
     # which should be converted to 0.00001
 
     assert result.asof("2020-01-01 00:00:00+00:00") == 0.000000000001
-    assert result.asof("2020-01-01 00:00:00+00:00") == 0.000000000001
     assert result.asof("2020-02-25 00:00:00+00:00") == 0.00000000001
     assert result.asof("2020-03-25 00:00:00+00:00") == 0.000000001
     assert result.asof("2020-04-01 00:00:00+00:00") == 0.000000001
@@ -181,3 +180,93 @@ def test_get_tick_size_over_time_small_numbers():
     assert result.asof("2025-04-01 00:00:00+00:00") == 0.000000001
 
     assert result.iloc[0] == 0.000000000001
+
+
+def test_get_tick_size_over_time_big_numbers():
+    """
+    Test the get_tick_size_over_time function with predefined data
+    """
+    # Create test dataframe with different levels of precision
+    data = {
+        "date": [
+            Timestamp("2020-01-01 00:00:00", tz=UTC),
+            Timestamp("2020-01-02 00:00:00", tz=UTC),
+            Timestamp("2020-01-03 00:00:00", tz=UTC),
+            Timestamp("2020-01-15 00:00:00", tz=UTC),
+            Timestamp("2020-01-16 00:00:00", tz=UTC),
+            Timestamp("2020-01-31 00:00:00", tz=UTC),
+            Timestamp("2020-02-01 00:00:00", tz=UTC),
+            Timestamp("2020-02-15 00:00:00", tz=UTC),
+            Timestamp("2020-03-15 00:00:00", tz=UTC),
+        ],
+        "open": [
+            12345.123456,
+            12345.1234,
+            12345.123,
+            12345.12,
+            12345.123456,
+            12345.1234,
+            12345.23456,
+            12345,
+            12345.234,
+        ],
+        "high": [
+            12345.123457,
+            12345.1235,
+            12345.124,
+            12345.13,
+            12345.123456,
+            12345.1235,
+            12345.23457,
+            12345,
+            12345.234,
+        ],
+        "low": [
+            12345.123455,
+            12345.1233,
+            12345.122,
+            12345.11,
+            12345.123456,
+            12345.1233,
+            12345.23455,
+            12345,
+            12345.234,
+        ],
+        "close": [
+            12345.123456,
+            12345.1234,
+            12345.123,
+            12345.12,
+            12345.123456,
+            12345.1234,
+            12345.23456,
+            12345,
+            12345.234,
+        ],
+        "volume": [100, 200, 300, 400, 500, 600, 700, 800, 900],
+    }
+
+    candles = DataFrame(data)
+
+    # Calculate significant digits
+    result = get_tick_size_over_time(candles)
+
+    # Check that the result is a pandas Series
+    assert isinstance(result, pd.Series)
+
+    # Check that we have three months of data (Jan, Feb and March 2020 )
+    assert len(result) == 3
+
+    # Before
+    assert result.asof("2019-01-01 00:00:00+00:00") is nan
+    # January should have 5 significant digits (based on 1.23456789 being the most precise value)
+    # which should be converted to 0.00001
+
+    assert result.asof("2020-01-01 00:00:00+00:00") == 0.000001
+    assert result.asof("2020-02-25 00:00:00+00:00") == 0.00001
+    assert result.asof("2020-03-25 00:00:00+00:00") == 0.001
+    assert result.asof("2020-04-01 00:00:00+00:00") == 0.001
+    # Value far past the last date should be the last value
+    assert result.asof("2025-04-01 00:00:00+00:00") == 0.001
+
+    assert result.iloc[0] == 0.000001
