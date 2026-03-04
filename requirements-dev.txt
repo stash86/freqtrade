@@ -6,7 +6,7 @@
 # -r requirements-freqai-rl.txt
 -r docs/requirements-docs.txt
 
-ruff==0.15.1
+ruff==0.15.2
 mypy==1.19.1
 pre-commit==4.5.1
 pytest==9.0.2
@@ -16,7 +16,7 @@ pytest-mock==3.15.1
 pytest-random-order==1.2.0
 pytest-timeout==2.4.0
 pytest-xdist==3.8.0
-isort==7.0.0
+isort==8.0.0
 # For datetime mocking
 time-machine==3.2.0
 
