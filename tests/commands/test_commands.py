@@ -83,6 +83,30 @@ def test_setup_utils_configuration():
     assert config["dry_run"] is False
 
 
+def test_setup_utils_configuration_download_convert_flag():
+    args = [
+        "download-data",
+        "--exchange",
+        "kraken",
+        "--pairs",
+        "ETH/USDT",
+        "--dl-trades",
+        "--convert",
+        "-t",
+        "1m",
+        "--timerange",
+        "20260101-",
+        "--config",
+        "tests/testdata/testconfigs/main_test_config.json",
+    ]
+
+    config = setup_utils_configuration(get_args(args), RunMode.UTIL_EXCHANGE)
+
+    assert config["download_trades"] is True
+    assert config["convert_trades"] is True
+    assert config["timeframes"] == ["1m"]
+
+
 def test_start_trading_fail(mocker, caplog):
     mocker.patch("freqtrade.worker.Worker.run", MagicMock(side_effect=OperationalException))
 

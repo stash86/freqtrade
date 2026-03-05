@@ -61,6 +61,7 @@ AVAILABLE_PAIRLISTS = [
     "ProducerPairList",
     "RemotePairList",
     "MarketCapPairList",
+    "CrossMarketPairList",
     "AgeFilter",
     "DelistFilter",
     "FullTradesFilter",

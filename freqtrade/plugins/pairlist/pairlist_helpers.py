@@ -28,7 +28,11 @@ def expand_pairlist(
                 raise ValueError(f"Wildcard error in {pair_wc}, {err}")
 
         # Remove wildcard pairs that didn't have a match.
-        result = [element for element in result if re.fullmatch(r"^[A-Za-z0-9:/-]+$", element)]
+        result = [
+            element
+            for element in result
+            if re.fullmatch(r"^[\w:/-]+$", element) and "_" not in element
+        ]
 
     else:
         for pair_wc in wildcardpl:

@@ -2585,6 +2585,207 @@ def test_MarketCapPairList_exceptions(mocker, default_conf_usdt, caplog):
 
 
 @pytest.mark.parametrize(
+    "pairlists,trade_mode,result",
+    [
+        (
+            [
+                # Spot pairs that exist on both markets
+                {"method": "StaticPairList", "allow_inactive": True},
+                {"method": "CrossMarketPairList", "pairs_exist_on": "both_markets"},
+            ],
+            "spot",
+            ["ETH/USDT"],
+        ),
+        (
+            [
+                # Spot pairs that exist only on spot market
+                {"method": "StaticPairList", "allow_inactive": True},
+                {"method": "CrossMarketPairList", "pairs_exist_on": "current_market_only"},
+            ],
+            "spot",
+            ["LTC/USDT", "XRP/USDT", "NEO/USDT", "TKN/USDT", "BTC/USDT"],
+        ),
+        (
+            [
+                # Futures pairs that exist on both markets
+                {"method": "StaticPairList", "allow_inactive": True},
+                {"method": "CrossMarketPairList", "pairs_exist_on": "both_markets"},
+            ],
+            "futures",
+            ["ETH/USDT:USDT"],
+        ),
+        (
+            [
+                # Futures pairs that exist only on futures market
+                {"method": "StaticPairList", "allow_inactive": True},
+                {"method": "CrossMarketPairList", "pairs_exist_on": "current_market_only"},
+            ],
+            "futures",
+            ["ADA/USDT:USDT"],
+        ),
+        (
+            [
+                # CrossMarketPairList as generator, spot market, pairs that exist on both markets
+                {"method": "CrossMarketPairList", "pairs_exist_on": "both_markets"},
+            ],
+            "spot",
+            ["ETH/USDT"],
+        ),
+        (
+            [
+                # CrossMarketPairList as generator, spot pairs that exist only on spot market
+                {"method": "CrossMarketPairList", "pairs_exist_on": "current_market_only"},
+            ],
+            "spot",
+            ["BTC/USDT", "XRP/USDT", "NEO/USDT", "TKN/USDT"],
+        ),
+        (
+            [
+                # CrossMarketPairList as generator, futures pairs that exist on both markets
+                {"method": "CrossMarketPairList", "pairs_exist_on": "both_markets"},
+            ],
+            "futures",
+            ["ETH/USDT:USDT"],
+        ),
+        (
+            [
+                # CrossMarketPairList as generator, futures pairs that exist only on futures market
+                {"method": "CrossMarketPairList", "pairs_exist_on": "current_market_only"},
+            ],
+            "futures",
+            ["ADA/USDT:USDT"],
+        ),
+    ],
+)
+def test_CrossMarketPairlist_filter(
+    mocker, default_conf_usdt, trade_mode, markets, pairlists, result
+):
+    default_conf_usdt["trading_mode"] = trade_mode
+    if trade_mode == "spot":
+        default_conf_usdt["exchange"]["pair_whitelist"].extend(["BTC/USDT", "ETC/USDT", "ADA/USDT"])
+    else:
+        default_conf_usdt["exchange"]["pair_whitelist"] = [
+            "BTC/USDT:USDT",
+            "ETH/USDT:USDT",
+            "ETC/USDT:USDT",
+            "ADA/USDT:USDT",
+        ]
+    default_conf_usdt["pairlists"] = pairlists
+    mocker.patch.multiple(
+        EXMS,
+        markets=PropertyMock(return_value=markets),
+        exchange_has=MagicMock(return_value=True),
+    )
+
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
+
+    pm = PairListManager(exchange, default_conf_usdt)
+    pm.refresh_pairlist()
+
+    assert pm.whitelist == result
+
+
+def test_CrossMarketPairlist_gen_pairlist_uses_cache(mocker, default_conf_usdt, markets):
+    default_conf_usdt["trading_mode"] = "spot"
+    default_conf_usdt["pairlists"] = [
+        {"method": "CrossMarketPairList", "pairs_exist_on": "both_markets"}
+    ]
+
+    mocker.patch.multiple(
+        EXMS,
+        markets=PropertyMock(return_value=markets),
+        exchange_has=MagicMock(return_value=True),
+    )
+
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
+    pm = PairListManager(exchange, default_conf_usdt)
+    pl = pm._pairlist_handlers[0]
+
+    pl._pair_cache["pairlist"] = ["ETH/USDT", "ADA/USDT"]
+    pl._exchange.get_markets = MagicMock(
+        side_effect=AssertionError("get_markets should not be called")
+    )
+
+    result = pl.gen_pairlist({})
+
+    assert result == ["ETH/USDT", "ADA/USDT"]
+    # Make sure the returned list is a copy, not the cached one
+    assert result is not pl._pair_cache["pairlist"]
+    result.append("BTC/USDT")
+    # Make sure the cache is not modified
+    assert pl._pair_cache["pairlist"] == ["ETH/USDT", "ADA/USDT"]
+
+
+def test_CrossMarketPairList_breaks_prefix_loop_on_match(mocker, default_conf_usdt, markets):
+    default_conf_usdt["trading_mode"] = "spot"
+    default_conf_usdt["pairlists"] = [
+        {"method": "CrossMarketPairList", "pairs_exist_on": "both_markets"}
+    ]
+
+    mocker.patch.multiple(
+        EXMS,
+        markets=PropertyMock(return_value=markets),
+        exchange_has=MagicMock(return_value=True),
+    )
+
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
+    pm = PairListManager(exchange, default_conf_usdt)
+    pl = pm._pairlist_handlers[0]
+
+    # Force base lookup path
+    mocker.patch.object(pl, "get_base_list", return_value=["1000PEPE"])
+    mocker.patch.object(pl._exchange, "get_pair_base_currency", return_value="PEPE")
+
+    def prefix_generator():
+        yield "1000"  # first prefix => match via "1000PEPE"
+        raise AssertionError("Prefix loop did not break after match")
+
+    mocker.patch(
+        "freqtrade.plugins.pairlist.CrossMarketPairList.PairPrefixes",
+        new=prefix_generator(),
+    )
+
+    result = pl.filter_pairlist(["PEPE/USDT"], {})
+    assert result == ["PEPE/USDT"]
+
+
+def test_CrossMarketPairList_breaks_prefix_loop_on_delayed_match(
+    mocker, default_conf_usdt, markets
+):
+    default_conf_usdt["trading_mode"] = "spot"
+    default_conf_usdt["pairlists"] = [
+        {"method": "CrossMarketPairList", "pairs_exist_on": "both_markets"}
+    ]
+
+    mocker.patch.multiple(
+        EXMS,
+        markets=PropertyMock(return_value=markets),
+        exchange_has=MagicMock(return_value=True),
+    )
+
+    exchange = get_patched_exchange(mocker, default_conf_usdt)
+    pm = PairListManager(exchange, default_conf_usdt)
+    pl = pm._pairlist_handlers[0]
+
+    # Force second matching path: base startswith prefix and removeprefix() matches bases.
+    mocker.patch.object(pl, "get_base_list", return_value=["PEPE"])
+    mocker.patch.object(pl._exchange, "get_pair_base_currency", return_value="1000PEPE")
+
+    def prefix_generator():
+        yield "X"  # no match, loop should continue
+        yield "1000"  # second path should match via removeprefix -> PEPE and break
+        raise AssertionError("Prefix loop did not break after delayed match")
+
+    mocker.patch(
+        "freqtrade.plugins.pairlist.CrossMarketPairList.PairPrefixes",
+        new=prefix_generator(),
+    )
+
+    result = pl.filter_pairlist(["1000PEPE/USDT"], {})
+    assert result == ["1000PEPE/USDT"]
+
+
+@pytest.mark.parametrize(
     "pairlists,expected_error,expected_warning",
     [
         (

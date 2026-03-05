@@ -410,7 +410,7 @@ class Configuration:
             ("include_inactive", "Detected --include-inactive-pairs: {}"),
             ("no_parallel_download", "Detected --no-parallel-download: {}"),
             ("download_trades", "Detected --dl-trades: {}"),
-            ("convert_trades", "Detected --convert: {} - Converting Trade data to OHCV {}"),
+            ("convert_trades", "Detected --convert: {} - Converting trade data to OHLCV."),
             ("dataformat_ohlcv", 'Using "{}" to store OHLCV data.'),
             ("dataformat_trades", 'Using "{}" to store trades data.'),
             ("show_timerange", "Detected --show-timerange"),

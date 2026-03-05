@@ -56,9 +56,9 @@ def test_datahandler_ohlcv_regex(filename, pair, timeframe, candletype):
         ("USDT_BUSD", "USDT/BUSD"),
         ("BTC_USDT_USDT", "BTC/USDT:USDT"),  # Futures
         ("XRP_USDT_USDT", "XRP/USDT:USDT"),  # futures
-        ("BTC-PERP", "BTC-PERP"),
-        ("BTC-PERP_USDT", "BTC-PERP:USDT"),
+        ("XYZ-XRP_USDT_USDT", "XYZ-XRP/USDT:USDT"),  # hip3 futures
         ("UNITTEST_USDT", "UNITTEST/USDT"),
+        ("币安人生_USDT_USDT", "币安人生/USDT:USDT"),  # futures
     ],
 )
 def test_rebuild_pair_from_filename(pair, expected):

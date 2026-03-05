@@ -649,6 +649,7 @@
               "ProducerPairList",
               "RemotePairList",
               "MarketCapPairList",
+              "CrossMarketPairList",
               "AgeFilter",
               "DelistFilter",
               "FullTradesFilter",

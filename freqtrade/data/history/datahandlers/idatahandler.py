@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 
 class IDataHandler(ABC):
-    _OHLCV_REGEX = r"^([a-zA-Z_\d-]+)\-(\d+[a-zA-Z]{1,2})\-?([a-zA-Z_]*)?(?=\.)"
-    _TRADES_REGEX = r"^([a-zA-Z_\d-]+)\-(trades)?(?=\.)"
+    _OHLCV_REGEX = r"^([\w-]+)\-(\d+[a-zA-Z]{1,2})\-?([a-zA-Z_]*)?(?=\.)"
+    _TRADES_REGEX = r"^([\w-]+)\-(trades)?(?=\.)"
 
     def __init__(self, datadir: Path) -> None:
         self._datadir = datadir
@@ -336,11 +336,10 @@ class IDataHandler(ABC):
     def rebuild_pair_from_filename(pair: str) -> str:
         """
         Rebuild pair name from filename
-        Assumes a asset name of max. 7 length to also support BTC-PERP and BTC-PERP:USD names.
+        Replaces the first '_' with '/' and the second '_' (if present) with ':'.
+        e.g. BTC_USDT -> BTC/USDT, BTC_USDT_USDT -> BTC/USDT:USDT
         """
-        res = re.sub(r"^(([A-Za-z\d]{1,10})|^([A-Za-z\-]{1,6}))(_)", r"\g<1>/", pair, count=1)
-        res = re.sub("_", ":", res, count=1)
-        return res
+        return pair.replace("_", "/", 1).replace("_", ":", 1)
 
     def ohlcv_load(
         self,
