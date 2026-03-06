@@ -407,7 +407,7 @@ Coins like 1000PEPE/USDT or KPEPE/USDT:USDT are detected on a best effort basis,
 
 Generate or filter pairs based of their availability on the opposite market.
 
-The `pairs_exis_on` setting defines whether the pairs should exists on both spot and futures market (`both_markets`) or only exist on the specified trading mode (`current_market_only`). By default, the plugin will be in `both_markets` setting, which means whitelisted pairs have to exists on both spot and futures markets.
+The `pairs_exist_on` setting defines whether the pairs should exists on both spot and futures market (`both_markets`) or only exist on the specified trading mode (`current_market_only`). By default, the plugin will be in `both_markets` setting, which means whitelisted pairs have to exists on both spot and futures markets.
 
 #### AgeFilter
 
