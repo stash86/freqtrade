@@ -1,0 +1,13 @@
+{
+    "pairlists": [
+        {
+            "method": "StaticPairList"
+        },
+    ],
+    "exchange": {
+        "pair_whitelist": [
+            "BTC/USDT"
+        ],
+        "pair_blacklist": []
+    },
+}
