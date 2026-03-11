@@ -25,15 +25,6 @@ class PerformanceFilter(IPairList):
         self._minutes = self._pairlistconfig.get("minutes", 0)
         self._min_profit = self._pairlistconfig.get("min_profit")
 
-    @property
-    def needstickers(self) -> bool:
-        """
-        Boolean property defining if tickers are necessary.
-        If no Pairlist requires tickers, an empty List is passed
-        as tickers argument to filter_pairlist
-        """
-        return False
-
     def short_desc(self) -> str:
         """
         Short allowlist method description - used for startup-messages

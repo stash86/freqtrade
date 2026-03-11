@@ -15,15 +15,6 @@ logger = logging.getLogger(__name__)
 class FullTradesFilter(IPairList):
     supports_backtesting = SupportsBacktesting.NO_ACTION
 
-    @property
-    def needstickers(self) -> bool:
-        """
-        Boolean property defining if tickers are necessary.
-        If no Pairlist requires tickers, an empty List is passed
-        as tickers argument to filter_pairlist
-        """
-        return False
-
     def short_desc(self) -> str:
         """
         Short allowlist method description - used for startup-messages
