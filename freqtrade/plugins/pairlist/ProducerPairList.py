@@ -42,16 +42,8 @@ class ProducerPairList(IPairList):
             raise OperationalException(
                 "ProducerPairList requires external_message_consumer to be enabled."
             )
-        
+
         self._stake_consumer = self._config.get("stake_currency", "USDT")
-    @property
-    def needstickers(self) -> bool:
-        """
-        Boolean property defining if tickers are necessary.
-        If no Pairlist requires tickers, an empty Dict is passed
-        as tickers argument to filter_pairlist
-        """
-        return False
 
     def short_desc(self) -> str:
         """
@@ -90,7 +82,7 @@ class ProducerPairList(IPairList):
                     "Convert the pairlist to spot pairs. "
                     "This will convert futures pairs to spot pairs."
                 ),
-            }
+            },
         }
 
     def _filter_pairlist(self, pairlist: list[str] | None):

@@ -368,6 +368,11 @@ On startup, freqtrade will set the position mode to "One-way Mode" for the whole
 !!! Tip "Stoploss on Exchange"
     Hyperliquid supports `stoploss_on_exchange` and uses `stop-loss-limit` orders. It provides great advantages, so we recommend to benefit from it.
 
+!!! Warning "Unified accounts"
+    Hyperliquid unified accounts are supported - though this relies freqtrade's assumption of "owning" the account, and being the only one trading on it (in this case, extended to both spot and futures).
+    We hence recommend the usage of subaccounts where possible, and to avoid manual trading on the same account while the bot is running.
+    Freqtrade will attempt to detect the account type on startup - changing the account type mid-trading is not supported and may lead to exceptions and errors.
+
 Hyperliquid is a Decentralized Exchange (DEX). Decentralized exchanges work a bit different compared to normal exchanges. Instead of authenticating private API calls using an API key, private API calls need to be signed with the private key of your wallet (We recommend using an api Wallet for this, generated either on Hyperliquid or in your wallet of choice).
 This needs to be configured like this:
 
@@ -422,6 +427,7 @@ Your balance and trades will now be used from your vault / subaccount - and no l
 
 !!! Note
     You can only use either a vault or a subaccount - not both at the same time.
+
 
 ### Historic Hyperliquid data
 

@@ -39,15 +39,6 @@ class ShuffleFilter(IPairList):
             maxsize=1000, ttl=timeframe_to_seconds(self._config["timeframe"])
         )
 
-    @property
-    def needstickers(self) -> bool:
-        """
-        Boolean property defining if tickers are necessary.
-        If no Pairlist requires tickers, an empty Dict is passed
-        as tickers argument to filter_pairlist
-        """
-        return False
-
     def short_desc(self) -> str:
         """
         Short whitelist method description - used for startup-messages

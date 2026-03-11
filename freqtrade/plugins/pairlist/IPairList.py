@@ -107,7 +107,6 @@ class IPairList(LoggingMixin, ABC):
         return self.__class__.__name__
 
     @property
-    @abstractmethod
     def needstickers(self) -> bool:
         """
         Boolean property defining if tickers are necessary.

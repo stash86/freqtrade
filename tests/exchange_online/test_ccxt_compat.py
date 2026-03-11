@@ -90,23 +90,14 @@ class TestCCXTExchange:
                 expected = order["expected"]
                 assert isinstance(po["id"], str)
                 assert po["id"] is not None
-                if len(exchange_response.keys()) < 5:
-                    # Kucoin case
-                    assert po["status"] is None
-                    continue
-                assert po["timestamp"] == expected["timestamp"]
-                assert isinstance(po["datetime"], str)
-                assert isinstance(po["timestamp"], int)
-                assert isinstance(po["price"], float)
-                assert po["price"] == expected["price"]
-                if po["status"] == "closed":
-                    # Filled orders should have average assigned.
-                    assert isinstance(po["average"], float)
-                    assert po["average"] == 15.5
-                assert po["symbol"] == pair
-                assert isinstance(po["amount"], float)
-                assert po["amount"] == expected["amount"]
-                assert isinstance(po["status"], str)
+
+                # Generic comparison which works for all fields
+                for key, value in expected.items():
+                    assert key in po, f"Expected key {key} not found in parsed order"
+                    assert po[key] == value, f"Expected {key} to be {value}, got {po[key]}"
+                    assert isinstance(po[key], type(value)), (
+                        f"Expected {key} to be of type {type(value)}, got {type(po[key])}"
+                    )
         else:
             pytest.skip(f"No sample order available for exchange {exchangename}")
 

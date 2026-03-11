@@ -5,11 +5,20 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Any
 
+import ccxt
+
 from freqtrade.constants import BuySell
 from freqtrade.enums import MarginMode, TradingMode
 from freqtrade.enums.runmode import NON_UTIL_MODES
-from freqtrade.exceptions import ConfigurationError, ExchangeError, OperationalException
+from freqtrade.exceptions import (
+    ConfigurationError,
+    DDosProtection,
+    ExchangeError,
+    OperationalException,
+    TemporaryError,
+)
 from freqtrade.exchange import Exchange
+from freqtrade.exchange.common import retrier
 from freqtrade.exchange.exchange_types import CcxtBalances, CcxtOrder, CcxtPosition, FtHas
 from freqtrade.util.datetime_helpers import dt_from_ts
 
@@ -21,6 +30,8 @@ class Hyperliquid(Exchange):
     """Hyperliquid exchange class.
     Contains adjustments needed for Freqtrade to work with this exchange.
     """
+
+    unified_account = False
 
     _ft_has: FtHas = {
         "ohlcv_has_history": False,
@@ -57,6 +68,38 @@ class Hyperliquid(Exchange):
             config.update({"options": {"defaultType": "spot"}})
         config.update(super()._ccxt_config)
         return config
+
+    @retrier
+    def additional_exchange_init(self) -> None:
+        """
+        Additional exchange initialization logic.
+        .api will be available at this point.
+        Query User account Account Type to determine unified account status
+        https://hyperliquid.gitbook.io/hyperliquid-docs/for-developers/api/info-endpoint#query-a-users-abstraction-state
+        """
+
+        try:
+            if self.trading_mode == TradingMode.FUTURES and not self._config["dry_run"]:
+                # Determine account status
+                # Unified accounts must use the spot endpoint for balances
+                request = {
+                    "type": "userAbstraction",
+                    "user": self._api.walletAddress,
+                }
+                response = self._api.publicPostInfo(request)
+                self.unified_account = response in ('"unifiedAccount"', '"portfolioMargin"')
+                if self.unified_account:
+                    logger.info("Unified Hyperliquid account detected.")
+
+        except ccxt.DDoSProtection as e:
+            raise DDosProtection(e) from e
+        except (ccxt.OperationFailed, ccxt.ExchangeError) as e:
+            raise TemporaryError(
+                f"Error in additional_exchange_init due to {e.__class__.__name__}. Message: {e}"
+            ) from e
+
+        except ccxt.BaseError as e:
+            raise OperationalException(e) from e
 
     def _get_configured_hip3_dexes(self) -> list[str]:
         """Get list of configured HIP-3 DEXes."""
@@ -122,28 +165,33 @@ class Hyperliquid(Exchange):
         This override is not absolutely necessary and is only there for correct used / total values
         which are however not used by Freqtrade in futures mode at the moment.
         """
-        balances = super().get_balances()
-        dexes = self._get_configured_hip3_dexes()
-        for dex in dexes:
-            try:
-                dex_balance = super().get_balances(params={"dex": dex})
+        params = params or {}
+        if self.unified_account:
+            params["type"] = "spot"
+        balances = super().get_balances(params)
+        if not self.unified_account:
+            # In unified accounts, the balance already includes all DEXes
+            dexes = self._get_configured_hip3_dexes()
+            for dex in dexes:
+                try:
+                    dex_balance = super().get_balances(params={"dex": dex})
 
-                for currency, amount_info in dex_balance.items():
-                    if currency in ["info", "free", "used", "total", "datetime", "timestamp"]:
-                        continue
+                    for currency, amount_info in dex_balance.items():
+                        if currency in ["info", "free", "used", "total", "datetime", "timestamp"]:
+                            continue
 
-                    if currency not in balances:
-                        balances[currency] = amount_info
-                    else:
-                        balances[currency]["free"] += amount_info["free"]
-                        balances[currency]["used"] += amount_info["used"]
-                        balances[currency]["total"] += amount_info["total"]
+                        if currency not in balances:
+                            balances[currency] = amount_info
+                        else:
+                            balances[currency]["free"] += amount_info["free"]
+                            balances[currency]["used"] += amount_info["used"]
+                            balances[currency]["total"] += amount_info["total"]
 
-            except Exception as e:
-                logger.error(f"Could not fetch balance for HIP-3 DEX '{dex}': {e}")
+                except Exception as e:
+                    logger.error(f"Could not fetch balance for HIP-3 DEX '{dex}': {e}")
 
-        if dexes:
-            self._log_exchange_response("fetch_balance", balances, add_info="combined")
+            if dexes:
+                self._log_exchange_response("fetch_balance", balances, add_info="combined")
         return balances
 
     def fetch_positions(
