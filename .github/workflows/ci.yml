@@ -32,7 +32,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set up Python
+    - name: Set up Python 🐍
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
@@ -182,7 +182,7 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set up Python
+    - name: Set up Python 🐍
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 #v6.2.0
       with:
         python-version: "3.12"
@@ -202,7 +202,8 @@ jobs:
 
     - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
+
     - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
 
   docs-check:
@@ -217,14 +218,20 @@ jobs:
       run: |
         ./tests/test_docs.sh
 
-    - name: Set up Python
+    - name: Set up Python 🐍
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
-        python-version: "3.12"
+        python-version: "3.13"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+      with:
+        activate-environment: true
+        python-version: "3.13"
 
     - name: Documentation build
       run: |
-        pip install -r docs/requirements-docs.txt
+        uv pip install -r docs/requirements-docs.txt
         mkdocs build
 
     - name: Discord notification
@@ -240,22 +247,25 @@ jobs:
     # Run pytest with "live" checks
     name: "Tests and Linting - Online tests"
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ["3.12"]
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: false
 
-    - name: Set up Python
+    - name: Set up Python 🐍
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
-        python-version: "3.12"
+        python-version: "${{ matrix.python-version }}"
 
     - name: Install uv
       uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
       with:
         activate-environment: true
         enable-cache: true
-        python-version: "3.12"
+        python-version: "${{ matrix.python-version }}"
         cache-dependency-glob: "requirements**.txt"
         cache-suffix: "3.12"
 
@@ -312,6 +322,9 @@ jobs:
       pre-commit,
     ]
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.13"]
 
     steps:
 
@@ -324,14 +337,20 @@ jobs:
       with:
         persist-credentials: false
 
-    - name: Set up Python
+    - name: Set up Python 🐍
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
-        python-version: "3.12"
+        python-version: "${{ matrix.python-version }}"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+      with:
+        activate-environment: true
+        python-version: "${{ matrix.python-version }}"
 
     - name: Build distribution
       run: |
-        pip install -U build
+        uv pip install -U build
         python -m build --sdist --wheel
 
     - name: Upload artifacts 📦
@@ -344,7 +363,6 @@ jobs:
 
     - name: Build Client distribution
       run: |
-        pip install -U build
         python -m build --sdist --wheel ft_client
 
     - name: Upload artifacts 📦
