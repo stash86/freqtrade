@@ -245,7 +245,7 @@ jobs:
 
   build-linux-online:
     # Run pytest with "live" checks
-    name: "Tests and Linting - Online tests"
+    name: "Online / live tests"
     runs-on: ubuntu-24.04
     strategy:
       matrix:
