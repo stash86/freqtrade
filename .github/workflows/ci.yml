@@ -137,10 +137,6 @@ jobs:
         freqtrade create-userdir --userdir user_data
         freqtrade hyperopt --datadir tests/testdata -e 6 --strategy SampleStrategy --hyperopt-loss SharpeHyperOptLossDaily --print-all
 
-    - name: Sort imports (isort)
-      run: |
-        isort --check .
-
     - name: Run Ruff
       run: |
         ruff check --output-format=github
