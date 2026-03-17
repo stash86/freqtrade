@@ -1,0 +1,8 @@
+{
+    "exchange": {
+        "name": "bitget",
+        "key": "1",
+        "secret": "2",
+        "password": "3", // for kucoin
+    }
+}
