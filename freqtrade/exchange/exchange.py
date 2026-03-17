@@ -431,6 +431,10 @@ class Exchange:
             return {}
 
     @property
+    def ccxt(self) -> ccxt.Exchange:
+        return self._api
+
+    @property
     def name(self) -> str:
         """exchange Name (from ccxt)"""
         return self._api.name

@@ -10,6 +10,7 @@ from collections import deque
 from datetime import UTC, datetime
 from typing import Any
 
+import ccxt
 from pandas import DataFrame, Timedelta, Timestamp, to_timedelta
 
 from freqtrade.configuration import TimeRange
@@ -425,6 +426,13 @@ class DataProvider:
         can be "live", "dry-run", "backtest", "hyperopt" or "other".
         """
         return RunMode(self._config.get("runmode", RunMode.OTHER))
+
+    @property
+    def ccxt(self) -> ccxt.Exchange | None:
+        """
+        Get ccxt exchange instance if available, None otherwise.
+        """
+        return self._exchange.ccxt if self._exchange else None
 
     def current_whitelist(self) -> list[str]:
         """
