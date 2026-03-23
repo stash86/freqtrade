@@ -853,7 +853,7 @@ class FreqtradeBot(LoggingMixin):
                 # logger.info(msg)
                 msg = (
                     f"Trade #{trade.id} ({trade.pair}) - Remaining amount "
-                    f"would be smaller than the minimum of {min_exit_stake}. Exit aborted."
+                    f"would be smaller than minimum of {round(min_exit_stake, 2)}. Exit aborted."
                 )
                 self.log_once(msg, logger.info)
 
