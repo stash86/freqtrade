@@ -163,12 +163,12 @@ jobs:
         if ($Error.Length -gt 0) {exit 1}
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@c2597273488aeda841dd1e891321952b51f7996f #v2.2.1
+      uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708 # v1.16.0
       if: ${{ failure() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) }}
       with:
-          severity: error
-          details: Freqtrade CI failed on ${{ matrix.os }} with Python ${{ matrix.python-version }}!
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}  # zizmor: ignore[secrets-outside-env] Intentionally not using environment variable.
+          color: '#FF0000' # red
+          title: Freqtrade CI failed on ${{ matrix.os }} with Python ${{ matrix.python-version }}!
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}  # zizmor: ignore[secrets-outside-env] Intentionally not using environment variable.
 
   mypy-version-check:
     name: "Mypy Version Check"
@@ -231,12 +231,12 @@ jobs:
         mkdocs build
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@c2597273488aeda841dd1e891321952b51f7996f #v2.2.1
+      uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708 # v1.16.0
       if: failure() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
       with:
-          severity: error
-          details: Freqtrade doc test failed!
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}  # zizmor: ignore[secrets-outside-env] Intentionally not using environment variable.
+          color: '#FF0000' # red
+          title: Freqtrade doc test failed!
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}  # zizmor: ignore[secrets-outside-env] Intentionally not using environment variable.
 
 
   build-linux-online:
@@ -291,22 +291,13 @@ jobs:
     if: github.event_name != 'schedule' && github.repository == 'freqtrade/freqtrade'
     steps:
 
-    - name: Check user permission
-      id: check
-      continue-on-error: true
-      uses: prince-chrismc/check-actor-permissions-action@d504e74ba31658f4cdf4fcfeb509d4c09736d88e # v3.0.2
-      with:
-        permission: "write"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@c2597273488aeda841dd1e891321952b51f7996f #v2.2.1
-      if: steps.check.outputs.permitted == 'true' && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+      uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708 # v1.16.0
+      if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
       with:
-          severity: info
-          details: Test Completed!
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}  # zizmor: ignore[secrets-outside-env] Intentionally not using environment variable.
+          color: '#00FF00' # green
+          title: Test Completed!
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}  # zizmor: ignore[secrets-outside-env] Intentionally not using environment variable.
 
   build:
     if: always()

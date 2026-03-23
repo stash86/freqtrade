@@ -310,9 +310,8 @@ jobs:
         docker image prune -a --force --filter "until=24h"
 
     - name: Discord notification
-      uses: rjstone/discord-webhook-notify@c2597273488aeda841dd1e891321952b51f7996f #v2.2.1
+      uses: sarisia/actions-status-discord@eb045afee445dc055c18d3d90bd0f244fd062708 # v1.16.0
       if: always() && ( github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) && (github.event_name != 'schedule')
       with:
-          severity: info
-          details: Deploy Succeeded!
-          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+          title: Deploy Succeeded!
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
