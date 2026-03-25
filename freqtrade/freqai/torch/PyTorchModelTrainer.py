@@ -179,16 +179,12 @@ class PyTorchModelTrainer(PyTorchTrainerInterface):
             path,
         )
 
-    def load(self, path: Path):
-        checkpoint = torch.load(path)
-        return self.load_from_checkpoint(checkpoint)
-
     def load_from_checkpoint(self, checkpoint: dict):
         """
         when using continual_learning, DataDrawer will load the dictionary
         (containing state dicts and model_meta_data) by calling torch.load(path).
         you can access this dict from any class that inherits IFreqaiModel by calling
-        get_init_model method.
+        the get_init_model method.
         """
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
