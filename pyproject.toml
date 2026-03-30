@@ -217,6 +217,9 @@ reportRedeclaration = false  # 1
 reportReturnType = false  # 28
 reportTypedDictNotRequiredAccess = false  # 27
 
+# [tool.uv]
+# exclude-newer = "1 week"
+# exclude-newer-package = { ccxt = false }
 
 [tool.ruff]
 line-length = 100

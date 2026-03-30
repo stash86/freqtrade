@@ -260,6 +260,10 @@ freqtrade trade --config config_examples/config_freqai.example.json --strategy F
 
     PyTorch dropped support for macOS x64 (intel based Apple devices) in version 2.3. Subsequently, freqtrade also dropped support for PyTorch on this platform.
 
+!!! Danger "Security notice"
+    Loading saved models from disk can cause security issues if using remote model files (files you downloaded from the internet or received from an untrusted source) due to having the necessity to have `weights_only=False`, which can cause security problems.
+    As long as you only load models that you have trained yourself, there is no risk.
+
 ### Structure
 
 #### Model

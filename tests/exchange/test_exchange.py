@@ -960,7 +960,8 @@ def test_validate_ordertypes_stop_advanced(default_conf, mocker, exchange_name, 
         ExchangeResolver.load_exchange(default_conf)
     else:
         with pytest.raises(
-            OperationalException, match=r"On exchange stoploss price type is not supported for .*"
+            OperationalException,
+            match=r"On exchange stoploss price type '.*' is not supported for .*",
         ):
             ExchangeResolver.load_exchange(default_conf)
 

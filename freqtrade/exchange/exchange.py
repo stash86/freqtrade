@@ -829,7 +829,8 @@ class Exchange:
                 and order_types["stoploss_price_type"] not in price_mapping
             ):
                 raise ConfigurationError(
-                    f"On exchange stoploss price type is not supported for {self.name}."
+                    f"On exchange stoploss price type '{order_types['stoploss_price_type']}' "
+                    f"is not supported for {self.name}."
                 )
 
     def validate_pricing(self, pricing: dict) -> None:
