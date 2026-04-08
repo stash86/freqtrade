@@ -29,6 +29,48 @@ from freqtrade.util import decimals_per_coin, fmt_coin, format_duration, get_dry
 logger = logging.getLogger(__name__)
 
 
+def convert_bt_wallet_collection(wallet_captures: list[tuple]) -> DataFrame:
+    """
+    Convert the wallet capture list to a DataFrame.
+    Assumes the wallet_captures list contains tuples with the following structure:
+    (date, currency, price, balance).
+    """
+    if len(wallet_captures) == 0:
+        return DataFrame()
+    return DataFrame(
+        wallet_captures,
+        columns=["date", "currency", "rate", "balance"],
+    )
+
+
+def generate_wallet_stats(wallet_df: DataFrame, stake_currency: str) -> dict[str, Any]:
+    """Generate wallet statistics from the wallet DataFrame."""
+    if wallet_df is None or wallet_df.empty:
+        return {}
+    wallet_df.loc[:, "total_quote"] = wallet_df["rate"] * wallet_df["balance"]
+    # Group by date to get total wallet value at each timestamp
+    wallet = wallet_df.groupby("date")["total_quote"].sum().reset_index()
+    total_quote = wallet["total_quote"]
+    low_idx = total_quote.idxmin()
+    high_idx = total_quote.idxmax()
+    start_balance = wallet.iloc[0]["total_quote"]
+    end_balance = wallet.iloc[-1]["total_quote"]
+    high_balance = total_quote.loc[high_idx]
+    low_balance = total_quote.loc[low_idx]
+    low_date = wallet.loc[low_idx, "date"]
+    high_date = wallet.loc[high_idx, "date"]
+    return {
+        "start_balance": start_balance,
+        "end_balance": end_balance,
+        "high_balance": high_balance,
+        "low_balance": low_balance,
+        "low_date": low_date.strftime(DATETIME_PRINT_FORMAT),
+        "low_ts": int(low_date.timestamp() * 1000),
+        "high_date": high_date.strftime(DATETIME_PRINT_FORMAT),
+        "high_ts": int(high_date.timestamp() * 1000),
+    }
+
+
 def generate_trade_signal_candles(
     preprocessed_df: dict[str, DataFrame], bt_results: BacktestContentType, date_col: str
 ) -> dict[str, DataFrame]:
@@ -593,6 +635,7 @@ def generate_strategy_stats(
         "sharpe": calculate_sharpe(results, min_date, max_date, start_balance),
         "calmar": calculate_calmar(results, min_date, max_date, start_balance),
         "sqn": calculate_sqn(results, start_balance),
+        "wallet_stats": generate_wallet_stats(content.get("wallet_summary"), stake_currency),
         "profit_factor": profit_factor,
         "backtest_start": min_date.strftime(DATETIME_PRINT_FORMAT),
         "backtest_start_ts": int(min_date.timestamp() * 1000),

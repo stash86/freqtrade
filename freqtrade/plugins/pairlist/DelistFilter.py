@@ -31,9 +31,10 @@ class DelistFilter(IPairList):
                 "DelistFilter requires only one of "
                 "max_days_from_now and max_hours_from_now to be > 0."
             )
-        if not self._exchange._ft_has["has_delisting"]:
+        if not self._exchange.get_option("has_delisting"):
             raise ConfigurationError(
-                "DelistFilter doesn't support this exchange and trading mode combination.",
+                f"DelistFilter doesn't support {self._exchange.name} in "
+                f"{self._exchange.trading_mode} mode."
             )
 
     def short_desc(self) -> str:

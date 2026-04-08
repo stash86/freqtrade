@@ -169,10 +169,12 @@ def generate_trades_history(n_rows, start_date: datetime | None = None, days=5):
     return df
 
 
-def generate_test_data(timeframe: str, size: int, start: str = "2020-07-05", random_seed=42):
+def generate_test_data(
+    timeframe: str, size: int, start: str = "2020-07-05", random_seed=42, base=20
+):
     np.random.seed(random_seed)
 
-    base = np.random.normal(20, 2, size=size)
+    base = np.random.normal(base, 2, size=size)
     if timeframe == "1y":
         date = pd.date_range(start, periods=size, freq="1YS", tz="UTC")
     elif timeframe == "1M":

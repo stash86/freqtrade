@@ -681,6 +681,15 @@ class BacktestMarketChange(BaseModel):
     data: list[list[Any]]
 
 
+class WalletHistoryResponse(BaseModel):
+    columns: list[str]
+    length: int
+    data: list[list[Any]]
+    # start date of the effectively captured data
+    # Before this date, it's based on a reconstructed wallet history
+    capture_start_ts: int | None = None
+
+
 class MarketRequest(ExchangeModePayloadMixin, BaseModel):
     base: str | None = None
     quote: str | None = None
