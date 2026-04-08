@@ -34,15 +34,15 @@ class Bitget(Exchange):
         "stoploss_query_requires_stop_flag": True,
         "ohlcv_candle_limit": 200,  # 200 for historical candles, 1000 for recent ones.
         "order_time_in_force": ["GTC", "FOK", "IOC", "PO"],
+    }
+    _ft_has_futures: FtHas = {
+        "funding_fee_candle_limit": 100,
+        "has_delisting": True,
         "stop_price_type_field": "triggerType",
         "stop_price_type_value_mapping": {
             PriceType.LAST: "fill_price",
             PriceType.MARK: "mark_price",
         },
-    }
-    _ft_has_futures: FtHas = {
-        "funding_fee_candle_limit": 100,
-        "has_delisting": True,
     }
 
     _supported_trading_mode_margin_pairs: list[tuple[TradingMode, MarginMode]] = [

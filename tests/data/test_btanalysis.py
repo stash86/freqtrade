@@ -10,8 +10,9 @@ from freqtrade.configuration import TimeRange
 from freqtrade.constants import LAST_BT_RESULT_FN
 from freqtrade.data.btanalysis import (
     BT_DATA_COLUMNS,
-    analyze_trade_parallelism,
     extract_trades_of_period,
+    get_backtest_market_change,
+    get_backtest_wallet_change,
     get_latest_backtest_filename,
     get_latest_hyperopt_file,
     load_backtest_data,
@@ -207,17 +208,6 @@ def test_extract_trades_of_period(testdatadir):
     assert trades1.iloc[0].close_date == datetime(2017, 11, 14, 10, 41, 0, tzinfo=UTC)
     assert trades1.iloc[-1].open_date == datetime(2017, 11, 14, 14, 20, 0, tzinfo=UTC)
     assert trades1.iloc[-1].close_date == datetime(2017, 11, 14, 15, 25, 0, tzinfo=UTC)
-
-
-def test_analyze_trade_parallelism(testdatadir):
-    filename = testdatadir / "backtest_results/backtest-result.json"
-    bt_data = load_backtest_data(filename)
-
-    res = analyze_trade_parallelism(bt_data, "5m")
-    assert isinstance(res, DataFrame)
-    assert "open_trades" in res.columns
-    assert res["open_trades"].max() == 3
-    assert res["open_trades"].min() == 0
 
 
 def test_load_trades(default_conf, mocker):
@@ -649,3 +639,56 @@ def test_load_file_from_zip(tmp_path):
 
     with pytest.raises(ValueError, match=r"File .* not found in zip.*"):
         load_file_from_zip(zip_file, "testfile55.txt")
+
+
+def test_get_backtest_market_change(tmp_path):
+    df = DataFrame(
+        {
+            "date": [dt_utc(2020, 1, 1), dt_utc(2020, 1, 2)],
+            "price": [100.0, 110.0],
+        }
+    )
+    feather_file = tmp_path / "backtest-result_market_change.feather"
+    df.to_feather(feather_file)
+
+    direct_df = get_backtest_market_change(feather_file)
+    assert isinstance(direct_df, DataFrame)
+    assert "__date_ts" in direct_df.columns
+    assert direct_df.loc[0, "__date_ts"] == int(df.loc[0, "date"].timestamp() * 1000)
+
+    no_ts_df = get_backtest_market_change(feather_file, include_ts=False)
+    assert "__date_ts" not in no_ts_df.columns
+
+    zip_file = tmp_path / "backtest-result.zip"
+    with ZipFile(zip_file, "w") as zipf:
+        zipf.write(feather_file, arcname=f"{zip_file.stem}_market_change.feather")
+
+    zipped_df = get_backtest_market_change(zip_file)
+    assert isinstance(zipped_df, DataFrame)
+    assert zipped_df.loc[0, "__date_ts"] == int(df.loc[0, "date"].timestamp() * 1000)
+    assert list(zipped_df["price"]) == [100.0, 110.0]
+
+
+def test_get_backtest_wallet_change(tmp_path):
+    df = DataFrame(
+        {
+            "date": [dt_utc(2020, 1, 1), dt_utc(2020, 1, 2)],
+            "balance": [1.0, 1.1],
+            "rate": [1.0, 1.1],
+        }
+    )
+    wallet_feather = tmp_path / "backtest-result_TestStrategy_wallet.feather"
+    df.to_feather(wallet_feather)
+
+    zip_file = tmp_path / "backtest-result.zip"
+    with ZipFile(zip_file, "w") as zipf:
+        zipf.write(wallet_feather, arcname=wallet_feather.name)
+
+    wallet_df = get_backtest_wallet_change(zip_file, "TestStrategy")
+    assert isinstance(wallet_df, DataFrame)
+    assert "__date_ts" in wallet_df.columns
+    assert wallet_df.loc[0, "__date_ts"] == int(df.loc[0, "date"].timestamp() * 1000)
+    assert list(wallet_df["balance"]) == [1.0, 1.1]
+
+    assert get_backtest_wallet_change(tmp_path / "backtest-result.feather", "TestStrategy") is None
+    assert get_backtest_wallet_change(zip_file, "UnknownStrategy") is None

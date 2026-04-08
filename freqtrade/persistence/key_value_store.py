@@ -22,6 +22,8 @@ KeyStoreKeys = Literal[
     "bot_start_time",
     "startup_time",
     "binance_migration",
+    "wallet_history_migration",
+    "wallet_history_migration_date",
 ]
 
 

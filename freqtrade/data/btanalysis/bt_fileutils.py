@@ -312,6 +312,27 @@ def get_backtest_market_change(filename: Path, include_ts: bool = True) -> pd.Da
     return df
 
 
+def get_backtest_wallet_change(filename: Path, strategy_name: str) -> pd.DataFrame | None:
+    """
+    Read backtest wallet change file.
+    :param filename: Path to the backtest result zip file
+    :param strategy_name: Name of the strategy to load
+    :return: DataFrame with wallet change data
+    """
+    if filename.suffix != ".zip":
+        return None
+
+    try:
+        data = load_file_from_zip(filename, f"{filename.stem}_{strategy_name}_wallet.feather")
+        df = pd.read_feather(BytesIO(data))
+
+        df.loc[:, "__date_ts"] = df.loc[:, "date"].astype(np.int64) // 1000 // 1000
+        return df
+    except ValueError:
+        pass
+    return None
+
+
 def find_existing_backtest_stats(
     dirname: Path | str, run_ids: dict[str, str], min_backtest_date: datetime | None = None
 ) -> dict[str, Any]:
@@ -503,13 +524,16 @@ def load_backtest_analysis_data(
             return None
 
 
-def trade_list_to_dataframe(trades: list[Trade] | list[LocalTrade]) -> pd.DataFrame:
+def trade_list_to_dataframe(
+    trades: list[Trade] | list[LocalTrade], *, minified: bool = True
+) -> pd.DataFrame:
     """
     Convert list of Trade objects to pandas Dataframe
     :param trades: List of trade objects
+    :param minified: Whether to use minified version of trade JSON
     :return: Dataframe with BT_DATA_COLUMNS
     """
-    df = pd.DataFrame.from_records([t.to_json(True) for t in trades], columns=BT_DATA_COLUMNS)
+    df = pd.DataFrame.from_records([t.to_json(minified) for t in trades], columns=BT_DATA_COLUMNS)
     if len(df) > 0:
         df["close_date"] = pd.to_datetime(df["close_timestamp"], unit="ms", utc=True)
         df["open_date"] = pd.to_datetime(df["open_timestamp"], unit="ms", utc=True)
