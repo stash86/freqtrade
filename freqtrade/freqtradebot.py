@@ -178,6 +178,10 @@ class FreqtradeBot(LoggingMixin):
             # Initialize protections AFTER bot start - otherwise parameters are not loaded.
             self.protections = ProtectionManager(self.config, self.strategy.protections)
 
+            self.__msg_cache = PeriodicCache(
+                maxsize=1000, ttl=timeframe_to_seconds(self.config["timeframe"])
+            )
+
             def log_took_too_long(duration: float, time_limit: float):
                 logger.warning(
                     f"Strategy analysis took {duration:.2f}s, more than 25% of the timeframe "
