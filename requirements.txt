@@ -16,7 +16,7 @@ python-telegram-bot==22.7
 httpx>=0.24.1
 humanize==4.15.0
 cachetools==7.0.5
-requests==2.33.0
+requests==2.33.1
 urllib3==2.6.3
 certifi==2026.2.25
 jsonschema==4.26.0
@@ -31,13 +31,13 @@ pyarrow==23.0.1; platform_machine != 'armv7l'
 # Load ticker files 30% faster
 python-rapidjson==1.23
 # Properly format api responses
-orjson==3.11.7
+orjson==3.11.8
 
 # Notify systemd
 sdnotify==0.3.2
 
 # API Server
-fastapi==0.135.2
+fastapi==0.135.3
 pydantic==2.12.5
 uvicorn==0.42.0
 pyjwt==2.12.1

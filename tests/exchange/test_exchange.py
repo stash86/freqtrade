@@ -348,6 +348,22 @@ def test_validate_freqai_compat(default_conf, mocker, caplog):
     ex.validate_freqai(default_conf)
 
 
+def test_validate_demo_trading(default_conf_usdt, mocker, caplog):
+    # Test - nothing enabled so nothing happens
+    ex = get_patched_exchange(mocker, default_conf_usdt, exchange="kraken")
+    ex.validate_demo_trading(default_conf_usdt["exchange"])
+
+    default_conf_usdt["exchange"]["demo_trading"] = True
+    with pytest.raises(ConfigurationError, match=r"Demo trading is not supported for .*"):
+        ex.validate_demo_trading(default_conf_usdt["exchange"])
+
+    msg = r"Demo trading enabled for .*"
+    assert not log_has_re(msg, caplog)
+    ex_bybit = get_patched_exchange(mocker, default_conf_usdt, exchange="bybit")
+    ex_bybit.validate_demo_trading(default_conf_usdt["exchange"])
+    assert log_has_re(msg, caplog)
+
+
 @pytest.mark.parametrize(
     "price,precision_mode,precision,expected",
     [
@@ -4296,11 +4312,28 @@ def test_fetch_order_or_stoploss_order(default_conf, mocker):
 
 
 @pytest.mark.parametrize("exchange_name", EXCHANGES)
-def test_name(default_conf, mocker, exchange_name):
-    exchange = get_patched_exchange(mocker, default_conf, exchange=exchange_name)
+def test_name(default_conf_usdt, mocker, exchange_name):
+    # exchange = get_patched_exchange(mocker, default_conf_usdt, exchange=exchange_name)
+    api_mock = MagicMock()
+    api_mock.name = exchange_name.title()
+    api_mock.id = exchange_name
+    mocker.patch(f"{EXMS}._init_ccxt", MagicMock(return_value=api_mock))
+    mocker.patch(f"{EXMS}._load_async_markets")
+    # mocker.patch(f"{EXMS}.validate_timeframes")
+    # mocker.patch(f"{EXMS}.validate_stakecurrency")
+    # mocker.patch(f"{EXMS}.validate_pricing")
+    default_conf_usdt["exchange"]["name"] = "exchange_name"
+    exchange = ExchangeResolver.load_exchange(default_conf_usdt, validate=False)
 
     assert exchange.name == exchange_name.title()
     assert exchange.id == exchange_name
+
+    default_conf_usdt["exchange"]["demo_trading"] = True
+
+    exchange_demo = ExchangeResolver.load_exchange(default_conf_usdt, validate=False)
+
+    assert exchange_demo.name == f"{exchange_name.title()} (Demo)"
+    assert exchange_demo.id == f"{exchange_name}_demo"
 
 
 @pytest.mark.parametrize(

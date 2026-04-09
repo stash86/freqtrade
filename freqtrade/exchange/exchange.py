@@ -249,7 +249,7 @@ class Exchange:
 
         # Holds all open sell orders for dry_run
         self._dry_run_open_orders: dict[str, Any] = {}
-
+        self._is_demo_trading = exchange_conf.get("demo_trading", False)
         if self._config["dry_run"]:
             logger.info("Instance is running with dry_run enabled")
         logger.info(f"Using CCXT {ccxt.__version__}")
@@ -365,6 +365,7 @@ class Exchange:
         self.validate_pricing(config["exit_pricing"])
         self.validate_pricing(config["entry_pricing"])
         self.validate_orderflow(config["exchange"])
+        self.validate_demo_trading(config["exchange"])
         self.validate_freqai(config)
 
         self._set_startup_candle_count(config)
@@ -418,6 +419,9 @@ class Exchange:
         except ccxt.BaseError as e:
             raise OperationalException(f"Initialization of ccxt failed. Reason: {e}") from e
 
+        if self.get_option("supports_demo_trading") and exchange_config.get("demo_trading", False):
+            api.enable_demo_trading(True)
+
         return api
 
     @property
@@ -437,12 +441,12 @@ class Exchange:
     @property
     def name(self) -> str:
         """exchange Name (from ccxt)"""
-        return self._api.name
+        return self._api.name if not self._is_demo_trading else f"{self._api.name} (Demo)"
 
     @property
     def id(self) -> str:
         """exchange ccxt id"""
-        return self._api.id
+        return self._api.id if not self._is_demo_trading else f"{self._api.id}_demo"
 
     @property
     def timeframes(self) -> list[str]:
@@ -873,6 +877,16 @@ class Exchange:
                 "Overriding exchange checks for freqAI. Make sure that your exchange supports "
                 "fetching historic OHLCV data, otherwise freqAI will not work."
             )
+
+    def validate_demo_trading(self, exchange_conf: dict) -> None:
+        """Validate demo trading configuration
+        Prevents accidental configuration with wrong expectations.
+        """
+        if exchange_conf.get("demo_trading", False):
+            if not self.get_option("supports_demo_trading"):
+                raise ConfigurationError(f"Demo trading is not supported for {self.name}.")
+            else:
+                logger.info(f"Demo trading enabled for {self.name}")
 
     def validate_required_startup_candles(self, startup_candles: int, timeframe: str) -> int:
         """

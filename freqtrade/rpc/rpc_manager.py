@@ -114,6 +114,8 @@ class RPCManager:
         trailing_stop = config["trailing_stop"]
         timeframe = config["timeframe"]
         exchange_name = config["exchange"]["name"]
+        if config["exchange"].get("demo_trading"):
+            exchange_name += " (demo trading)"
         strategy_name = config.get("strategy", "")
         pos_adjust_enabled = "On" if config["position_adjustment_enable"] else "Off"
         self.send_msg(

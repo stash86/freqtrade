@@ -255,6 +255,7 @@ class ShowConfig(BaseModel):
     timeframe_ms: int
     timeframe_min: int
     exchange: str
+    demo_trading: bool
     strategy: str | None = None
     force_entry_enable: bool
     exit_pricing: dict[str, Any]

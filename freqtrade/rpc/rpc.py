@@ -176,6 +176,7 @@ class RPC:
                 timeframe_to_minutes(config["timeframe"]) if "timeframe" in config else 0
             ),
             "exchange": config["exchange"]["name"],
+            "demo_trading": config["exchange"].get("demo_trading", False),
             "strategy": config["strategy"],
             "force_entry_enable": config.get("force_entry_enable", False),
             "exit_pricing": config.get("exit_pricing", {}),

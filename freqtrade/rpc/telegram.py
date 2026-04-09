@@ -2055,7 +2055,7 @@ class Telegram(RPCHandler):
 
         await self._send_msg(
             f"*Mode:* `{'Dry-run' if val['dry_run'] else 'Live'}`\n"
-            f"*Exchange:* `{val['exchange']}`\n"
+            f"*Exchange:* `{val['exchange']}{' (Demo)' if val['demo_trading'] else ''}`\n"
             f"*Market: * `{val['trading_mode']}`\n"
             f"*Stake per trade:* `{val['stake_amount']} {val['stake_currency']}`\n"
             f"*Max open Trades:* `{val['max_open_trades']}`\n"

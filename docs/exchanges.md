@@ -345,6 +345,15 @@ API Keys for live futures trading must have the following permissions:
 
 We do strongly recommend to limit all API keys to the IP you're going to use it from.
 
+### Bybit Demo Mode
+
+Bybit has a [demo mode](https://learn.bybit.com/en/bybit-guide/how-to-use-bybit-demo-trading) - which can be activated by setting `exchange.demo_trading` to `true` in the configuration.
+Bybit uses live markets to simulate your trades (without market impact) - making it work very similar to freqtrade's dry-run mode.  
+
+You'll need to use separate API keys for demo trading, which you can create on bybit's demo page.
+
+Demo mode is incompatible with dry-run.
+
 ## Bitmart
 
 Bitmart requires the API key Memo (the name you give the API key) to go along with the exchange key and secret.
