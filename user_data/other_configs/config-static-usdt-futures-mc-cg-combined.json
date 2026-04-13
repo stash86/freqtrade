@@ -50,6 +50,7 @@
         "name": "binance",
         "key": "1",
         "secret": "2",
+        "enable_ws": false,
         "pair_whitelist": [
             "BTC/USDT:USDT",
             "ETH/USDT:USDT",

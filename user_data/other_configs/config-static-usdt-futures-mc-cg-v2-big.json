@@ -50,13 +50,7 @@
         "name": "binance",
         "key": "1",
         "secret": "2",
-        "ccxt_config": {
-            "enableRateLimit": true
-        },
-        "ccxt_async_config": {
-            "enableRateLimit": true,
-            "rateLimit": 200
-        },
+        "enable_ws": false,
         "pair_whitelist": [
             "BTC/USDT:USDT",
             "ETH/USDT:USDT",

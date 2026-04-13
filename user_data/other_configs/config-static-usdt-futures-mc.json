@@ -1,7 +1,7 @@
 {
     "max_open_trades": -1,
     "stake_currency": "USDT",
-    "stake_amount" : 45,
+    "stake_amount": 45,
     "amend_last_stake_amount ": true,
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
@@ -42,18 +42,49 @@
         "order_book_top": 1
     },
     "pairlists": [
-        {"method": "StaticPairList"},
+        {
+            "method": "StaticPairList"
+        },
     ],
     "exchange": {
         "name": "binance",
         "key": "1",
         "secret": "2",
-        "ccxt_config": {"enableRateLimit": true},
-        "ccxt_async_config": {
-            "enableRateLimit": true,
-            "rateLimit": 200
-        },
-        "pair_whitelist": ["BTC/USDT:USDT","ETH/USDT:USDT","BNB/USDT:USDT","SOL/USDT:USDT","XRP/USDT:USDT","TON/USDT:USDT","ADA/USDT:USDT","AVAX/USDT:USDT","TRX/USDT:USDT","LINK/USDT:USDT","BCH/USDT:USDT","DOT/USDT:USDT","UNI/USDT:USDT","NEAR/USDT:USDT","LTC/USDT:USDT","ICP/USDT:USDT","FET/USDT:USDT","ETC/USDT:USDT","KAS/USDT:USDT","APT/USDT:USDT","FIL/USDT:USDT","STX/USDT:USDT","HBAR/USDT:USDT","ATOM/USDT:USDT","IMX/USDT:USDT","XLM/USDT:USDT","ARB/USDT:USDT","INJ/USDT:USDT","WIF/USDT:USDT","SUI/USDT:USDT","FTM/USDT:USDT","S/USDT:USDT"],
+        "enable_ws": false,
+        "pair_whitelist": [
+            "BTC/USDT:USDT",
+            "ETH/USDT:USDT",
+            "BNB/USDT:USDT",
+            "SOL/USDT:USDT",
+            "XRP/USDT:USDT",
+            "TON/USDT:USDT",
+            "ADA/USDT:USDT",
+            "AVAX/USDT:USDT",
+            "TRX/USDT:USDT",
+            "LINK/USDT:USDT",
+            "BCH/USDT:USDT",
+            "DOT/USDT:USDT",
+            "UNI/USDT:USDT",
+            "NEAR/USDT:USDT",
+            "LTC/USDT:USDT",
+            "ICP/USDT:USDT",
+            "FET/USDT:USDT",
+            "ETC/USDT:USDT",
+            "KAS/USDT:USDT",
+            "APT/USDT:USDT",
+            "FIL/USDT:USDT",
+            "STX/USDT:USDT",
+            "HBAR/USDT:USDT",
+            "ATOM/USDT:USDT",
+            "IMX/USDT:USDT",
+            "XLM/USDT:USDT",
+            "ARB/USDT:USDT",
+            "INJ/USDT:USDT",
+            "WIF/USDT:USDT",
+            "SUI/USDT:USDT",
+            "FTM/USDT:USDT",
+            "S/USDT:USDT"
+        ],
         "pair_blacklist": []
     },
     "edge": {
