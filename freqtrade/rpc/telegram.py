@@ -2249,7 +2249,7 @@ class Telegram(RPCHandler):
         else:
             raise RPCException(
                 "Invalid usage of command /marketdir. \n"
-                "Usage: */marketdir [short |  long | even | none]*"
+                "Usage: */marketdir [short | long | even | none]*"
             )
 
     async def _tg_info(self, update: Update, context: CallbackContext) -> None:

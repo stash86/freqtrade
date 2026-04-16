@@ -757,7 +757,7 @@ class Backtesting:
     ) -> bool:
         """
         Check if an order is open and if it should've filled.
-        :return:  True if the order filled.
+        :return: True if the order filled.
         """
         if order and self._get_order_filled(order.ft_price, row):
             order.close_bt_order(current_date, trade)

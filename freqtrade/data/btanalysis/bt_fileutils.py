@@ -10,7 +10,6 @@ from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any, Literal
 
-import numpy as np
 import pandas as pd
 
 from freqtrade.constants import LAST_BT_RESULT_FN
@@ -308,7 +307,7 @@ def get_backtest_market_change(filename: Path, include_ts: bool = True) -> pd.Da
     else:
         df = pd.read_feather(filename)
     if include_ts:
-        df.loc[:, "__date_ts"] = df.loc[:, "date"].astype(np.int64) // 1000 // 1000
+        df.loc[:, "__date_ts"] = df.loc[:, "date"].dt.as_unit("ms").astype("int64")
     return df
 
 
@@ -326,7 +325,7 @@ def get_backtest_wallet_change(filename: Path, strategy_name: str) -> pd.DataFra
         data = load_file_from_zip(filename, f"{filename.stem}_{strategy_name}_wallet.feather")
         df = pd.read_feather(BytesIO(data))
 
-        df.loc[:, "__date_ts"] = df.loc[:, "date"].astype(np.int64) // 1000 // 1000
+        df.loc[:, "__date_ts"] = df.loc[:, "date"].dt.as_unit("ms").astype("int64")
         return df
     except ValueError:
         pass
