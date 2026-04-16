@@ -45,6 +45,6 @@ class WalletHistory(ModelBase):
     def __repr__(self) -> str:
         return (
             f"WalletHistory(timestamp={self.timestamp}, currency={self.currency}, "
-            f"rate={self.rate},  total_quote={self.total_quote}, "
+            f"rate={self.rate}, total_quote={self.total_quote}, "
             f"balance={self.balance}, leverage={self.leverage})"
         )

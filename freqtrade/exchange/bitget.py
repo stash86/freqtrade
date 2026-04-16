@@ -38,6 +38,8 @@ class Bitget(Exchange):
     _ft_has_futures: FtHas = {
         "funding_fee_candle_limit": 100,
         "has_delisting": True,
+        "stop_price_param": "stopLossPrice",
+        "stop_price_prop": "stopLossPrice",
         "stop_price_type_field": "triggerType",
         "stop_price_type_value_mapping": {
             PriceType.LAST: "fill_price",
@@ -99,30 +101,36 @@ class Bitget(Exchange):
         return order
 
     def _fetch_stop_order_fallback(self, order_id: str, pair: str) -> CcxtOrder:
-        params2 = {
-            "stop": True,
-        }
-        for method in (
-            self._api.fetch_open_orders,
-            self._api.fetch_canceled_and_closed_orders,
-        ):
-            try:
-                orders = method(pair, params=params2)
-                orders_f = [order for order in orders if order["id"] == order_id]
-                if orders_f:
-                    order = orders_f[0]
-                    self._log_exchange_response("get_stop_order_fallback", order)
-                    return self._convert_stop_order(pair, order_id, order)
-            except (ccxt.OrderNotFound, ccxt.InvalidOrder):
-                pass
-            except ccxt.DDoSProtection as e:
-                raise DDosProtection(e) from e
-            except (ccxt.OperationFailed, ccxt.ExchangeError) as e:
-                raise TemporaryError(
-                    f"Could not get order due to {e.__class__.__name__}. Message: {e}"
-                ) from e
-            except ccxt.BaseError as e:
-                raise OperationalException(e) from e
+        # old stoploss orders
+        paramsold = {"stop": True}
+        # new stoploss orders with stopLossPrice (used in futures starting 2026.4)
+        paramsnew = {"planType": "profit_loss"}
+        params_to_try = (
+            (paramsnew, paramsold) if self.trading_mode == TradingMode.FUTURES else (paramsold,)
+        )
+
+        for params2 in params_to_try:
+            for method in (
+                self._api.fetch_open_orders,
+                self._api.fetch_canceled_and_closed_orders,
+            ):
+                try:
+                    orders = method(pair, params=params2)
+                    orders_f = [order for order in orders if order["id"] == order_id]
+                    if orders_f:
+                        order = orders_f[0]
+                        self._log_exchange_response("get_stop_order_fallback", order)
+                        return self._convert_stop_order(pair, order_id, order)
+                except (ccxt.OrderNotFound, ccxt.InvalidOrder):
+                    pass
+                except ccxt.DDoSProtection as e:
+                    raise DDosProtection(e) from e
+                except (ccxt.OperationFailed, ccxt.ExchangeError) as e:
+                    raise TemporaryError(
+                        f"Could not get order due to {e.__class__.__name__}. Message: {e}"
+                    ) from e
+                except ccxt.BaseError as e:
+                    raise OperationalException(e) from e
         raise RetryableOrderError(f"StoplossOrder not found (pair: {pair} id: {order_id}).")
 
     @retrier(retries=API_RETRY_COUNT)

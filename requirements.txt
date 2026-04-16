@@ -5,12 +5,12 @@ numexpr==2.14.1
 # Indicator libraries
 ft-pandas-ta==0.3.16
 ta-lib==0.6.8
-technical==1.5.4
+technical==1.6.0
 
-ccxt==4.5.46
-cryptography==46.0.6
-aiohttp==3.13.4
-SQLAlchemy==2.0.48
+ccxt==4.5.48
+cryptography==46.0.7
+aiohttp==3.13.5
+SQLAlchemy==2.0.49
 python-telegram-bot==22.7
 # can't be hard-pinned due to telegram-bot pinning httpx with ~
 httpx>=0.24.1
@@ -39,7 +39,7 @@ sdnotify==0.3.2
 # API Server
 fastapi==0.135.3
 pydantic==2.12.5
-uvicorn==0.42.0
+uvicorn==0.43.0
 pyjwt==2.12.1
 aiofiles==25.1.0
 psutil==7.2.2
