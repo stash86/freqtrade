@@ -483,7 +483,7 @@ class Telegram(RPCHandler):
                 profit_prefix = "Sub "
                 cp_extra = (
                     f"*Final Profit:* `{format_pct(msg['final_profit_ratio'])} "
-                    f"({msg['cumulative_profit']:.8f} {msg['quote_currency']}{cp_fiat})`\n"
+                    f"({fmt_coin(msg['cumulative_profit'], msg['stake_currency'])}{cp_fiat})`\n"
                 )
             else:
                 exit_wording = f"Partially {exit_wording.lower()}"
@@ -838,7 +838,7 @@ class Telegram(RPCHandler):
                 ):
                     # Adding initial stoploss only if it is different from stoploss
                     lines.append(
-                        f"*Initial Stoploss:* `{r['initial_stop_loss_abs']:.8f}` "
+                        f"*Initial Stoploss:* `{round_value(r['initial_stop_loss_abs'], 8)}` "
                         f"`({format_pct(r['initial_stop_loss_ratio'])})`"
                     )
 
