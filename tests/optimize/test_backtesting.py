@@ -860,6 +860,9 @@ def test_backtest_one(default_conf, mocker, testdatadir) -> None:
             "funding_fees": [0.0, 0.0],
         }
     )
+    # TODO: pandas3 - create correctly above ?!?
+    expected["open_date"] = expected["open_date"].astype("datetime64[ms, UTC]")
+    expected["close_date"] = expected["close_date"].astype("datetime64[ms, UTC]")
     pd.testing.assert_frame_equal(results, expected)
     assert "orders" in results.columns
     data_pair = processed[pair]

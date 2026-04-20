@@ -1,5 +1,5 @@
 numpy==2.4.4
-pandas==2.3.3
+pandas==3.0.2
 bottleneck==1.6.0
 numexpr==2.14.1
 # Indicator libraries
@@ -7,7 +7,7 @@ ft-pandas-ta==0.3.16
 ta-lib==0.6.8
 technical==1.6.0
 
-ccxt==4.5.48
+ccxt==4.5.49
 cryptography==46.0.7
 aiohttp==3.13.5
 SQLAlchemy==2.0.49
@@ -24,7 +24,7 @@ tabulate==0.10.0
 pycoingecko==3.2.0
 jinja2==3.1.6
 joblib==1.5.3
-rich==14.3.3
+rich==15.0.0
 pyarrow==23.0.1; platform_machine != 'armv7l'
 
 
@@ -39,7 +39,7 @@ sdnotify==0.3.2
 # API Server
 fastapi==0.135.3
 pydantic==2.12.5
-uvicorn==0.43.0
+uvicorn==0.44.0
 pyjwt==2.12.1
 aiofiles==25.1.0
 psutil==7.2.2

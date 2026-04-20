@@ -176,20 +176,20 @@ def generate_test_data(
 
     base = np.random.normal(base, 2, size=size)
     if timeframe == "1y":
-        date = pd.date_range(start, periods=size, freq="1YS", tz="UTC")
+        date = pd.date_range(start, periods=size, freq="1YS", tz="UTC", unit="ms")
     elif timeframe == "1M":
-        date = pd.date_range(start, periods=size, freq="1MS", tz="UTC")
+        date = pd.date_range(start, periods=size, freq="1MS", tz="UTC", unit="ms")
     elif timeframe == "3M":
-        date = pd.date_range(start, periods=size, freq="3MS", tz="UTC")
+        date = pd.date_range(start, periods=size, freq="3MS", tz="UTC", unit="ms")
     elif timeframe == "1w" or timeframe == "7d":
-        date = pd.date_range(start, periods=size, freq="1W-MON", tz="UTC")
+        date = pd.date_range(start, periods=size, freq="1W-MON", tz="UTC", unit="ms")
     else:
         tf_mins = timeframe_to_minutes(timeframe)
         if tf_mins >= 1:
-            date = pd.date_range(start, periods=size, freq=f"{tf_mins}min", tz="UTC")
+            date = pd.date_range(start, periods=size, freq=f"{tf_mins}min", tz="UTC", unit="ms")
         else:
             tf_secs = timeframe_to_seconds(timeframe)
-            date = pd.date_range(start, periods=size, freq=f"{tf_secs}s", tz="UTC")
+            date = pd.date_range(start, periods=size, freq=f"{tf_secs}s", tz="UTC", unit="ms")
     df = pd.DataFrame(
         {
             "date": date,
