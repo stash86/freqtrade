@@ -5,7 +5,7 @@ Freqtrade is the main module of this bot. It contains the FreqtradeBot class.
 import logging
 import traceback
 from copy import deepcopy
-from datetime import UTC, datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta, timezone
 from math import isclose
 from threading import Lock
 from time import sleep
@@ -668,6 +668,14 @@ class FreqtradeBot(LoggingMixin):
                     trades_created += self.create_trade(pair)
             except DependencyException as exception:
                 msg = f"Unable to create trade for {pair}: {exception}"
+                if "No new positions during delisting" in str(exception):
+                    # Lock the pair to avoid further attempts to trade it
+                    delist_time = self.dataprovider.check_delisting(pair)
+                    if not delist_time:
+                        delist_time = datetime.now(timezone.utc) + timedelta(days=7)
+                    if delist_time:
+                        PairLocks.lock_pair(pair, until=delist_time, reason="Delisting")
+                        msg += " Pair will be locked."
                 self.send_dp_message(msg)
 
                 logger.warning(msg)
