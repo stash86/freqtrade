@@ -218,7 +218,7 @@ def test__lev_prep_bitget(default_conf, mocker):
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange="bitget")
     exchange._lev_prep("BTC/USDC:USDC", 3.2, "buy")
 
-    assert api_mock.set_margin_mode.call_count == 0
+    assert api_mock.set_margin_mode.call_count == 1
     assert api_mock.set_leverage.call_count == 1
     api_mock.set_leverage.assert_called_with(symbol="BTC/USDC:USDC", leverage=3.2)
 
@@ -226,7 +226,7 @@ def test__lev_prep_bitget(default_conf, mocker):
 
     exchange._lev_prep("BTC/USDC:USDC", 19.99, "sell")
 
-    assert api_mock.set_margin_mode.call_count == 0
+    assert api_mock.set_margin_mode.call_count == 1
     assert api_mock.set_leverage.call_count == 1
     api_mock.set_leverage.assert_called_with(symbol="BTC/USDC:USDC", leverage=19.99)
 

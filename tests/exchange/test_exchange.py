@@ -1,5 +1,6 @@
 import copy
 import logging
+import re
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from random import randint
@@ -1075,6 +1076,24 @@ def test_create_dry_run_order(default_conf, mocker, side, exchange_name, leverag
     assert order["symbol"] == "ETH/BTC"
     assert order["amount"] == 1
     assert order["cost"] == 1 * 200
+
+
+def test_create_dry_run_order_id_unique_with_same_timestamp(default_conf, mocker, time_machine):
+    exchange = get_patched_exchange(mocker, default_conf)
+
+    time_machine.move_to("2026-04-27T04:49:57.438232Z", tick=False)
+    order1 = exchange.create_dry_run_order(
+        pair="ETH/USDT", ordertype="limit", side="sell", amount=1, rate=2.05, leverage=1.0
+    )
+    order2 = exchange.create_dry_run_order(
+        pair="ETH/USDT", ordertype="limit", side="sell", amount=1, rate=2.05, leverage=1.0
+    )
+
+    assert order1["id"] != order2["id"]
+    assert re.match(
+        r"^dry_run_sell_ETH/USDT_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        order1["id"],
+    )
 
 
 @pytest.mark.parametrize(

@@ -53,6 +53,7 @@ def set_sequence_ids(
     pairlock_id: int | None = None,
     kv_id: int | None = None,
     custom_data_id: int | None = None,
+    wallet_history_id: int | None = None,
 ):
     """
     Set sequence ids to the given values.
@@ -64,6 +65,7 @@ def set_sequence_ids(
     :param pairlock_id: value to set for pairlocks_id_seq (optional)
     :param kv_id: value to set for KeyValueStore_id_seq (optional)
     :param custom_data_id: value to set for trade_custom_data_id_seq (optional)
+    :param wallet_history_id: value to set for wallet_history_id_seq (optional)
     """
     if engine.name == "postgresql":
         with engine.begin() as connection:
@@ -82,6 +84,10 @@ def set_sequence_ids(
             if custom_data_id:
                 connection.execute(
                     text(f"ALTER SEQUENCE trade_custom_data_id_seq RESTART WITH {custom_data_id}")
+                )
+            if wallet_history_id:
+                connection.execute(
+                    text(f"ALTER SEQUENCE wallet_history_id_seq RESTART WITH {wallet_history_id}")
                 )
 
 
