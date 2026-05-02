@@ -180,7 +180,7 @@ def _create_wallet_history_entries(
                 if is_futures:
                     collateral = row[pair_collateral_idx[pair]]
                     is_short = row[pair_is_short_idx[pair]]
-                    if collateral is not None and not pd.isna(collateral):
+                    if collateral is not None and not pd.isna(collateral) and rate is not None:
                         # Same formula than in rpc's _rpc_balance
                         total_quote = (
                             (rate * balance - collateral * (leverage - 1))

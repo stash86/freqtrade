@@ -167,6 +167,7 @@ async def test_exchangews_ohlcv(mocker, time_machine, caplog):
 
     ccxt_object.un_watch_ohlcv_for_symbols = AsyncMock(side_effect=[NotSupported, ValueError])
     ccxt_object.watch_ohlcv = AsyncMock(side_effect=controlled_sleeper)
+    ccxt_object.has = {"unWatchOHLCVForSymbols": True}
     ccxt_object.close = AsyncMock()
     time_machine.move_to("2024-11-01 01:00:02 +00:00")
 

@@ -177,9 +177,24 @@ class ExchangeWS:
                 )
             )
 
+    def exchange_has(self, endpoint: str) -> bool:
+        """
+        Checks if exchange implements a specific API endpoint.
+        Wrapper around ccxt 'has' attribute
+        :param endpoint: Name of endpoint (e.g. 'fetchOHLCV', 'fetchTickers')
+        :return: bool
+        """
+        return endpoint in self._ccxt_object.has and self._ccxt_object.has[endpoint]
+
     async def _unwatch_ohlcv(self, pair: str, timeframe: str, candle_type: CandleType) -> None:
         try:
-            await self._ccxt_object.un_watch_ohlcv_for_symbols([[pair, timeframe]])
+            if self.exchange_has("unWatchOHLCVForSymbols"):
+                await self._ccxt_object.un_watch_ohlcv_for_symbols([[pair, timeframe]])
+            elif self.exchange_has("unWatchOHLCV"):
+                await self._ccxt_object.un_watch_ohlcv(pair, timeframe)
+            else:
+                logger.debug("un_watch_ohlcv not supported for %s, %s", pair, timeframe)
+
         except ccxt.NotSupported as e:
             logger.debug("un_watch_ohlcv_for_symbols not supported: %s", e)
             pass
