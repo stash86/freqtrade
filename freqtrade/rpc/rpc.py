@@ -1560,8 +1560,7 @@ class RPC:
 
             # band-aid until this is fixed:
             # https://github.com/pandas-dev/pandas/issues/45836
-            datetime_types = ["datetime", "datetime64", "datetimetz"]
-            date_columns = dataframe.select_dtypes(include=datetime_types)
+            date_columns = dataframe.select_dtypes(include=["datetime", "datetime64", "datetimetz"])
             for date_column in date_columns:
                 # replace NaT with `None`
                 dataframe[date_column] = dataframe[date_column].astype(object).replace({NaT: None})
