@@ -1706,8 +1706,11 @@ class RPC:
                     else dt_ts(dt_now() - timedelta(days=30)),
                     is_new_pair=True,  # history is never available - so always treat as new pair
                     candle_type=config.get("candle_type_def", CandleType.SPOT),
-                    until_ms=timerange_parsed.stopts,
+                    until_ms=timerange_parsed.stopts * 1000 if timerange_parsed.stopts else None,
                 )
+                if timerange_parsed.stopts and len(data) > 1:
+                    # trim last candle if it is newer than the stop time
+                    data = data.loc[data["date"] <= timerange_parsed.stopdt]
             else:
                 _data = load_data(
                     datadir=config["datadir"],

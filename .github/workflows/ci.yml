@@ -150,7 +150,10 @@ jobs:
       run: |
         $PSVersionTable
         Get-PSRepository | Format-List *
-        Set-PSRepository psgallery -InstallationPolicy trusted
+        if (-not (Get-PSRepository -Name PSGallery -ErrorAction SilentlyContinue)) {
+          Register-PSRepository -Default
+        }
+        Set-PSRepository PSGallery -InstallationPolicy Trusted
         Install-Module -Name Pester -RequiredVersion 5.7.1 -Confirm:$false -Force -SkipPublisherCheck
         $Error.clear()
         Invoke-Pester -Path "tests" -CI
