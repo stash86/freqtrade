@@ -806,7 +806,7 @@ class RPC:
         results = results.rename({"timestamp": "date"}, axis=1)
         results.loc[:, "__date_ts"] = results.loc[:, "date"].dt.as_unit("ms").astype("int64")
         # Exclude non-bot managed for now
-        results_filtered = results.loc[results["bot_managed"]]
+        results_filtered = results.loc[results["bot_managed"].astype(bool)]
 
         results_final = (
             results_filtered.groupby(["date", "__date_ts"])
