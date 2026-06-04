@@ -1,7 +1,7 @@
 {
     "max_open_trades": 4,
     "stake_currency": "BTC",
-    "stake_amount" : 0.01,
+    "stake_amount": 0.01,
     "amend_last_stake_amount ": true,
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
@@ -38,13 +38,17 @@
         "order_book_max": 1
     },
     "pairlists": [
-        {"method": "StaticPairList"},
+        {
+            "method": "StaticPairList"
+        },
     ],
     "exchange": {
         "name": "binance",
         "key": "1",
         "secret": "2",
-        "ccxt_config": {"enableRateLimit": true},
+        "ccxt_config": {
+            "enableRateLimit": true
+        },
         "ccxt_async_config": {
             "enableRateLimit": true,
             "rateLimit": 200
@@ -368,16 +372,6 @@
         "min_trade_number": 10,
         "max_trade_duration_minute": 1440,
         "remove_pumps": false
-    },
-    "api_server": {
-        "enabled": false,
-        "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080,
-        "verbosity": "error",
-        "jwt_secret_key": "00",
-        "CORS_origins": [],
-        "username": "11",
-        "password": "22"
     },
     "bot_name": "freqtrade_bot",
     "initial_state": "running",

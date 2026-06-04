@@ -1,7 +1,7 @@
 {
     "max_open_trades": -1,
     "stake_currency": "USDT",
-    "stake_amount" : 45,
+    "stake_amount": 45,
     "amend_last_stake_amount ": true,
     "tradable_balance_ratio": 0.99,
     "fiat_display_currency": "USD",
@@ -39,19 +39,60 @@
         "order_book_max": 1
     },
     "pairlists": [
-        {"method": "StaticPairList"},
+        {
+            "method": "StaticPairList"
+        },
         // {"method": "AgeFilter", "min_days_listed": 30},
     ],
     "exchange": {
         "name": "binance",
         "key": "1",
         "secret": "2",
-        "ccxt_config": {"enableRateLimit": true},
+        "ccxt_config": {
+            "enableRateLimit": true
+        },
         "ccxt_async_config": {
             "enableRateLimit": true,
             "rateLimit": 200
         },
-        "pair_whitelist": ["BTC/USDT","ETH/USDT","BNB/USDT","SOL/USDT","XRP/USDT","ADA/USDT","AVAX/USDT","BCH/USDT","DOT/USDT","WBTC/USDT","TRX/USDT","LINK/USDT","MATIC/USDT","UNI/USDT","ICP/USDT","NEAR/USDT","LTC/USDT","APT/USDT","ETC/USDT","STX/USDT","FIL/USDT","ATOM/USDT","ARB/USDT","IMX/USDT","WIF/USDT","RNDR/USDT","XLM/USDT","HBAR/USDT","VET/USDT","MKR/USDT","OP/USDT","GRT/USDT","PEPE/USDT","INJ/USDT","THETA/USDT","FET/USDT"],
+        "pair_whitelist": [
+            "BTC/USDT",
+            "ETH/USDT",
+            "BNB/USDT",
+            "SOL/USDT",
+            "XRP/USDT",
+            "ADA/USDT",
+            "AVAX/USDT",
+            "BCH/USDT",
+            "DOT/USDT",
+            "WBTC/USDT",
+            "TRX/USDT",
+            "LINK/USDT",
+            "MATIC/USDT",
+            "UNI/USDT",
+            "ICP/USDT",
+            "NEAR/USDT",
+            "LTC/USDT",
+            "APT/USDT",
+            "ETC/USDT",
+            "STX/USDT",
+            "FIL/USDT",
+            "ATOM/USDT",
+            "ARB/USDT",
+            "IMX/USDT",
+            "WIF/USDT",
+            "RNDR/USDT",
+            "XLM/USDT",
+            "HBAR/USDT",
+            "VET/USDT",
+            "MKR/USDT",
+            "OP/USDT",
+            "GRT/USDT",
+            "PEPE/USDT",
+            "INJ/USDT",
+            "THETA/USDT",
+            "FET/USDT"
+        ],
         "pair_blacklist": []
     },
     "edge": {
@@ -67,16 +108,6 @@
         "min_trade_number": 10,
         "max_trade_duration_minute": 1440,
         "remove_pumps": false
-    },
-    "api_server": {
-        "enabled": false,
-        "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080,
-        "verbosity": "error",
-        "jwt_secret_key": "00",
-        "CORS_origins": [],
-        "username": "11",
-        "password": "22"
     },
     "bot_name": "freqtrade_bot",
     "initial_state": "running",

@@ -101,16 +101,6 @@
         "max_trade_duration_minute": 1440,
         "remove_pumps": false
     },
-    "api_server": {
-        "enabled": false,
-        "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080,
-        "verbosity": "error",
-        "jwt_secret_key": "00",
-        "CORS_origins": [],
-        "username": "11",
-        "password": "22"
-    },
     "bot_name": "freqtrade_bot",
     "initial_state": "running",
     "force_entry_enable": false,
