@@ -1522,22 +1522,28 @@ class Backtesting:
         """
         Spread into detail data
         """
-        current_detail_time: datetime = row[DATE_IDX].to_pydatetime()
+        current_detail_time: datetime = row[DATE_IDX]
         exit_candle_end = current_detail_time + self.timeframe_td
         detail_data = self.detail_data[pair]
-        detail_data = detail_data.loc[
-            (detail_data["date"] >= current_detail_time) & (detail_data["date"] < exit_candle_end)
-        ].copy()
-
-        if len(detail_data) == 0:
+        dates = detail_data["date"]
+        # "date" is sorted ascending, so the window
+        # (current_detail_time, exit_candle_end) can be located with searchsorted -
+        # equivalent to (dates >= current_detail_time) & (dates < exit_candle_end).
+        start_idx = dates.searchsorted(current_detail_time, side="left")
+        end_idx = dates.searchsorted(exit_candle_end, side="left")
+        if end_idx <= start_idx:
             return None
-        detail_data.loc[:, "enter_long"] = row[LONG_IDX]
-        detail_data.loc[:, "exit_long"] = row[ELONG_IDX]
-        detail_data.loc[:, "enter_short"] = row[SHORT_IDX]
-        detail_data.loc[:, "exit_short"] = row[ESHORT_IDX]
-        detail_data.loc[:, "enter_tag"] = row[ENTER_TAG_IDX]
-        detail_data.loc[:, "exit_tag"] = row[EXIT_TAG_IDX]
-        return detail_data[HEADERS].values.tolist()
+        detail_rows = detail_data.iloc[start_idx:end_idx, : CLOSE_IDX + 1].values.tolist()
+        signals = [
+            row[LONG_IDX],
+            row[ELONG_IDX],
+            row[SHORT_IDX],
+            row[ESHORT_IDX],
+            row[ENTER_TAG_IDX],
+            row[EXIT_TAG_IDX],
+        ]
+        # Column sequence per row must correspond to HEADERS
+        return [candle + signals for candle in detail_rows]
 
     def _time_generator(self, start_date: datetime, end_date: datetime):
         current_time = start_date + self.timeframe_td
