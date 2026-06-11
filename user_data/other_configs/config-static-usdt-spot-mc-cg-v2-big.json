@@ -42,7 +42,8 @@
     },
     "pairlists": [
         {
-            "method": "StaticPairList"
+            "method": "StaticPairList",
+            "allow_inactive": true
         },
     ],
     "exchange": {
