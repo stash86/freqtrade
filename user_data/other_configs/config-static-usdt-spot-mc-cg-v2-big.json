@@ -116,7 +116,8 @@
             "FTM/USDT",
             "S/USDT",
             "AAVE/USDT",
-            "MATIC/USDT"
+            "MATIC/USDT",
+            "MANTRA/USDT",
         ],
         "pair_blacklist": []
     },
