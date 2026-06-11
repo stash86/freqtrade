@@ -112,7 +112,6 @@
             "S/USDT:USDT",
             "AAVE/USDT:USDT",
             "MATIC/USDT:USDT",
-            "MANTRA/USDT:USDT",
         ],
         "pair_blacklist": []
     },
