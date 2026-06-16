@@ -694,6 +694,7 @@ class WalletHistoryResponse(BaseModel):
 class MarketRequest(ExchangeModePayloadMixin, BaseModel):
     base: str | None = None
     quote: str | None = None
+    include_inactive: bool = False
 
 
 class MarketModel(BaseModel):
@@ -702,6 +703,7 @@ class MarketModel(BaseModel):
     quote: str
     spot: bool
     swap: bool
+    active: bool = False  # Assume false if the field is missing.
 
 
 class MarketResponse(BaseModel):
