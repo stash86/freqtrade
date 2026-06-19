@@ -375,8 +375,9 @@ def test_get_pair_precision_bt(default_conf, mocker) -> None:
     assert ex_mock.call_count == 2
 
 
-def test_backtest_abort(default_conf, mocker, testdatadir) -> None:
+def test_backtest_abort(default_conf, mocker) -> None:
     patch_exchange(mocker)
+    default_conf["runmode"] = RunMode.BACKTEST
     backtesting = Backtesting(default_conf)
     backtesting.check_abort()
 
@@ -386,7 +387,7 @@ def test_backtest_abort(default_conf, mocker, testdatadir) -> None:
         backtesting.check_abort()
     # abort flag resets
     assert backtesting.abort is False
-    assert backtesting.progress.progress == 0
+    assert backtesting.progress.tasks[backtesting._progress_task].completed == 0
 
 
 def test_backtesting_start(default_conf, mocker, caplog) -> None:

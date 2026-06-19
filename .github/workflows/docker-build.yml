@@ -167,8 +167,8 @@ jobs:
     permissions:
       packages: write # Needed to push package versions
     needs: [ deploy-docker ]
-    # Only run on 64bit machines
-    runs-on: [self-hosted, linux, ARM64]
+    # Must run on an ARM runner to avoid emulation
+    runs-on: ubuntu-24.04-arm
     if: github.repository == 'freqtrade/freqtrade'
     environment:
       name: docker

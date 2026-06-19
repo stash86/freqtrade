@@ -24,7 +24,12 @@ from sqlalchemy import select
 
 from freqtrade.__init__ import __version__
 from freqtrade.enums import CandleType, RunMode, State, TradingMode
-from freqtrade.exceptions import DependencyException, ExchangeError, OperationalException
+from freqtrade.exceptions import (
+    ConfigurationError,
+    DependencyException,
+    ExchangeError,
+    OperationalException,
+)
 from freqtrade.loggers import setup_logging, setup_logging_pre
 from freqtrade.optimize.backtesting import Backtesting
 from freqtrade.persistence import CustomDataWrapper, Trade
@@ -3163,6 +3168,14 @@ def test_api_backtesting(botclient, mocker, fee, caplog, tmp_path):
 
         data["stake_amount"] = 101
 
+        mocker.patch(
+            "freqtrade.optimize.backtesting.Backtesting.backtest_one_strategy",
+            side_effect=ConfigurationError("DeadBeef22"),
+        )
+        rc = client_post(client, f"{BASE_URI}/backtest", data=data)
+        assert log_has("Backtesting encountered a configuration Error: DeadBeef22", caplog)
+
+        data["stake_amount"] = 102
         mocker.patch(
             "freqtrade.optimize.backtesting.Backtesting.backtest_one_strategy",
             side_effect=DependencyException("DeadBeef"),
