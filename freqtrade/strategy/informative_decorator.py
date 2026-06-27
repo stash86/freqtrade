@@ -121,6 +121,7 @@ def _get_populated_informative_dataframe(
         if cached and cached[0] == fingerprint:
             return cached[1].copy()
 
+    dataframe = dataframe.copy()
     dataframe = populate_indicators_fn(strategy, dataframe, metadata)
 
     if use_cache:
@@ -169,7 +170,7 @@ def _create_and_merge_informative_pair(
             fmt = "{base}_{quote}_" + fmt  # Informatives of other pairs
 
     inf_metadata = {"pair": asset, "timeframe": timeframe}
-    inf_dataframe = strategy.dp.get_pair_dataframe(asset, timeframe1, candle_type)
+    inf_dataframe = strategy.dp.get_pair_dataframe(asset, timeframe1, candle_type, copy=False)
     if inf_dataframe.empty:
         raise ValueError(
             f"Informative dataframe for ({asset}, {timeframe1}, {candle_type}) is empty. "

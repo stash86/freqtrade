@@ -482,11 +482,17 @@ def test_informative_decorator_caches_populated_shared_dataframe(default_conf_us
     class DataProviderMock:
         def __init__(self, informative: pd.DataFrame):
             self.informative = informative
+            self.get_pair_dataframe_copy_args = []
 
         def get_pair_dataframe(
-            self, pair: str, timeframe: str | None = None, candle_type: str = ""
+            self,
+            pair: str,
+            timeframe: str | None = None,
+            candle_type: str = "",
+            copy: bool = True,
         ) -> pd.DataFrame:
-            return self.informative.copy()
+            self.get_pair_dataframe_copy_args.append(copy)
+            return self.informative.copy() if copy else self.informative
 
         def market(self, pair: str):
             base, quote = pair.split("/")
@@ -500,6 +506,8 @@ def test_informative_decorator_caches_populated_shared_dataframe(default_conf_us
     analyzed_ltc = strategy.advise_indicators(data.copy(), {"pair": "LTC/USDT"})
 
     assert strategy.informative_call_count == 1
+    assert dp.get_pair_dataframe_copy_args == [False, False]
+    assert "cached" not in dp.informative.columns
     assert "btc_usdt_cached_1h" in analyzed_xrp.columns
     assert "btc_usdt_cached_1h" in analyzed_ltc.columns
 
