@@ -1174,6 +1174,9 @@ def test_enter_positions(
     assert log_has(log_message, caplog)
     # create_trade should be called once for every pair in the whitelist.
     assert mock_ct.call_count == len(default_conf_usdt["exchange"]["pair_whitelist"])
+    mock_ct.assert_any_call(
+        default_conf_usdt["exchange"]["pair_whitelist"][0], check_free_open_trades=False
+    )
 
 
 def test_enter_positions_stops_when_slots_are_filled(mocker, default_conf_usdt) -> None:
@@ -1184,11 +1187,30 @@ def test_enter_positions_stops_when_slots_are_filled(mocker, default_conf_usdt) 
     )
     get_free_open_trades = mocker.patch(
         "freqtrade.freqtradebot.FreqtradeBot.get_free_open_trades",
-        MagicMock(return_value=0),
+        MagicMock(return_value=1),
     )
 
     assert freqtrade.enter_positions() == 1
-    mock_ct.assert_called_once_with(default_conf_usdt["exchange"]["pair_whitelist"][0])
+    mock_ct.assert_called_once_with(
+        default_conf_usdt["exchange"]["pair_whitelist"][0], check_free_open_trades=False
+    )
+    get_free_open_trades.assert_called_once()
+
+
+def test_enter_positions_reuses_free_slot_count(mocker, default_conf_usdt) -> None:
+    freqtrade = get_patched_freqtradebot(mocker, default_conf_usdt)
+    mock_ct = mocker.patch(
+        "freqtrade.freqtradebot.FreqtradeBot.create_trade",
+        MagicMock(return_value=False),
+    )
+    get_free_open_trades = mocker.patch(
+        "freqtrade.freqtradebot.FreqtradeBot.get_free_open_trades",
+        MagicMock(return_value=10),
+    )
+
+    assert freqtrade.enter_positions() == 0
+    assert mock_ct.call_count == len(default_conf_usdt["exchange"]["pair_whitelist"])
+    assert all(call.kwargs == {"check_free_open_trades": False} for call in mock_ct.call_args_list)
     get_free_open_trades.assert_called_once()
 
 

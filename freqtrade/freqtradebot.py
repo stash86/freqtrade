@@ -317,8 +317,10 @@ class FreqtradeBot(LoggingMixin):
                 self.process_open_trade_positions()
 
         # Then looking for entry opportunities
-        if self.state == State.RUNNING and self.get_free_open_trades():
-            self.enter_positions()
+        if self.state == State.RUNNING:
+            free_open_trades = self.get_free_open_trades()
+            if free_open_trades:
+                self.enter_positions(free_open_trades=free_open_trades)
         self._schedule.run_pending()
         Trade.commit()
         self.rpc.process_msg_queue(self.dataprovider._msg_queue)
@@ -624,29 +626,14 @@ class FreqtradeBot(LoggingMixin):
     # enter positions / open trades logic and methods
     #
 
-    def enter_positions(self) -> int:
+    def enter_positions(self, free_open_trades: int | None = None) -> int:
         """
         Tries to execute entry orders for new trades (positions)
         """
         trades_created = 0
 
-        if not self.active_pair_whitelist:
-            self.log_once("Active pair whitelist is empty.", logger.info)
-            return trades_created
-        # Filter pairs for currently opened trades from the whitelist.
-        open_pairs = {trade.pair for trade in Trade.get_open_trades()}
-        whitelist = []
-        for pair in self.active_pair_whitelist:
-            if pair in open_pairs:
-                logger.debug("Ignoring %s in pair whitelist", pair)
-                continue
-            whitelist.append(pair)
-
+        whitelist = self._get_enter_position_pairs()
         if not whitelist:
-            self.log_once(
-                "No currency pair in active pair whitelist, but checking to exit open trades.",
-                logger.info,
-            )
             return trades_created
         if PairLocks.is_global_lock(side="*"):
             # This only checks for total locks (both sides).
@@ -663,14 +650,22 @@ class FreqtradeBot(LoggingMixin):
             else:
                 self.log_once("Global pairlock active. Not creating new trades.", logger.info)
             return trades_created
+
+        free_open_trades = (
+            self.get_free_open_trades() if free_open_trades is None else free_open_trades
+        )
+        if not free_open_trades:
+            return trades_created
+
         # Create entity and execute trade for each pair from whitelist
         for pair in whitelist:
             try:
                 with self._exit_lock:
-                    trade_created = self.create_trade(pair)
+                    trade_created = self.create_trade(pair, check_free_open_trades=False)
                     if trade_created:
                         trades_created += 1
-                        if not self.get_free_open_trades():
+                        free_open_trades -= 1
+                        if free_open_trades <= 0:
                             break
             except DependencyException as exception:
                 self._handle_create_trade_dependency_exception(pair, exception)
@@ -679,6 +674,27 @@ class FreqtradeBot(LoggingMixin):
             logger.debug("Found no enter signals for whitelisted currencies. Trying again...")
 
         return trades_created
+
+    def _get_enter_position_pairs(self) -> list[str]:
+        if not self.active_pair_whitelist:
+            self.log_once("Active pair whitelist is empty.", logger.info)
+            return []
+
+        # Filter pairs for currently opened trades from the whitelist.
+        open_pairs = {trade.pair for trade in Trade.get_open_trades()}
+        whitelist = []
+        for pair in self.active_pair_whitelist:
+            if pair in open_pairs:
+                logger.debug("Ignoring %s in pair whitelist", pair)
+                continue
+            whitelist.append(pair)
+
+        if not whitelist:
+            self.log_once(
+                "No currency pair in active pair whitelist, but checking to exit open trades.",
+                logger.info,
+            )
+        return whitelist
 
     def _handle_create_trade_dependency_exception(
         self, pair: str, exception: DependencyException
@@ -696,7 +712,7 @@ class FreqtradeBot(LoggingMixin):
 
         logger.warning(msg)
 
-    def create_trade(self, pair: str) -> bool:
+    def create_trade(self, pair: str, *, check_free_open_trades: bool = True) -> bool:
         """
         Check the implemented trading strategy for entry signals.
 
@@ -707,9 +723,9 @@ class FreqtradeBot(LoggingMixin):
         """
         logger.debug(f"create_trade for pair {pair}")
 
-        # get_free_open_trades is checked before create_trade is called
-        # but it is still used here to prevent opening too many trades within one iteration
-        if not self.get_free_open_trades():
+        # Keep this guard enabled for direct create_trade calls. enter_positions passes
+        # check_free_open_trades=False after taking a single slot-count snapshot.
+        if check_free_open_trades and not self.get_free_open_trades():
             logger.debug(f"Can't open a new trade for {pair}: max number of trades is reached.")
             return False
 
