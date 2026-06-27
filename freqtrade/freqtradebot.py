@@ -5,7 +5,7 @@ Freqtrade is the main module of this bot. It contains the FreqtradeBot class.
 import logging
 import traceback
 from copy import deepcopy
-from datetime import UTC, datetime, time, timedelta, timezone
+from datetime import UTC, datetime, time, timedelta
 from math import isclose
 from threading import Lock
 from time import sleep
@@ -665,25 +665,34 @@ class FreqtradeBot(LoggingMixin):
         for pair in whitelist:
             try:
                 with self._exit_lock:
-                    trades_created += self.create_trade(pair)
+                    trade_created = self.create_trade(pair)
+                    if trade_created:
+                        trades_created += 1
+                        if not self.get_free_open_trades():
+                            break
             except DependencyException as exception:
-                msg = f"Unable to create trade for {pair}: {exception}"
-                if "No new positions during delisting" in str(exception):
-                    # Lock the pair to avoid further attempts to trade it
-                    delist_time = self.dataprovider.check_delisting(pair)
-                    if not delist_time:
-                        delist_time = datetime.now(timezone.utc) + timedelta(days=7)
-                    if delist_time:
-                        PairLocks.lock_pair(pair, until=delist_time, reason="Delisting")
-                        msg += " Pair will be locked."
-                self.send_dp_message(msg)
-
-                logger.warning(msg)
+                self._handle_create_trade_dependency_exception(pair, exception)
 
         if not trades_created:
             logger.debug("Found no enter signals for whitelisted currencies. Trying again...")
 
         return trades_created
+
+    def _handle_create_trade_dependency_exception(
+        self, pair: str, exception: DependencyException
+    ) -> None:
+        msg = f"Unable to create trade for {pair}: {exception}"
+        if "No new positions during delisting" in str(exception):
+            # Lock the pair to avoid further attempts to trade it
+            delist_time = self.dataprovider.check_delisting(pair)
+            if not delist_time:
+                delist_time = datetime.now(UTC) + timedelta(days=7)
+            if delist_time:
+                PairLocks.lock_pair(pair, until=delist_time, reason="Delisting")
+                msg += " Pair will be locked."
+        self.send_dp_message(msg)
+
+        logger.warning(msg)
 
     def create_trade(self, pair: str) -> bool:
         """
@@ -696,14 +705,14 @@ class FreqtradeBot(LoggingMixin):
         """
         logger.debug(f"create_trade for pair {pair}")
 
-        analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(pair, self.strategy.timeframe)
-        nowtime = analyzed_df.iloc[-1]["date"] if len(analyzed_df) > 0 else None
-
         # get_free_open_trades is checked before create_trade is called
         # but it is still used here to prevent opening too many trades within one iteration
         if not self.get_free_open_trades():
             logger.debug(f"Can't open a new trade for {pair}: max number of trades is reached.")
             return False
+
+        analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(pair, self.strategy.timeframe)
+        nowtime = analyzed_df.iloc[-1]["date"] if len(analyzed_df) > 0 else None
 
         # running get_signal on historical data fetched
         (signal, enter_tag) = self.strategy.get_entry_signal(

@@ -513,6 +513,17 @@ def test_create_trade_no_signal(default_conf_usdt, fee, mocker) -> None:
     assert not freqtrade.create_trade("ETH/USDT")
 
 
+def test_create_trade_no_free_slots_skips_analyzed_dataframe(default_conf_usdt, mocker) -> None:
+    freqtrade = get_patched_freqtradebot(mocker, default_conf_usdt)
+    mocker.patch.object(freqtrade, "get_free_open_trades", return_value=0)
+    get_analyzed_dataframe = mocker.patch.object(freqtrade.dataprovider, "get_analyzed_dataframe")
+    get_entry_signal = mocker.patch.object(freqtrade.strategy, "get_entry_signal")
+
+    assert not freqtrade.create_trade("ETH/USDT")
+    get_analyzed_dataframe.assert_not_called()
+    get_entry_signal.assert_not_called()
+
+
 @pytest.mark.parametrize("max_open", range(0, 5))
 @pytest.mark.parametrize("tradable_balance_ratio,modifier", [(1.0, 1), (0.99, 0.8), (0.5, 0.5)])
 def test_create_trades_multiple_trades(
@@ -1163,6 +1174,22 @@ def test_enter_positions(
     assert log_has(log_message, caplog)
     # create_trade should be called once for every pair in the whitelist.
     assert mock_ct.call_count == len(default_conf_usdt["exchange"]["pair_whitelist"])
+
+
+def test_enter_positions_stops_when_slots_are_filled(mocker, default_conf_usdt) -> None:
+    freqtrade = get_patched_freqtradebot(mocker, default_conf_usdt)
+    mock_ct = mocker.patch(
+        "freqtrade.freqtradebot.FreqtradeBot.create_trade",
+        MagicMock(return_value=True),
+    )
+    get_free_open_trades = mocker.patch(
+        "freqtrade.freqtradebot.FreqtradeBot.get_free_open_trades",
+        MagicMock(return_value=0),
+    )
+
+    assert freqtrade.enter_positions() == 1
+    mock_ct.assert_called_once_with(default_conf_usdt["exchange"]["pair_whitelist"][0])
+    get_free_open_trades.assert_called_once()
 
 
 @pytest.mark.usefixtures("init_persistence")
