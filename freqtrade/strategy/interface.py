@@ -1406,27 +1406,30 @@ class IStrategy(ABC, HyperStrategyMixin):
 
         enter_signal: SignalDirection | None = None
         enter_tag: str | None = None
-        if enter_long == 1 and not any([exit_long, enter_short]):
+        if enter_long and not exit_long and not enter_short:
             enter_signal = SignalDirection.LONG
             enter_tag = latest.get(SignalTagType.ENTER_TAG, None)
         if (
             self.config.get("trading_mode", TradingMode.SPOT) != TradingMode.SPOT
             and self.can_short
-            and enter_short == 1
-            and not any([exit_short, enter_long])
+            and enter_short
+            and not exit_short
+            and not enter_long
         ):
             enter_signal = SignalDirection.SHORT
             enter_tag = latest.get(SignalTagType.ENTER_TAG, None)
 
         enter_tag = enter_tag if isinstance(enter_tag, str) and enter_tag != "nan" else None
 
-        timeframe_seconds = timeframe_to_seconds(timeframe)
-
-        if self.ignore_expired_candle(
-            latest_date=latest_date,
-            current_time=dt_now(),
-            timeframe_seconds=timeframe_seconds,
-            enter=bool(enter_signal),
+        if (
+            enter_signal
+            and self.ignore_buying_expired_candle_after
+            and self.ignore_expired_candle(
+                latest_date=latest_date,
+                current_time=dt_now(),
+                timeframe_seconds=timeframe_to_seconds(timeframe),
+                enter=True,
+            )
         ):
             return None, enter_tag
 

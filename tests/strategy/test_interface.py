@@ -201,6 +201,21 @@ def test_get_signal_no_sell_column(default_conf, mocker, caplog, ohlcv_history):
     )
 
 
+def test_get_entry_signal_skips_expiry_check_without_signal(mocker, ohlcv_history):
+    mocked_history = ohlcv_history.copy()
+    latest_index = mocked_history.index[-1]
+    mocked_history.loc[latest_index, "date"] = dt_now_no_micro()
+    mocked_history["enter_long"] = 0
+    mocked_history["exit_long"] = 0
+    mocked_history["enter_short"] = 0
+    mocked_history["exit_short"] = 0
+    mocker.patch.object(_STRATEGY, "ignore_buying_expired_candle_after", 60)
+    ignore_expired_candle = mocker.patch.object(_STRATEGY, "ignore_expired_candle")
+
+    assert _STRATEGY.get_entry_signal("ETH/BTC", "5m", mocked_history) == (None, None)
+    ignore_expired_candle.assert_not_called()
+
+
 def test_ignore_expired_candle(default_conf):
     strategy = StrategyResolver.load_strategy(default_conf)
     strategy.ignore_buying_expired_candle_after = 60
