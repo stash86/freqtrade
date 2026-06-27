@@ -1211,7 +1211,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         """
         pair = str(metadata.get("pair"))
 
-        new_candle = self.__last_candle_seen_per_pair.get(pair, None) != dataframe.iloc[-1]["date"]
+        new_candle = self._has_new_candle(pair, dataframe)
         # Test if seen this pair and last candle before.
         # always run if process_only_new_candles is set to false
         if not self.process_only_new_candles or new_candle:
@@ -1232,6 +1232,12 @@ class IStrategy(ABC, HyperStrategyMixin):
 
         return dataframe
 
+    def _has_new_candle(self, pair: str, dataframe: DataFrame) -> bool:
+        """
+        Check if the dataframe's latest candle has not been analyzed yet.
+        """
+        return self.__last_candle_seen_per_pair.get(pair, None) != dataframe.iloc[-1]["date"]
+
     def analyze_pair(self, pair: str) -> None:
         """
         Fetch data for this pair from dataprovider and analyze.
@@ -1239,14 +1245,19 @@ class IStrategy(ABC, HyperStrategyMixin):
         The analyzed dataframe is then accessible via `dp.get_analyzed_dataframe()`.
         :param pair: Pair to analyze.
         """
-        dataframe = self.dp.ohlcv(
-            pair, self.timeframe, candle_type=self.config.get("candle_type_def", CandleType.SPOT)
-        )
+        candle_type = self.config.get("candle_type_def", CandleType.SPOT)
+        dataframe = self.dp.ohlcv(pair, self.timeframe, copy=False, candle_type=candle_type)
         if not isinstance(dataframe, DataFrame) or dataframe.empty:
             msg = f"Empty candle (OHLCV) data for pair {pair}"
             self.dp.send_msg(msg)
             logger.warning(msg)
             return
+
+        if self.process_only_new_candles and not self._has_new_candle(pair, dataframe):
+            logger.debug("Skipping TA Analysis for already analyzed candle")
+            return
+
+        dataframe = dataframe.copy()
 
         try:
             validator = StrategyResultValidator(

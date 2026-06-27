@@ -957,6 +957,39 @@ def test__analyze_ticker_internal_skip_analyze(ohlcv_history, mocker, caplog) ->
     assert log_has("Skipping TA Analysis for already analyzed candle", caplog)
 
 
+def test_analyze_pair_skips_same_candle_before_analysis(ohlcv_history, mocker, caplog) -> None:
+    caplog.set_level(logging.DEBUG)
+    strategy = StrategyTestV3({})
+    strategy.dp = MagicMock()
+    strategy.dp.ohlcv.return_value = ohlcv_history
+    strategy.process_only_new_candles = True
+
+    ind_mock = MagicMock(side_effect=lambda x, meta: x)
+    entry_mock = MagicMock(side_effect=lambda x, meta: x)
+    exit_mock = MagicMock(side_effect=lambda x, meta: x)
+    mocker.patch.multiple(
+        "freqtrade.strategy.interface.IStrategy",
+        advise_indicators=ind_mock,
+        advise_entry=entry_mock,
+        advise_exit=exit_mock,
+    )
+    analyze_mock = mocker.patch.object(
+        strategy, "_analyze_ticker_internal", wraps=strategy._analyze_ticker_internal
+    )
+
+    strategy.analyze_pair("ETH/BTC")
+    caplog.clear()
+    strategy.analyze_pair("ETH/BTC")
+
+    assert strategy.dp.ohlcv.call_count == 2
+    assert all(call.kwargs["copy"] is False for call in strategy.dp.ohlcv.call_args_list)
+    assert analyze_mock.call_count == 1
+    assert ind_mock.call_count == 1
+    assert entry_mock.call_count == 1
+    assert exit_mock.call_count == 1
+    assert log_has("Skipping TA Analysis for already analyzed candle", caplog)
+
+
 @pytest.mark.usefixtures("init_persistence")
 def test_is_pair_locked(default_conf):
     PairLocks.timeframe = default_conf["timeframe"]
