@@ -630,15 +630,17 @@ class FreqtradeBot(LoggingMixin):
         """
         trades_created = 0
 
-        whitelist = deepcopy(self.active_pair_whitelist)
-        if not whitelist:
+        if not self.active_pair_whitelist:
             self.log_once("Active pair whitelist is empty.", logger.info)
             return trades_created
-        # Remove pairs for currently opened trades from the whitelist
-        for trade in Trade.get_open_trades():
-            if trade.pair in whitelist:
-                whitelist.remove(trade.pair)
-                logger.debug("Ignoring %s in pair whitelist", trade.pair)
+        # Filter pairs for currently opened trades from the whitelist.
+        open_pairs = {trade.pair for trade in Trade.get_open_trades()}
+        whitelist = []
+        for pair in self.active_pair_whitelist:
+            if pair in open_pairs:
+                logger.debug("Ignoring %s in pair whitelist", pair)
+                continue
+            whitelist.append(pair)
 
         if not whitelist:
             self.log_once(
