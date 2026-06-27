@@ -4,7 +4,7 @@ from typing import Any
 
 from pandas import DataFrame
 
-from freqtrade.enums import CandleType
+from freqtrade.enums import CandleType, RunMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.strategy.strategy_helper import merge_informative_pair
 
@@ -95,6 +95,40 @@ def _format_pair_name(config, pair: str, market: dict[str, Any] | None = None) -
     ).upper()
 
 
+def _informative_dataframe_fingerprint(dataframe: DataFrame) -> tuple[int, Any, Any]:
+    latest = dataframe.iloc[-1]
+    return (len(dataframe), latest["date"], latest.get("close", None))
+
+
+def _get_populated_informative_dataframe(
+    strategy,
+    populate_indicators_fn: PopulateIndicators,
+    dataframe: DataFrame,
+    metadata: dict,
+    cache_key: tuple,
+    fingerprint: tuple[int, Any, Any],
+) -> DataFrame:
+    cache = getattr(strategy, "_ft_informative_cache", None)
+    runmode = RunMode(strategy.config.get("runmode") or RunMode.OTHER)
+    use_cache = bool(
+        getattr(strategy, "process_only_new_candles", False)
+        and runmode in (RunMode.DRY_RUN, RunMode.LIVE)
+        and cache is not None
+    )
+
+    if use_cache:
+        cached = cache.get(cache_key)
+        if cached and cached[0] == fingerprint:
+            return cached[1].copy()
+
+    dataframe = populate_indicators_fn(strategy, dataframe, metadata)
+
+    if use_cache:
+        cache[cache_key] = (fingerprint, dataframe.copy())
+
+    return dataframe
+
+
 def _create_and_merge_informative_pair(
     strategy,
     dataframe: DataFrame,
@@ -141,7 +175,11 @@ def _create_and_merge_informative_pair(
             f"Informative dataframe for ({asset}, {timeframe1}, {candle_type}) is empty. "
             "Can't populate informative indicators."
         )
-    inf_dataframe = populate_indicators_fn(strategy, inf_dataframe, inf_metadata)
+    cache_key = (populate_indicators_fn, asset, timeframe1, candle_type)
+    fingerprint = _informative_dataframe_fingerprint(inf_dataframe)
+    inf_dataframe = _get_populated_informative_dataframe(
+        strategy, populate_indicators_fn, inf_dataframe, inf_metadata, cache_key, fingerprint
+    )
 
     formatter: Any = None
     if callable(fmt):

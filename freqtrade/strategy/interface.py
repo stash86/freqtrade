@@ -41,7 +41,7 @@ from freqtrade.strategy.informative_decorator import (
 )
 from freqtrade.strategy.strategy_validation import StrategyResultValidator
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
-from freqtrade.util import dt_now, dt_ts
+from freqtrade.util import FtTTLCache, dt_now, dt_ts
 from freqtrade.wallets import Wallets
 
 
@@ -153,6 +153,9 @@ class IStrategy(ABC, HyperStrategyMixin):
         self.config = config
         # Dict to determine if analysis is necessary
         self.__last_candle_seen_per_pair: dict[str, datetime] = {}
+        self._ft_informative_cache = FtTTLCache(
+            maxsize=1000, ttl=max(3600, timeframe_to_seconds(self.timeframe))
+        )
         super().__init__(config)
 
         # Gather informative pairs from @informative-decorated methods.

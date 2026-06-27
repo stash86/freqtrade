@@ -3,10 +3,32 @@ import pandas as pd
 import pytest
 
 from freqtrade.data.dataprovider import DataProvider
-from freqtrade.enums import CandleType
+from freqtrade.enums import CandleType, RunMode
 from freqtrade.resolvers.strategy_resolver import StrategyResolver
-from freqtrade.strategy import merge_informative_pair, stoploss_from_absolute, stoploss_from_open
+from freqtrade.strategy import (
+    IStrategy,
+    informative,
+    merge_informative_pair,
+    stoploss_from_absolute,
+    stoploss_from_open,
+)
+from freqtrade.util import FtTTLCache
 from tests.conftest import generate_test_data, get_patched_exchange
+
+
+class SharedInformativeCacheTest(IStrategy):
+    timeframe = "5m"
+    stoploss = -0.10
+    minimal_roi = {}
+
+    @informative("1h", "BTC/{stake}")
+    def populate_indicators_btc_1h(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
+        self.informative_call_count = getattr(self, "informative_call_count", 0) + 1
+        dataframe["cached"] = dataframe["close"]
+        return dataframe
+
+    def populate_indicators(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
+        return dataframe
 
 
 def test_merge_informative_pair():
@@ -443,3 +465,49 @@ def test_informative_decorator(mocker, default_conf_usdt, trading_mode):
         strategy.advise_all_indicators(
             {p: data[(p, strategy.timeframe, candle_def)] for p in ("XRP/USDT", "LTC/USDT")}
         )
+
+
+def test_informative_decorator_caches_populated_shared_dataframe(default_conf_usdt):
+    default_conf_usdt["candle_type_def"] = CandleType.SPOT
+    default_conf_usdt["runmode"] = RunMode.DRY_RUN
+    strategy = SharedInformativeCacheTest(default_conf_usdt)
+    strategy.process_only_new_candles = True
+    timer = [0]
+    strategy._ft_informative_cache = FtTTLCache(maxsize=1000, ttl=10, timer=lambda: timer[0])
+
+    class DataProviderMock:
+        def __init__(self, informative: pd.DataFrame):
+            self.informative = informative
+
+        def get_pair_dataframe(
+            self, pair: str, timeframe: str | None = None, candle_type: str = ""
+        ) -> pd.DataFrame:
+            return self.informative.copy()
+
+        def market(self, pair: str):
+            base, quote = pair.split("/")
+            return {"base": base, "quote": quote}
+
+    data = generate_test_data("5m", 40)
+    dp = DataProviderMock(generate_test_data("1h", 40))
+    strategy.dp = dp
+
+    analyzed_xrp = strategy.advise_indicators(data.copy(), {"pair": "XRP/USDT"})
+    analyzed_ltc = strategy.advise_indicators(data.copy(), {"pair": "LTC/USDT"})
+
+    assert strategy.informative_call_count == 1
+    assert "btc_usdt_cached_1h" in analyzed_xrp.columns
+    assert "btc_usdt_cached_1h" in analyzed_ltc.columns
+
+    dp.informative.loc[dp.informative.index[-1], "date"] += pd.Timedelta(hours=1)
+    strategy.advise_indicators(data.copy(), {"pair": "ADA/USDT"})
+    assert strategy.informative_call_count == 2
+
+    timer[0] = 11
+    strategy.advise_indicators(data.copy(), {"pair": "DOT/USDT"})
+    assert strategy.informative_call_count == 3
+
+    strategy.process_only_new_candles = False
+    strategy.advise_indicators(data.copy(), {"pair": "SOL/USDT"})
+    strategy.advise_indicators(data.copy(), {"pair": "DOGE/USDT"})
+    assert strategy.informative_call_count == 5
