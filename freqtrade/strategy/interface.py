@@ -1311,8 +1311,8 @@ class IStrategy(ABC, HyperStrategyMixin):
             return None, None
 
         try:
-            latest_date_pd = dataframe["date"].max()
-            latest = dataframe.loc[dataframe["date"] == latest_date_pd].iloc[-1]
+            latest = dataframe.iloc[-1]
+            latest_date_pd = latest["date"]
         except Exception as e:
             msg = f"Unable to get latest candle (OHLCV) data for pair {pair} - {e}"
             self.dp.send_msg(msg)
