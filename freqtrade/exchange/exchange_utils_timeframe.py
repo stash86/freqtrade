@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from functools import cache
 
 import ccxt
 from ccxt import ROUND_DOWN, ROUND_UP
@@ -6,6 +7,7 @@ from ccxt import ROUND_DOWN, ROUND_UP
 from freqtrade.util.datetime_helpers import dt_from_ts, dt_ts
 
 
+@cache
 def timeframe_to_seconds(timeframe: str) -> int:
     """
     Translates the timeframe interval value written in the human readable
@@ -15,6 +17,7 @@ def timeframe_to_seconds(timeframe: str) -> int:
     return ccxt.Exchange.parse_timeframe(timeframe)
 
 
+@cache
 def timeframe_to_minutes(timeframe: str) -> int:
     """
     Same as timeframe_to_seconds, but returns minutes.
@@ -22,6 +25,7 @@ def timeframe_to_minutes(timeframe: str) -> int:
     return ccxt.Exchange.parse_timeframe(timeframe) // 60
 
 
+@cache
 def timeframe_to_msecs(timeframe: str) -> int:
     """
     Same as timeframe_to_seconds, but returns milliseconds.

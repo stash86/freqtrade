@@ -149,6 +149,28 @@ def test_timeframe_to_msecs():
     assert timeframe_to_msecs("1d") == 86400000
 
 
+def test_timeframe_parse_helpers_are_cached(mocker):
+    helpers = (timeframe_to_seconds, timeframe_to_minutes, timeframe_to_msecs)
+    for helper in helpers:
+        helper.cache_clear()
+
+    parse_timeframe = mocker.patch(
+        "freqtrade.exchange.exchange_utils_timeframe.ccxt.Exchange.parse_timeframe",
+        MagicMock(return_value=300),
+    )
+
+    assert timeframe_to_seconds("5m") == 300
+    assert timeframe_to_seconds("5m") == 300
+    assert timeframe_to_minutes("5m") == 5
+    assert timeframe_to_minutes("5m") == 5
+    assert timeframe_to_msecs("5m") == 300000
+    assert timeframe_to_msecs("5m") == 300000
+    assert parse_timeframe.call_count == 3
+
+    for helper in helpers:
+        helper.cache_clear()
+
+
 @pytest.mark.parametrize(
     "timeframe,expected",
     [
