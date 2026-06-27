@@ -514,7 +514,7 @@ class FreqtradeBot(LoggingMixin):
             logger.info(f"Trying to refind {order}")
             fo = None
             if not order.ft_is_open:
-                logger.debug(f"Order {order} is no longer open.")
+                logger.debug("Order %s is no longer open.", order)
                 continue
             try:
                 fo = self.exchange.fetch_order_or_stoploss_order(
@@ -721,12 +721,12 @@ class FreqtradeBot(LoggingMixin):
 
         :return: True if a trade has been created.
         """
-        logger.debug(f"create_trade for pair {pair}")
+        logger.debug("create_trade for pair %s", pair)
 
         # Keep this guard enabled for direct create_trade calls. enter_positions passes
         # check_free_open_trades=False after taking a single slot-count snapshot.
         if check_free_open_trades and not self.get_free_open_trades():
-            logger.debug(f"Can't open a new trade for {pair}: max number of trades is reached.")
+            logger.debug("Can't open a new trade for %s: max number of trades is reached.", pair)
             return False
 
         analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(pair, self.strategy.timeframe)
@@ -817,7 +817,7 @@ class FreqtradeBot(LoggingMixin):
             trade.pair, current_entry_rate, trade.leverage
         )
         stake_available = self.wallets.get_available_stake_amount()
-        logger.debug(f"Calling adjust_trade_position for pair {trade.pair}")
+        logger.debug("Calling adjust_trade_position for pair %s", trade.pair)
         stake_amount, order_tag = self.strategy._adjust_trade_position_internal(
             trade=trade,
             current_time=datetime.now(UTC),
@@ -840,7 +840,7 @@ class FreqtradeBot(LoggingMixin):
             if self.strategy.max_entry_position_adjustment > -1:
                 count_of_entries = trade.nr_of_successful_entries
                 if count_of_entries > self.strategy.max_entry_position_adjustment:
-                    logger.debug(f"Max adjustment entries for {trade.pair} has been reached.")
+                    logger.debug("Max adjustment entries for %s has been reached.", trade.pair)
                     return
                 else:
                     logger.debug("Max adjustment entries is set to unlimited.")
@@ -1445,7 +1445,7 @@ class FreqtradeBot(LoggingMixin):
         if self._check_and_execute_exit(trade, exit_rate, enter, exit_, exit_tag):
             return True
 
-        logger.debug(f"Found no {exit_signal_type} signal for %s.", trade)
+        logger.debug("Found no %s signal for %s.", exit_signal_type, trade)
         return False
 
     def _check_and_execute_exit(
@@ -2138,7 +2138,7 @@ class FreqtradeBot(LoggingMixin):
             trade_base_currency
         )
 
-        logger.debug(f"{pair} - Wallet: {wallet_amount} - Trade-amount: {amount}")
+        logger.debug("%s - Wallet: %s - Trade-amount: %s", pair, wallet_amount, amount)
         if wallet_amount >= amount:
             return amount
         elif wallet_amount > amount * 0.98:

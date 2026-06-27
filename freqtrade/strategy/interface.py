@@ -1376,7 +1376,9 @@ class IStrategy(ABC, HyperStrategyMixin):
         # Tags can be None, which does not resolve to False.
         exit_tag = exit_tag if isinstance(exit_tag, str) and exit_tag != "nan" else None
 
-        logger.debug(f"exit-trigger: {latest['date']} (pair={pair}) enter={enter} exit={exit_}")
+        logger.debug(
+            "exit-trigger: %s (pair=%s) enter=%s exit=%s", latest["date"], pair, enter, exit_
+        )
 
         return enter, exit_, exit_tag
 
@@ -1434,8 +1436,11 @@ class IStrategy(ABC, HyperStrategyMixin):
             return None, enter_tag
 
         logger.debug(
-            f"entry trigger: {latest['date']} (pair={pair}) "
-            f"enter={enter_long} enter_tag_value={enter_tag}"
+            "entry trigger: %s (pair=%s) enter=%s enter_tag_value=%s",
+            latest["date"],
+            pair,
+            enter_long,
+            enter_tag,
         )
         return enter_signal, enter_tag
 
@@ -1540,15 +1545,15 @@ class IStrategy(ABC, HyperStrategyMixin):
         # Trailing stoploss
 
         if stoplossflag.exit_type in (ExitType.STOP_LOSS, ExitType.LIQUIDATION):
-            logger.debug(f"{trade.pair} - Stoploss hit. exit_type={stoplossflag.exit_type}")
+            logger.debug("%s - Stoploss hit. exit_type=%s", trade.pair, stoplossflag.exit_type)
             exits.append(stoplossflag)
 
         if roi_reached:
-            logger.debug(f"{trade.pair} - Required profit reached. exit_type=ExitType.ROI")
+            logger.debug("%s - Required profit reached. exit_type=ExitType.ROI", trade.pair)
             exits.append(ExitCheckTuple(exit_type=ExitType.ROI))
 
         if stoplossflag.exit_type == ExitType.TRAILING_STOP_LOSS:
-            logger.debug(f"{trade.pair} - Trailing stoploss hit.")
+            logger.debug("%s - Trailing stoploss hit.", trade.pair)
             exits.append(stoplossflag)
 
         return exits
@@ -1699,7 +1704,9 @@ class IStrategy(ABC, HyperStrategyMixin):
             return ExitCheckTuple(exit_type=exit_type)
 
         if liq_higher_long or liq_lower_short:
-            logger.debug(f"{trade.pair} - Liquidation price hit. exit_type=ExitType.LIQUIDATION")
+            logger.debug(
+                "%s - Liquidation price hit. exit_type=ExitType.LIQUIDATION", trade.pair
+            )
             return ExitCheckTuple(exit_type=ExitType.LIQUIDATION)
 
         return ExitCheckTuple(exit_type=ExitType.NONE)
@@ -1731,7 +1738,7 @@ class IStrategy(ABC, HyperStrategyMixin):
             )
             if custom_roi is None or isnan(custom_roi) or isinf(custom_roi):
                 custom_roi = None
-                logger.debug(f"Custom ROI function did not return a valid ROI for {trade.pair}")
+                logger.debug("Custom ROI function did not return a valid ROI for %s", trade.pair)
 
         # Get highest entry in ROI dict where key <= trade-duration
         roi_list = [x for x in self.minimal_roi.keys() if x <= trade_dur]
@@ -1856,7 +1863,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :param metadata: Additional information, like the currently traded pair
         :return: a Dataframe with all mandatory indicators for the strategies
         """
-        logger.debug(f"Populating indicators for pair {metadata.get('pair')}.")
+        logger.debug("Populating indicators for pair %s.", metadata.get("pair"))
 
         # call populate_indicators_Nm() which were tagged with @informative decorator.
         for inf_data, populate_fn in self._ft_informative:
@@ -1883,7 +1890,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :return: DataFrame with buy column
         """
 
-        logger.debug(f"Populating enter signals for pair {metadata.get('pair')}.")
+        logger.debug("Populating enter signals for pair %s.", metadata.get("pair"))
         # Initialize column to work around Pandas bug #56503.
         dataframe.loc[:, "enter_tag"] = ""
         df = self.populate_entry_trend(dataframe, metadata)
@@ -1903,7 +1910,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         """
         # Initialize column to work around Pandas bug #56503.
         dataframe.loc[:, "exit_tag"] = ""
-        logger.debug(f"Populating exit signals for pair {metadata.get('pair')}.")
+        logger.debug("Populating exit signals for pair %s.", metadata.get("pair"))
         df = self.populate_exit_trend(dataframe, metadata)
         if "exit_long" not in df.columns:
             df = df.rename({"sell": "exit_long"}, axis="columns")
