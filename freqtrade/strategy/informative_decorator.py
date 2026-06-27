@@ -95,9 +95,9 @@ def _format_pair_name(config, pair: str, market: dict[str, Any] | None = None) -
     ).upper()
 
 
-def _informative_dataframe_fingerprint(dataframe: DataFrame) -> tuple[int, Any, Any]:
+def _informative_dataframe_fingerprint(dataframe: DataFrame) -> tuple[int, Any]:
     latest = dataframe.iloc[-1]
-    return (len(dataframe), latest["date"], latest.get("close", None))
+    return (len(dataframe), latest["date"])
 
 
 def _get_populated_informative_dataframe(
@@ -106,7 +106,7 @@ def _get_populated_informative_dataframe(
     dataframe: DataFrame,
     metadata: dict,
     cache_key: tuple,
-    fingerprint: tuple[int, Any, Any],
+    fingerprint: tuple[int, Any],
 ) -> DataFrame:
     cache = getattr(strategy, "_ft_informative_cache", None)
     runmode = RunMode(strategy.config.get("runmode") or RunMode.OTHER)
