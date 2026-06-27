@@ -1096,6 +1096,14 @@ class IStrategy(ABC, HyperStrategyMixin):
             )
             for p in informative_pairs
         ]
+        whitelist: list[str] | None = None
+
+        def current_whitelist() -> list[str]:
+            nonlocal whitelist
+            if whitelist is None:
+                whitelist = self.dp.current_whitelist()
+            return whitelist
+
         for inf_data, _ in self._ft_informative:
             # Get default candle type if not provided explicitly.
             candle_type = (
@@ -1105,7 +1113,7 @@ class IStrategy(ABC, HyperStrategyMixin):
             )
             if inf_data.asset:
                 if any(s in inf_data.asset for s in ("{BASE}", "{base}")):
-                    for pair in self.dp.current_whitelist():
+                    for pair in current_whitelist():
                         pair_tf = (
                             _format_pair_name(self.config, inf_data.asset, self.dp.market(pair)),
                             inf_data.timeframe,
@@ -1121,7 +1129,7 @@ class IStrategy(ABC, HyperStrategyMixin):
                     )
                     informative_pairs.append(pair_tf)
             else:
-                for pair in self.dp.current_whitelist():
+                for pair in current_whitelist():
                     informative_pairs.append((pair, inf_data.timeframe, candle_type))
         informative_pairs.extend(self.__informative_pairs_freqai())
         return list(set(informative_pairs))
