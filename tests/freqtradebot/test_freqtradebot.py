@@ -2662,6 +2662,7 @@ def test_handle_cancel_enter(mocker, caplog, default_conf_usdt, limit_order, is_
 
     cancel_order_mock = MagicMock(return_value=cancel_entry_order)
     mocker.patch(f"{EXMS}.cancel_order_with_result", cancel_order_mock)
+    min_pair_stake_mock = mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=1)
 
     freqtrade = FreqtradeBot(default_conf_usdt)
     freqtrade._notify_enter_cancel = MagicMock()
@@ -2675,19 +2676,24 @@ def test_handle_cancel_enter(mocker, caplog, default_conf_usdt, limit_order, is_
     reason = CANCEL_REASON["TIMEOUT"]
     assert freqtrade.handle_cancel_enter(trade, l_order, trade.open_orders[0], reason)
     assert cancel_order_mock.call_count == 1
+    min_pair_stake_mock.assert_not_called()
 
     cancel_order_mock.reset_mock()
+    min_pair_stake_mock.reset_mock()
     caplog.clear()
     l_order["filled"] = 0.01
     assert not freqtrade.handle_cancel_enter(trade, l_order, trade.open_orders[0], reason)
     assert cancel_order_mock.call_count == 0
+    min_pair_stake_mock.assert_called_once()
     assert log_has_re("Order .* for .* not cancelled, as the filled amount.* unexitable.*", caplog)
 
     caplog.clear()
     cancel_order_mock.reset_mock()
+    min_pair_stake_mock.reset_mock()
     l_order["filled"] = 2
     assert not freqtrade.handle_cancel_enter(trade, l_order, trade.open_orders[0], reason)
     assert cancel_order_mock.call_count == 1
+    min_pair_stake_mock.assert_called_once()
 
     # Order remained open for some reason (cancel failed)
     cancel_entry_order["status"] = "open"
@@ -2800,7 +2806,7 @@ def test_handle_cancel_exit_limit(
     entry_price = 0.245441
 
     mocker.patch(f"{EXMS}.get_rate", return_value=entry_price)
-    mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.2)
+    min_pair_stake_mock = mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.2)
 
     mocker.patch("freqtrade.freqtradebot.FreqtradeBot.handle_order_fee")
 
@@ -2867,8 +2873,10 @@ def test_handle_cancel_exit_limit(
     assert trade.close_rate is None
     assert trade.exit_reason is None
     assert not trade.has_open_orders
+    min_pair_stake_mock.assert_not_called()
 
     send_msg_mock.reset_mock()
+    min_pair_stake_mock.reset_mock()
 
     # Partial exit - below exit threshold
     order["amount"] = amount * leverage
@@ -2881,6 +2889,7 @@ def test_handle_cancel_exit_limit(
         send_msg_mock.call_args_list[0][0][0]["reason"]
         == CANCEL_REASON["PARTIALLY_FILLED_KEEP_OPEN"]
     )
+    min_pair_stake_mock.assert_called_once()
 
     assert not freqtrade.handle_cancel_exit(trade, order, order_obj, reason)
 

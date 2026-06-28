@@ -1998,18 +1998,20 @@ class FreqtradeBot(LoggingMixin):
 
         if order["status"] not in constants.NON_OPEN_EXCHANGE_STATES:
             filled_val: float = order.get("filled", 0.0) or 0.0
-            filled_stake = filled_val * trade.open_rate
-            minstake = self.exchange.get_min_pair_stake_amount(
-                trade.pair, trade.open_rate, self.strategy.stoploss
-            )
 
-            if filled_val > 0 and minstake and filled_stake < minstake:
-                self.log_once(
-                    f"Order {order_id} for {trade.pair} not cancelled, "
-                    f"as the filled amount of {filled_val} would result in an unexitable trade.",
-                    logger.warning,
+            if filled_val > 0:
+                filled_stake = filled_val * trade.open_rate
+                minstake = self.exchange.get_min_pair_stake_amount(
+                    trade.pair, trade.open_rate, self.strategy.stoploss
                 )
-                return False
+                if minstake and filled_stake < minstake:
+                    self.log_once(
+                        f"Order {order_id} for {trade.pair} not cancelled, "
+                        f"as the filled amount of {filled_val} would result in "
+                        "an unexitable trade.",
+                        logger.warning,
+                    )
+                    return False
             corder = self.exchange.cancel_order_with_result(order_id, trade.pair, trade.amount)
             order_obj.ft_cancel_reason = reason
             # if replacing, retry fetching the order 3 times if the status is not what we need
@@ -2042,10 +2044,10 @@ class FreqtradeBot(LoggingMixin):
         if isclose(filled_amount, 0.0, abs_tol=constants.MATH_CLOSE_PREC):
             was_trade_fully_canceled = True
             # if trade is not partially completed and it's the only order, just delete the trade
-            open_order_count = len(
-                [order for order in trade.orders if order.ft_is_open and order.order_id != order_id]
+            has_other_open_order = any(
+                order.ft_is_open and order.order_id != order_id for order in trade.orders
             )
-            if open_order_count < 1 and trade.nr_of_successful_entries == 0 and not replacing:
+            if not has_other_open_order and trade.nr_of_successful_entries == 0 and not replacing:
                 logger.info(f"{side} order fully cancelled. Removing {trade} from database.")
                 trade.delete()
                 order_obj.ft_cancel_reason += f", {constants.CANCEL_REASON['FULLY_CANCELLED']}"
@@ -2081,14 +2083,16 @@ class FreqtradeBot(LoggingMixin):
         # Cancelled orders may have the status of 'canceled' or 'closed'
         if order["status"] not in constants.NON_OPEN_EXCHANGE_STATES:
             filled_amt: float = order.get("filled", 0.0) or 0.0
-            # Filled val is in quote currency (after leverage)
-            filled_rem_stake = trade.stake_amount - (filled_amt * trade.open_rate / trade.leverage)
-            minstake = self.exchange.get_min_pair_stake_amount(
-                trade.pair, trade.open_rate, self.strategy.stoploss
-            )
             # Double-check remaining amount
             if filled_amt > 0:
                 reason = constants.CANCEL_REASON["PARTIALLY_FILLED"]
+                # Filled val is in quote currency (after leverage)
+                filled_rem_stake = trade.stake_amount - (
+                    filled_amt * trade.open_rate / trade.leverage
+                )
+                minstake = self.exchange.get_min_pair_stake_amount(
+                    trade.pair, trade.open_rate, self.strategy.stoploss
+                )
                 if minstake and filled_rem_stake < minstake:
                     logger.warning(
                         f"Order {order_id} for {trade.pair} not cancelled, as "
@@ -2429,8 +2433,8 @@ class FreqtradeBot(LoggingMixin):
             "open_date": trade.open_date,
             "close_date": trade.close_date or datetime.now(UTC),
             "stake_currency": self.config["stake_currency"],
-            "base_currency": self.exchange.get_pair_base_currency(trade.pair),
-            "quote_currency": self.exchange.get_pair_quote_currency(trade.pair),
+            "base_currency": trade.safe_base_currency,
+            "quote_currency": trade.safe_quote_currency,
             "fiat_currency": self.config.get("fiat_display_currency", None),
             "reason": reason,
             "sub_trade": sub_trade,

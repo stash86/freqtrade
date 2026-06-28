@@ -627,10 +627,11 @@ class LocalTrade:
 
     @property
     def open_orders_ids(self) -> list[str]:
-        open_orders_ids_wo_sl = [
-            oo.order_id for oo in self.open_orders if oo.ft_order_side not in ["stoploss"]
+        return [
+            order.order_id
+            for order in self.orders
+            if order.ft_is_open and order.ft_order_side != "stoploss"
         ]
-        return open_orders_ids_wo_sl
 
     def __init__(self, **kwargs):
         for key in kwargs:
