@@ -966,6 +966,7 @@ class FreqtradeBot(LoggingMixin):
         name = "Short" if is_short else "Long"
         trade_side: LongShort = "short" if is_short else "long"
         pos_adjust = trade is not None
+        current_time = datetime.now(UTC)
 
         enter_limit_requested, stake_amount, leverage = self.get_valid_enter_price_and_stake(
             pair,
@@ -976,6 +977,7 @@ class FreqtradeBot(LoggingMixin):
             trade,
             mode,
             leverage_,
+            current_time,
             stake_available,
         )
 
@@ -1006,7 +1008,7 @@ class FreqtradeBot(LoggingMixin):
             amount=amount,
             rate=enter_limit_requested,
             time_in_force=time_in_force,
-            current_time=datetime.now(UTC),
+            current_time=current_time,
             entry_tag=enter_tag,
             side=trade_side,
         ):
@@ -1188,6 +1190,7 @@ class FreqtradeBot(LoggingMixin):
         trade: Trade | None,
         mode: EntryExecuteMode,
         leverage_: float | None,
+        current_time: datetime,
         stake_available: float | None = None,
     ) -> tuple[float, float, float]:
         """
@@ -1209,7 +1212,7 @@ class FreqtradeBot(LoggingMixin):
             )(
                 pair=pair,
                 trade=trade,
-                current_time=datetime.now(UTC),
+                current_time=current_time,
                 proposed_rate=enter_limit_requested,
                 entry_tag=entry_tag,
                 side=trade_side,
@@ -1227,7 +1230,7 @@ class FreqtradeBot(LoggingMixin):
             else:
                 leverage = strategy_safe_wrapper(self.strategy.leverage, default_retval=1.0)(
                     pair=pair,
-                    current_time=datetime.now(UTC),
+                    current_time=current_time,
                     current_rate=enter_limit_requested,
                     proposed_leverage=1.0,
                     max_leverage=max_leverage,
@@ -1261,7 +1264,7 @@ class FreqtradeBot(LoggingMixin):
                 self.strategy.custom_stake_amount, default_retval=stake_amount
             )(
                 pair=pair,
-                current_time=datetime.now(UTC),
+                current_time=current_time,
                 current_rate=enter_limit_requested,
                 proposed_stake=stake_amount,
                 min_stake=min_stake_amount,
@@ -2214,6 +2217,7 @@ class FreqtradeBot(LoggingMixin):
         # set custom_exit_price if available
         proposed_limit_rate = limit
         custom_exit_price = limit
+        current_time = datetime.now(UTC)
 
         current_profit = trade.calc_profit_ratio(limit)
         if order_type == "limit" and not skip_custom_exit_price:
@@ -2222,7 +2226,7 @@ class FreqtradeBot(LoggingMixin):
             )(
                 pair=trade.pair,
                 trade=trade,
-                current_time=datetime.now(UTC),
+                current_time=current_time,
                 proposed_rate=proposed_limit_rate,
                 current_profit=current_profit,
                 exit_tag=exit_reason,
@@ -2248,7 +2252,7 @@ class FreqtradeBot(LoggingMixin):
                 time_in_force=time_in_force,
                 exit_reason=exit_reason,
                 sell_reason=exit_reason,  # sellreason -> compatibility
-                current_time=datetime.now(UTC),
+                current_time=current_time,
             )
         ):
             # logger.info(f"User denied exit for {trade.pair}.")

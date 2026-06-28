@@ -1069,6 +1069,47 @@ def test_execute_entry(
     assert trade.leverage == 1 if trading_mode == "spot" else 3
 
 
+def test_execute_entry_reuses_current_time_for_strategy_callbacks(
+    mocker, default_conf_usdt, fee, limit_order_open
+) -> None:
+    patch_RPCManager(mocker)
+    patch_exchange(mocker)
+    order = limit_order_open[entry_side(False)]
+    mocker.patch.multiple(
+        EXMS,
+        create_order=MagicMock(return_value=order),
+        get_rate=MagicMock(return_value=0.11),
+        get_min_pair_stake_amount=MagicMock(return_value=1),
+        get_max_pair_stake_amount=MagicMock(return_value=500000),
+        get_fee=fee,
+    )
+    freqtrade = FreqtradeBot(default_conf_usdt)
+    callback_times = {}
+
+    def custom_entry_price(**kwargs):
+        callback_times["custom_entry_price"] = kwargs["current_time"]
+        return kwargs["proposed_rate"]
+
+    def custom_stake_amount(**kwargs):
+        callback_times["custom_stake_amount"] = kwargs["current_time"]
+        return kwargs["proposed_stake"]
+
+    def confirm_trade_entry(**kwargs):
+        callback_times["confirm_trade_entry"] = kwargs["current_time"]
+        return True
+
+    freqtrade.strategy.custom_entry_price = MagicMock(side_effect=custom_entry_price)
+    freqtrade.strategy.custom_stake_amount = MagicMock(side_effect=custom_stake_amount)
+    freqtrade.strategy.confirm_trade_entry = MagicMock(side_effect=confirm_trade_entry)
+
+    assert freqtrade.execute_entry("ETH/USDT", 2)
+    assert (
+        callback_times["custom_entry_price"]
+        is callback_times["custom_stake_amount"]
+        is callback_times["confirm_trade_entry"]
+    )
+
+
 @pytest.mark.parametrize("is_short", [False, True])
 def test_execute_entry_confirm_error(mocker, default_conf_usdt, fee, limit_order, is_short) -> None:
     freqtrade = get_patched_freqtradebot(mocker, default_conf_usdt)
@@ -2972,9 +3013,15 @@ def test_execute_trade_exit_up(
         "close_rate": ANY,
         "sub_trade": False,
         "cumulative_profit": 0.0,
+        "min_profit": ANY,
+        "max_profit": ANY,
         "stake_amount": pytest.approx(60),
         "is_final_exit": False,
         "final_profit_ratio": None,
+        "order_tag": ExitType.ROI.value,
+        "order_stake_amount": ANY,
+        "full_amount": pytest.approx(amt),
+        "order_filled_date": None,
     } == last_msg
 
 
@@ -3047,9 +3094,15 @@ def test_execute_trade_exit_down(
         "close_rate": ANY,
         "sub_trade": False,
         "cumulative_profit": 0.0,
+        "min_profit": ANY,
+        "max_profit": ANY,
         "stake_amount": pytest.approx(60),
         "is_final_exit": False,
         "final_profit_ratio": None,
+        "order_tag": ExitType.STOP_LOSS.value,
+        "order_stake_amount": ANY,
+        "full_amount": pytest.approx(29.70297029) if is_short else 30.0,
+        "order_filled_date": None,
     } == last_msg
 
 
@@ -3102,10 +3155,20 @@ def test_execute_trade_exit_custom_exit_price(
     # Increase the price and sell it
     mocker.patch.multiple(EXMS, fetch_ticker=ticker_usdt_sell_up)
 
-    freqtrade.strategy.confirm_trade_exit = MagicMock(return_value=True)
+    callback_times = {}
+
+    def confirm_trade_exit(**kwargs):
+        callback_times["confirm_trade_exit"] = kwargs["current_time"]
+        return True
+
+    def custom_exit_price(**kwargs):
+        callback_times["custom_exit_price"] = kwargs["current_time"]
+        return 2.25
+
+    freqtrade.strategy.confirm_trade_exit = MagicMock(side_effect=confirm_trade_exit)
 
     # Set a custom exit price
-    freqtrade.strategy.custom_exit_price = lambda **kwargs: 2.25
+    freqtrade.strategy.custom_exit_price = MagicMock(side_effect=custom_exit_price)
     freqtrade.execute_trade_exit(
         trade=trade,
         limit=ticker_usdt_sell_up()["ask" if is_short else "bid"],
@@ -3115,6 +3178,9 @@ def test_execute_trade_exit_custom_exit_price(
     # Sell price must be different to default bid price
 
     assert freqtrade.strategy.confirm_trade_exit.call_count == 1
+    assert (
+        callback_times["custom_exit_price"] is callback_times["confirm_trade_exit"]
+    )
 
     assert rpc_mock.call_count == 1
     last_msg = rpc_mock.call_args_list[-1][0][0]
@@ -3146,9 +3212,15 @@ def test_execute_trade_exit_custom_exit_price(
         "close_rate": 2.25,  # the custom exit price
         "sub_trade": False,
         "cumulative_profit": 0.0,
+        "min_profit": ANY,
+        "max_profit": ANY,
         "stake_amount": pytest.approx(60),
         "is_final_exit": False,
         "final_profit_ratio": None,
+        "order_tag": "foo",
+        "order_stake_amount": ANY,
+        "full_amount": pytest.approx(amount),
+        "order_filled_date": None,
     } == last_msg
 
 
