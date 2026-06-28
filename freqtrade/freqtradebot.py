@@ -730,7 +730,6 @@ class FreqtradeBot(LoggingMixin):
             return False
 
         analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(pair, self.strategy.timeframe)
-        nowtime = analyzed_df.iloc[-1]["date"] if len(analyzed_df) > 0 else None
 
         # running get_signal on historical data fetched
         (signal, enter_tag) = self.strategy.get_entry_signal(
@@ -738,6 +737,7 @@ class FreqtradeBot(LoggingMixin):
         )
 
         if signal:
+            nowtime = analyzed_df.iloc[-1]["date"] if len(analyzed_df) > 0 else None
             if self.strategy.is_pair_locked(pair, candle_date=nowtime, side=signal):
                 lock = PairLocks.get_pair_longest_lock(pair, nowtime, signal)
                 if lock:
@@ -1470,7 +1470,7 @@ class FreqtradeBot(LoggingMixin):
                         f"{trade.pair}_{trade.id}_{exit_tag1 or should_exit.exit_reason}", None
                     ):
                         logger.debug(
-                            f"Exit reason already seen this candle, first seen at {prev_eval}"
+                            "Exit reason already seen this candle, first seen at %s", prev_eval
                         )
                         continue
 

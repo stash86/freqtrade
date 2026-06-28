@@ -509,8 +509,10 @@ def test_create_trade_no_signal(default_conf_usdt, fee, mocker) -> None:
     default_conf_usdt["stake_amount"] = 10
     freqtrade = FreqtradeBot(default_conf_usdt)
     patch_get_signal(freqtrade, enter_long=False, exit_long=False)
+    is_pair_locked = mocker.patch.object(freqtrade.strategy, "is_pair_locked")
 
     assert not freqtrade.create_trade("ETH/USDT")
+    is_pair_locked.assert_not_called()
 
 
 def test_create_trade_no_free_slots_skips_analyzed_dataframe(default_conf_usdt, mocker) -> None:

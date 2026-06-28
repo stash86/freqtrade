@@ -1335,10 +1335,11 @@ class IStrategy(ABC, HyperStrategyMixin):
         # Check if dataframe is out of date
         timeframe_minutes = timeframe_to_minutes(timeframe)
         offset = self.config.get("exchange", {}).get("outdated_offset", 5)
-        if latest_date < (dt_now() - timedelta(minutes=timeframe_minutes * 2 + offset)):
+        current_time = dt_now()
+        if latest_date < (current_time - timedelta(minutes=timeframe_minutes * 2 + offset)):
             msg = (
                 f"Outdated history for pair {pair}. Last tick is "
-                f"{int((dt_now() - latest_date).total_seconds() // 60)} minutes old"
+                f"{int((current_time - latest_date).total_seconds() // 60)} minutes old"
             )
             warning_level = self.config.get("warning_level", "minimal")
             if warning_level != "minimal":
@@ -1404,7 +1405,6 @@ class IStrategy(ABC, HyperStrategyMixin):
         enter_long = latest.get(SignalType.ENTER_LONG, 0) == 1
         exit_long = latest.get(SignalType.EXIT_LONG, 0) == 1
         enter_short = latest.get(SignalType.ENTER_SHORT, 0) == 1
-        exit_short = latest.get(SignalType.EXIT_SHORT, 0) == 1
 
         enter_signal: SignalDirection | None = None
         enter_tag: str | None = None
@@ -1415,11 +1415,12 @@ class IStrategy(ABC, HyperStrategyMixin):
             self.config.get("trading_mode", TradingMode.SPOT) != TradingMode.SPOT
             and self.can_short
             and enter_short
-            and not exit_short
             and not enter_long
         ):
-            enter_signal = SignalDirection.SHORT
-            enter_tag = latest.get(SignalTagType.ENTER_TAG, None)
+            exit_short = latest.get(SignalType.EXIT_SHORT, 0) == 1
+            if not exit_short:
+                enter_signal = SignalDirection.SHORT
+                enter_tag = latest.get(SignalTagType.ENTER_TAG, None)
 
         enter_tag = enter_tag if isinstance(enter_tag, str) and enter_tag != "nan" else None
 
@@ -1531,11 +1532,19 @@ class IStrategy(ABC, HyperStrategyMixin):
                 exit_signal == ExitType.EXIT_SIGNAL
                 and (not self.exit_profit_only or current_profit > self.exit_profit_offset)
             ):
-                logger.debug(
-                    f"{trade.pair} - Sell signal received. "
-                    f"exit_type=ExitType.{exit_signal.name}"
-                    + (f", custom_reason={custom_reason}" if custom_reason else "")
-                )
+                if custom_reason:
+                    logger.debug(
+                        "%s - Sell signal received. exit_type=ExitType.%s, custom_reason=%s",
+                        trade.pair,
+                        exit_signal.name,
+                        custom_reason,
+                    )
+                else:
+                    logger.debug(
+                        "%s - Sell signal received. exit_type=ExitType.%s",
+                        trade.pair,
+                        exit_signal.name,
+                    )
                 exits.append(ExitCheckTuple(exit_type=exit_signal, exit_reason=custom_reason))
 
         # Sequence:
@@ -1704,9 +1713,7 @@ class IStrategy(ABC, HyperStrategyMixin):
             return ExitCheckTuple(exit_type=exit_type)
 
         if liq_higher_long or liq_lower_short:
-            logger.debug(
-                "%s - Liquidation price hit. exit_type=ExitType.LIQUIDATION", trade.pair
-            )
+            logger.debug("%s - Liquidation price hit. exit_type=ExitType.LIQUIDATION", trade.pair)
             return ExitCheckTuple(exit_type=ExitType.LIQUIDATION)
 
         return ExitCheckTuple(exit_type=ExitType.NONE)
@@ -1745,6 +1752,8 @@ class IStrategy(ABC, HyperStrategyMixin):
         for roi_key in self.minimal_roi:
             if roi_key <= trade_dur and (roi_entry is None or roi_key > roi_entry):
                 roi_entry = roi_key
+                if roi_key == trade_dur:
+                    break
         min_roi = self.minimal_roi[roi_entry] if roi_entry is not None else None
 
         # The lowest available value is used to trigger an exit.

@@ -98,6 +98,9 @@ def test_returns_latest_signal(ohlcv_history):
     assert _STRATEGY.get_exit_signal("ETH/BTC", "5m", mocked_history) == (False, False, None)
     assert _STRATEGY.get_exit_signal("ETH/BTC", "5m", mocked_history, True) == (True, False, None)
 
+    mocked_history.loc[latest_index, "exit_short"] = 1
+    assert _STRATEGY.get_entry_signal("ETH/BTC", "5m", mocked_history) == (None, None)
+
     mocked_history.loc[latest_index, "enter_short"] = 0
     mocked_history.loc[latest_index, "exit_short"] = 1
     mocked_history.loc[latest_index, "exit_tag"] = "sell_signal_02"
