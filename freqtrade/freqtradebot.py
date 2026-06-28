@@ -750,7 +750,9 @@ class FreqtradeBot(LoggingMixin):
                 else:
                     self.log_once(f"Pair {pair} is currently locked.", logger.info)
                 return False
-            stake_amount = self.wallets.get_trade_stake_amount(pair, self.config["max_open_trades"])
+            stake_amount, stake_available = self.wallets.get_trade_stake_amount_and_available(
+                pair, self.config["max_open_trades"]
+            )
 
             bid_check_dom = self.config.get("entry_pricing", {}).get("check_depth_of_market", {})
             if (bid_check_dom.get("enabled", False)) and (
@@ -762,12 +764,17 @@ class FreqtradeBot(LoggingMixin):
                         stake_amount,
                         enter_tag=enter_tag,
                         is_short=(signal == SignalDirection.SHORT),
+                        stake_available=stake_available,
                     )
                 else:
                     return False
 
             return self.execute_entry(
-                pair, stake_amount, enter_tag=enter_tag, is_short=(signal == SignalDirection.SHORT)
+                pair,
+                stake_amount,
+                enter_tag=enter_tag,
+                is_short=(signal == SignalDirection.SHORT),
+                stake_available=stake_available,
             )
         else:
             return False
@@ -944,6 +951,7 @@ class FreqtradeBot(LoggingMixin):
         trade: Trade | None = None,
         mode: EntryExecuteMode = "initial",
         leverage_: float | None = None,
+        stake_available: float | None = None,
     ) -> bool:
         """
         Executes an entry for the given pair
@@ -960,7 +968,15 @@ class FreqtradeBot(LoggingMixin):
         pos_adjust = trade is not None
 
         enter_limit_requested, stake_amount, leverage = self.get_valid_enter_price_and_stake(
-            pair, price, stake_amount, trade_side, enter_tag, trade, mode, leverage_
+            pair,
+            price,
+            stake_amount,
+            trade_side,
+            enter_tag,
+            trade,
+            mode,
+            leverage_,
+            stake_available,
         )
 
         if not stake_amount:
@@ -1172,6 +1188,7 @@ class FreqtradeBot(LoggingMixin):
         trade: Trade | None,
         mode: EntryExecuteMode,
         leverage_: float | None,
+        stake_available: float | None = None,
     ) -> tuple[float, float, float]:
         """
         Validate and eventually adjust (within limits) limit, amount and leverage
@@ -1238,7 +1255,8 @@ class FreqtradeBot(LoggingMixin):
         )
 
         if trade is None:
-            stake_available = self.wallets.get_available_stake_amount()
+            if stake_available is None:
+                stake_available = self.wallets.get_available_stake_amount()
             stake_amount = strategy_safe_wrapper(
                 self.strategy.custom_stake_amount, default_retval=stake_amount
             )(
@@ -1259,6 +1277,7 @@ class FreqtradeBot(LoggingMixin):
             min_stake_amount=min_stake_amount,
             max_stake_amount=max_stake_amount,
             trade_amount=trade.stake_amount if trade else None,
+            available_amount=stake_available,
         )
 
         return enter_limit_requested, stake_amount, leverage

@@ -673,7 +673,8 @@ def test_backtest__enter_trade_futures(default_conf_usdt, fee, mocker) -> None:
 
     # Stake-amount throwing error
     mocker.patch(
-        "freqtrade.wallets.Wallets.get_trade_stake_amount", side_effect=DependencyException
+        "freqtrade.wallets.Wallets.get_trade_stake_amount_and_available",
+        side_effect=DependencyException,
     )
 
     trade = backtesting._enter_trade(pair, row=row, direction="long")

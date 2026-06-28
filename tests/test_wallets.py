@@ -112,6 +112,22 @@ def test_get_trade_stake_amount_no_stake_amount(default_conf, mocker) -> None:
         freqtrade.wallets.get_trade_stake_amount("ETH/BTC", 1)
 
 
+def test_get_trade_stake_amount_reuses_open_stake_amount(default_conf, mocker) -> None:
+    freqtrade = get_patched_freqtradebot(mocker, default_conf)
+    mocker.patch.object(freqtrade.wallets, "get_free", return_value=100)
+    total_open_stakes = mocker.patch(
+        "freqtrade.wallets.Trade.total_open_trades_stakes", return_value=0
+    )
+
+    stake_amount, available_amount = freqtrade.wallets.get_trade_stake_amount_and_available(
+        "ETH/BTC", 1, update=False
+    )
+
+    assert stake_amount == default_conf["stake_amount"]
+    assert available_amount == 100 * default_conf["tradable_balance_ratio"]
+    assert total_open_stakes.call_count == 1
+
+
 @pytest.mark.parametrize(
     "balance_ratio,capital,result1,result2",
     [
@@ -212,10 +228,30 @@ def test_validate_stake_amount(
     mocker.patch(
         "freqtrade.wallets.Wallets.get_available_stake_amount", return_value=stake_available
     )
+    mocker.patch.object(freqtrade.wallets, "send_dp_message")
     res = freqtrade.wallets.validate_stake_amount(
         "XRP/USDT", stake_amount, min_stake, max_stake, trade_amount
     )
     assert res == expected
+
+
+def test_validate_stake_amount_uses_available_amount(default_conf, mocker) -> None:
+    freqtrade = get_patched_freqtradebot(mocker, default_conf)
+    get_available_stake_amount = mocker.patch.object(
+        freqtrade.wallets, "get_available_stake_amount"
+    )
+
+    res = freqtrade.wallets.validate_stake_amount(
+        "XRP/USDT",
+        stake_amount=22,
+        min_stake_amount=11,
+        max_stake_amount=10000,
+        trade_amount=None,
+        available_amount=50,
+    )
+
+    assert res == 22
+    get_available_stake_amount.assert_not_called()
 
 
 @pytest.mark.parametrize(

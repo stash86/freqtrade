@@ -300,14 +300,15 @@ class Wallets:
                 "tradable_balance_ratio"
             ]
 
-    def get_total_stake_amount(self):
+    def get_total_stake_amount(self, val_tied_up: float | None = None):
         """
         Return the total currently available balance in stake currency, including tied up stake and
         respecting tradable_balance_ratio.
         Calculated as
         (<open_trade stakes> + free amount) * tradable_balance_ratio
         """
-        val_tied_up = Trade.total_open_trades_stakes()
+        if val_tied_up is None:
+            val_tied_up = Trade.total_open_trades_stakes()
         if "available_capital" in self._config:
             starting_balance = self._config["available_capital"]
             tot_profit = Trade.get_total_closed_profit()
@@ -322,16 +323,17 @@ class Wallets:
             ]
         return available_amount
 
-    def get_available_stake_amount(self) -> float:
+    def get_available_stake_amount(self, val_tied_up: float | None = None) -> float:
         """
         Return the total currently available balance in stake currency,
         respecting tradable_balance_ratio.
         Calculated as
         (<open_trade stakes> + free amount) * tradable_balance_ratio - <open_trade stakes>
         """
-
+        if val_tied_up is None:
+            val_tied_up = Trade.total_open_trades_stakes()
         free = self.get_free(self._stake_currency)
-        return min(self.get_total_stake_amount() - Trade.total_open_trades_stakes(), free)
+        return min(self.get_total_stake_amount(val_tied_up) - val_tied_up, free)
 
     def _calculate_unlimited_stake_amount(
         self, available_amount: float, val_tied_up: float, max_open_trades: IntOrInf
@@ -374,9 +376,17 @@ class Wallets:
     def get_trade_stake_amount(
         self, pair: str, max_open_trades: IntOrInf, update: bool = True
     ) -> float:
+        stake_amount, _ = self.get_trade_stake_amount_and_available(
+            pair, max_open_trades, update=update
+        )
+        return stake_amount
+
+    def get_trade_stake_amount_and_available(
+        self, pair: str, max_open_trades: IntOrInf, update: bool = True
+    ) -> tuple[float, float]:
         """
         Calculate stake amount for the trade
-        :return: float: Stake amount
+        :return: Tuple with stake amount and available stake amount
         :raise: DependencyException if the available stake amount is too low
         """
         stake_amount: float
@@ -384,7 +394,7 @@ class Wallets:
         if update:
             self.update()
         val_tied_up = Trade.total_open_trades_stakes()
-        available_amount = self.get_available_stake_amount()
+        available_amount = self.get_available_stake_amount(val_tied_up)
 
         stake_amount = self._config["stake_amount"]
         if stake_amount == UNLIMITED_STAKE_AMOUNT:
@@ -392,7 +402,8 @@ class Wallets:
                 available_amount, val_tied_up, max_open_trades
             )
 
-        return self._check_available_stake_amount(stake_amount, available_amount)
+        stake_amount = self._check_available_stake_amount(stake_amount, available_amount)
+        return stake_amount, available_amount
 
     def validate_stake_amount(
         self,
@@ -401,6 +412,7 @@ class Wallets:
         min_stake_amount: float | None,
         max_stake_amount: float,
         trade_amount: float | None,
+        available_amount: float | None = None,
     ):
         if not stake_amount or isinstance(stake_amount, str) or stake_amount <= 0:
             self._local_log(
@@ -409,7 +421,9 @@ class Wallets:
             )
             return 0
 
-        max_allowed_stake = min(max_stake_amount, self.get_available_stake_amount())
+        if available_amount is None:
+            available_amount = self.get_available_stake_amount()
+        max_allowed_stake = min(max_stake_amount, available_amount)
         if trade_amount:
             # if in a trade, then the resulting trade size cannot go beyond the max stake
             # Otherwise we could no longer exit.

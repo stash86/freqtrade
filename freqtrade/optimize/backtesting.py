@@ -1058,9 +1058,10 @@ class Backtesting:
 
         pos_adjust = trade is not None
         leverage = trade.leverage if trade else 1.0
+        stake_available = None
         if not pos_adjust:
             try:
-                stake_amount = self.wallets.get_trade_stake_amount(
+                stake_amount, stake_available = self.wallets.get_trade_stake_amount_and_available(
                     pair, self.strategy.max_open_trades, update=False
                 )
             except DependencyException:
@@ -1092,7 +1093,6 @@ class Backtesting:
         max_stake_amount = self.exchange.get_max_pair_stake_amount(
             pair, propose_rate, leverage=leverage
         )
-        stake_available = self.wallets.get_available_stake_amount()
 
         if not pos_adjust:
             stake_amount = strategy_safe_wrapper(
@@ -1115,6 +1115,7 @@ class Backtesting:
             min_stake_amount=min_stake_amount,
             max_stake_amount=max_stake_amount,
             trade_amount=trade.stake_amount if trade else None,
+            available_amount=stake_available,
         )
 
         return propose_rate, stake_amount_val, leverage, min_stake_amount
