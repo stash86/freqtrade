@@ -329,9 +329,8 @@ class Order(ModelBase):
             logger.warning(f"{order} is not a valid response object.")
             return
 
-        filtered_orders = [o for o in orders if o.order_id == order.get("id")]
-        if filtered_orders:
-            oobj = filtered_orders[0]
+        oobj = next((o for o in orders if o.order_id == order.get("id")), None)
+        if oobj:
             oobj.update_from_ccxt_object(order)
             Trade.commit()
         else:
@@ -679,8 +678,19 @@ class LocalTrade:
                          Only used for backtesting.
         :return: Dictionary with trade data
         """
+        entry_side = self.entry_side
         filled_or_open_orders = self.select_filled_or_open_orders()
-        orders_json = [order.to_json(self.entry_side, minified) for order in filled_or_open_orders]
+        orders_json = [order.to_json(entry_side, minified) for order in filled_or_open_orders]
+        open_date_utc = self.open_date_utc
+        close_date_utc = self.close_date_utc
+        date_entry_fill_utc = self.date_entry_fill_utc
+        stoploss_last_update_utc = self.stoploss_last_update_utc
+        nr_of_successful_entries = self.nr_of_successful_entries
+        nr_of_successful_exits = self.nr_of_successful_exits
+        use_first_entry_rate = nr_of_successful_entries > 1
+        trade_duration_s = (
+            int((close_date_utc - open_date_utc).total_seconds()) if self.close_date else None
+        )
 
         return {
             "trade_id": self.id,
@@ -703,20 +713,18 @@ class LocalTrade:
             "fee_close_cost": self.fee_close_cost,
             "fee_close_currency": self.fee_close_currency,
             "open_date": self.open_date.strftime(DATETIME_PRINT_FORMAT),
-            "open_timestamp": dt_ts_none(self.open_date_utc),
+            "open_timestamp": dt_ts_none(open_date_utc),
             "open_fill_date": (
-                self.date_entry_fill_utc.strftime(DATETIME_PRINT_FORMAT)
-                if self.date_entry_fill_utc
-                else None
+                date_entry_fill_utc.strftime(DATETIME_PRINT_FORMAT) if date_entry_fill_utc else None
             ),
-            "open_fill_timestamp": dt_ts_none(self.date_entry_fill_utc),
+            "open_fill_timestamp": dt_ts_none(date_entry_fill_utc),
             "open_rate": self.open_rate,
             "open_rate_requested": self.open_rate_requested,
             "open_trade_value": round(self.open_trade_value, 8),
             "close_date": (
                 self.close_date.strftime(DATETIME_PRINT_FORMAT) if self.close_date else None
             ),
-            "close_timestamp": dt_ts_none(self.close_date_utc),
+            "close_timestamp": dt_ts_none(close_date_utc),
             "realized_profit": self.realized_profit or 0.0,
             # Close-profit corresponds to relative realized_profit ratio
             "realized_profit_ratio": self.close_profit or None,
@@ -725,16 +733,8 @@ class LocalTrade:
             "close_profit": self.close_profit,  # Deprecated
             "close_profit_pct": round(self.close_profit * 100, 2) if self.close_profit else None,
             "close_profit_abs": self.close_profit_abs,  # Deprecated
-            "trade_duration_s": (
-                int((self.close_date_utc - self.open_date_utc).total_seconds())
-                if self.close_date
-                else None
-            ),
-            "trade_duration": (
-                int((self.close_date_utc - self.open_date_utc).total_seconds() // 60)
-                if self.close_date
-                else None
-            ),
+            "trade_duration_s": trade_duration_s,
+            "trade_duration": int(trade_duration_s // 60) if trade_duration_s is not None else None,
             "profit_ratio": self.close_profit,
             "profit_pct": round(self.close_profit * 100, 2) if self.close_profit else None,
             "profit_abs": self.close_profit_abs,
@@ -744,11 +744,11 @@ class LocalTrade:
             "stop_loss_ratio": self.stop_loss_pct if self.stop_loss_pct else None,
             "stop_loss_pct": (self.stop_loss_pct * 100) if self.stop_loss_pct else None,
             "stoploss_last_update": (
-                self.stoploss_last_update_utc.strftime(DATETIME_PRINT_FORMAT)
-                if self.stoploss_last_update_utc
+                stoploss_last_update_utc.strftime(DATETIME_PRINT_FORMAT)
+                if stoploss_last_update_utc
                 else None
             ),
-            "stoploss_last_update_timestamp": dt_ts_none(self.stoploss_last_update_utc),
+            "stoploss_last_update_timestamp": dt_ts_none(stoploss_last_update_utc),
             "initial_stop_loss_abs": self.initial_stop_loss,
             "initial_stop_loss_ratio": (
                 self.initial_stop_loss_pct if self.initial_stop_loss_pct else None
@@ -758,8 +758,12 @@ class LocalTrade:
             ),
             "min_rate": self.min_rate,
             "max_rate": self.max_rate,
-            "min_profit": self.min_profit,
-            "max_profit": self.max_profit,
+            "min_profit": self.calc_profit_ratio(
+                self.min_profit_rate, use_first_rate=use_first_entry_rate
+            ),
+            "max_profit": self.calc_profit_ratio(
+                self.max_profit_rate, use_first_rate=use_first_entry_rate
+            ),
             "leverage": self.leverage,
             "interest_rate": self.interest_rate,
             "liquidation_price": self.liquidation_price,
@@ -771,8 +775,8 @@ class LocalTrade:
             "precision_mode": self.precision_mode,
             "precision_mode_price": self.precision_mode_price,
             "contract_size": self.contract_size,
-            "nr_of_successful_entries": self.nr_of_successful_entries,
-            "nr_of_successful_exits": self.nr_of_successful_exits,
+            "nr_of_successful_entries": nr_of_successful_entries,
+            "nr_of_successful_exits": nr_of_successful_exits,
             "has_open_orders": self.has_open_orders,
             "orders": orders_json,
         }
@@ -881,21 +885,28 @@ class LocalTrade:
                 or (higher_stop and not self.is_short)
                 or (lower_stop and self.is_short)
             ):
-                logger.debug(f"{self.pair} - Adjusting stoploss...")
+                logger.debug("%s - Adjusting stoploss...", self.pair)
                 if not allow_refresh:
                     self.is_stop_loss_trailing = True
                 self.__set_stop_loss(stop_loss_norm, stoploss)
             else:
-                logger.debug(f"{self.pair} - Keeping current stoploss...")
+                logger.debug("%s - Keeping current stoploss...", self.pair)
 
-        logger.debug(
-            f"{self.pair} - Stoploss adjusted. current_price={current_price:.8f}, "
-            f"open_rate={self.open_rate:.8f}, max_rate={self.max_rate or self.open_rate:.8f}, "
-            f"initial_stop_loss={self.initial_stop_loss:.8f}, "
-            f"stop_loss={self.stop_loss:.8f}. "
-            f"Trailing stoploss saved us: "
-            f"{float(self.stop_loss) - float(self.initial_stop_loss or 0.0):.8f}."
-        )
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "%s - Stoploss adjusted. current_price=%.8f, "
+                "open_rate=%.8f, max_rate=%.8f, "
+                "initial_stop_loss=%.8f, "
+                "stop_loss=%.8f. "
+                "Trailing stoploss saved us: %.8f.",
+                self.pair,
+                current_price,
+                self.open_rate,
+                self.max_rate or self.open_rate,
+                self.initial_stop_loss,
+                self.stop_loss,
+                float(self.stop_loss) - float(self.initial_stop_loss or 0.0),
+            )
 
     def update_trade(self, order: Order, recalculating: bool = False) -> None:
         """
@@ -1218,7 +1229,9 @@ class LocalTrade:
             return 0.0
         else:
             if use_first_rate:
-                first_entry = self.select_filled_orders(self.entry_side)[0]
+                first_entry = self._select_first_filled_order(self.entry_side)
+                if first_entry is None:
+                    raise IndexError("list index out of range")
                 if amount is None:
                     amount = self.amount
                 open_trade_value = self._calc_open_trade_value(amount, first_entry.safe_price)
@@ -1387,6 +1400,19 @@ class LocalTrade:
             and o.filled
             and o.status in NON_OPEN_EXCHANGE_STATES
         ]
+
+    def _select_first_filled_order(self, order_side: str | None = None) -> Order | None:
+        return next(
+            (
+                o
+                for o in self.orders
+                if ((o.ft_order_side == order_side) or (order_side is None))
+                and o.ft_is_open is False
+                and o.filled
+                and o.status in NON_OPEN_EXCHANGE_STATES
+            ),
+            None,
+        )
 
     def _count_filled_orders(self, order_side: str | None = None) -> int:
         return sum(
