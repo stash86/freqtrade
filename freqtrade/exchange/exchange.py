@@ -2281,7 +2281,7 @@ class Exchange:
                 rate = cache_rate.get(pair)
             # Check if cache has been invalidated
             if rate:
-                logger.debug(f"Using cached {side} rate for {pair}.")
+                logger.debug("Using cached %s rate for %s.", side, pair)
                 return rate
 
         conf_strategy = self._config.get(strat_name, {})
@@ -2294,7 +2294,7 @@ class Exchange:
                 order_book = self.fetch_l2_order_book(pair, order_book_top)
             rate = self._get_rate_from_ob(pair, side, order_book, name, price_side, order_book_top)
         else:
-            logger.debug(f"Using Last {price_side.capitalize()} / Last Price")
+            logger.debug("Using Last %s / Last Price", price_side.capitalize())
             if ticker is None:
                 ticker = self.fetch_ticker(pair)
             rate = self._get_rate_from_ticker(side, ticker, conf_strategy, price_side)
@@ -2348,8 +2348,13 @@ class Exchange:
             )
             raise PricingError from e
         logger.debug(
-            f"{pair} - {name} price from orderbook {price_side.capitalize()}"
-            f"side - top {order_book_top} order book {side} rate {rate:.8f}"
+            "%s - %s price from orderbook %sside - top %s order book %s rate %.8f",
+            pair,
+            name,
+            price_side.capitalize(),
+            order_book_top,
+            side,
+            rate,
         )
         return rate
 
@@ -2361,9 +2366,9 @@ class Exchange:
                 entry_rate = self._entry_rate_cache.get(pair)
                 exit_rate = self._exit_rate_cache.get(pair)
             if entry_rate:
-                logger.debug(f"Using cached buy rate for {pair}.")
+                logger.debug("Using cached buy rate for %s.", pair)
             if exit_rate:
-                logger.debug(f"Using cached sell rate for {pair}.")
+                logger.debug("Using cached sell rate for %s.", pair)
 
         entry_pricing = self._config.get("entry_pricing", {})
         exit_pricing = self._config.get("exit_pricing", {})

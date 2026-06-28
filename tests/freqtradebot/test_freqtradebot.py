@@ -1103,11 +1103,13 @@ def test_execute_entry_reuses_current_time_for_strategy_callbacks(
     freqtrade.strategy.confirm_trade_entry = MagicMock(side_effect=confirm_trade_entry)
 
     assert freqtrade.execute_entry("ETH/USDT", 2)
+    trade = Trade.session.scalars(select(Trade)).one()
     assert (
         callback_times["custom_entry_price"]
         is callback_times["custom_stake_amount"]
         is callback_times["confirm_trade_entry"]
     )
+    assert trade.open_date_utc == callback_times["confirm_trade_entry"]
 
 
 @pytest.mark.parametrize("is_short", [False, True])
@@ -2917,6 +2919,52 @@ def test_handle_cancel_exit_cancel_exception(mocker, default_conf_usdt) -> None:
 
     # mocker.patch(f'{EXMS}.cancel_order_with_result', return_value=order)
     # assert not freqtrade.handle_cancel_exit(trade, order, reason)
+
+
+def test_notify_enter_fill_skips_current_rate_lookup(mocker, default_conf_usdt, fee) -> None:
+    rpc_mock = patch_RPCManager(mocker)
+    patch_exchange(mocker)
+    freqtrade = FreqtradeBot(default_conf_usdt)
+    get_rate_mock = mocker.patch.object(freqtrade.exchange, "get_rate", return_value=1.23)
+    rpc_mock.reset_mock()
+
+    trade = Trade(
+        pair="ETH/USDT",
+        amount=10.0,
+        exchange="binance",
+        open_rate=1.0,
+        open_date=dt_now(),
+        fee_open=fee.return_value,
+        fee_close=fee.return_value,
+        stake_amount=10.0,
+        leverage=1.0,
+    )
+    order = Order(
+        ft_order_side=entry_side(False),
+        ft_pair=trade.pair,
+        ft_is_open=False,
+        order_id="buy_123456",
+        status="closed",
+        symbol=trade.pair,
+        order_type="limit",
+        side=entry_side(False),
+        price=1.0,
+        average=1.0,
+        filled=10.0,
+        remaining=0.0,
+        cost=10.0,
+        order_date=trade.open_date,
+        order_filled_date=trade.open_date,
+    )
+    trade.orders.append(order)
+
+    freqtrade._notify_enter(trade, order, "limit", fill=True)
+
+    get_rate_mock.assert_not_called()
+    assert rpc_mock.call_count == 1
+    msg = rpc_mock.call_args_list[0][0][0]
+    assert msg["type"] == RPCMessageType.ENTRY_FILL
+    assert msg["current_rate"] is None
 
 
 @pytest.mark.parametrize(
@@ -6090,6 +6138,30 @@ def test_process_open_trade_positions_exception(mocker, default_conf_usdt, fee, 
 
     freqtrade.process_open_trade_positions()
     assert log_has_re(r"Unable to adjust position of trade for .*", caplog)
+
+
+def test_check_and_call_adjust_trade_position_skips_min_exit_stake_for_entry_adjustment(
+    mocker, default_conf_usdt, fee
+) -> None:
+    freqtrade = get_patched_freqtradebot(mocker, default_conf_usdt)
+    min_pair_stake_mock = MagicMock(return_value=1)
+    mocker.patch.multiple(
+        EXMS,
+        get_rates=MagicMock(return_value=(10, 11)),
+        get_min_pair_stake_amount=min_pair_stake_mock,
+        get_max_pair_stake_amount=MagicMock(return_value=100),
+        get_fee=fee,
+    )
+    create_mock_trades(fee)
+    trade = Trade.get_trades().first()
+    freqtrade.wallets.get_available_stake_amount = MagicMock(return_value=100)
+    freqtrade.execute_entry = MagicMock(return_value=True)
+    freqtrade.strategy.adjust_trade_position = MagicMock(return_value=(10, "aaaa"))
+
+    freqtrade.check_and_call_adjust_trade_position(trade)
+
+    assert {call.args[2] for call in min_pair_stake_mock.call_args_list} == {0.0}
+    freqtrade.execute_entry.assert_called_once()
 
 
 def test_check_and_call_adjust_trade_position(mocker, default_conf_usdt, fee, caplog) -> None:

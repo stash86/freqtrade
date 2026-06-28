@@ -817,9 +817,6 @@ class FreqtradeBot(LoggingMixin):
         min_entry_stake = self.exchange.get_min_pair_stake_amount(
             trade.pair, current_entry_rate, 0.0, trade.leverage
         )
-        min_exit_stake = self.exchange.get_min_pair_stake_amount(
-            trade.pair, current_exit_rate, self.strategy.stoploss, trade.leverage
-        )
         max_entry_stake = self.exchange.get_max_pair_stake_amount(
             trade.pair, current_entry_rate, trade.leverage
         )
@@ -882,6 +879,9 @@ class FreqtradeBot(LoggingMixin):
                 )
                 return
 
+            min_exit_stake = self.exchange.get_min_pair_stake_amount(
+                trade.pair, current_exit_rate, self.strategy.stoploss, trade.leverage
+            )
             remaining = (trade.amount - amount) * current_exit_rate
             if min_exit_stake and remaining != 0 and remaining < min_exit_stake:
                 # msg = (
@@ -1105,7 +1105,7 @@ class FreqtradeBot(LoggingMixin):
                 fee_close=fee,
                 open_rate=enter_limit_filled_price,
                 open_rate_requested=enter_limit_requested,
-                open_date=datetime.now(UTC),
+                open_date=current_time,
                 exchange=self.exchange.id,
                 strategy=self.strategy.get_strategy_name(),
                 enter_tag=enter_tag,
@@ -1301,8 +1301,10 @@ class FreqtradeBot(LoggingMixin):
         if open_rate is None:
             open_rate = trade.open_rate
 
-        current_rate = self.exchange.get_rate(
-            trade.pair, side="entry", is_short=trade.is_short, refresh=False
+        current_rate = (
+            self.exchange.get_rate(trade.pair, side="entry", is_short=trade.is_short, refresh=False)
+            if not fill
+            else None
         )
         stake_amount = trade.stake_amount
         if not fill and trade.nr_of_successful_entries > 0:
