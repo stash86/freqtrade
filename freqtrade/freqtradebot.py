@@ -1949,25 +1949,28 @@ class FreqtradeBot(LoggingMixin):
         :param side: Side of the potential new order
         :return: True if an existing similar order was found
         """
-        if trade.has_open_orders:
-            oo = trade.select_order(side, True)
-            if oo is not None:
-                if price == oo.price and side == oo.side and amount == oo.amount:
-                    # logger.info(
-                    #     f"A similar open order was found for {trade.pair}. "
-                    #     f"Keeping existing {trade.exit_side} order. {price=},  {amount=}"
-                    # )
-                    return True
-            # cancel open orders of this trade if order is different
-            self.cancel_open_orders_of_trade(
-                trade,
-                [trade.entry_side, trade.exit_side],
-                constants.CANCEL_REASON["REPLACE"],
-                True,
-            )
-            Trade.commit()
+        open_orders = trade.open_orders
+        if not open_orders:
             return False
 
+        oo = next((o for o in reversed(open_orders) if o.ft_order_side == side), None)
+        if oo is not None:
+            if price == oo.price and side == oo.side and amount == oo.amount:
+                msg = (
+                    "A similar open order was found for %s. Keeping existing %s order.",
+                    trade.pair,
+                    trade.exit_side,
+                )
+                self.log_once(msg, logger.info, cache_key=f"similar_order_{trade.id}")
+                return True
+        # cancel open orders of this trade if order is different
+        self.cancel_open_orders_of_trade(
+            trade,
+            [trade.entry_side, trade.exit_side],
+            constants.CANCEL_REASON["REPLACE"],
+            True,
+        )
+        Trade.commit()
         return False
 
     def handle_cancel_enter(
@@ -2263,9 +2266,8 @@ class FreqtradeBot(LoggingMixin):
             )
             return False
 
-        if trade.has_open_orders:
-            if self.handle_similar_open_order(trade, limit, amount, trade.exit_side):
-                return False
+        if self.handle_similar_open_order(trade, limit, amount, trade.exit_side):
+            return False
 
         try:
             # Execute exit and update trade record
