@@ -1329,8 +1329,8 @@ class FreqtradeBot(LoggingMixin):
             "order_type": order_type or "unknown",
             "stake_amount": stake_amount,
             "stake_currency": self.config["stake_currency"],
-            "base_currency": self.exchange.get_pair_base_currency(trade.pair),
-            "quote_currency": self.exchange.get_pair_quote_currency(trade.pair),
+            "base_currency": trade.safe_base_currency,
+            "quote_currency": trade.safe_quote_currency,
             "fiat_currency": self.config.get("fiat_display_currency", None),
             "amount": order.safe_amount_after_fee if fill else (order.safe_amount or trade.amount),
             "open_date": trade.open_date_utc or datetime.now(UTC),
@@ -1702,6 +1702,7 @@ class FreqtradeBot(LoggingMixin):
         Timeout setting takes priority over limit order adjustment request.
         :return: None
         """
+        current_time = datetime.now(UTC)
         for trade in Trade.get_open_trades():
             open_order: Order
             for open_order in trade.open_orders:
@@ -1720,13 +1721,13 @@ class FreqtradeBot(LoggingMixin):
                 if not_closed:
                     if fully_cancelled or (
                         open_order
-                        and self.strategy.ft_check_timed_out(trade, open_order, datetime.now(UTC))
+                        and self.strategy.ft_check_timed_out(trade, open_order, current_time)
                     ):
                         self.handle_cancel_order(
                             order, open_order, trade, constants.CANCEL_REASON["TIMEOUT"]
                         )
                     else:
-                        self.replace_order(order, open_order, trade)
+                        self.replace_order(order, open_order, trade, current_time)
 
     def handle_cancel_order(
         self, order: CcxtOrder, order_obj: Order, trade: Trade, reason: str, replacing: bool = False
@@ -1790,7 +1791,9 @@ class FreqtradeBot(LoggingMixin):
             )
             trade.delete()
 
-    def replace_order(self, order: CcxtOrder, order_obj: Order | None, trade: Trade) -> None:
+    def replace_order(
+        self, order: CcxtOrder, order_obj: Order | None, trade: Trade, current_time: datetime | None
+    ) -> None:
         """
         Check if current analyzed entry order should be replaced or simply cancelled.
         To simply cancel the existing order(no replacement) adjust_order_price() should return None
@@ -1824,7 +1827,7 @@ class FreqtradeBot(LoggingMixin):
                 trade=trade,
                 order=order_obj,
                 pair=trade.pair,
-                current_time=datetime.now(UTC),
+                current_time=current_time or datetime.now(UTC),
                 proposed_rate=proposed_rate,
                 current_order_rate=order_obj.safe_placement_price,
                 entry_tag=trade.enter_tag,
