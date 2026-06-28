@@ -505,10 +505,17 @@ class LocalTrade:
     @property
     def _date_last_filled_utc(self) -> datetime | None:
         """Date of the last filled order"""
-        orders = self.select_filled_orders()
-        if orders:
-            return max(o.order_filled_utc for o in orders if o.order_filled_utc)
-        return None
+        return max(
+            (
+                o.order_filled_utc
+                for o in self.orders
+                if o.ft_is_open is False
+                and o.filled
+                and o.status in NON_OPEN_EXCHANGE_STATES
+                and o.order_filled_utc
+            ),
+            default=None,
+        )
 
     @property
     def date_last_filled_utc(self) -> datetime:
@@ -516,17 +523,23 @@ class LocalTrade:
         dt_last_filled = self._date_last_filled_utc
         if not dt_last_filled:
             return self.open_date_utc
-        return max([self.open_date_utc, dt_last_filled])
+        return max(self.open_date_utc, dt_last_filled)
 
     @property
     def date_entry_fill_utc(self) -> datetime | None:
         """Date of the first filled order"""
-        orders = self.select_filled_orders(self.entry_side)
-        if orders and len(
-            filled_date := [o.order_filled_utc for o in orders if o.order_filled_utc]
-        ):
-            return min(filled_date)
-        return None
+        return min(
+            (
+                o.order_filled_utc
+                for o in self.orders
+                if o.ft_order_side == self.entry_side
+                and o.ft_is_open is False
+                and o.filled
+                and o.status in NON_OPEN_EXCHANGE_STATES
+                and o.order_filled_utc
+            ),
+            default=None,
+        )
 
     @property
     def open_date_utc(self):
@@ -534,9 +547,14 @@ class LocalTrade:
 
     @property
     def stoploss_last_update_utc(self):
-        if self.has_open_sl_orders:
-            return max(o.order_date_utc for o in self.open_sl_orders)
-        return None
+        return max(
+            (
+                o.order_date_utc
+                for o in self.orders
+                if o.ft_order_side == "stoploss" and o.ft_is_open
+            ),
+            default=None,
+        )
 
     @property
     def close_date_utc(self):
@@ -609,7 +627,7 @@ class LocalTrade:
         """
         All open stoploss orders for this trade
         """
-        return [o for o in self.orders if o.ft_order_side in ["stoploss"] and o.ft_is_open]
+        return [o for o in self.orders if o.ft_order_side == "stoploss" and o.ft_is_open]
 
     @property
     def has_open_sl_orders(self) -> bool:
@@ -623,7 +641,7 @@ class LocalTrade:
         """
         All stoploss orders for this trade
         """
-        return [o for o in self.orders if o.ft_order_side in ["stoploss"]]
+        return [o for o in self.orders if o.ft_order_side == "stoploss"]
 
     @property
     def open_orders_ids(self) -> list[str]:
@@ -795,7 +813,7 @@ class LocalTrade:
         if funding_fee is None:
             return
         self.funding_fee_running = funding_fee
-        prior_funding_fees = sum([o.funding_fee for o in self.orders if o.funding_fee])
+        prior_funding_fees = sum(o.funding_fee for o in self.orders if o.funding_fee)
         self.funding_fees = prior_funding_fees + funding_fee
 
     def __set_stop_loss(self, stop_loss: float, percent: float):
@@ -993,14 +1011,12 @@ class LocalTrade:
         Get amount of failed exiting orders
         assumes full exits.
         """
-        return len(
-            [
-                o
-                for o in self.orders
-                if o.ft_order_side == self.entry_side
-                and o.status in CANCELED_EXCHANGE_STATES
-                and o.filled == 0
-            ]
+        return sum(
+            1
+            for o in self.orders
+            if o.ft_order_side == self.entry_side
+            and o.status in CANCELED_EXCHANGE_STATES
+            and o.filled == 0
         )
 
     @property
@@ -1009,12 +1025,10 @@ class LocalTrade:
         Get amount of failed exiting orders
         assumes full exits.
         """
-        return len(
-            [
-                o
-                for o in self.orders
-                if o.ft_order_side == self.exit_side and o.status in CANCELED_EXCHANGE_STATES
-            ]
+        return sum(
+            1
+            for o in self.orders
+            if o.ft_order_side == self.exit_side and o.status in CANCELED_EXCHANGE_STATES
         )
 
     def get_canceled_exit_order_count(self) -> int:
@@ -1347,17 +1361,16 @@ class LocalTrade:
         :param only_filled: Only search for Filled orders (only valid with is_open=False).
         :return: latest Order object if it exists, else None
         """
-        orders = self.orders
-        if order_side:
-            orders = [o for o in orders if o.ft_order_side == order_side]
-        if is_open is not None:
-            orders = [o for o in orders if o.ft_is_open == is_open]
-        if is_open is False and only_filled:
-            orders = [o for o in orders if o.filled and o.status in NON_OPEN_EXCHANGE_STATES]
-        if len(orders) > 0:
-            return orders[-1]
-        else:
-            return None
+        for o in reversed(self.orders):
+            if order_side and o.ft_order_side != order_side:
+                continue
+            if is_open is not None and o.ft_is_open != is_open:
+                continue
+            if is_open is False and only_filled:
+                if not (o.filled and o.status in NON_OPEN_EXCHANGE_STATES):
+                    continue
+            return o
+        return None
 
     def select_filled_orders(self, order_side: str | None = None) -> list["Order"]:
         """
@@ -1374,6 +1387,16 @@ class LocalTrade:
             and o.filled
             and o.status in NON_OPEN_EXCHANGE_STATES
         ]
+
+    def _count_filled_orders(self, order_side: str | None = None) -> int:
+        return sum(
+            1
+            for o in self.orders
+            if ((o.ft_order_side == order_side) or (order_side is None))
+            and o.ft_is_open is False
+            and o.filled
+            and o.status in NON_OPEN_EXCHANGE_STATES
+        )
 
     def select_filled_or_open_orders(self) -> list["Order"]:
         """
@@ -1455,7 +1478,7 @@ class LocalTrade:
         :return: int count of entry orders that have been filled for this trade.
         """
 
-        return len(self.select_filled_orders(self.entry_side))
+        return self._count_filled_orders(self.entry_side)
 
     @property
     def nr_of_successful_exits(self) -> int:
@@ -1463,7 +1486,7 @@ class LocalTrade:
         Helper function to count the number of exit orders that have been filled.
         :return: int count of exit orders that have been filled for this trade.
         """
-        return len(self.select_filled_orders(self.exit_side))
+        return self._count_filled_orders(self.exit_side)
 
     @property
     def nr_of_successful_buys(self) -> int:
@@ -1473,7 +1496,7 @@ class LocalTrade:
         :return: int count of buy orders that have been filled for this trade.
         """
 
-        return len(self.select_filled_orders("buy"))
+        return self._count_filled_orders("buy")
 
     @property
     def nr_of_successful_sells(self) -> int:
@@ -1482,7 +1505,7 @@ class LocalTrade:
         WARNING: Please use nr_of_successful_exits for short support.
         :return: int count of sell orders that have been filled for this trade.
         """
-        return len(self.select_filled_orders("sell"))
+        return self._count_filled_orders("sell")
 
     @property
     def sell_reason(self) -> str | None:
