@@ -329,7 +329,12 @@ class Order(ModelBase):
             logger.warning(f"{order} is not a valid response object.")
             return
 
-        oobj = next((o for o in orders if o.order_id == order.get("id")), None)
+        order_id = order.get("id")
+        oobj = None
+        for o in orders:
+            if o.order_id == order_id:
+                oobj = o
+                break
         if oobj:
             oobj.update_from_ccxt_object(order)
             Trade.commit()
@@ -612,7 +617,10 @@ class LocalTrade:
         """
         True if there are open orders for this trade excluding stoploss orders
         """
-        return any(o.ft_order_side != "stoploss" and o.ft_is_open for o in self.orders)
+        for o in self.orders:
+            if o.ft_order_side != "stoploss" and o.ft_is_open:
+                return True
+        return False
 
     @property
     def has_open_position(self) -> bool:
@@ -633,7 +641,10 @@ class LocalTrade:
         """
         True if there are open stoploss orders for this trade
         """
-        return any(o.ft_order_side == "stoploss" and o.ft_is_open for o in self.orders)
+        for o in self.orders:
+            if o.ft_order_side == "stoploss" and o.ft_is_open:
+                return True
+        return False
 
     @property
     def sl_orders(self) -> list[Order]:
@@ -817,7 +828,10 @@ class LocalTrade:
         if funding_fee is None:
             return
         self.funding_fee_running = funding_fee
-        prior_funding_fees = sum(o.funding_fee for o in self.orders if o.funding_fee)
+        prior_funding_fees = 0.0
+        for order in self.orders:
+            if order.funding_fee:
+                prior_funding_fees += order.funding_fee
         self.funding_fees = prior_funding_fees + funding_fee
 
     def __set_stop_loss(self, stop_loss: float, percent: float):
@@ -919,7 +933,7 @@ class LocalTrade:
         if order.status == "open" or order.safe_price is None:
             return
 
-        logger.info(f"Updating trade (id={self.id}) ...")
+        logger.info("Updating trade (id=%s) ...", self.id)
         if order.ft_order_side != "stoploss":
             order.funding_fee = self.funding_fee_running
             # Reset running funding fees
@@ -932,20 +946,20 @@ class LocalTrade:
             self.amount = order.safe_amount_after_fee
             if self.is_open:
                 payment = "SELL" if self.is_short else "BUY"
-                logger.info(f"{order_type}_{payment} has been fulfilled for {self}.")
+                logger.info("%s_%s has been fulfilled for %s.", order_type, payment, self)
 
             self.recalc_trade_from_orders()
         elif order.ft_order_side == self.exit_side:
             if self.is_open:
                 payment = "BUY" if self.is_short else "SELL"
                 # * On margin shorts, you buy a little bit more than the amount (amount + interest)
-                logger.info(f"{order_type}_{payment} has been fulfilled for {self}.")
+                logger.info("%s_%s has been fulfilled for %s.", order_type, payment, self)
 
         elif order.ft_order_side == "stoploss" and order.status not in ("open",):
             self.close_rate_requested = self.stop_loss
             self.exit_reason = ExitType.STOPLOSS_ON_EXCHANGE.value
             if self.is_open and order.safe_filled > 0:
-                logger.info(f"{order_type} is hit for {self}.")
+                logger.info("%s is hit for %s.", order_type, self)
         else:
             raise ValueError(f"Unknown order type: {order.order_type}")
 
@@ -1022,13 +1036,16 @@ class LocalTrade:
         Get amount of failed exiting orders
         assumes full exits.
         """
-        return sum(
-            1
-            for o in self.orders
-            if o.ft_order_side == self.entry_side
-            and o.status in CANCELED_EXCHANGE_STATES
-            and o.filled == 0
-        )
+        count = 0
+        entry_side = self.entry_side
+        for o in self.orders:
+            if (
+                o.ft_order_side == entry_side
+                and o.status in CANCELED_EXCHANGE_STATES
+                and o.filled == 0
+            ):
+                count += 1
+        return count
 
     @property
     def canceled_exit_order_count(self) -> int:
@@ -1036,11 +1053,12 @@ class LocalTrade:
         Get amount of failed exiting orders
         assumes full exits.
         """
-        return sum(
-            1
-            for o in self.orders
-            if o.ft_order_side == self.exit_side and o.status in CANCELED_EXCHANGE_STATES
-        )
+        count = 0
+        exit_side = self.exit_side
+        for o in self.orders:
+            if o.ft_order_side == exit_side and o.status in CANCELED_EXCHANGE_STATES:
+                count += 1
+        return count
 
     def get_canceled_exit_order_count(self) -> int:
         """
@@ -1288,7 +1306,8 @@ class LocalTrade:
         # current funding fees - resetting on every exit to be aligned with profit calculation,
         # as funding fees are part of the profit
         current_funding_fee = 0.0
-        for i, o in enumerate(self.orders):
+        entry_side = self.entry_side
+        for o in self.orders:
             if o.ft_is_open or not o.filled:
                 continue
             current_funding_fee += o.funding_fee or 0.0
@@ -1296,7 +1315,7 @@ class LocalTrade:
             tmp_amount = FtPrecise(o.safe_amount_after_fee)
             tmp_price = FtPrecise(o.safe_price)
 
-            is_exit = o.ft_order_side != self.entry_side
+            is_exit = o.ft_order_side != entry_side
             side = FtPrecise(-1 if is_exit else 1)
             if tmp_amount > ZERO and tmp_price is not None:
                 current_amount += tmp_amount * side
@@ -1402,27 +1421,27 @@ class LocalTrade:
         ]
 
     def _select_first_filled_order(self, order_side: str | None = None) -> Order | None:
-        return next(
-            (
-                o
-                for o in self.orders
-                if ((o.ft_order_side == order_side) or (order_side is None))
+        for o in self.orders:
+            if (
+                ((o.ft_order_side == order_side) or (order_side is None))
                 and o.ft_is_open is False
                 and o.filled
                 and o.status in NON_OPEN_EXCHANGE_STATES
-            ),
-            None,
-        )
+            ):
+                return o
+        return None
 
     def _count_filled_orders(self, order_side: str | None = None) -> int:
-        return sum(
-            1
-            for o in self.orders
-            if ((o.ft_order_side == order_side) or (order_side is None))
-            and o.ft_is_open is False
-            and o.filled
-            and o.status in NON_OPEN_EXCHANGE_STATES
-        )
+        count = 0
+        for o in self.orders:
+            if (
+                ((o.ft_order_side == order_side) or (order_side is None))
+                and o.ft_is_open is False
+                and o.filled
+                and o.status in NON_OPEN_EXCHANGE_STATES
+            ):
+                count += 1
+        return count
 
     def select_filled_or_open_orders(self) -> list["Order"]:
         """
@@ -1992,10 +2011,9 @@ class Trade(ModelBase, LocalTrade):
                 select(func.sum(Trade.close_profit_abs)).filter(Trade.is_open.is_(False))
             ).scalar_one()
         else:
-            total_profit = sum(
-                t.close_profit_abs  # type: ignore
-                for t in LocalTrade.get_trades_proxy(is_open=False)
-            )
+            total_profit = 0.0
+            for trade in LocalTrade.get_trades_proxy(is_open=False):
+                total_profit += trade.close_profit_abs  # type: ignore
         return total_profit or 0
 
     @staticmethod
@@ -2009,9 +2027,9 @@ class Trade(ModelBase, LocalTrade):
                 select(func.sum(Trade.stake_amount)).filter(Trade.is_open.is_(True))
             )
         else:
-            total_open_stake_amount = sum(
-                t.stake_amount for t in LocalTrade.get_trades_proxy(is_open=True)
-            )
+            total_open_stake_amount = 0.0
+            for trade in LocalTrade.get_trades_proxy(is_open=True):
+                total_open_stake_amount += trade.stake_amount
         return total_open_stake_amount or 0
 
     @staticmethod
@@ -2177,8 +2195,14 @@ class Trade(ModelBase, LocalTrade):
 
             if exit_reason is not None and enter_tag is not None:
                 mix_tag = enter_tag + " " + exit_reason
-                i = 0
-                if not any(item["mix_tag"] == mix_tag for item in resp):
+                for item in resp:
+                    if item["mix_tag"] == mix_tag:
+                        item["profit_pct"] = round(profit + item["profit_ratio"] * 100, 2)
+                        item["profit_ratio"] = profit + item["profit_ratio"]
+                        item["profit_abs"] = profit_abs + item["profit_abs"]
+                        item["count"] = 1 + item["count"]
+                        break
+                else:
                     resp.append(
                         {
                             "mix_tag": mix_tag,
@@ -2188,17 +2212,6 @@ class Trade(ModelBase, LocalTrade):
                             "count": count,
                         }
                     )
-                else:
-                    while i < len(resp):
-                        if resp[i]["mix_tag"] == mix_tag:
-                            resp[i] = {
-                                "mix_tag": mix_tag,
-                                "profit_ratio": profit + resp[i]["profit_ratio"],
-                                "profit_pct": round(profit + resp[i]["profit_ratio"] * 100, 2),
-                                "profit_abs": profit_abs + resp[i]["profit_abs"],
-                                "count": 1 + resp[i]["count"],
-                            }
-                        i += 1
 
         return resp
 

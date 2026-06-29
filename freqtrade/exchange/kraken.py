@@ -94,10 +94,13 @@ class Kraken(Exchange):
                 for x in orders
                 if x["remaining"] is not None and (x["side"] == "sell" or x["price"] is not None)
             ]
+            used_balances = {}
+            for curr, used in order_list:
+                used_balances[curr] = used_balances.get(curr, 0) + used
             for bal in balances:
                 if not isinstance(balances[bal], dict):
                     continue
-                balances[bal]["used"] = sum(order[1] for order in order_list if order[0] == bal)
+                balances[bal]["used"] = used_balances.get(bal, 0)
                 balances[bal]["free"] = balances[bal]["total"] - balances[bal]["used"]
 
             self._log_exchange_response("fetch_balance2", balances)

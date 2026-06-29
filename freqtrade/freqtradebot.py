@@ -1310,9 +1310,10 @@ class FreqtradeBot(LoggingMixin):
         if not fill and trade.nr_of_successful_entries > 0:
             # If we have open orders, we need to add the stake amount of the open orders
             # as it's not yet included in the trade.stake_amount
-            stake_amount += sum(
-                o.stake_amount for o in trade.open_orders if o.ft_order_side == trade.entry_side
-            )
+            entry_side = trade.entry_side
+            for o in trade.orders:
+                if o.ft_is_open and o.ft_order_side == entry_side:
+                    stake_amount += o.stake_amount
 
         msg: RPCEntryMsg = {
             "trade_id": trade.id,

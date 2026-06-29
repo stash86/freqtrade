@@ -424,9 +424,10 @@ class RPC:
                 .order_by(Trade.close_date)
             ).all()
 
-            curdayprofit = sum(
-                trade.close_profit_abs for trade in trades if trade.close_profit_abs is not None
-            )
+            curdayprofit = 0.0
+            for trade in trades:
+                if trade.close_profit_abs is not None:
+                    curdayprofit += trade.close_profit_abs
             # Calculate this periods starting balance
             daily_stake = daily_stake - curdayprofit
             profit_units[profitday] = {
@@ -1408,6 +1409,9 @@ class RPC:
             raise RPCException("trader is not running")
 
         trades = Trade.get_open_trades()
+        total_stake = 0.0
+        for trade in trades:
+            total_stake += trade.open_rate * trade.amount
         return {
             "current": len(trades),
             "max": (
@@ -1415,7 +1419,7 @@ class RPC:
                 if self._freqtrade.config["max_open_trades"] != float("inf")
                 else -1
             ),
-            "total_stake": sum((trade.open_rate * trade.amount) for trade in trades),
+            "total_stake": total_stake,
         }
 
     def _rpc_locks(self) -> dict[str, Any]:

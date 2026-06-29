@@ -3524,7 +3524,10 @@ class Exchange:
             self._log_exchange_response(
                 "funding_history", funding_history, add_info=f"pair: {pair}, since: {since}"
             )
-            return sum(fee["amount"] for fee in funding_history)
+            funding_fees = 0.0
+            for fee in funding_history:
+                funding_fees += fee["amount"]
+            return funding_fees
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
         except (ccxt.OperationFailed, ccxt.ExchangeError) as e:

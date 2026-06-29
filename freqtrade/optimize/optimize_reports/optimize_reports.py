@@ -236,7 +236,11 @@ def calculate_trade_volume(trades_dict: list[dict[str, Any]]) -> float:
     # Aggregate the total volume traded from orders.cost.
     # Orders is a nested dictionary within the trades list.
 
-    return sum(sum(order["cost"] for order in trade.get("orders", [])) for trade in trades_dict)
+    volume = 0.0
+    for trade in trades_dict:
+        for order in trade.get("orders", []):
+            volume += order["cost"]
+    return volume
 
 
 def generate_pair_metrics(  #

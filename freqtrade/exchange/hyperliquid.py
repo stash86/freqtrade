@@ -343,12 +343,12 @@ class Hyperliquid(Exchange):
             )
 
             if trades:
-                total_amount = sum(t["amount"] for t in trades)
-                order["average"] = (
-                    sum(t["price"] * t["amount"] for t in trades) / total_amount
-                    if total_amount
-                    else None
-                )
+                total_amount = 0.0
+                vwap_cost = 0.0
+                for t in trades:
+                    total_amount += t["amount"]
+                    vwap_cost += t["price"] * t["amount"]
+                order["average"] = vwap_cost / total_amount if total_amount else None
         return order
 
     def fetch_order(self, order_id: str, pair: str, params: dict | None = None) -> CcxtOrder:

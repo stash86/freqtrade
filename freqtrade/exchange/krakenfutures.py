@@ -158,13 +158,21 @@ class Krakenfutures(Exchange):
                 order["id"], order["symbol"], since=dt_from_ts(order["timestamp"])
             )
             if trades:
-                total_amount = sum(t["amount"] for t in trades)
+                total_amount = 0.0
+                total_cost = 0.0
+                vwap_cost = 0.0
+                has_trade_cost = False
+                for t in trades:
+                    total_amount += t["amount"]
+                    vwap_cost += t["price"] * t["amount"]
+                    if t.get("cost") is not None:
+                        total_cost += t["cost"]
+                        has_trade_cost = True
                 if total_amount:
                     # Compute VWAP
-                    order["average"] = sum(t["price"] * t["amount"] for t in trades) / total_amount
-                    trade_costs = [t["cost"] for t in trades if t.get("cost") is not None]
-                    if trade_costs:
-                        order["cost"] = sum(trade_costs)
+                    order["average"] = vwap_cost / total_amount
+                    if has_trade_cost:
+                        order["cost"] = total_cost
         return order
 
     def get_trades_for_order(

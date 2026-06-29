@@ -97,9 +97,10 @@ class Wallets:
         if self._config.get("margin_mode") == "cross":
             # free includes all balances and, combined with position collateral,
             # is used as "wallet balance".
-            return self.get_free(self._stake_currency) + sum(
-                pos.collateral for pos in self._positions.values()
-            )
+            collateral = self.get_free(self._stake_currency)
+            for pos in self._positions.values():
+                collateral += pos.collateral
+            return collateral
         return self.get_total(self._stake_currency)
 
     def get_owned(self, pair: str, base_currency: str) -> float:
@@ -112,6 +113,30 @@ class Wallets:
         if pos := self._positions.get(pair):
             return pos.position
         return 0
+
+    @staticmethod
+    def _get_dry_trade_totals(open_trades: list[LocalTrade]) -> tuple[float, float]:
+        realized_profit = 0.0
+        total_stake = 0.0
+        for trade in open_trades:
+            realized_profit += trade.realized_profit
+            total_stake += trade.stake_amount
+        return realized_profit, total_stake
+
+    @staticmethod
+    def _get_open_order_wallet_amounts(trade: LocalTrade) -> tuple[float, float]:
+        used_stake = 0.0
+        pending = 0.0
+        entry_side = trade.entry_side
+        exit_side = trade.exit_side
+        for order in trade.orders:
+            if not order.ft_is_open:
+                continue
+            if order.ft_order_side == entry_side:
+                used_stake += order.stake_amount
+            elif order.amount and order.ft_order_side == exit_side:
+                pending += order.amount
+        return used_stake, pending
 
     def _update_dry(self) -> None:
         """
@@ -130,21 +155,15 @@ class Wallets:
         else:
             # Backtest mode
             tot_profit = LocalTrade.bt_total_profit
-        tot_profit += sum(trade.realized_profit for trade in open_trades)
-        tot_in_trades = sum(trade.stake_amount for trade in open_trades)
+        realized_profit, tot_in_trades = self._get_dry_trade_totals(open_trades)
+        tot_profit += realized_profit
         used_stake = 0.0
 
         if self._config.get("trading_mode", "spot") != TradingMode.FUTURES:
             for trade in open_trades:
                 curr = self._exchange.get_pair_base_currency(trade.pair)
-                used_stake += sum(
-                    o.stake_amount for o in trade.open_orders if o.ft_order_side == trade.entry_side
-                )
-                pending = sum(
-                    o.amount
-                    for o in trade.open_orders
-                    if o.amount and o.ft_order_side == trade.exit_side
-                )
+                open_order_stake, pending = self._get_open_order_wallet_amounts(trade)
+                used_stake += open_order_stake
                 curr_wallet_bal = self._start_cap.get(curr, 0)
 
                 _wallets[curr] = Wallet(

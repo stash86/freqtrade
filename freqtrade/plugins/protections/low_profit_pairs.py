@@ -59,11 +59,10 @@ class LowProfitPairs(IProtection):
             # Not enough trades in the relevant period
             return None
 
-        profit = sum(
-            trade.close_profit
-            for trade in trades
-            if trade.close_profit and (not self._only_per_side or trade.trade_direction == side)
-        )
+        profit = 0.0
+        for trade in trades:
+            if trade.close_profit and (not self._only_per_side or trade.trade_direction == side):
+                profit += trade.close_profit
         if profit < self._required_profit:
             self.log_once(
                 f"Trading for {pair} stopped due to {profit:.2f} < {self._required_profit} "

@@ -59,11 +59,10 @@ class MaxDrawdown(IProtection):
                 # Standard equity-based drawdown
                 # Get all trades to calculate cumulative profit before the window
                 all_closed_trades = Trade.get_trades_proxy(is_open=False)
-                profit_before_window = sum(
-                    trade.close_profit_abs or 0.0
-                    for trade in all_closed_trades
-                    if trade.close_date_utc <= look_back_until
-                )
+                profit_before_window = 0.0
+                for trade in all_closed_trades:
+                    if trade.close_date_utc <= look_back_until:
+                        profit_before_window += trade.close_profit_abs or 0.0
 
                 trades_df = pd.DataFrame(
                     [
