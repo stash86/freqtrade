@@ -627,7 +627,7 @@ class RPC:
         winning_profit = stats["winning_profit"]
         losing_profit = stats["losing_profit"]
 
-        closed_trade_count = len([t for t in trades if not t.is_open])
+        closed_trade_count = sum(not trade.is_open for trade in trades)
 
         best_pair_filters = [Trade.close_date > start_date]
         trading_volume_filters = [Order.order_filled_date >= start_date]
@@ -1548,7 +1548,7 @@ class RPC:
         if has_content:
             if selected_cols is not None:
                 # Ensure OHLCV columns are always present
-                cols_set = set(DEFAULT_DATAFRAME_COLUMNS + list(signals.keys()) + selected_cols)
+                cols_set = set(DEFAULT_DATAFRAME_COLUMNS).union(signals, selected_cols)
                 df_cols = [col for col in dataframe_columns if col in cols_set]
                 dataframe = dataframe.loc[:, df_cols]
 
@@ -1556,7 +1556,7 @@ class RPC:
                 dataframe.loc[:, "date"].dt.as_unit("ms").astype("int64")
             )
             # Move signal close to separate column when signal for easy plotting
-            for sig_type in signals.keys():
+            for sig_type in signals:
                 if sig_type in dataframe.columns:
                     mask = dataframe[sig_type] == 1
                     signals[sig_type] = int(mask.sum())

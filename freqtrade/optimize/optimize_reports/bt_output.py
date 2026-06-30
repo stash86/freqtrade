@@ -1,8 +1,6 @@
 import logging
 from typing import Any, Literal
 
-from rich.text import Text
-
 from freqtrade.constants import UNLIMITED_STAKE_AMOUNT, Config
 from freqtrade.ft_types import BacktestResultType
 from freqtrade.optimize.optimize_reports.optimize_reports import generate_periodic_breakdown_stats
@@ -175,8 +173,8 @@ def text_table_strategy(strategy_results, stake_currency: str, title: str):
         # Support for prior backtest results
         drawdown = [f"{t['max_drawdown_per']:.2f}" for t in strategy_results]
 
-    dd_pad_abs = max([len(t["max_drawdown_abs"]) for t in strategy_results])
-    dd_pad_per = max([len(dd) for dd in drawdown])
+    dd_pad_abs = max(len(t["max_drawdown_abs"]) for t in strategy_results)
+    dd_pad_per = max(len(dd) for dd in drawdown)
     drawdown = [
         f"{t['max_drawdown_abs']:>{dd_pad_abs}} {stake_currency}  {dd:>{dd_pad_per}}%"
         for t, dd in zip(strategy_results, drawdown, strict=False)

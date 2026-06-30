@@ -224,7 +224,7 @@ class Backtesting:
         )
 
         # Get maximum required startup period
-        self.required_startup = max([strat.startup_candle_count for strat in self.strategylist])
+        self.required_startup = max(strat.startup_candle_count for strat in self.strategylist)
         self.exchange.validate_required_startup_candles(self.required_startup, self.timeframe)
 
         # Add maximum startup candle count to configuration for informative pairs support
@@ -529,7 +529,7 @@ class Backtesting:
         self._set_progress_step(BacktestState.CONVERT, len(processed))
 
         # Create dict with data
-        for pair in processed.keys():
+        for pair in processed:
             pair_data = processed[pair]
             self.check_abort()
             self._increment_progress()
@@ -1283,7 +1283,7 @@ class Backtesting:
         """
         Handling of left open trades at the end of backtesting
         """
-        for pair in open_trades.keys():
+        for pair in open_trades:
             for trade in list(open_trades[pair]):
                 if (
                     trade.has_open_orders and trade.nr_of_successful_entries == 0

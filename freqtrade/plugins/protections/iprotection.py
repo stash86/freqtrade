@@ -126,7 +126,7 @@ class IProtection(LoggingMixin, ABC):
         Get lock end time
         Implicitly uses `self._stop_duration` or `self._unlock_at` depending on the configuration.
         """
-        max_date: datetime = max([trade.close_date for trade in trades if trade.close_date])
+        max_date: datetime = max(trade.close_date for trade in trades if trade.close_date)
         # coming from Database, tzinfo is not set.
         if max_date.tzinfo is None:
             max_date = max_date.replace(tzinfo=UTC)

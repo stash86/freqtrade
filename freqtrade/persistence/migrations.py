@@ -14,7 +14,7 @@ def get_table_names_for_table(inspector, tabletype: str) -> list[str]:
 
 
 def has_column(columns: list, searchname: str) -> bool:
-    return len(list(filter(lambda x: x["name"] == searchname, columns))) == 1
+    return sum(column["name"] == searchname for column in columns) == 1
 
 
 def get_column_def(columns: list, column: str, default: str) -> str:

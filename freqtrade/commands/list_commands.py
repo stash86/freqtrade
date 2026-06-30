@@ -136,11 +136,12 @@ def _print_objs_tabular(objs: list, print_colorized: bool) -> None:
             )
     table = Table()
 
-    for header in objs_to_print[0].keys():
+    headers = objs_to_print[0].keys()
+    for header in headers:
         table.add_column(header.capitalize(), justify="right")
 
     for row in objs_to_print:
-        table.add_row(*[row[header] for header in objs_to_print[0].keys()])
+        table.add_row(*(row[header] for header in headers))
 
     console = get_rich_console(color_system="auto" if print_colorized else None)
     console.print(table)

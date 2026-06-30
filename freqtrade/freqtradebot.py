@@ -543,12 +543,9 @@ class FreqtradeBot(LoggingMixin):
             prev_trade_state = trade.is_open
             prev_trade_amount = trade.amount
             for order in orders:
-                trade_order = [o for o in trade.orders if o.order_id == order["id"]]
+                order_obj = next((o for o in trade.orders if o.order_id == order["id"]), None)
 
-                if trade_order:
-                    # We knew this order, but didn't have it updated properly
-                    order_obj = trade_order[0]
-                else:
+                if order_obj is None:
                     logger.info(f"Found previously unknown order {order['id']} for {trade.pair}.")
 
                     order_obj = Order.parse_from_ccxt_object(order, trade.pair, order["side"])
@@ -1623,13 +1620,18 @@ class FreqtradeBot(LoggingMixin):
         :return: None
         """
         # If all stoploss ordered are canceled for some reason we add it again
-        canceled_sl_orders = [
-            o for o in stoploss_orders if o["status"] in ("canceled", "cancelled")
-        ]
+        canceled_sl_orders_count = 0
+        active_sl_orders = []
+        for order in stoploss_orders:
+            if order["status"] in ("canceled", "cancelled"):
+                canceled_sl_orders_count += 1
+            else:
+                active_sl_orders.append(order)
+
         if (
             trade.is_open
             and len(stoploss_orders) > 0
-            and len(stoploss_orders) == len(canceled_sl_orders)
+            and len(stoploss_orders) == canceled_sl_orders_count
         ):
             if self.create_stoploss_order(trade=trade, stop_price=trade.stoploss_or_liquidation):
                 return False
@@ -1638,8 +1640,7 @@ class FreqtradeBot(LoggingMixin):
                 logger.warning(msg)
                 self.send_dp_message(msg)
 
-        active_sl_orders = [o for o in stoploss_orders if o not in canceled_sl_orders]
-        if len(active_sl_orders) > 0:
+        if active_sl_orders:
             last_active_sl_order = active_sl_orders[-1]
             # Finally we check if stoploss on exchange should be moved up because of trailing.
             # Triggered Orders are now real orders - so don't replace stoploss anymore
@@ -1793,7 +1794,7 @@ class FreqtradeBot(LoggingMixin):
             trade.delete()
 
     def replace_order(
-        self, order: CcxtOrder, order_obj: Order | None, trade: Trade, current_time: datetime | None
+        self, order: CcxtOrder, order_obj: Order, trade: Trade, current_time: datetime | None
     ) -> None:
         """
         Check if current analyzed entry order should be replaced or simply cancelled.
@@ -1813,7 +1814,7 @@ class FreqtradeBot(LoggingMixin):
             self.strategy.timeframe, latest_candle_open_date
         )
         # Check if new candle
-        if order_obj and latest_candle_close_date > order_obj.order_date_utc:
+        if latest_candle_close_date > order_obj.order_date_utc:
             is_entry = order_obj.side == trade.entry_side
             # New candle
             proposed_rate = self.exchange.get_rate(

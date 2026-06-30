@@ -570,7 +570,7 @@ class Exchange:
         Return a list of supported quote currencies
         """
         markets = self.markets
-        return sorted(set([x["quote"] for _, x in markets.items()]))
+        return sorted({x["quote"] for x in markets.values()})
 
     def get_pair_quote_currency(self, pair: str) -> str:
         """Return a pair's quote currency (base/quote:settlement)"""
@@ -1522,7 +1522,7 @@ class Exchange:
     def _get_stop_order_type(self, user_order_type) -> tuple[str, str]:
         available_order_Types: dict[str, str] = self._ft_has["stoploss_order_types"]
 
-        if user_order_type in available_order_Types.keys():
+        if user_order_type in available_order_Types:
             ordertype = available_order_Types[user_order_type]
         else:
             # Otherwise pick only one available
@@ -2198,7 +2198,7 @@ class Exchange:
         if not limit_range:
             return min(limit, upper_limit) if upper_limit else limit
 
-        result = min([x for x in limit_range if limit <= x] + [max(limit_range)])
+        result = min((x for x in limit_range if limit <= x), default=max(limit_range))
         if not range_required and limit > result:
             # Range is not required - we can use None as parameter.
             return None
