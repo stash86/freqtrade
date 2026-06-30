@@ -80,12 +80,11 @@ class CrossMarketPairList(IPairList):
         else:
             # Use fresh pairlist
             # Check if pair quote currency equals to the stake currency.
-            _pairlist = [
-                k
-                for k in self._exchange.get_markets(
+            _pairlist = list(
+                self._exchange.get_markets(
                     quote_currencies=[self._stake_currency], tradable_only=True, active_only=True
-                ).keys()
-            ]
+                )
+            )
 
             _pairlist = self.verify_blacklist(_pairlist, logger.info)
 

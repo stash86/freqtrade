@@ -397,7 +397,7 @@ class HyperoptTools:
         ]
         perc_multi = 100
 
-        param_metrics = [("params_dict." + param) for param in results[0]["params_dict"].keys()]
+        param_metrics = [("params_dict." + param) for param in results[0]["params_dict"]]
         trials = trials[base_metrics + param_metrics]
 
         base_columns = [
@@ -418,7 +418,7 @@ class HyperoptTools:
             "is_initial_point",
             "is_best",
         ]
-        param_columns = list(results[0]["params_dict"].keys())
+        param_columns = list(results[0]["params_dict"])
         trials.columns = base_columns + param_columns
 
         trials["is_profit"] = False

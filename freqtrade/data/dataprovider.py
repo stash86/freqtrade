@@ -500,7 +500,7 @@ class DataProvider:
         """
         if self._exchange is None:
             raise OperationalException(NO_EXCHANGE_EXCEPTION)
-        return list(self._exchange._klines.keys())
+        return list(self._exchange._klines)
 
     def ohlcv(
         self, pair: str, timeframe: str | None = None, copy: bool = True, candle_type: str = ""

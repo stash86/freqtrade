@@ -813,7 +813,7 @@ def generate_backtest_stats(
     result: BacktestResultType = get_BacktestResultType_default()
     market_change = calculate_market_change(btdata, "close", min_date=min_date)
     metadata = {}
-    pairlist = list(btdata.keys())
+    pairlist = list(btdata)
     for strategy, content in all_results.items():
         strat_stats = generate_strategy_stats(
             pairlist, strategy, content, min_date, max_date, market_change=market_change

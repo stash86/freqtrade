@@ -64,12 +64,9 @@ def start_convert_trades(args: dict[str, Any]) -> None:
 
     for timeframe in config["timeframes"]:
         exchange.validate_timeframes(timeframe)
-    available_pairs = [
-        p
-        for p in exchange.get_markets(
-            tradable_only=True, active_only=not config.get("include_inactive")
-        ).keys()
-    ]
+    available_pairs = list(
+        exchange.get_markets(tradable_only=True, active_only=not config.get("include_inactive"))
+    )
 
     expanded_pairs = dynamic_expand_pairlist(config, available_pairs)
 

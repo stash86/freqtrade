@@ -459,7 +459,7 @@ class Exchange:
         timeframes = self._api.options.get("timeframes", {}).get(market_type)
         if timeframes is None:
             timeframes = self._api.timeframes
-        return list((timeframes or {}).keys())
+        return list(timeframes or {})
 
     @property
     def markets(self) -> dict[str, Any]:
@@ -1527,7 +1527,7 @@ class Exchange:
         else:
             # Otherwise pick only one available
             ordertype = next(iter(available_order_Types.values()))
-            user_order_type = next(iter(available_order_Types.keys()))
+            user_order_type = next(iter(available_order_Types))
         return ordertype, user_order_type
 
     def _get_stop_limit_rate(self, stop_price: float, order_types: dict, side: str) -> float:

@@ -426,7 +426,7 @@ def load_backtest_data(
 
         if not strategy:
             if len(data["strategy"]) == 1:
-                strategy = next(iter(data["strategy"].keys()))
+                strategy = next(iter(data["strategy"]))
             else:
                 raise ValueError(
                     "Detected backtest result with more than one strategy. "
@@ -436,7 +436,7 @@ def load_backtest_data(
         if strategy not in data["strategy"]:
             raise ValueError(
                 f"Strategy {strategy} not available in the backtest result. "
-                f"Available strategies are '{','.join(data['strategy'].keys())}'"
+                f"Available strategies are '{','.join(data['strategy'])}'"
             )
 
         data = data["strategy"][strategy]["trades"]

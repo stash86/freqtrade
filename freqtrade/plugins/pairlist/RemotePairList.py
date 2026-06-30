@@ -213,8 +213,6 @@ class RemotePairList(IPairList):
         else:
             pairlist = []
 
-        time_elapsed = 0.0
-
         if pairlist:
             # Item found - no refresh necessary
             return pairlist.copy()
@@ -236,11 +234,11 @@ class RemotePairList(IPairList):
 
             else:
                 # Fetch Pairlist from Remote URL
-                pairlist, time_elapsed = self.fetch_pairlist()
+                pairlist, _ = self.fetch_pairlist()
 
         self.log_once(f"Fetched pairs: {pairlist}", logger.debug)
 
-        pairlist = expand_pairlist(pairlist, list(self._exchange.get_markets().keys()))
+        pairlist = expand_pairlist(pairlist, list(self._exchange.get_markets()))
         pairlist = self._whitelist_for_active_markets(pairlist)
         if self._number_pairs and (self._mode == "whitelist"):
             pairlist = pairlist[: self._number_pairs]

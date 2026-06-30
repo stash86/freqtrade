@@ -74,7 +74,7 @@ class SKLearnRandomForestClassifier(BaseClassifierModel):
 
         le = LabelEncoder()
         label = dk.label_list[0]
-        labels_before = list(dk.data["labels_std"].keys())
+        labels_before = list(dk.data["labels_std"])
         labels_after = le.fit_transform(labels_before).tolist()
         pred_df[label] = le.inverse_transform(pred_df[label])
         pred_df = pred_df.rename(

@@ -2099,8 +2099,7 @@ class Telegram(RPCHandler):
                         f"*Create Date:* `{format_date(custom_data['created_at'])}`",
                         f"*Update Date:* `{format_date(custom_data['updated_at'])}`",
                     ]
-                    # Filter empty lines using list-comprehension
-                    messages.append("\n".join([line for line in lines if line]))
+                    messages.append("\n".join(line for line in lines if line))
                 for msg in messages:
                     if len(msg) > MAX_MESSAGE_LENGTH:
                         msg = "Message dropped because length exceeds "

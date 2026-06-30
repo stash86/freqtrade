@@ -1484,7 +1484,7 @@ class RPC:
             for pair in add:
                 if pair not in self._freqtrade.pairlists.blacklist:
                     try:
-                        expand_pairlist([pair], list(self._freqtrade.exchange.get_markets().keys()))
+                        expand_pairlist([pair], list(self._freqtrade.exchange.get_markets()))
                         self._freqtrade.pairlists.blacklist.append(pair)
 
                     except ValueError:

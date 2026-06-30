@@ -303,7 +303,7 @@ def _validate_pricing_rules(conf: dict[str, Any]) -> None:
                 "Please migrate your settings to use 'entry_pricing' and 'exit_pricing'."
             )
             conf["entry_pricing"] = {}
-            for obj in list(conf.get("bid_strategy", {}).keys()):
+            for obj in list(conf.get("bid_strategy", {})):
                 if obj == "ask_last_balance":
                     process_deprecated_setting(
                         conf, "bid_strategy", obj, "entry_pricing", "price_last_balance"
@@ -313,7 +313,7 @@ def _validate_pricing_rules(conf: dict[str, Any]) -> None:
             del conf["bid_strategy"]
 
             conf["exit_pricing"] = {}
-            for obj in list(conf.get("ask_strategy", {}).keys()):
+            for obj in list(conf.get("ask_strategy", {})):
                 if obj == "bid_last_balance":
                     process_deprecated_setting(
                         conf, "ask_strategy", obj, "exit_pricing", "price_last_balance"

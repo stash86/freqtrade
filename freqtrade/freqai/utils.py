@@ -32,12 +32,9 @@ def download_all_data_for_training(dp: DataProvider, config: Config) -> None:
 
     if dp._exchange is None:
         raise OperationalException("No exchange object found.")
-    markets = [
-        p
-        for p in dp._exchange.get_markets(
-            tradable_only=True, active_only=not config.get("include_inactive")
-        ).keys()
-    ]
+    markets = list(
+        dp._exchange.get_markets(tradable_only=True, active_only=not config.get("include_inactive"))
+    )
 
     all_pairs = dynamic_expand_pairlist(config, markets)
 

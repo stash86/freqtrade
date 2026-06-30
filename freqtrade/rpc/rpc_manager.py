@@ -138,7 +138,7 @@ class RPCManager:
             }
         )
         if len(protections.name_list) > 0:
-            prots = "\n".join([p for prot in protections.short_desc() for k, p in prot.items()])
+            prots = "\n".join(p for prot in protections.short_desc() for p in prot.values())
             self.send_msg(
                 {"type": RPCMessageType.STARTUP, "status": f"Using Protections: \n{prots}"}
             )

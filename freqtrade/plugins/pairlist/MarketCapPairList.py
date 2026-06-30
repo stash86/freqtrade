@@ -120,12 +120,11 @@ class MarketCapPairList(IPairList):
         }
 
     def get_markets_exchange(self):
-        markets = [
-            k
-            for k in self._exchange.get_markets(
+        markets = list(
+            self._exchange.get_markets(
                 quote_currencies=[self._stake_currency], tradable_only=True, active_only=True
-            ).keys()
-        ]
+            )
+        )
 
         return markets
 
