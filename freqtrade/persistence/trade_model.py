@@ -2174,43 +2174,33 @@ class Trade(ModelBase, LocalTrade):
         filters: list = [Trade.is_open.is_(False)]
         if pair is not None:
             filters.append(Trade.pair == pair)
+
         mix_tag_perf = Trade.session.execute(
             select(
-                Trade.id,
-                Trade.enter_tag,
-                Trade.exit_reason,
+                func.coalesce(Trade.enter_tag, "Other").label("enter_tag"),
+                func.coalesce(Trade.exit_reason, "Other").label("exit_reason"),
                 func.sum(Trade.close_profit).label("profit_sum"),
                 func.sum(Trade.close_profit_abs).label("profit_sum_abs"),
-                func.count(Trade.pair).label("count"),
+                func.count(Trade.id).label("count"),
             )
             .filter(*filters)
-            .group_by(Trade.id)
+            .group_by(
+                func.coalesce(Trade.enter_tag, "Other"),
+                func.coalesce(Trade.exit_reason, "Other"),
+            )
             .order_by(desc("profit_sum_abs"))
         ).all()
 
-        resp_dict: dict = {}
-        for _, enter_tag, exit_reason, profit, profit_abs, count in mix_tag_perf:
-            enter_tag = enter_tag if enter_tag is not None else "Other"
-            exit_reason = exit_reason if exit_reason is not None else "Other"
-
-            if exit_reason is not None and enter_tag is not None:
-                mix_tag = enter_tag + " " + exit_reason
-                if mix_tag in resp_dict:
-                    item = resp_dict[mix_tag]
-                    item["profit_pct"] = round(profit + item["profit_ratio"] * 100, 2)
-                    item["profit_ratio"] = profit + item["profit_ratio"]
-                    item["profit_abs"] = profit_abs + item["profit_abs"]
-                    item["count"] = 1 + item["count"]
-                else:
-                    resp_dict[mix_tag] = {
-                        "mix_tag": mix_tag,
-                        "profit_ratio": profit,
-                        "profit_pct": round(profit * 100, 2),
-                        "profit_abs": profit_abs,
-                        "count": count,
-                    }
-
-        return list(resp_dict.values())
+        return [
+            {
+                "mix_tag": f"{enter_tag} {exit_reason}",
+                "profit_ratio": profit,
+                "profit_pct": round(profit * 100, 2),
+                "profit_abs": profit_abs,
+                "count": count,
+            }
+            for enter_tag, exit_reason, profit, profit_abs, count in mix_tag_perf
+        ]
 
     @staticmethod
     def get_best_pair(trade_filter: list | None = None):
