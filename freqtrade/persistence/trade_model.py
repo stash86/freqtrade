@@ -2188,32 +2188,29 @@ class Trade(ModelBase, LocalTrade):
             .order_by(desc("profit_sum_abs"))
         ).all()
 
-        resp: list[dict] = []
+        resp_dict: dict = {}
         for _, enter_tag, exit_reason, profit, profit_abs, count in mix_tag_perf:
             enter_tag = enter_tag if enter_tag is not None else "Other"
             exit_reason = exit_reason if exit_reason is not None else "Other"
 
             if exit_reason is not None and enter_tag is not None:
                 mix_tag = enter_tag + " " + exit_reason
-                for item in resp:
-                    if item["mix_tag"] == mix_tag:
-                        item["profit_pct"] = round(profit + item["profit_ratio"] * 100, 2)
-                        item["profit_ratio"] = profit + item["profit_ratio"]
-                        item["profit_abs"] = profit_abs + item["profit_abs"]
-                        item["count"] = 1 + item["count"]
-                        break
+                if mix_tag in resp_dict:
+                    item = resp_dict[mix_tag]
+                    item["profit_pct"] = round(profit + item["profit_ratio"] * 100, 2)
+                    item["profit_ratio"] = profit + item["profit_ratio"]
+                    item["profit_abs"] = profit_abs + item["profit_abs"]
+                    item["count"] = 1 + item["count"]
                 else:
-                    resp.append(
-                        {
-                            "mix_tag": mix_tag,
-                            "profit_ratio": profit,
-                            "profit_pct": round(profit * 100, 2),
-                            "profit_abs": profit_abs,
-                            "count": count,
-                        }
-                    )
+                    resp_dict[mix_tag] = {
+                        "mix_tag": mix_tag,
+                        "profit_ratio": profit,
+                        "profit_pct": round(profit * 100, 2),
+                        "profit_abs": profit_abs,
+                        "count": count,
+                    }
 
-        return resp
+        return list(resp_dict.values())
 
     @staticmethod
     def get_best_pair(trade_filter: list | None = None):
