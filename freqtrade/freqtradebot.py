@@ -876,10 +876,10 @@ class FreqtradeBot(LoggingMixin):
                 )
                 return
 
+            remaining = (trade.amount - amount) * current_exit_rate
             min_exit_stake = self.exchange.get_min_pair_stake_amount(
                 trade.pair, current_exit_rate, self.strategy.stoploss, trade.leverage
             )
-            remaining = (trade.amount - amount) * current_exit_rate
             if min_exit_stake and remaining != 0 and remaining < min_exit_stake:
                 # msg = (
                 #     f"Trade #{trade.id} ({trade.pair}) - Remaining amount of {remaining} "
@@ -1954,7 +1954,7 @@ class FreqtradeBot(LoggingMixin):
         :param price: Limit price of the potential new order
         :param amount: Quantity of assets of the potential new order
         :param side: Side of the potential new order
-        :return: True if an existing similar order was found
+        :return: True if an existing similar order was found or if cancellation failed.
         """
         open_orders = trade.open_orders
         if not open_orders:
@@ -1978,7 +1978,7 @@ class FreqtradeBot(LoggingMixin):
             True,
         )
         Trade.commit()
-        return False
+        return trade.has_open_orders
 
     def handle_cancel_enter(
         self,
@@ -2007,12 +2007,11 @@ class FreqtradeBot(LoggingMixin):
                     trade.pair, trade.open_rate, self.strategy.stoploss
                 )
                 if minstake and filled_stake < minstake:
-                    self.log_once(
+                    msg = (
                         f"Order {order_id} for {trade.pair} not cancelled, "
-                        f"as the filled amount of {filled_val} would result in "
-                        "an unexitable trade.",
-                        logger.warning,
+                        f"as the filled amount of {filled_val} would result in an unexitable trade."
                     )
+                    self.log_once(msg, logger.warning)
                     return False
             corder = self.exchange.cancel_order_with_result(order_id, trade.pair, trade.amount)
             order_obj.ft_cancel_reason = reason
@@ -2233,8 +2232,8 @@ class FreqtradeBot(LoggingMixin):
         custom_exit_price = limit
         current_time = datetime.now(UTC)
 
-        current_profit = trade.calc_profit_ratio(limit)
         if order_type == "limit" and not skip_custom_exit_price:
+            current_profit = trade.calc_profit_ratio(limit)
             custom_exit_price = strategy_safe_wrapper(
                 self.strategy.custom_exit_price, default_retval=proposed_limit_rate
             )(
@@ -2648,8 +2647,6 @@ class FreqtradeBot(LoggingMixin):
         Necessary for exchanges which charge fees in base currency (e.g. binance)
         :return: Absolute fee to apply for this order or None
         """
-        # Init variables
-        order_amount = safe_value_fallback(order, "filled", "amount")
         # Only run for closed orders
         if (
             trade.fee_updated(order.get("side", "")) or order["status"] == "open"
@@ -2657,7 +2654,8 @@ class FreqtradeBot(LoggingMixin):
         ):
             return None
 
-        trade_base_currency = self.exchange.get_pair_base_currency(trade.pair)
+        order_amount = safe_value_fallback(order, "filled", "amount")
+
         # use fee from order-dict if possible
         if self.exchange.order_has_fee(order):
             fee_cost, fee_currency, fee_rate = self.exchange.extract_cost_curr_rate(
@@ -2672,6 +2670,7 @@ class FreqtradeBot(LoggingMixin):
                 # These are most likely caused by a parsing bug in ccxt
                 # due to multiple trades (https://github.com/ccxt/ccxt/issues/8025)
                 trade.update_fee(fee_cost, fee_currency, fee_rate, order.get("side", ""))
+                trade_base_currency = self.exchange.get_pair_base_currency(trade.pair)
                 if trade_base_currency == fee_currency:
                     # Apply fee to amount
                     return self.apply_fee_conditional(
