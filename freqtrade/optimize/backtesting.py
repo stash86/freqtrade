@@ -53,7 +53,11 @@ from freqtrade.ft_types import (
 from freqtrade.leverage.liquidation_price import update_liquidation_prices
 from freqtrade.mixins import LoggingMixin
 from freqtrade.optimize.backtest_caching import get_strategy_run_id
-from freqtrade.optimize.backtest_compare import compare_backtest_results
+from freqtrade.optimize.backtest_compare import (
+    compare_backtest_results,
+    compare_signal_results,
+    prepare_backtest_signals,
+)
 from freqtrade.optimize.optimize_reports import (
     convert_bt_wallet_collection,
     generate_backtest_stats,
@@ -156,6 +160,7 @@ class Backtesting:
         self.run_ids: dict[str, str] = {}
         self.strategylist: list[IStrategy] = []
         self.all_bt_content: dict[str, BacktestContentType] = {}
+        self.strategy_signals: dict[str, dict[str, DataFrame]] = {}
         self.analysis_results: dict[str, dict[str, DataFrame]] = {
             "signals": {},
             "rejected": {},
@@ -165,14 +170,7 @@ class Backtesting:
         self.starting_balance: float = 0.0
         self.wallet_captures: list = []
 
-        if self.config.get("equal"):
-            strategy_list = self.config.get("strategy_list", [])
-            if len(strategy_list) < 2:
-                raise OperationalException(
-                    "--equal requires at least two strategies supplied with --strategy-list."
-                )
-            if len(strategy_list) != len(set(strategy_list)):
-                raise OperationalException("--equal requires each strategy name to be unique.")
+        self._validate_equal_mode()
 
         self._exchange_name = self.config["exchange"]["name"]
         self.__initial_backtest = exchange is None
@@ -254,6 +252,42 @@ class Backtesting:
         migrate_data(config, self.exchange)
 
         self.init_backtest()
+
+    def _get_equal_mode(self) -> str | None:
+        equal = self.config.get("equal")
+        # Keep direct configuration users of the original boolean flag compatible.
+        return "trades" if equal is True else equal or None
+
+    def _validate_equal_mode(self) -> None:
+        equal_mode = self._get_equal_mode()
+        if equal_mode not in (None, "trades", "signals"):
+            raise OperationalException("--equal must be either 'trades' or 'signals'.")
+        if not equal_mode:
+            return
+
+        if equal_mode == "signals" and self.config.get("enable_dynamic_pairlist"):
+            raise OperationalException(
+                "--equal signals is not supported with --enable-dynamic-pairlist."
+            )
+
+        strategy_list = self.config.get("strategy_list", [])
+        if len(strategy_list) < 2:
+            raise OperationalException(
+                "--equal requires at least two strategies supplied with --strategy-list."
+            )
+        if len(strategy_list) != len(set(strategy_list)):
+            raise OperationalException("--equal requires each strategy name to be unique.")
+
+    def _reset_signal_comparison_state(self) -> None:
+        if self._get_equal_mode() == "signals":
+            self.dataprovider.clear_cache()
+            self.dataprovider._set_dataframe_max_date(None)
+
+    def _capture_strategy_signals(
+        self, strategy_name: str, processed: dict[str, DataFrame]
+    ) -> None:
+        if self._get_equal_mode() == "signals":
+            self.strategy_signals[strategy_name] = prepare_backtest_signals(processed)
 
     def _validate_pairlists_for_backtesting(self):
         if "VolumePairList" in self.pairlists.name_list:
@@ -1794,6 +1828,7 @@ class Backtesting:
         # Use dict of lists with data for performance
         # (looping lists is a lot faster than pandas DataFrames)
         data: dict = self._get_ohlcv_as_lists(processed)
+        self._capture_strategy_signals(self.strategy.get_strategy_name(), processed)
 
         # Loop timerange and get candle for each pair at that point in time
         for (
@@ -1841,6 +1876,7 @@ class Backtesting:
         strategy_name = strat.get_strategy_name()
         logger.info(f"Running backtesting for Strategy {strategy_name}")
         backtest_start_time = dt_now()
+        self._reset_signal_comparison_state()
         self._set_strategy(strat)
 
         # need to reprocess data every time to populate signals
@@ -1907,6 +1943,10 @@ class Backtesting:
             for strategy in self.strategylist
         }
 
+        if self._get_equal_mode() == "signals":
+            logger.info("Backtest result caching disabled for --equal signals.")
+            return
+
         # Load previous result that will be updated incrementally.
         # This can be circumvented in certain instances in combination with downloading more data
         min_backtest_date = self._get_min_cached_backtest_date()
@@ -1916,13 +1956,31 @@ class Backtesting:
             )
 
     def _check_strategy_results_equal(self) -> None:
-        if not self.config.get("equal"):
+        equal_mode = self._get_equal_mode()
+        if not equal_mode:
+            return
+
+        strategy_names = ", ".join(self.results["strategy"])
+
+        if equal_mode == "signals":
+            if difference := compare_signal_results(self.strategy_signals):
+                raise OperationalException(f"Backtest signal equality check failed: {difference}.")
+
+            pair_count = len(next(iter(self.strategy_signals.values())))
+            candle_count = sum(
+                len(signals) for signals in next(iter(self.strategy_signals.values())).values()
+            )
+            pair_word = "pair" if pair_count == 1 else "pairs"
+            candle_word = "candle" if candle_count == 1 else "candles"
+            print(
+                f"Backtest signal equality check passed: {strategy_names} produced identical "
+                f"signals across {pair_count} {pair_word} and {candle_count} {candle_word}."
+            )
             return
 
         if difference := compare_backtest_results(self.results["strategy"]):
             raise OperationalException(f"Backtest equality check failed: {difference}.")
 
-        strategy_names = ", ".join(self.results["strategy"])
         trade_count = len(next(iter(self.results["strategy"].values()))["trades"])
         print(
             f"Backtest equality check passed: {strategy_names} produced "
@@ -1934,6 +1992,8 @@ class Backtesting:
         Run backtesting end-to-end
         """
         data: dict[str, DataFrame] = {}
+        if self._get_equal_mode() == "signals":
+            self.strategy_signals = {}
 
         # Render the live progress bars for the duration of the run. The context must stop
         # before show_backtest_results() so the result tables render cleanly afterwards.

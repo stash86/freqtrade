@@ -220,8 +220,11 @@ AVAILABLE_CLI_OPTIONS = {
     ),
     "equal": Arg(
         "--equal",
-        help="Fail unless all strategies supplied with --strategy-list produce identical trades.",
-        action="store_true",
+        help="Fail unless all strategies supplied with --strategy-list produce identical "
+        "trades or signals (default: trades).",
+        nargs="?",
+        const="trades",
+        choices=("trades", "signals"),
         default=False,
     ),
     "backtest_notes": Arg(

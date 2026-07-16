@@ -1,6 +1,7 @@
 # pragma pylint: disable=missing-docstring, W0212, line-too-long, C0103, unused-argument
 
 import random
+import re
 from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
@@ -334,6 +335,31 @@ def test_backtesting_equal_requires_multiple_unique_strategies(default_conf) -> 
         Backtesting(default_conf)
 
 
+@pytest.mark.parametrize(
+    ("config", "message"),
+    [
+        (
+            {"equal": "signal", "strategy_list": ["StrategyA", "StrategyB"]},
+            "--equal must be either 'trades' or 'signals'.",
+        ),
+        (
+            {
+                "equal": "signals",
+                "strategy_list": ["StrategyA", "StrategyB"],
+                "enable_dynamic_pairlist": True,
+            },
+            "--equal signals is not supported with --enable-dynamic-pairlist.",
+        ),
+    ],
+)
+def test_backtesting_equal_rejects_invalid_modes(config, message) -> None:
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = config
+
+    with pytest.raises(OperationalException, match=re.escape(message)):
+        backtesting._validate_equal_mode()
+
+
 def test_backtesting_equal_difference_raises() -> None:
     backtesting = Backtesting.__new__(Backtesting)
     backtesting.config = {"equal": True}
@@ -352,6 +378,133 @@ def test_backtesting_equal_difference_raises() -> None:
         ),
     ):
         backtesting._check_strategy_results_equal()
+
+
+def test_backtesting_equal_signal_difference_raises() -> None:
+    signal_date = pd.to_datetime(["2024-01-01 00:00:00"], utc=True)
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = {"equal": "signals"}
+    backtesting.results = {
+        "strategy": {
+            "StrategyA": {"trades": []},
+            "StrategyB": {"trades": []},
+        }
+    }
+    backtesting.strategy_signals = {
+        "StrategyA": {"BTC/USDT": pd.DataFrame({"date": signal_date, "enter_long": [0]})},
+        "StrategyB": {"BTC/USDT": pd.DataFrame({"date": signal_date, "enter_long": [1]})},
+    }
+
+    with pytest.raises(
+        OperationalException,
+        match=(
+            r"Backtest signal equality check failed: StrategyB differs from StrategyA on "
+            r"BTC/USDT .* field enter_long: True != False\."
+        ),
+    ):
+        backtesting._check_strategy_results_equal()
+
+
+def test_backtesting_equal_signals_passes(capsys) -> None:
+    signals = pd.DataFrame(
+        {"date": pd.to_datetime(["2024-01-01 00:00:00"], utc=True), "enter_long": [1]}
+    )
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = {"equal": "signals"}
+    backtesting.results = {
+        "strategy": {
+            "StrategyA": {"trades": []},
+            "StrategyB": {"trades": []},
+        }
+    }
+    backtesting.strategy_signals = {
+        "StrategyA": {"BTC/USDT": signals},
+        "StrategyB": {"BTC/USDT": signals.copy()},
+    }
+
+    backtesting._check_strategy_results_equal()
+
+    assert capsys.readouterr().out == (
+        "Backtest signal equality check passed: StrategyA, StrategyB produced identical "
+        "signals across 1 pair and 1 candle.\n"
+    )
+
+
+def test_backtesting_capture_strategy_signals() -> None:
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = {"equal": "signals"}
+    backtesting.strategy_signals = {}
+    processed = {
+        "BTC/USDT": pd.DataFrame(
+            {
+                "date": pd.to_datetime(["2024-01-01 00:00:00"], utc=True),
+                "enter_long": [1],
+            }
+        )
+    }
+
+    backtesting._capture_strategy_signals("StrategyA", processed)
+
+    captured = backtesting.strategy_signals["StrategyA"]["BTC/USDT"]
+    assert list(captured.columns) == [
+        "date",
+        "enter_long",
+        "exit_long",
+        "enter_short",
+        "exit_short",
+        "enter_tag",
+        "exit_tag",
+    ]
+    assert captured.iloc[0]["enter_long"]
+    assert not captured.iloc[0]["enter_short"]
+
+
+@pytest.mark.parametrize("equal", [False, "trades"])
+def test_backtesting_does_not_capture_signals_in_other_modes(equal) -> None:
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = {"equal": equal}
+    backtesting.strategy_signals = {}
+
+    backtesting._capture_strategy_signals(
+        "StrategyA", {"BTC/USDT": pd.DataFrame({"date": ["2024-01-01T00:00:00Z"]})}
+    )
+
+    assert backtesting.strategy_signals == {}
+
+
+@pytest.mark.parametrize("equal", ["signals", "trades"])
+def test_backtesting_resets_dataprovider_for_signal_comparison(equal) -> None:
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = {"equal": equal}
+    backtesting.dataprovider = MagicMock()
+
+    backtesting._reset_signal_comparison_state()
+
+    if equal == "signals":
+        backtesting.dataprovider.clear_cache.assert_called_once_with()
+        backtesting.dataprovider._set_dataframe_max_date.assert_called_once_with(None)
+    else:
+        backtesting.dataprovider.clear_cache.assert_not_called()
+        backtesting.dataprovider._set_dataframe_max_date.assert_not_called()
+
+
+def test_backtesting_equal_signals_disables_cache(mocker, caplog) -> None:
+    strategy = MagicMock()
+    strategy.get_strategy_name.return_value = "StrategyA"
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = {"equal": "signals"}
+    backtesting.strategylist = [strategy]
+    get_run_id = mocker.patch(
+        "freqtrade.optimize.backtesting.get_strategy_run_id", return_value="run-id"
+    )
+    find_cached = mocker.patch("freqtrade.optimize.backtesting.find_existing_backtest_stats")
+
+    backtesting.load_prior_backtest()
+
+    assert backtesting.run_ids == {"StrategyA": "run-id"}
+    get_run_id.assert_called_once_with(strategy)
+    find_cached.assert_not_called()
+    assert log_has("Backtest result caching disabled for --equal signals.", caplog)
 
 
 def test_data_with_fee(default_conf, mocker) -> None:
@@ -2799,12 +2952,13 @@ def test_backtest_start_multi_strat_caching(
         assert log_has(line, caplog)
 
 
-def test_get_strategy_run_id(default_conf_usdt):
+@pytest.mark.parametrize("equal", [True, "trades", "signals"])
+def test_get_strategy_run_id(default_conf_usdt, equal):
     default_conf_usdt.update({"strategy": "StrategyTestV2", "max_open_trades": float("inf")})
     strategy = StrategyResolver.load_strategy(default_conf_usdt)
     x = get_strategy_run_id(strategy)
     assert isinstance(x, str)
-    strategy.config["equal"] = True
+    strategy.config["equal"] = equal
     assert get_strategy_run_id(strategy) == x
 
 

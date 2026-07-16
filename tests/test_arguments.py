@@ -182,11 +182,16 @@ def test_parse_args_backtesting_custom() -> None:
     assert call_args["timeframe"] == "1m"
     assert isinstance(call_args["strategy_list"], list)
     assert len(call_args["strategy_list"]) == 2
-    assert call_args["equal"] is True
+    assert call_args["equal"] == "trades"
 
 
 def test_parse_args_equal_is_backtesting_only() -> None:
     assert Arguments(["backtesting"]).get_parsed_arg()["equal"] is False
+    assert Arguments(["backtesting", "--equal", "trades"]).get_parsed_arg()["equal"] == "trades"
+    assert Arguments(["backtesting", "--equal", "signals"]).get_parsed_arg()["equal"] == "signals"
+
+    with pytest.raises(SystemExit, match=r"2"):
+        Arguments(["backtesting", "--equal", "signal"]).get_parsed_arg()
 
     for command in ("hyperopt", "lookahead-analysis"):
         with pytest.raises(SystemExit, match=r"2"):

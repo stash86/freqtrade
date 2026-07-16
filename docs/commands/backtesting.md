@@ -14,7 +14,8 @@ usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
                              [--dry-run-wallet DRY_RUN_WALLET]
                              [--timeframe-detail TIMEFRAME_DETAIL]
                              [--strategy-list STRATEGY_LIST [STRATEGY_LIST ...]]
-                             [--equal] [--export {none,trades,signals}]
+                             [--equal [{trades,signals}]]
+                             [--export {none,trades,signals}]
                              [--backtest-filename PATH]
                              [--backtest-directory PATH]
                              [--breakdown {day,week,month,year,weekday} [{day,week,month,year,weekday} ...]]
@@ -65,8 +66,10 @@ options:
                         Provide a space-separated list of strategies to
                         backtest. Please note that timeframe needs to be set
                         either in config or via command line.
-  --equal               Fail unless all strategies supplied with --strategy-
-                        list produce identical trades.
+  --equal [{trades,signals}]
+                        Fail unless all strategies supplied with --strategy-
+                        list produce identical trades or signals (default:
+                        trades).
   --export {none,trades,signals}
                         Export backtest results (default: trades).
   --backtest-filename, --export-filename PATH

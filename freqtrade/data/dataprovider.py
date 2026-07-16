@@ -78,11 +78,11 @@ class DataProvider:
         """
         self.__slice_index[pair] = limit_index
 
-    def _set_dataframe_max_date(self, limit_date: datetime):
+    def _set_dataframe_max_date(self, limit_date: datetime | None):
         """
         Limit informative dataframe to max specified index.
         Only relevant in backtesting.
-        :param limit_date: "current date"
+        :param limit_date: "current date", or None to clear the backtesting limit
         """
         self.__slice_date = limit_date
 

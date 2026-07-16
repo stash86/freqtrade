@@ -4,6 +4,8 @@ from math import isclose, isnan
 from numbers import Integral, Real
 from typing import Any
 
+from pandas import DataFrame, isna, to_datetime
+
 from freqtrade.constants import MATH_CLOSE_PREC
 from freqtrade.data.btanalysis import BT_DATA_COLUMNS
 
@@ -14,6 +16,8 @@ _TRADE_COMPARISON_FIELDS = tuple(
 )
 _FLOAT_REL_TOLERANCE = 1e-12
 _MISSING = object()
+_SIGNAL_FLAG_COLUMNS = ("enter_long", "exit_long", "enter_short", "exit_short")
+_SIGNAL_TAG_COLUMNS = ("enter_tag", "exit_tag")
 
 
 def _numeric_sort_value(value: Any) -> float:
@@ -210,6 +214,137 @@ def compare_backtest_results(strategy_results: dict[str, Any]) -> str | None:
                 f"{actual_name} differs from {expected_name} at trade {index + 1} "
                 f"({pair}, open timestamp {open_timestamp}), field {path}: "
                 f"{_format_value(actual_value)} != {_format_value(expected_value)}"
+            )
+
+    return None
+
+
+def _normalize_signal_tag(value: Any) -> Any:
+    return None if isna(value) or value == "" else value
+
+
+def _normalize_signal_dataframe(dataframe: DataFrame) -> DataFrame:
+    normalized = DataFrame()
+    normalized["date"] = to_datetime(dataframe["date"], utc=True).astype("datetime64[ns, UTC]")
+
+    for column in _SIGNAL_FLAG_COLUMNS:
+        if column in dataframe.columns:
+            normalized[column] = dataframe[column].eq(1).fillna(False).astype(bool)
+        else:
+            normalized[column] = False
+
+    for column in _SIGNAL_TAG_COLUMNS:
+        if column in dataframe.columns:
+            normalized[column] = dataframe[column].map(_normalize_signal_tag)
+        else:
+            normalized[column] = None
+
+    return normalized.sort_values("date", kind="stable").reset_index(drop=True)
+
+
+def prepare_backtest_signals(processed: dict[str, DataFrame]) -> dict[str, DataFrame]:
+    """Keep only normalized strategy signal outputs needed by signal equality checks."""
+    return {pair: _normalize_signal_dataframe(dataframe) for pair, dataframe in processed.items()}
+
+
+def _format_pair_difference(expected_pairs: set[str], actual_pairs: set[str]) -> str:
+    missing = sorted(expected_pairs - actual_pairs)
+    unexpected = sorted(actual_pairs - expected_pairs)
+    return f"missing pairs {missing}, unexpected pairs {unexpected}"
+
+
+def _format_candle_count(count: int) -> str:
+    return f"{count} candle{'s' if count != 1 else ''}"
+
+
+def _format_signal_date(value: Any) -> str:
+    return value.isoformat()
+
+
+def _find_duplicate_signal_date(dataframe: DataFrame) -> Any | None:
+    duplicate_dates = dataframe.loc[dataframe["date"].duplicated(keep=False), "date"]
+    return None if duplicate_dates.empty else duplicate_dates.iloc[0]
+
+
+def _format_signal_date_difference(expected: DataFrame, actual: DataFrame) -> str:
+    expected_dates = set(expected["date"])
+    actual_dates = set(actual["date"])
+    details = []
+
+    if missing_dates := sorted(expected_dates - actual_dates):
+        details.append(f"missing candle {_format_signal_date(missing_dates[0])}")
+    if unexpected_dates := sorted(actual_dates - expected_dates):
+        details.append(f"unexpected candle {_format_signal_date(unexpected_dates[0])}")
+    if len(expected) != len(actual):
+        details.append(
+            f"{_format_candle_count(len(actual))} != {_format_candle_count(len(expected))}"
+        )
+
+    return ", ".join(details)
+
+
+def compare_signal_results(
+    strategy_signals: dict[str, dict[str, DataFrame]],
+) -> str | None:
+    """Compare normalized entry/exit signals and tags for every pair and candle."""
+    if len(strategy_signals) < 2:
+        return "at least two strategy signal results are required"
+
+    strategy_items = list(strategy_signals.items())
+    expected_name, expected_pair_signals = strategy_items[0]
+    expected_pairs = set(expected_pair_signals)
+
+    for actual_name, actual_pair_signals in strategy_items[1:]:
+        actual_pairs = set(actual_pair_signals)
+        if expected_pairs != actual_pairs:
+            pair_difference = _format_pair_difference(expected_pairs, actual_pairs)
+            return f"{actual_name} signal pairs differ from {expected_name}: {pair_difference}"
+
+        for pair in sorted(expected_pairs):
+            expected = _normalize_signal_dataframe(expected_pair_signals[pair])
+            actual = _normalize_signal_dataframe(actual_pair_signals[pair])
+
+            if duplicate_date := _find_duplicate_signal_date(expected):
+                return (
+                    f"{expected_name} produced duplicate signal candles on {pair} at "
+                    f"{_format_signal_date(duplicate_date)}"
+                )
+            if duplicate_date := _find_duplicate_signal_date(actual):
+                return (
+                    f"{actual_name} produced duplicate signal candles on {pair} at "
+                    f"{_format_signal_date(duplicate_date)}"
+                )
+
+            if not expected["date"].equals(actual["date"]):
+                date_difference = _format_signal_date_difference(expected, actual)
+                return (
+                    f"{actual_name} signal candle dates differ from {expected_name} on {pair}: "
+                    f"{date_difference}"
+                )
+
+            signal_columns = (*_SIGNAL_FLAG_COLUMNS, *_SIGNAL_TAG_COLUMNS)
+            expected_signals = expected.loc[:, signal_columns]
+            actual_signals = actual.loc[:, signal_columns]
+            mismatch = expected_signals.ne(actual_signals) & ~(
+                expected_signals.isna() & actual_signals.isna()
+            )
+            if not mismatch.to_numpy().any():
+                continue
+
+            row_positions, column_positions = mismatch.to_numpy().nonzero()
+            row_position = int(row_positions[0])
+            column = signal_columns[int(column_positions[0])]
+            expected_value = expected.iloc[row_position][column]
+            actual_value = actual.iloc[row_position][column]
+            if column in _SIGNAL_FLAG_COLUMNS:
+                expected_value = bool(expected_value)
+                actual_value = bool(actual_value)
+            candle_date = actual.iloc[row_position]["date"]
+
+            return (
+                f"{actual_name} differs from {expected_name} on {pair} at "
+                f"{candle_date.isoformat()}, field {column}: "
+                f"{actual_value!r} != {expected_value!r}"
             )
 
     return None

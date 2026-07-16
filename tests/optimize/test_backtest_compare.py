@@ -2,7 +2,11 @@ from copy import deepcopy
 
 import pandas as pd
 
-from freqtrade.optimize.backtest_compare import compare_backtest_results
+from freqtrade.optimize.backtest_compare import (
+    compare_backtest_results,
+    compare_signal_results,
+    prepare_backtest_signals,
+)
 
 
 def _trade(**overrides):
@@ -120,3 +124,173 @@ def test_compare_backtest_results_requires_two_results():
     result = compare_backtest_results({"StrategyA": {"trades": []}})
 
     assert result == "at least two strategy results are required"
+
+
+def test_compare_signal_results_normalizes_order_missing_columns_and_empty_tags():
+    first = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-01 00:05:00", "2024-01-01 00:00:00"], utc=True),
+            "enter_long": [None, 1],
+            "exit_long": [0, 1],
+            "enter_tag": [None, "entry"],
+            "exit_tag": ["", "exit"],
+            "close": [100.0, 101.0],
+            "strategy_indicator": [1.5, 2.5],
+        }
+    )
+    second = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-01 00:00:00", "2024-01-01 00:05:00"], utc=True),
+            "enter_long": [True, False],
+            "exit_long": [True, False],
+            "enter_short": [False, False],
+            "exit_short": [False, False],
+            "enter_tag": ["entry", ""],
+            "exit_tag": ["exit", None],
+            "close": [999.0, 998.0],
+            "other_indicator": [20, 10],
+        }
+    )
+
+    result = compare_signal_results(
+        {
+            "StrategyA": prepare_backtest_signals({"BTC/USDT": first}),
+            "StrategyB": {"BTC/USDT": second},
+        }
+    )
+
+    assert result is None
+
+
+def test_compare_signal_results_reports_first_field_difference():
+    first = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-01 00:00:00"], utc=True),
+            "enter_long": [0],
+        }
+    )
+    second = first.copy()
+    second["enter_long"] = 1
+
+    result = compare_signal_results(
+        {
+            "StrategyA": {"BTC/USDT": first},
+            "StrategyB": {"BTC/USDT": second},
+        }
+    )
+
+    assert result == (
+        "StrategyB differs from StrategyA on BTC/USDT at 2024-01-01T00:00:00+00:00, "
+        "field enter_long: True != False"
+    )
+
+
+def test_compare_signal_results_reports_tag_difference_after_null_tags():
+    first = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2024-01-01 00:00:00"], utc=True),
+            "enter_tag": [None],
+            "exit_tag": [None],
+        }
+    )
+    second = first.copy()
+    second["exit_tag"] = "exit"
+
+    result = compare_signal_results(
+        {
+            "StrategyA": {"BTC/USDT": first},
+            "StrategyB": {"BTC/USDT": second},
+        }
+    )
+
+    assert result is not None
+    assert "field exit_tag: 'exit' != None" in result
+
+
+def test_compare_signal_results_reports_pair_and_candle_date_differences():
+    frame = pd.DataFrame({"date": pd.to_datetime(["2024-01-01 00:00:00"], utc=True)})
+
+    pair_result = compare_signal_results(
+        {
+            "StrategyA": {"BTC/USDT": frame},
+            "StrategyB": {"ETH/USDT": frame},
+        }
+    )
+    count_result = compare_signal_results(
+        {
+            "StrategyA": {"BTC/USDT": frame},
+            "StrategyB": {"BTC/USDT": frame.iloc[0:0]},
+        }
+    )
+
+    assert pair_result == (
+        "StrategyB signal pairs differ from StrategyA: missing pairs ['BTC/USDT'], "
+        "unexpected pairs ['ETH/USDT']"
+    )
+    assert count_result == (
+        "StrategyB signal candle dates differ from StrategyA on BTC/USDT: missing candle "
+        "2024-01-01T00:00:00+00:00, 0 candles != 1 candle"
+    )
+
+
+def test_compare_signal_results_normalizes_equivalent_datetime_units():
+    first = pd.DataFrame(
+        {
+            "date": pd.Series([pd.Timestamp("2024-01-01T00:00:00Z")], dtype="datetime64[ns, UTC]"),
+            "enter_long": [1],
+        }
+    )
+    second = pd.DataFrame(
+        {
+            "date": ["2023-12-31T19:00:00-05:00"],
+            "enter_long": [True],
+        }
+    )
+
+    result = compare_signal_results(
+        {
+            "StrategyA": {"BTC/USDT": first},
+            "StrategyB": {"BTC/USDT": second},
+        }
+    )
+
+    assert result is None
+
+
+def test_compare_signal_results_reports_replaced_candle_date():
+    first = pd.DataFrame({"date": ["2024-01-01T00:00:00Z"]})
+    second = pd.DataFrame({"date": ["2024-01-01T00:05:00Z"]})
+
+    result = compare_signal_results(
+        {
+            "StrategyA": {"BTC/USDT": first},
+            "StrategyB": {"BTC/USDT": second},
+        }
+    )
+
+    assert result == (
+        "StrategyB signal candle dates differ from StrategyA on BTC/USDT: missing candle "
+        "2024-01-01T00:00:00+00:00, unexpected candle 2024-01-01T00:05:00+00:00"
+    )
+
+
+def test_compare_signal_results_rejects_duplicate_candle_dates():
+    duplicate = pd.DataFrame({"date": ["2024-01-01T00:00:00Z", "2024-01-01T00:00:00Z"]})
+    single = duplicate.iloc[:1]
+
+    result = compare_signal_results(
+        {
+            "StrategyA": {"BTC/USDT": duplicate},
+            "StrategyB": {"BTC/USDT": single},
+        }
+    )
+
+    assert result == (
+        "StrategyA produced duplicate signal candles on BTC/USDT at 2024-01-01T00:00:00+00:00"
+    )
+
+
+def test_compare_signal_results_requires_two_results():
+    result = compare_signal_results({"StrategyA": {}})
+
+    assert result == "at least two strategy signal results are required"

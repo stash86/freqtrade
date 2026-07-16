@@ -669,7 +669,7 @@ This will save the results to `user_data/backtest_results/backtest-result-<datet
 There will be an additional table comparing win/losses of the different strategies (identical to the "Total" row in the first table).
 Detailed output for all strategies one after the other will be available, so make sure to scroll up to see the details per strategy.
 
-To verify that strategies produce the same executed trades, add `--equal`:
+To verify that strategies produce the same executed trades, add `--equal` (equivalent to `--equal trades`):
 
 ``` bash
 freqtrade backtesting --timerange 20180401-20180410 --timeframe 5m --strategy-list Strategy001 Strategy002 --equal
@@ -679,8 +679,20 @@ Every strategy is compared with the first strategy in the list. Trades are match
 Floating-point values allow a small tolerance for numerical noise.
 A difference is reported with the first mismatching trade and field, and the command exits with a non-zero status.
 
-`--equal` compares executed trades, not the raw entry and exit signal columns.
-Different signals that are rejected due to balance, protections, or `max_open_trades` can therefore still produce equal backtest results.
+To compare the strategy signal columns instead, use `--equal signals`:
+
+``` bash
+freqtrade backtesting --timerange 20180401-20180410 --timeframe 5m --strategy-list Strategy001 Strategy002 --equal signals
+```
+
+Signal mode compares `enter_long`, `exit_long`, `enter_short`, `exit_short`, `enter_tag`, and `exit_tag` for every pair and candle after startup and timerange trimming.
+These are the canonical, unshifted strategy outputs, including the final candle; tags are compared even on candles without an active entry or exit signal.
+Missing signal columns and empty tags are normalized to their inactive values.
+Indicator columns are not compared.
+
+Backtest cache reuse is disabled in signal mode because existing result files do not contain the complete signal grid.
+Signal comparison cannot be combined with `--enable-dynamic-pairlist`, whose state changes during a multi-strategy backtest.
+Equal signals do not guarantee equal trades: ROI, stop-loss, callbacks, protections, and position adjustment can still produce different outcomes.
 
 ```
 ================================================== STRATEGY SUMMARY ===================================================================
