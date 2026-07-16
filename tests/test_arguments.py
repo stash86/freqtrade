@@ -173,6 +173,7 @@ def test_parse_args_backtesting_custom() -> None:
         CURRENT_TEST_STRATEGY,
         "SampleStrategy",
         "--equal",
+        "--timed",
     ]
     call_args = Arguments(args).get_parsed_arg()
     assert call_args["config"] == ["test_conf.json"]
@@ -183,6 +184,7 @@ def test_parse_args_backtesting_custom() -> None:
     assert isinstance(call_args["strategy_list"], list)
     assert len(call_args["strategy_list"]) == 2
     assert call_args["equal"] == "trades"
+    assert call_args["timed"] == "full"
 
 
 def test_parse_args_equal_is_backtesting_only() -> None:
@@ -196,6 +198,21 @@ def test_parse_args_equal_is_backtesting_only() -> None:
     for command in ("hyperopt", "lookahead-analysis"):
         with pytest.raises(SystemExit, match=r"2"):
             Arguments([command, "--equal"]).get_parsed_arg()
+
+
+def test_parse_args_timed_is_backtesting_only() -> None:
+    assert Arguments(["backtesting"]).get_parsed_arg()["timed"] is False
+    assert Arguments(["backtesting", "--timed"]).get_parsed_arg()["timed"] == "full"
+    for mode in ("full", "indicators", "signals"):
+        assert Arguments(["backtesting", "--timed", mode]).get_parsed_arg()["timed"] == mode
+
+    for mode in ("indicator", "signal", "invalid"):
+        with pytest.raises(SystemExit, match=r"2"):
+            Arguments(["backtesting", "--timed", mode]).get_parsed_arg()
+
+    for command in ("hyperopt", "lookahead-analysis"):
+        with pytest.raises(SystemExit, match=r"2"):
+            Arguments([command, "--timed"]).get_parsed_arg()
 
 
 def test_parse_args_hyperopt_custom() -> None:

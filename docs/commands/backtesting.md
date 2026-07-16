@@ -15,6 +15,7 @@ usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
                              [--timeframe-detail TIMEFRAME_DETAIL]
                              [--strategy-list STRATEGY_LIST [STRATEGY_LIST ...]]
                              [--equal [{trades,signals}]]
+                             [--timed [{full,indicators,signals}]]
                              [--export {none,trades,signals}]
                              [--backtest-filename PATH]
                              [--backtest-directory PATH]
@@ -70,6 +71,11 @@ options:
                         Fail unless all strategies supplied with --strategy-
                         list produce identical trades or signals (default:
                         trades).
+  --timed [{full,indicators,signals}]
+                        Measure each strategy's runtime for the selected
+                        phase: full backtest, indicators only, or indicators
+                        plus entry/exit signals (default: full). Disables
+                        backtest result caching.
   --export {none,trades,signals}
                         Export backtest results (default: trades).
   --backtest-filename, --export-filename PATH

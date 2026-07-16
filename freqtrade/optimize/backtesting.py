@@ -11,6 +11,7 @@ from collections import defaultdict
 from contextlib import nullcontext
 from copy import deepcopy
 from datetime import datetime, timedelta
+from time import perf_counter
 from typing import TYPE_CHECKING
 
 from numpy import isnan, nan
@@ -169,8 +170,10 @@ class Backtesting:
         self.rejected_dict: dict[str, list] = {}
         self.starting_balance: float = 0.0
         self.wallet_captures: list = []
+        self._signal_calculation_time: float = 0.0
 
         self._validate_equal_mode()
+        self._validate_timed_mode()
 
         self._exchange_name = self.config["exchange"]["name"]
         self.__initial_backtest = exchange is None
@@ -257,6 +260,14 @@ class Backtesting:
         equal = self.config.get("equal")
         # Keep direct configuration users of the original boolean flag compatible.
         return "trades" if equal is True else equal or None
+
+    def _get_timed_mode(self) -> str | None:
+        timed = self.config.get("timed")
+        return "full" if timed is True else timed or None
+
+    def _validate_timed_mode(self) -> None:
+        if self._get_timed_mode() not in (None, "full", "indicators", "signals"):
+            raise OperationalException("--timed must be either 'full', 'indicators', or 'signals'.")
 
     def _validate_equal_mode(self) -> None:
         equal_mode = self._get_equal_mode()
@@ -570,6 +581,7 @@ class Backtesting:
         """
 
         data: dict = {}
+        time_signals = self._get_timed_mode() == "signals"
         self._set_progress_step(BacktestState.CONVERT, len(processed))
 
         # Create dict with data
@@ -581,7 +593,10 @@ class Backtesting:
             if not pair_data.empty:
                 # Cleanup from prior runs
                 pair_data.drop(HEADERS[5:] + ["buy", "sell"], axis=1, errors="ignore")
+            signal_start = perf_counter() if time_signals else 0.0
             df_analyzed = self.strategy.ft_advise_signals(pair_data, {"pair": pair})
+            if time_signals:
+                self._signal_calculation_time += perf_counter() - signal_start
             # Update dataprovider cache
             self.dataprovider._set_cached_df(
                 pair, self.timeframe, df_analyzed, self.config["candle_type_def"]
@@ -1827,6 +1842,7 @@ class Backtesting:
         self.wallets.update()
         # Use dict of lists with data for performance
         # (looping lists is a lot faster than pandas DataFrames)
+        self._signal_calculation_time = 0.0
         data: dict = self._get_ohlcv_as_lists(processed)
         self._capture_strategy_signals(self.strategy.get_strategy_name(), processed)
 
@@ -1876,11 +1892,17 @@ class Backtesting:
         strategy_name = strat.get_strategy_name()
         logger.info(f"Running backtesting for Strategy {strategy_name}")
         backtest_start_time = dt_now()
+        timed_mode = self._get_timed_mode()
+        full_start = perf_counter() if timed_mode == "full" else 0.0
         self._reset_signal_comparison_state()
         self._set_strategy(strat)
 
         # need to reprocess data every time to populate signals
+        indicator_start = perf_counter() if timed_mode in ("indicators", "signals") else 0.0
         preprocessed = self.strategy.advise_all_indicators(data)
+        indicator_duration = (
+            perf_counter() - indicator_start if timed_mode in ("indicators", "signals") else 0.0
+        )
 
         # Trim startup period from analyzed dataframe
         # This only used to determine if trimming would result in an empty dataframe
@@ -1903,6 +1925,14 @@ class Backtesting:
             start_date=min_date,
             end_date=max_date,
         )
+        backtest_run_duration = None
+        if timed_mode == "full":
+            backtest_run_duration = perf_counter() - full_start
+        elif timed_mode == "indicators":
+            backtest_run_duration = indicator_duration
+        elif timed_mode == "signals":
+            backtest_run_duration = indicator_duration + self._signal_calculation_time
+
         backtest_end_time = dt_now()
         results.update(
             {
@@ -1911,6 +1941,8 @@ class Backtesting:
                 "backtest_end_time": int(backtest_end_time.timestamp()),
             }
         )
+        if backtest_run_duration is not None:
+            results["backtest_run_duration"] = backtest_run_duration
         self.all_bt_content[strategy_name] = results
 
         if self.config.get("export", "none") == "signals" and self._is_backtest_runmode:
@@ -1942,6 +1974,11 @@ class Backtesting:
             strategy.get_strategy_name(): get_strategy_run_id(strategy)
             for strategy in self.strategylist
         }
+
+        if timed_mode := self._get_timed_mode():
+            timed_option = "--timed" if timed_mode == "full" else f"--timed {timed_mode}"
+            logger.info(f"Backtest result caching disabled for {timed_option}.")
+            return
 
         if self._get_equal_mode() == "signals":
             logger.info("Backtest result caching disabled for --equal signals.")

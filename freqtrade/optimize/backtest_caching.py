@@ -16,7 +16,14 @@ def get_strategy_run_id(strategy) -> str:
     config = deepcopy(strategy.config)
 
     # Options that have no impact on results of individual backtest.
-    not_important_keys = ("strategy_list", "original_config", "telegram", "api_server", "equal")
+    not_important_keys = (
+        "strategy_list",
+        "original_config",
+        "telegram",
+        "api_server",
+        "equal",
+        "timed",
+    )
     for k in not_important_keys:
         if k in config:
             del config[k]

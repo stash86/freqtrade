@@ -338,6 +338,8 @@ def generate_strategy_comparison(bt_stats: dict) -> list[dict]:
         tabular_data[-1]["max_drawdown_abs"] = fmt_coin(
             result["max_drawdown_abs"], result["stake_currency"], False
         )
+        if "backtest_run_duration" in result:
+            tabular_data[-1]["backtest_run_duration"] = result["backtest_run_duration"]
     return tabular_data
 
 
@@ -741,6 +743,9 @@ def generate_strategy_stats(
         **daily_stats,
         **trade_stats,
     }
+
+    if "backtest_run_duration" in content:
+        strat_stats["backtest_run_duration"] = content["backtest_run_duration"]
 
     try:
         drawdown = calculate_max_drawdown(

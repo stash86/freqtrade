@@ -26,6 +26,7 @@ from freqtrade.optimize.optimize_reports import (
     generate_periodic_breakdown_stats,
     generate_strategy_comparison,
     generate_trading_stats,
+    show_backtest_results,
     show_sorted_pairlist,
     store_backtest_results,
     text_table_add_metrics,
@@ -148,6 +149,7 @@ def test_generate_backtest_stats(default_conf, testdatadir, tmp_path):
             "replaced_entry_orders": 0,
             "backtest_start_time": dt_ts() // 1000,
             "backtest_end_time": dt_ts() // 1000,
+            "backtest_run_duration": 1.2345,
             "run_id": "123",
         }
     }
@@ -167,6 +169,8 @@ def test_generate_backtest_stats(default_conf, testdatadir, tmp_path):
     assert strat_stats["backtest_start"] == min_date.strftime(DATETIME_PRINT_FORMAT)
     assert strat_stats["backtest_end"] == max_date.strftime(DATETIME_PRINT_FORMAT)
     assert strat_stats["total_trades"] == len(results["DefStrat"]["results"])
+    assert strat_stats["backtest_run_duration"] == 1.2345
+    assert stats["strategy_comparison"][0]["backtest_run_duration"] == 1.2345
     # Above sample had no losing trade
     assert strat_stats["max_drawdown_account"] == 0.0
 
@@ -618,6 +622,62 @@ def test_text_table_strategy(testdatadir, capsys):
         r".*TestStrategy .* 179 .* 0.08 .* 0.02608550 .* "
         r"260.85 .* 3:40:00 .* 170     0     9  95.0 .* 0.00308222 BTC  8.67%.*",
         text,
+    )
+
+
+@pytest.mark.parametrize(
+    ("timed", "expected_header"),
+    [
+        (False, None),
+        (True, "Backtest Time"),
+        ("full", "Backtest Time"),
+        ("indicators", "Indicators Time"),
+        ("signals", "Signals Time"),
+    ],
+)
+def test_text_table_strategy_timed(testdatadir, mocker, timed, expected_header):
+    filename = testdatadir / "backtest_results/backtest-result_multistrat.json"
+    strategy_results = load_backtest_stats(filename)["strategy_comparison"]
+    strategy_results[0]["backtest_run_duration"] = 1.2346
+    print_mock = mocker.patch("freqtrade.optimize.optimize_reports.bt_output.print_rich_table")
+
+    text_table_strategy(strategy_results, "BTC", "STRATEGY SUMMARY", timed=timed)
+
+    output, headers = print_mock.call_args.args[:2]
+    if expected_header:
+        assert headers[-1] == expected_header
+        assert output[0][-1] == "1.235s"
+        assert output[1][-1] == "N/A"
+    else:
+        assert headers[-1] == "Expectancy (Ratio)"
+        assert output[0][-1] != "1.235s"
+
+
+def test_show_backtest_results_passes_timed(mocker):
+    strategy_comparison = [{"key": "StrategyA"}]
+    backtest_stats = {
+        "strategy": {
+            "StrategyA": {
+                "backtest_start": "2024-01-01 00:00:00",
+                "backtest_end": "2024-01-02 00:00:00",
+                "max_open_trades": 1,
+            }
+        },
+        "strategy_comparison": strategy_comparison,
+    }
+    mocker.patch("freqtrade.optimize.optimize_reports.bt_output.show_backtest_result")
+    table_mock = mocker.patch("freqtrade.optimize.optimize_reports.bt_output.text_table_strategy")
+
+    show_backtest_results(
+        {"stake_currency": "BTC", "timed": "signals"},  # type: ignore[arg-type]
+        backtest_stats,  # type: ignore[arg-type]
+    )
+
+    table_mock.assert_called_once_with(
+        strategy_comparison,
+        "BTC",
+        "STRATEGY SUMMARY",
+        timed="signals",
     )
 
 

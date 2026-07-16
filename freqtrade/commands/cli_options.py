@@ -227,6 +227,16 @@ AVAILABLE_CLI_OPTIONS = {
         choices=("trades", "signals"),
         default=False,
     ),
+    "timed": Arg(
+        "--timed",
+        help="Measure each strategy's runtime for the selected phase: full backtest, indicators "
+        "only, or indicators plus entry/exit signals (default: full). Disables backtest result "
+        "caching.",
+        nargs="?",
+        const="full",
+        choices=("full", "indicators", "signals"),
+        default=False,
+    ),
     "backtest_notes": Arg(
         "--notes",
         help="Add notes to the backtest results.",
