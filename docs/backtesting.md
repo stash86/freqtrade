@@ -514,7 +514,6 @@ To save time, by default backtest will reuse a cached result from within the las
 !!! Warning
     Caching is automatically disabled for open-ended timeranges (`--timerange 20210101-`), as freqtrade cannot ensure reliably that the underlying data didn't change. It can also use cached results where it shouldn't if the original backtest had missing data at the end, which was fixed by downloading more data.
     In this instance, please use `--cache none` once to force a fresh backtest.
-    Caching is also disabled when `--timed` is used because every strategy must run to produce a meaningful timing measurement.
 
 ### Further backtest-result analysis
 
@@ -670,22 +669,7 @@ This will save the results to `user_data/backtest_results/backtest-result-<datet
 There will be an additional table comparing win/losses of the different strategies (identical to the "Total" row in the first table).
 Detailed output for all strategies one after the other will be available, so make sure to scroll up to see the details per strategy.
 
-To measure the elapsed time needed by each strategy, add `--timed`. Without an explicit mode, it is equivalent to `--timed full`:
-
-``` bash
-freqtrade backtesting --timerange 20180401-20180410 --timeframe 5m --strategy-list Strategy001 Strategy002 --timed
-```
-
-The available timing modes are:
-
-- `full`: Measure the complete per-strategy run, including strategy setup, indicator and entry/exit signal calculation, and trade simulation.
-- `indicators`: Measure only indicator calculation.
-- `signals`: Measure indicator calculation followed by entry and exit signal calculation. Trade simulation is excluded from the measurement.
-
-Every mode adds a scope-specific timing column to the strategy summary. Shared candle-data loading, statistics and report generation, and result export are excluded from all measurements.
-Backtest cache reuse is disabled for timed runs so every strategy is executed and measured. Timings are wall-clock measurements and can vary with system load, strategy order, and warmed caches, so they are best used as an approximate comparison rather than a precise benchmark.
-
-For repeated, single-strategy measurements without trade simulation, use the dedicated [strategy benchmark](benchmark.md) command.
+For repeated, single-strategy indicator and signal timing measurements, use the dedicated [strategy benchmark](benchmark.md) command.
 
 To verify that strategies produce the same executed trades, add `--equal` (equivalent to `--equal trades`):
 

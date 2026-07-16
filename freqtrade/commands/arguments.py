@@ -55,7 +55,6 @@ ARGS_BACKTEST = [
     "timeframe_detail",
     "strategy_list",
     "equal",
-    "timed",
     "export",
     "exportfilename",
     "exportdirectory",
@@ -285,7 +284,6 @@ ARGS_LOOKAHEAD_ANALYSIS = [
         "backtest_breakdown",
         "backtest_notes",
         "equal",
-        "timed",
     )
 ] + [
     "minimum_trade_amount",

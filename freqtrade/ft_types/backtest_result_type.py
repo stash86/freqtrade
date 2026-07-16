@@ -51,7 +51,6 @@ class BacktestContentTypeIcomplete(TypedDict, total=False):
     final_balance: float
     backtest_start_time: int
     backtest_end_time: int
-    backtest_run_duration: float
     run_id: str
     wallet_summary: DataFrame
 

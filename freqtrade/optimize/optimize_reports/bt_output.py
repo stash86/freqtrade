@@ -154,9 +154,7 @@ def text_table_periodic_breakdown(
     print_rich_table(output, headers, summary=f"{period.upper()} BREAKDOWN")
 
 
-def text_table_strategy(
-    strategy_results, stake_currency: str, title: str, timed: bool | str = False
-):
+def text_table_strategy(strategy_results, stake_currency: str, title: str):
     """
     Generate summary table per strategy
     :param strategy_results: Dict of <Strategyname: DataFrame> containing results for all strategies
@@ -167,14 +165,6 @@ def text_table_strategy(
     # therefore we slip this column in only for strategy summary here.
     headers.append("Drawdown")
     headers.append("Expectancy (Ratio)")
-    if timed:
-        if timed == "indicators":
-            timing_header = "Indicators Time"
-        elif timed == "signals":
-            timing_header = "Signals Time"
-        else:
-            timing_header = "Backtest Time"
-        headers.append(timing_header)
 
     # Align drawdown string on the center two space separator.
     if "max_drawdown_account" in strategy_results[0]:
@@ -201,15 +191,6 @@ def text_table_strategy(
             generate_wins_draws_losses(t["wins"], t["draws"], t["losses"]),
             drawdown,
             f"{t.get('expectancy', 0):.3f} ({t.get('expectancy_ratio', 100):.3f})",
-            *(
-                [
-                    f"{t['backtest_run_duration']:.3f}s"
-                    if t.get("backtest_run_duration") is not None
-                    else "N/A"
-                ]
-                if timed
-                else []
-            ),
         ]
         for t, drawdown in zip(strategy_results, drawdown, strict=False)
     ]
@@ -606,7 +587,6 @@ def show_backtest_results(config: Config, backtest_stats: BacktestResultType):
             backtest_stats["strategy_comparison"],
             stake_currency,
             "STRATEGY SUMMARY",
-            timed=config.get("timed", False),
         )
 
 

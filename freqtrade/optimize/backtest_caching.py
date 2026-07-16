@@ -22,7 +22,6 @@ def get_strategy_run_id(strategy) -> str:
         "telegram",
         "api_server",
         "equal",
-        "timed",
     )
     for k in not_important_keys:
         if k in config:

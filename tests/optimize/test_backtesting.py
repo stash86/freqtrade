@@ -379,100 +379,6 @@ def test_backtesting_equal_rejects_invalid_modes(config, message) -> None:
         backtesting._validate_equal_mode()
 
 
-def test_backtesting_timed_rejects_invalid_mode() -> None:
-    backtesting = Backtesting.__new__(Backtesting)
-    backtesting.config = {"timed": "signal"}
-
-    with pytest.raises(
-        OperationalException,
-        match=r"--timed must be either 'full', 'indicators', or 'signals'\.",
-    ):
-        backtesting._validate_timed_mode()
-
-
-@pytest.mark.parametrize(
-    ("timed_mode", "perf_values", "signal_duration", "expected_duration"),
-    [
-        ("full", [10.0, 14.5], 0.0, 4.5),
-        ("indicators", [10.0, 11.25], 0.0, 1.25),
-        ("signals", [10.0, 11.25], 2.5, 3.75),
-    ],
-)
-def test_backtesting_timed_modes_measure_requested_scope(
-    mocker, timed_mode, perf_values, signal_duration, expected_duration
-) -> None:
-    candle_date = pd.Timestamp("2024-01-01T00:00:00Z")
-    processed = {"BTC/USDT": pd.DataFrame({"date": [candle_date]})}
-    strategy = MagicMock()
-    strategy.get_strategy_name.return_value = "StrategyA"
-    strategy.advise_all_indicators.return_value = processed
-
-    backtesting = Backtesting.__new__(Backtesting)
-    backtesting.config = {"timed": timed_mode, "export": "none"}
-    backtesting.required_startup = 0
-    backtesting.run_ids = {}
-    backtesting.all_bt_content = {}
-    backtesting._is_backtest_runmode = False
-    backtesting._set_progress_step = MagicMock()
-    backtesting._reset_signal_comparison_state = MagicMock()
-
-    def set_strategy(selected_strategy):
-        backtesting.strategy = selected_strategy
-
-    def run_backtest(**kwargs):
-        backtesting._signal_calculation_time = signal_duration
-        return {}
-
-    backtesting._set_strategy = MagicMock(side_effect=set_strategy)
-    backtesting.backtest = MagicMock(side_effect=run_backtest)
-    perf_counter = mocker.patch(
-        "freqtrade.optimize.backtesting.perf_counter", side_effect=perf_values
-    )
-
-    backtesting.backtest_one_strategy(strategy, processed, TimeRange())
-
-    assert perf_counter.call_count == 2
-    assert backtesting.all_bt_content["StrategyA"]["backtest_run_duration"] == pytest.approx(
-        expected_duration
-    )
-
-
-def test_backtesting_timed_signals_measures_signal_callbacks(mocker) -> None:
-    dataframe = pd.DataFrame(
-        {
-            "date": pd.to_datetime(["2024-01-01 00:00:00", "2024-01-01 00:05:00"], utc=True),
-            "open": [1.0, 1.0],
-            "high": [1.1, 1.1],
-            "low": [0.9, 0.9],
-            "close": [1.0, 1.0],
-            "volume": [10.0, 10.0],
-        }
-    )
-    strategy = MagicMock()
-    strategy.ft_advise_signals.side_effect = lambda frame, _: frame.assign(enter_long=[1, 0])
-
-    backtesting = Backtesting.__new__(Backtesting)
-    backtesting.config = {"timed": "signals", "candle_type_def": CandleType.SPOT}
-    backtesting.strategy = strategy
-    backtesting.dataprovider = MagicMock()
-    backtesting.timeframe = "5m"
-    backtesting.timerange = TimeRange()
-    backtesting.required_startup = 0
-    backtesting._signal_calculation_time = 0.0
-    backtesting._set_progress_step = MagicMock()
-    backtesting.check_abort = MagicMock()
-    backtesting._increment_progress = MagicMock()
-    perf_counter = mocker.patch(
-        "freqtrade.optimize.backtesting.perf_counter", side_effect=[20.0, 20.375]
-    )
-
-    converted = backtesting._get_ohlcv_as_lists({"BTC/USDT": dataframe})
-
-    assert perf_counter.call_count == 2
-    assert backtesting._signal_calculation_time == pytest.approx(0.375)
-    assert len(converted["BTC/USDT"]) == 1
-
-
 def test_backtesting_equal_difference_raises() -> None:
     backtesting = Backtesting.__new__(Backtesting)
     backtesting.config = {"equal": True}
@@ -618,30 +524,6 @@ def test_backtesting_equal_signals_disables_cache(mocker, caplog) -> None:
     get_run_id.assert_called_once_with(strategy)
     find_cached.assert_not_called()
     assert log_has("Backtest result caching disabled for --equal signals.", caplog)
-
-
-@pytest.mark.parametrize(
-    ("timed_mode", "timed_option"),
-    [
-        ("full", "--timed"),
-        ("indicators", "--timed indicators"),
-        ("signals", "--timed signals"),
-    ],
-)
-def test_backtesting_timed_disables_cache(mocker, caplog, timed_mode, timed_option) -> None:
-    strategy = MagicMock()
-    strategy.get_strategy_name.return_value = "StrategyA"
-    backtesting = Backtesting.__new__(Backtesting)
-    backtesting.config = {"timed": timed_mode}
-    backtesting.strategylist = [strategy]
-    mocker.patch("freqtrade.optimize.backtesting.get_strategy_run_id", return_value="run-id")
-    find_cached = mocker.patch("freqtrade.optimize.backtesting.find_existing_backtest_stats")
-
-    backtesting.load_prior_backtest()
-
-    assert backtesting.run_ids == {"StrategyA": "run-id"}
-    find_cached.assert_not_called()
-    assert log_has(f"Backtest result caching disabled for {timed_option}.", caplog)
 
 
 def test_data_with_fee(default_conf, mocker) -> None:
@@ -3096,8 +2978,6 @@ def test_get_strategy_run_id(default_conf_usdt, equal):
     x = get_strategy_run_id(strategy)
     assert isinstance(x, str)
     strategy.config["equal"] = equal
-    assert get_strategy_run_id(strategy) == x
-    strategy.config["timed"] = "signals"
     assert get_strategy_run_id(strategy) == x
 
 
