@@ -54,6 +54,7 @@ ARGS_BACKTEST = [
     "dry_run_wallet",
     "timeframe_detail",
     "strategy_list",
+    "equal",
     "export",
     "exportfilename",
     "exportdirectory",
@@ -267,7 +268,14 @@ ARGS_STRATEGY_UPDATER = ["strategy_list", "strategy_path", "recursive_strategy_s
 ARGS_LOOKAHEAD_ANALYSIS = [
     a
     for a in ARGS_BACKTEST
-    if a not in ("position_stacking", "backtest_cache", "backtest_breakdown", "backtest_notes")
+    if a
+    not in (
+        "position_stacking",
+        "backtest_cache",
+        "backtest_breakdown",
+        "backtest_notes",
+        "equal",
+    )
 ] + [
     "minimum_trade_amount",
     "targeted_trade_amount",

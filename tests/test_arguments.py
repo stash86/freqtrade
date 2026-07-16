@@ -172,6 +172,7 @@ def test_parse_args_backtesting_custom() -> None:
         "--strategy-list",
         CURRENT_TEST_STRATEGY,
         "SampleStrategy",
+        "--equal",
     ]
     call_args = Arguments(args).get_parsed_arg()
     assert call_args["config"] == ["test_conf.json"]
@@ -181,6 +182,15 @@ def test_parse_args_backtesting_custom() -> None:
     assert call_args["timeframe"] == "1m"
     assert isinstance(call_args["strategy_list"], list)
     assert len(call_args["strategy_list"]) == 2
+    assert call_args["equal"] is True
+
+
+def test_parse_args_equal_is_backtesting_only() -> None:
+    assert Arguments(["backtesting"]).get_parsed_arg()["equal"] is False
+
+    for command in ("hyperopt", "lookahead-analysis"):
+        with pytest.raises(SystemExit, match=r"2"):
+            Arguments([command, "--equal"]).get_parsed_arg()
 
 
 def test_parse_args_hyperopt_custom() -> None:

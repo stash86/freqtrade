@@ -53,6 +53,7 @@ from freqtrade.ft_types import (
 from freqtrade.leverage.liquidation_price import update_liquidation_prices
 from freqtrade.mixins import LoggingMixin
 from freqtrade.optimize.backtest_caching import get_strategy_run_id
+from freqtrade.optimize.backtest_compare import compare_backtest_results
 from freqtrade.optimize.optimize_reports import (
     convert_bt_wallet_collection,
     generate_backtest_stats,
@@ -163,6 +164,15 @@ class Backtesting:
         self.rejected_dict: dict[str, list] = {}
         self.starting_balance: float = 0.0
         self.wallet_captures: list = []
+
+        if self.config.get("equal"):
+            strategy_list = self.config.get("strategy_list", [])
+            if len(strategy_list) < 2:
+                raise OperationalException(
+                    "--equal requires at least two strategies supplied with --strategy-list."
+                )
+            if len(strategy_list) != len(set(strategy_list)):
+                raise OperationalException("--equal requires each strategy name to be unique.")
 
         self._exchange_name = self.config["exchange"]["name"]
         self.__initial_backtest = exchange is None
@@ -1905,6 +1915,20 @@ class Backtesting:
                 self.config["user_data_dir"] / "backtest_results", self.run_ids, min_backtest_date
             )
 
+    def _check_strategy_results_equal(self) -> None:
+        if not self.config.get("equal"):
+            return
+
+        if difference := compare_backtest_results(self.results["strategy"]):
+            raise OperationalException(f"Backtest equality check failed: {difference}.")
+
+        strategy_names = ", ".join(self.results["strategy"])
+        trade_count = len(next(iter(self.results["strategy"].values()))["trades"])
+        print(
+            f"Backtest equality check passed: {strategy_names} produced "
+            f"{trade_count} identical trades."
+        )
+
     def start(self) -> None:
         """
         Run backtesting end-to-end
@@ -1977,3 +2001,5 @@ class Backtesting:
         if len(self.strategylist) > 0:
             # Show backtest results
             show_backtest_results(self.config, self.results)
+
+        self._check_strategy_results_equal()

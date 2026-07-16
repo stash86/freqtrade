@@ -318,6 +318,42 @@ def test_backtesting_init_no_timeframe(mocker, default_conf, caplog) -> None:
         Backtesting(default_conf)
 
 
+def test_backtesting_equal_requires_multiple_unique_strategies(default_conf) -> None:
+    default_conf["equal"] = True
+
+    with pytest.raises(
+        OperationalException,
+        match=r"--equal requires at least two strategies supplied with --strategy-list\.",
+    ):
+        Backtesting(default_conf)
+
+    default_conf["strategy_list"] = [CURRENT_TEST_STRATEGY, CURRENT_TEST_STRATEGY]
+    with pytest.raises(
+        OperationalException, match=r"--equal requires each strategy name to be unique\."
+    ):
+        Backtesting(default_conf)
+
+
+def test_backtesting_equal_difference_raises() -> None:
+    backtesting = Backtesting.__new__(Backtesting)
+    backtesting.config = {"equal": True}
+    backtesting.results = {
+        "strategy": {
+            "StrategyA": {"trades": [{"pair": "BTC/USDT", "open_timestamp": 1}]},
+            "StrategyB": {"trades": [{"pair": "ETH/USDT", "open_timestamp": 1}]},
+        }
+    }
+
+    with pytest.raises(
+        OperationalException,
+        match=(
+            r"Backtest equality check failed: StrategyB differs from StrategyA at trade 1 .*"
+            r"field pair: 'ETH/USDT' != 'BTC/USDT'\."
+        ),
+    ):
+        backtesting._check_strategy_results_equal()
+
+
 def test_data_with_fee(default_conf, mocker) -> None:
     patch_exchange(mocker)
     default_conf["fee"] = 0.01234
@@ -2080,7 +2116,7 @@ def test_backtest_start_timerange(default_conf, mocker, caplog, testdatadir):
 
 
 @pytest.mark.filterwarnings("ignore:deprecated")
-def test_backtest_start_multi_strat(default_conf, mocker, caplog, testdatadir):
+def test_backtest_start_multi_strat(default_conf, mocker, caplog, testdatadir, capsys):
     default_conf.update(
         {
             "use_exit_signal": True,
@@ -2144,6 +2180,7 @@ def test_backtest_start_multi_strat(default_conf, mocker, caplog, testdatadir):
         "--strategy-list",
         CURRENT_TEST_STRATEGY,
         "StrategyTestV2",
+        "--equal",
     ]
     args = get_args(args)
     start_backtesting(args)
@@ -2153,6 +2190,10 @@ def test_backtest_start_multi_strat(default_conf, mocker, caplog, testdatadir):
     assert strattable_mock.call_count == 1
     assert tag_metrics_mock.call_count == 6
     assert strat_summary.call_count == 1
+    assert (
+        f"Backtest equality check passed: {CURRENT_TEST_STRATEGY}, StrategyTestV2 produced "
+        "0 identical trades." in capsys.readouterr().out
+    )
 
     # check the logs, that will contain the backtest result
     exists = [
@@ -2763,6 +2804,8 @@ def test_get_strategy_run_id(default_conf_usdt):
     strategy = StrategyResolver.load_strategy(default_conf_usdt)
     x = get_strategy_run_id(strategy)
     assert isinstance(x, str)
+    strategy.config["equal"] = True
+    assert get_strategy_run_id(strategy) == x
 
 
 def test_get_backtest_metadata_filename():

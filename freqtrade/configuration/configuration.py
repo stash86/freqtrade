@@ -334,6 +334,7 @@ class Configuration:
             ("export", "Parameter --export detected: {} ..."),
             ("backtest_breakdown", "Parameter --breakdown detected ..."),
             ("backtest_cache", "Parameter --cache={} detected ..."),
+            ("equal", "Parameter --equal detected. Comparing strategy trades ..."),
             ("disableparamexport", "Parameter --disableparamexport detected: {} ..."),
             ("freqai_backtest_live_models", "Parameter --freqai-backtest-live-models detected ..."),
             ("backtest_notes", "Parameter --notes detected: {} ..."),

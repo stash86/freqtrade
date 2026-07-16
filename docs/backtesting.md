@@ -669,6 +669,19 @@ This will save the results to `user_data/backtest_results/backtest-result-<datet
 There will be an additional table comparing win/losses of the different strategies (identical to the "Total" row in the first table).
 Detailed output for all strategies one after the other will be available, so make sure to scroll up to see the details per strategy.
 
+To verify that strategies produce the same executed trades, add `--equal`:
+
+``` bash
+freqtrade backtesting --timerange 20180401-20180410 --timeframe 5m --strategy-list Strategy001 Strategy002 --equal
+```
+
+Every strategy is compared with the first strategy in the list. Trades are matched independently of their output order, and entry/exit timestamps, pairs, direction, prices, amounts, profit, reasons, tags, and orders must match.
+Floating-point values allow a small tolerance for numerical noise.
+A difference is reported with the first mismatching trade and field, and the command exits with a non-zero status.
+
+`--equal` compares executed trades, not the raw entry and exit signal columns.
+Different signals that are rejected due to balance, protections, or `max_open_trades` can therefore still produce equal backtest results.
+
 ```
 ================================================== STRATEGY SUMMARY ===================================================================
 | Strategy    |  Trades |   Avg Profit % |   Tot Profit BTC |   Tot Profit % | Avg Duration   |  Wins |  Draws | Losses | Drawdown % |

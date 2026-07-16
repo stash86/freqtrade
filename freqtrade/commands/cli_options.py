@@ -218,6 +218,12 @@ AVAILABLE_CLI_OPTIONS = {
         "or via command line. ",
         nargs="+",
     ),
+    "equal": Arg(
+        "--equal",
+        help="Fail unless all strategies supplied with --strategy-list produce identical trades.",
+        action="store_true",
+        default=False,
+    ),
     "backtest_notes": Arg(
         "--notes",
         help="Add notes to the backtest results.",

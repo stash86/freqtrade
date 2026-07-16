@@ -546,6 +546,7 @@ def test_setup_configuration_with_stratlist(mocker, default_conf, caplog) -> Non
         "--strategy-list",
         CURRENT_TEST_STRATEGY,
         "TestStrategy",
+        "--equal",
     ]
 
     args = Arguments(arglist).get_parsed_arg()
@@ -565,6 +566,8 @@ def test_setup_configuration_with_stratlist(mocker, default_conf, caplog) -> Non
 
     assert "strategy_list" in config
     assert log_has("Using strategy list of 2 strategies", caplog)
+    assert config["equal"] is True
+    assert log_has("Parameter --equal detected. Comparing strategy trades ...", caplog)
 
     assert "position_stacking" not in config
 
