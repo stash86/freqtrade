@@ -23,6 +23,7 @@ nav:
         - Web Hook: webhook-config.md
     - Data Downloading: data-download.md
     - Backtesting: backtesting.md
+    - Strategy Benchmarking: benchmark.md
     - Hyperopt: hyperopt.md
     - FreqAI:
         - Introduction: freqai.md

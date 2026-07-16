@@ -13,7 +13,11 @@ import pandas as pd
 import pytest
 
 from freqtrade import constants
-from freqtrade.commands.optimize_commands import setup_optimize_configuration, start_backtesting
+from freqtrade.commands.optimize_commands import (
+    setup_optimize_configuration,
+    start_backtesting,
+    start_benchmark,
+)
 from freqtrade.configuration import TimeRange
 from freqtrade.data import history
 from freqtrade.data.btanalysis import BT_DATA_COLUMNS, evaluate_result_multi
@@ -143,6 +147,21 @@ def _trend_alternate(dataframe=None, metadata=None):
 
 
 # Unit tests
+def test_start_benchmark(mocker) -> None:
+    args = {"command": "benchmark", "benchmark_runs": 3}
+    config = {"runmode": RunMode.BACKTEST, "benchmark_runs": 3}
+    setup_mock = mocker.patch(
+        "freqtrade.commands.optimize_commands.setup_optimize_configuration", return_value=config
+    )
+    benchmark_mock = mocker.patch("freqtrade.optimize.benchmark.StrategyBenchmark")
+
+    start_benchmark(args)
+
+    setup_mock.assert_called_once_with(args, RunMode.BACKTEST)
+    benchmark_mock.assert_called_once_with(config)
+    benchmark_mock.return_value.start.assert_called_once_with()
+
+
 def test_setup_optimize_configuration_without_arguments(mocker, default_conf, caplog) -> None:
     patched_configuration_load_config_file(mocker, default_conf)
 

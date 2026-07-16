@@ -336,11 +336,21 @@ class Configuration:
             ("backtest_cache", "Parameter --cache={} detected ..."),
             ("equal", "Parameter --equal={} detected. Comparing strategy outputs ..."),
             ("timed", "Parameter --timed={} detected. Measuring strategy runtimes ..."),
+            ("benchmark_runs", "Parameter --runs={} detected. Setting benchmark runs ..."),
             ("disableparamexport", "Parameter --disableparamexport detected: {} ..."),
             ("freqai_backtest_live_models", "Parameter --freqai-backtest-live-models detected ..."),
             ("backtest_notes", "Parameter --notes detected: {} ..."),
         ]
         self._args_to_config_loop(config, configurations)
+
+        # Zero is a valid number of benchmark warmup runs, so this cannot use
+        # _args_to_config(), which intentionally ignores false-like values.
+        if self.args.get("benchmark_warmup_runs") is not None:
+            config["benchmark_warmup_runs"] = self.args["benchmark_warmup_runs"]
+            logger.info(
+                "Parameter --warmup-runs=%s detected. Setting benchmark warmup runs ...",
+                config["benchmark_warmup_runs"],
+            )
 
         # Hyperopt section
 

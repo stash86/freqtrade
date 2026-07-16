@@ -56,6 +56,25 @@ def test_parse_args_backtesting(mocker) -> None:
     assert call_args["timeframe"] is None
 
 
+def test_main_start_benchmark(mocker) -> None:
+    mocker.patch.object(Path, "is_file", MagicMock(side_effect=[False, True]))
+    benchmark_mock = mocker.patch("freqtrade.commands.start_benchmark")
+    benchmark_mock.__name__ = PropertyMock("start_benchmark")
+
+    with pytest.raises(SystemExit):
+        main(["benchmark", "--strategy", "SampleStrategy", "--runs", "3"])
+
+    benchmark_mock.assert_called_once()
+    call_args = benchmark_mock.call_args[0][0]
+    assert call_args["config"] == ["config.json"]
+    assert call_args["command"] == "benchmark"
+    assert call_args["strategy"] == "SampleStrategy"
+    assert call_args["benchmark_runs"] == 3
+    assert call_args["benchmark_warmup_runs"] is None
+    assert "strategy_list" not in call_args
+    assert callable(call_args["func"])
+
+
 def test_main_start_hyperopt(mocker) -> None:
     mocker.patch.object(Path, "is_file", MagicMock(side_effect=[False, True]))
     hyperopt_mock = mocker.patch("freqtrade.commands.start_hyperopt", MagicMock())

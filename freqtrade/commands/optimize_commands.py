@@ -61,6 +61,19 @@ def start_backtesting(args: dict[str, Any]) -> None:
     backtesting.start()
 
 
+def start_benchmark(args: dict[str, Any]) -> None:
+    """Start the strategy signal benchmark."""
+    # Import here to avoid loading benchmark dependencies when they're not used
+    from freqtrade.optimize.benchmark import StrategyBenchmark
+
+    config = setup_optimize_configuration(args, RunMode.BACKTEST)
+
+    logger.info("Starting freqtrade in Strategy Benchmark mode")
+
+    benchmark = StrategyBenchmark(config)
+    benchmark.start()
+
+
 def start_backtesting_show(args: dict[str, Any]) -> None:
     """
     Show previous backtest result

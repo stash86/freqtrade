@@ -65,6 +65,15 @@ ARGS_BACKTEST = [
     "backtest_notes",
 ]
 
+ARGS_BENCHMARK = [
+    "timeframe",
+    "timerange",
+    "dataformat_ohlcv",
+    "pairs",
+    "benchmark_runs",
+    "benchmark_warmup_runs",
+]
+
 ARGS_HYPEROPT = [
     *ARGS_COMMON_OPTIMIZE,
     "hyperopt_path",
@@ -396,6 +405,7 @@ class Arguments:
             start_analysis_entries_exits,
             start_backtesting,
             start_backtesting_show,
+            start_benchmark,
             start_convert_data,
             start_convert_db,
             start_convert_trades,
@@ -524,6 +534,15 @@ class Arguments:
         )
         backtesting_cmd.set_defaults(func=start_backtesting)
         self._build_args(optionlist=ARGS_BACKTEST, parser=backtesting_cmd)
+
+        # Add benchmark subcommand
+        benchmark_cmd = subparsers.add_parser(
+            "benchmark",
+            help="Benchmark strategy signal calculation.",
+            parents=[_common_parser, _strategy_parser],
+        )
+        benchmark_cmd.set_defaults(func=start_benchmark)
+        self._build_args(optionlist=ARGS_BENCHMARK, parser=benchmark_cmd)
 
         # Add backtesting-show subcommand
         backtesting_show_cmd = subparsers.add_parser(

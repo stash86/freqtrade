@@ -685,6 +685,8 @@ The available timing modes are:
 Every mode adds a scope-specific timing column to the strategy summary. Shared candle-data loading, statistics and report generation, and result export are excluded from all measurements.
 Backtest cache reuse is disabled for timed runs so every strategy is executed and measured. Timings are wall-clock measurements and can vary with system load, strategy order, and warmed caches, so they are best used as an approximate comparison rather than a precise benchmark.
 
+For repeated, single-strategy measurements without trade simulation, use the dedicated [strategy benchmark](benchmark.md) command.
+
 To verify that strategies produce the same executed trades, add `--equal` (equivalent to `--equal trades`):
 
 ``` bash

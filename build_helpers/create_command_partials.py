@@ -38,6 +38,7 @@ def extract_command_partials():
         "trades-to-ohlcv",
         "list-data",
         "backtesting",
+        "benchmark",
         "backtesting-show",
         "backtesting-analysis",
         "edge",

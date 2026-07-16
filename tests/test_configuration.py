@@ -580,6 +580,55 @@ def test_setup_configuration_with_stratlist(mocker, default_conf, caplog) -> Non
     assert log_has("Parameter --export detected: {} ...".format(config["export"]), caplog)
 
 
+def test_setup_benchmark_configuration(mocker, default_conf, caplog) -> None:
+    patched_configuration_load_config_file(mocker, default_conf)
+
+    args = Arguments(
+        [
+            "benchmark",
+            "--config",
+            "config.json",
+            "--strategy",
+            CURRENT_TEST_STRATEGY,
+            "--runs",
+            "7",
+            "--warmup-runs",
+            "0",
+        ]
+    ).get_parsed_arg()
+
+    config = Configuration(args, RunMode.BACKTEST).get_config()
+
+    assert config["runmode"] == RunMode.BACKTEST
+    assert config["strategy"] == CURRENT_TEST_STRATEGY
+    assert config["benchmark_runs"] == 7
+    assert config["benchmark_warmup_runs"] == 0
+    assert "strategy_list" not in args
+    assert log_has("Parameter --runs=7 detected. Setting benchmark runs ...", caplog)
+    assert log_has("Parameter --warmup-runs=0 detected. Setting benchmark warmup runs ...", caplog)
+
+
+def test_setup_benchmark_configuration_preserves_config_runs(mocker, default_conf) -> None:
+    default_conf["benchmark_runs"] = 8
+    default_conf["benchmark_warmup_runs"] = 2
+    patched_configuration_load_config_file(mocker, default_conf)
+
+    args = Arguments(
+        [
+            "benchmark",
+            "--config",
+            "config.json",
+            "--strategy",
+            CURRENT_TEST_STRATEGY,
+        ]
+    ).get_parsed_arg()
+
+    config = Configuration(args, RunMode.BACKTEST).get_config()
+
+    assert config["benchmark_runs"] == 8
+    assert config["benchmark_warmup_runs"] == 2
+
+
 def test_hyperopt_with_arguments(mocker, default_conf, caplog) -> None:
     patched_configuration_load_config_file(mocker, default_conf)
 

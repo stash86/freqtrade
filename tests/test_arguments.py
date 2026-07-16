@@ -8,6 +8,7 @@ import pytest
 from freqtrade.commands import Arguments, arguments
 from freqtrade.commands.cli_options import (
     AVAILABLE_CLI_OPTIONS,
+    check_int_nonnegative,
     check_int_nonzero,
     check_int_positive,
 )
@@ -215,6 +216,55 @@ def test_parse_args_timed_is_backtesting_only() -> None:
             Arguments([command, "--timed"]).get_parsed_arg()
 
 
+def test_parse_args_benchmark() -> None:
+    args = Arguments(
+        [
+            "benchmark",
+            "--strategy",
+            CURRENT_TEST_STRATEGY,
+            "--timeframe",
+            "5m",
+            "--timerange",
+            "20250101-20250201",
+            "--runs",
+            "7",
+            "--warmup-runs",
+            "0",
+        ]
+    ).get_parsed_arg()
+
+    assert args["command"] == "benchmark"
+    assert args["strategy"] == CURRENT_TEST_STRATEGY
+    assert args["timeframe"] == "5m"
+    assert args["timerange"] == "20250101-20250201"
+    assert args["benchmark_runs"] == 7
+    assert args["benchmark_warmup_runs"] == 0
+    assert "strategy_list" not in args
+    assert callable(args["func"])
+
+
+def test_parse_args_benchmark_defaults_and_rejected_options() -> None:
+    args = Arguments(["benchmark", "--strategy", CURRENT_TEST_STRATEGY]).get_parsed_arg()
+    assert args["benchmark_runs"] is None
+    assert args["benchmark_warmup_runs"] is None
+
+    for option in (
+        ["--strategy-list", CURRENT_TEST_STRATEGY, "SampleStrategy"],
+        ["--timed"],
+        ["--equal"],
+    ):
+        with pytest.raises(SystemExit, match=r"2"):
+            Arguments(["benchmark", *option]).get_parsed_arg()
+
+    for option in (
+        ["--runs", "0"],
+        ["--runs", "-1"],
+        ["--warmup-runs", "-1"],
+    ):
+        with pytest.raises(SystemExit, match=r"2"):
+            Arguments(["benchmark", *option]).get_parsed_arg()
+
+
 def test_parse_args_hyperopt_custom() -> None:
     args = ["hyperopt", "-c", "test_conf.json", "--epochs", "20", "--spaces", "buy"]
     call_args = Arguments(args).get_parsed_arg()
@@ -370,3 +420,18 @@ def test_check_int_nonzero() -> None:
 
     with pytest.raises(argparse.ArgumentTypeError):
         check_int_nonzero("DeadBeef")
+
+
+def test_check_int_nonnegative() -> None:
+    assert check_int_nonnegative("0") == 0
+    assert check_int_nonnegative("1") == 1
+    assert check_int_nonnegative("100") == 100
+
+    with pytest.raises(argparse.ArgumentTypeError):
+        check_int_nonnegative("-1")
+
+    with pytest.raises(argparse.ArgumentTypeError):
+        check_int_nonnegative("3.5")
+
+    with pytest.raises(argparse.ArgumentTypeError):
+        check_int_nonnegative("DeadBeef")

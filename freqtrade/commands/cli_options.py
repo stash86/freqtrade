@@ -36,6 +36,18 @@ def check_int_nonzero(value: str) -> int:
     return uint
 
 
+def check_int_nonnegative(value: str) -> int:
+    try:
+        uint = int(value)
+        if uint < 0:
+            raise ValueError
+    except ValueError:
+        raise ArgumentTypeError(
+            f"{value} is invalid for this parameter, should be a non-negative integer value"
+        )
+    return uint
+
+
 class Arg:
     # Optional CLI arguments
     def __init__(self, *args, fthelp: dict[str, str] | None = None, **kwargs):
@@ -236,6 +248,21 @@ AVAILABLE_CLI_OPTIONS = {
         const="full",
         choices=("full", "indicators", "signals"),
         default=False,
+    ),
+    # Benchmark
+    "benchmark_runs": Arg(
+        "--runs",
+        help="Number of measured benchmark runs (default: 5).",
+        type=check_int_positive,
+        metavar="INT",
+        default=None,
+    ),
+    "benchmark_warmup_runs": Arg(
+        "--warmup-runs",
+        help="Number of unmeasured warmup runs (default: 1).",
+        type=check_int_nonnegative,
+        metavar="INT",
+        default=None,
     ),
     "backtest_notes": Arg(
         "--notes",
