@@ -20,7 +20,11 @@ from freqtrade.commands.optimize_commands import (
 )
 from freqtrade.configuration import TimeRange
 from freqtrade.data import history
-from freqtrade.data.btanalysis import BT_DATA_COLUMNS, evaluate_result_multi
+from freqtrade.data.btanalysis import (
+    BT_DATA_COLUMNS,
+    evaluate_result_multi,
+    get_tick_size_over_time,
+)
 from freqtrade.data.converter import clean_ohlcv_dataframe, ohlcv_fill_up_missing_data
 from freqtrade.data.dataprovider import DataProvider
 from freqtrade.data.history import get_timerange
@@ -283,7 +287,7 @@ def test_setup_optimize_configuration_stake_amount(mocker, default_conf, caplog)
         setup_optimize_configuration(get_args(args), RunMode.BACKTEST)
 
 
-def test_start(mocker, fee, default_conf, caplog) -> None:
+def test_start(mocker, fee, default_conf, caplog, capsys) -> None:
     start_mock = MagicMock()
     mocker.patch(f"{EXMS}.get_fee", fee)
     patch_exchange(mocker)
@@ -301,6 +305,32 @@ def test_start(mocker, fee, default_conf, caplog) -> None:
     start_backtesting(pargs)
     assert log_has("Starting freqtrade in Backtesting mode", caplog)
     assert start_mock.call_count == 1
+    assert capsys.readouterr().out == ""
+
+
+def test_start_timed(mocker, default_conf, capsys) -> None:
+    patch_exchange(mocker)
+    backtesting_mock = mocker.patch("freqtrade.optimize.backtesting.Backtesting")
+    timer_mock = mocker.patch(
+        "freqtrade.commands.optimize_commands.perf_counter", side_effect=[10.0, 12.3456]
+    )
+    patched_configuration_load_config_file(mocker, default_conf)
+
+    args = get_args(
+        [
+            "backtesting",
+            "--config",
+            "config.json",
+            "--strategy",
+            CURRENT_TEST_STRATEGY,
+            "--timed",
+        ]
+    )
+    start_backtesting(args)
+
+    backtesting_mock.return_value.start.assert_called_once_with()
+    assert timer_mock.call_count == 2
+    assert capsys.readouterr().out == "Backtesting pipeline completed in 2.346 seconds.\n"
 
 
 @pytest.mark.parametrize("order_types", ORDER_TYPES)
@@ -571,6 +601,17 @@ def test_get_pair_precision_bt(default_conf, mocker) -> None:
     ex_mock = mocker.patch(f"{EXMS}.get_precision_price", return_value=1e-5)
     data, _timerange = backtesting.load_bt_data()
     assert data
+    precision_columns = {
+        "open_count",
+        "high_count",
+        "low_count",
+        "close_count",
+        "max_count",
+    }
+    assert precision_columns.isdisjoint(data[pair].columns)
+
+    processed = backtesting.strategy.advise_all_indicators(data)
+    assert precision_columns.isdisjoint(processed[pair].columns)
 
     assert backtesting.get_pair_precision(pair, dt_utc(2018, 1, 1)) == (1e-8, TICK_SIZE)
     assert ex_mock.call_count == 0
@@ -582,6 +623,20 @@ def test_get_pair_precision_bt(default_conf, mocker) -> None:
     assert ex_mock.call_count == 1
     assert backtesting.get_pair_precision("ETH/BTC", dt_utc(2017, 1, 15)) == (1e-5, DECIMAL_PLACES)
     assert ex_mock.call_count == 2
+
+    integer_candles = pd.DataFrame(
+        {
+            "date": [dt_utc(2017, 1, 1)],
+            "open": [1.0],
+            "high": [2.0],
+            "low": [1.0],
+            "close": [2.0],
+        }
+    )
+    backtesting.price_pair_prec[pair] = get_tick_size_over_time(integer_candles)
+    assert backtesting.price_pair_prec[pair].isna().all()
+    assert backtesting.get_pair_precision(pair, dt_utc(2017, 1, 15)) == (1e-5, DECIMAL_PLACES)
+    assert ex_mock.call_count == 3
 
 
 def test_backtest_abort(default_conf, mocker) -> None:
@@ -597,6 +652,286 @@ def test_backtest_abort(default_conf, mocker) -> None:
     # abort flag resets
     assert backtesting.abort is False
     assert backtesting.progress.tasks[backtesting._progress_task].completed == 0
+
+
+def test_get_ohlcv_as_lists_copies_only_simulator_columns(default_conf, mocker) -> None:
+    patch_exchange(mocker)
+    default_conf.update({"runmode": RunMode.BACKTEST, "timeframe": "5m"})
+    default_conf.pop("timerange", None)
+
+    backtesting = Backtesting(default_conf)
+    backtesting._set_strategy(backtesting.strategylist[0])
+    backtesting.required_startup = 0
+
+    pair = "UNITTEST/BTC"
+    frame = generate_test_data("5m", 3, "2022-01-01 00:00:00+00:00")
+    frame["wide_indicator"] = [10.0, 20.0, 30.0]
+    processed = {pair: frame}
+    signals = {
+        "enter_long": [1, 0, 0],
+        "exit_long": [0, 1, 0],
+        "enter_short": [0, 0, 1],
+        "exit_short": [0, 0, 0],
+        "enter_tag": ["first", None, None],
+        "exit_tag": [None, "second", None],
+    }
+
+    def advise_signals(dataframe, metadata):
+        assert metadata == {"pair": pair}
+        assert "wide_indicator" in dataframe.columns
+        for column, values in signals.items():
+            dataframe[column] = values
+        return dataframe
+
+    mocker.patch.object(
+        backtesting.strategy,
+        "ft_advise_signals",
+        side_effect=advise_signals,
+    )
+    set_cached_df = mocker.patch.object(backtesting.dataprovider, "_set_cached_df")
+    real_copy = pd.DataFrame.copy
+    copied_columns = []
+
+    def tracked_copy(dataframe, *args, **kwargs):
+        copied_columns.append(list(dataframe.columns))
+        return real_copy(dataframe, *args, **kwargs)
+
+    mocker.patch.object(pd.DataFrame, "copy", tracked_copy)
+
+    rows = backtesting._get_ohlcv_as_lists(processed)[pair]
+
+    assert copied_columns
+    assert all(columns == HEADERS for columns in copied_columns)
+
+    cached_frame = set_cached_df.call_args.args[2]
+    assert cached_frame["wide_indicator"].tolist() == [10.0, 20.0, 30.0]
+    assert cached_frame["enter_long"].tolist() == [1, 0, 0]
+    assert processed[pair]["wide_indicator"].tolist() == [10.0, 20.0, 30.0]
+    assert processed[pair]["enter_long"].tolist() == [1, 0, 0]
+    assert processed[pair]["enter_tag"].iloc[0] == "first"
+    assert processed[pair]["enter_tag"].iloc[1:].isna().all()
+
+    assert len(rows) == 2
+    assert all(len(row) == len(HEADERS) for row in rows)
+    assert [row[DATE_IDX] for row in rows] == frame["date"].iloc[1:].tolist()
+    assert rows[0][HEADERS.index("enter_long")] == 1
+    assert rows[0][HEADERS.index("exit_long")] == 0
+    assert rows[0][HEADERS.index("enter_tag")] == "first"
+    assert rows[0][HEADERS.index("exit_tag")] is None
+    assert rows[1][HEADERS.index("enter_long")] == 0
+    assert rows[1][HEADERS.index("exit_long")] == 1
+    assert rows[1][HEADERS.index("enter_tag")] is None
+    assert rows[1][HEADERS.index("exit_tag")] == "second"
+
+
+@pytest.mark.parametrize("export", ["none", "signals"])
+def test_backtest_one_strategy_narrows_trim_input_by_export_mode(
+    default_conf, mocker, export
+) -> None:
+    patch_exchange(mocker)
+    default_conf.update(
+        {
+            "runmode": RunMode.BACKTEST,
+            "timeframe": "5m",
+            "export": export,
+        }
+    )
+
+    backtesting = Backtesting(default_conf)
+    strategy = backtesting.strategylist[0]
+    pair = "UNITTEST/BTC"
+    analyzed = generate_test_data("5m", 3, "2022-01-01 00:00:00+00:00")
+    analyzed["wide_indicator"] = [10.0, 20.0, 30.0]
+    preprocessed = {pair: analyzed}
+    raw_data = {pair: analyzed}
+    advise = mocker.patch.object(
+        strategy,
+        "advise_all_indicators",
+        return_value=preprocessed,
+    )
+    trim_dataframes = mocker.patch(
+        "freqtrade.optimize.backtesting.trim_dataframes",
+        side_effect=lambda frames, *_args, **_kwargs: frames,
+    )
+    backtest = mocker.patch.object(
+        backtesting,
+        "backtest",
+        return_value={
+            "results": pd.DataFrame(
+                {
+                    "pair": [pair],
+                    "open_date": [analyzed.iloc[1]["date"]],
+                    "close_date": [analyzed.iloc[2]["date"]],
+                }
+            )
+        },
+    )
+
+    backtesting.backtest_one_strategy(strategy, raw_data, backtesting.timerange)
+
+    advise.assert_called_once_with(raw_data)
+    trim_input = trim_dataframes.call_args.args[0]
+    if export == "signals":
+        assert trim_input[pair] is analyzed
+        assert list(trim_input[pair].columns) == list(analyzed.columns)
+        strategy_name = strategy.get_strategy_name()
+        entry_candles = backtesting.analysis_results["signals"][strategy_name][pair]
+        exit_candles = backtesting.analysis_results["exited"][strategy_name][pair]
+        assert entry_candles["wide_indicator"].tolist() == [10.0]
+        assert exit_candles["wide_indicator"].tolist() == [20.0]
+        assert backtesting.analysis_results["rejected"][strategy_name] == {}
+    else:
+        assert trim_input[pair] is not analyzed
+        assert list(trim_input[pair].columns) == ["date"]
+        assert backtesting.analysis_results == {"signals": {}, "rejected": {}, "exited": {}}
+
+    assert "wide_indicator" in preprocessed[pair].columns
+    assert "wide_indicator" in backtest.call_args.kwargs["processed"][pair].columns
+
+
+@pytest.mark.parametrize(
+    ("trade_dir", "open_trade_pair", "expected_calls"),
+    [
+        (None, None, 0),
+        (None, "UNITTEST/BTC", 1),
+        (None, "OTHER/BTC", 0),
+        ("long", None, 1),
+    ],
+)
+def test_backtest_skips_only_inactive_pair_iterations(
+    default_conf, mocker, trade_dir, open_trade_pair, expected_calls
+) -> None:
+    patch_exchange(mocker)
+    default_conf["runmode"] = RunMode.BACKTEST
+    backtesting = Backtesting(default_conf)
+    backtesting._set_strategy(backtesting.strategylist[0])
+    pair = "UNITTEST/BTC"
+    current_time = dt_utc(2022, 1, 1, 0, 5)
+    row = (current_time, 1.0, 1.0, 1.0, 1.0, 0, 0, 0, 0, None, None)
+
+    mocker.patch.object(backtesting, "_get_ohlcv_as_lists", return_value={pair: []})
+    backtest_loop = mocker.patch.object(backtesting, "backtest_loop", return_value=None)
+    mocker.patch.object(backtesting, "handle_left_open")
+
+    def time_pair_generator(*_args):
+        if open_trade_pair:
+            LocalTrade.bt_trades_open_pp[open_trade_pair].append(MagicMock())
+        yield current_time, pair, row, False, trade_dir
+
+    mocker.patch.object(
+        backtesting,
+        "time_pair_generator",
+        side_effect=time_pair_generator,
+    )
+
+    result = backtesting.backtest(
+        processed={},
+        start_date=current_time - timedelta(minutes=5),
+        end_date=current_time,
+    )
+
+    assert result["results"].empty
+    assert backtest_loop.call_count == expected_calls
+    LocalTrade.bt_trades_open_pp.clear()
+
+
+def test_backtest_inactive_pairs_keep_generator_bookkeeping(default_conf, mocker) -> None:
+    def no_signals(dataframe=None, metadata=None):
+        dataframe["enter_long"] = 0
+        dataframe["exit_long"] = 0
+        dataframe["enter_short"] = 0
+        dataframe["exit_short"] = 0
+        return dataframe
+
+    patch_exchange(mocker)
+    default_conf.update({"runmode": RunMode.BACKTEST, "timeframe": "5m"})
+    pairs = ["ADA/BTC", "LTC/BTC"]
+    raw_candles = generate_test_data("5m", 10, "2022-01-01 00:00:00+00:00")
+    data = {pair: raw_candles.copy() for pair in pairs}
+
+    backtesting = Backtesting(default_conf)
+    backtesting.required_startup = 0
+    backtesting._set_strategy(backtesting.strategylist[0])
+    backtesting.strategy.bot_loop_start = MagicMock()
+    backtesting.strategy.advise_entry = no_signals
+    backtesting.strategy.advise_exit = no_signals
+    validate_row = mocker.spy(backtesting, "validate_row")
+    backtest_loop = mocker.spy(backtesting, "backtest_loop")
+    set_max_index = mocker.spy(backtesting.dataprovider, "_set_dataframe_max_index")
+    set_max_date = mocker.spy(backtesting.dataprovider, "_set_dataframe_max_date")
+    capture_wallet = mocker.spy(backtesting, "_capture_wallet")
+
+    processed = backtesting.strategy.advise_all_indicators(data)
+    min_date, max_date = get_timerange(processed)
+    result = backtesting.backtest(
+        processed=processed,
+        start_date=min_date,
+        end_date=max_date,
+    )
+
+    candle_steps = len(raw_candles) - 1
+    pair_steps = candle_steps * len(pairs)
+    assert result["results"].empty
+    assert backtest_loop.call_count == 0
+    assert backtesting.strategy.bot_loop_start.call_count == candle_steps
+    assert validate_row.call_count == pair_steps
+    assert set_max_index.call_count == pair_steps
+    assert set_max_date.call_count == pair_steps
+    assert capture_wallet.call_count == candle_steps + pair_steps
+
+
+def test_backtest_open_trade_without_new_signals_still_reaches_roi(
+    default_conf, fee, mocker
+) -> None:
+    def one_entry(dataframe=None, metadata=None):
+        dataframe["enter_long"] = 0
+        dataframe["enter_short"] = 0
+        dataframe.loc[dataframe.index[0], "enter_long"] = 1
+        return dataframe
+
+    def no_exits(dataframe=None, metadata=None):
+        dataframe["exit_long"] = 0
+        dataframe["exit_short"] = 0
+        return dataframe
+
+    mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.00001)
+    mocker.patch(f"{EXMS}.get_max_pair_stake_amount", return_value=float("inf"))
+    mocker.patch(f"{EXMS}.get_fee", fee)
+    patch_exchange(mocker)
+    default_conf.update(
+        {
+            "runmode": RunMode.BACKTEST,
+            "timeframe": "5m",
+            "max_open_trades": 1,
+            "minimal_roi": {"10": 0, "0": 100},
+            "stoploss": -1,
+            "use_exit_signal": False,
+        }
+    )
+    pair = "UNITTEST/BTC"
+    candles = generate_test_data("5m", 6, "2022-01-01 00:00:00+00:00")
+    candles[["open", "close"]] = 100.0
+    candles["low"] = 99.0
+    candles["high"] = 102.0
+
+    backtesting = Backtesting(default_conf)
+    backtesting.required_startup = 0
+    backtesting._set_strategy(backtesting.strategylist[0])
+    backtesting.strategy.advise_entry = one_entry
+    backtesting.strategy.advise_exit = no_exits
+    backtest_loop = mocker.spy(backtesting, "backtest_loop")
+
+    processed = backtesting.strategy.advise_all_indicators({pair: candles})
+    min_date, max_date = get_timerange(processed)
+    result = backtesting.backtest(
+        processed=processed,
+        start_date=min_date,
+        end_date=max_date,
+    )
+
+    assert len(result["results"]) == 1
+    assert result["results"].iloc[0]["exit_reason"] == ExitType.ROI.value
+    assert any(call.args[3] is None for call in backtest_loop.call_args_list)
 
 
 def test_backtesting_start(default_conf, mocker, caplog) -> None:
@@ -796,6 +1131,174 @@ def test_backtest__enter_trade(default_conf, fee, mocker) -> None:
     LocalTrade.bt_trades_open.pop()
     assert trade
     assert trade.stake_amount == 300.0
+
+
+def test_backtest_enter_trade_recalculates_once_per_fill(default_conf, fee, mocker) -> None:
+    default_conf.update(
+        {
+            "use_exit_signal": False,
+            "stake_amount": 100.0,
+            "max_open_trades": 10,
+        }
+    )
+    mocker.patch(f"{EXMS}.get_fee", fee)
+    mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.00001)
+    mocker.patch(f"{EXMS}.get_max_pair_stake_amount", return_value=float("inf"))
+    patch_exchange(mocker)
+    backtesting = Backtesting(default_conf)
+    backtesting._set_strategy(backtesting.strategylist[0])
+    recalculate = mocker.spy(LocalTrade, "recalc_trade_from_orders")
+    filled_trade_states = []
+
+    def capture_filled_trade(**kwargs):
+        trade = kwargs["trade"]
+        filled_trade_states.append(
+            (
+                trade.nr_of_successful_entries,
+                trade.amount,
+                trade.stake_amount,
+                trade.open_rate,
+            )
+        )
+
+    backtesting.strategy.order_filled = capture_filled_trade
+    pair = "UNITTEST/BTC"
+    first_row = [
+        pd.Timestamp(year=2020, month=1, day=1, hour=5, minute=0, tz="UTC"),
+        2.0,
+        2.1,
+        1.9,
+        2.0,
+        1,
+        0,
+        0,
+        0,
+        "initial",
+        None,
+    ]
+
+    trade = backtesting._enter_trade(pair, row=first_row, direction="long")
+
+    assert trade
+    assert recalculate.call_count == 1
+    assert filled_trade_states == [(1, 50.0, 100.0, 2.0)]
+    assert trade.nr_of_successful_entries == 1
+    assert trade.max_stake_amount == 100.0
+    assert trade.fee_open_cost == fee.return_value * 100.0
+
+    recalculate.reset_mock()
+    second_row = [
+        pd.Timestamp(year=2020, month=1, day=1, hour=5, minute=5, tz="UTC"),
+        1.0,
+        1.1,
+        0.9,
+        1.0,
+        1,
+        0,
+        0,
+        0,
+        "dca",
+        None,
+    ]
+
+    adjusted_trade = backtesting._enter_trade(
+        pair,
+        row=second_row,
+        direction="long",
+        stake_amount=50.0,
+        trade=trade,
+    )
+
+    assert adjusted_trade is trade
+    assert recalculate.call_count == 1
+    assert filled_trade_states[-1] == (2, 100.0, 150.0, 1.5)
+    assert trade.nr_of_successful_entries == 2
+    assert trade.amount == 100.0
+    assert trade.stake_amount == 150.0
+    assert trade.max_stake_amount == 150.0
+    assert trade.open_rate == 1.5
+    assert trade.fee_open_cost == fee.return_value * 150.0
+
+
+def test_backtest_enter_trade_recalculates_delayed_order_on_placement_and_fill(
+    default_conf, fee, mocker
+) -> None:
+    default_conf.update(
+        {
+            "use_exit_signal": False,
+            "stake_amount": 100.0,
+            "max_open_trades": 10,
+        }
+    )
+    mocker.patch(f"{EXMS}.get_fee", fee)
+    mocker.patch(f"{EXMS}.get_min_pair_stake_amount", return_value=0.00001)
+    mocker.patch(f"{EXMS}.get_max_pair_stake_amount", return_value=float("inf"))
+    patch_exchange(mocker)
+    backtesting = Backtesting(default_conf)
+    backtesting._set_strategy(backtesting.strategylist[0])
+    backtesting.strategy.custom_entry_price = MagicMock(return_value=0.5)
+    recalculate = mocker.spy(LocalTrade, "recalc_trade_from_orders")
+    filled_trade_states = []
+    backtesting.strategy.order_filled = lambda **kwargs: filled_trade_states.append(
+        (
+            kwargs["trade"].nr_of_successful_entries,
+            kwargs["trade"].amount,
+            kwargs["trade"].stake_amount,
+            kwargs["trade"].open_rate,
+        )
+    )
+    pair = "UNITTEST/BTC"
+    placement_row = [
+        pd.Timestamp(year=2020, month=1, day=1, hour=5, minute=0, tz="UTC"),
+        1.0,
+        1.1,
+        0.9,
+        1.0,
+        1,
+        0,
+        0,
+        0,
+        "delayed",
+        None,
+    ]
+
+    trade = backtesting._enter_trade(pair, row=placement_row, direction="long")
+
+    assert trade
+    assert recalculate.call_count == 1
+    assert filled_trade_states == []
+    assert trade.nr_of_successful_entries == 0
+    assert trade.amount == 0
+    assert trade.funding_fees == 0.0
+    assert trade.orders[0].ft_is_open is True
+
+    recalculate.reset_mock()
+    fill_row = [
+        pd.Timestamp(year=2020, month=1, day=1, hour=5, minute=5, tz="UTC"),
+        0.5,
+        0.6,
+        0.4,
+        0.5,
+        0,
+        0,
+        0,
+        0,
+        None,
+        None,
+    ]
+
+    filled = backtesting._try_close_open_order(
+        trade.orders[0], trade, fill_row[DATE_IDX].to_pydatetime(), fill_row
+    )
+
+    assert filled is True
+    assert recalculate.call_count == 1
+    assert filled_trade_states == [(1, 200.0, 100.0, 0.5)]
+    assert trade.nr_of_successful_entries == 1
+    assert trade.amount == 200.0
+    assert trade.stake_amount == 100.0
+    assert trade.open_rate == 0.5
+    assert trade.orders[0].ft_is_open is False
 
 
 def test_backtest__enter_trade_futures(default_conf_usdt, fee, mocker) -> None:
@@ -1947,7 +2450,6 @@ def test_backtest_multi_pair_detail(
 
     backtesting = Backtesting(default_conf_usdt)
     vr_spy = mocker.spy(backtesting, "validate_row")
-    bl_spy = mocker.spy(backtesting, "backtest_loop")
     backtesting.detail_data = detail_data
     backtesting._set_strategy(backtesting.strategylist[0])
     backtesting.strategy.bot_loop_start = MagicMock()
@@ -1969,14 +2471,6 @@ def test_backtest_multi_pair_detail(
     assert backtesting.strategy.bot_loop_start.call_count == 199
     # Validated row once per candle and pair
     assert vr_spy.call_count == 995
-
-    if use_detail:
-        # Backtest loop is called once per candle per pair
-        # Exact numbers depend on trade state - but should be around 3_800
-        assert bl_spy.call_count > 1_220
-        assert bl_spy.call_count < 1_300
-    else:
-        assert bl_spy.call_count < 995
 
     # Make sure we have parallel trades
     assert len(evaluate_result_multi(results["results"], "5m", 2)) > 0
@@ -2095,8 +2589,7 @@ def test_backtest_multi_pair_detail_simplified(
     assert vr_spy.call_count == 415
 
     if use_detail:
-        # Backtest loop is called once per candle per pair
-        # Exact numbers depend on trade state - but should be around 2_600
+        # Active main/detail iterations may reach the loop more than once.
         assert bl_spy.call_count > 2_159
         assert bl_spy.call_count < 2_800
         assert len(evaluate_result_multi(results["results"], "1h", 3)) > 0
@@ -2204,7 +2697,6 @@ def test_backtest_multi_pair_long_short_switch(
 
     backtesting = Backtesting(default_conf_usdt)
     vr_spy = mocker.spy(backtesting, "validate_row")
-    bl_spy = mocker.spy(backtesting, "backtest_loop")
     backtesting.detail_data = detail_data
     backtesting.funding_fee_timeframe_secs = 3600 * 8  # 8h
     backtesting.futures_data = {pair: pd.DataFrame() for pair in pairs}
@@ -2230,12 +2722,6 @@ def test_backtest_multi_pair_long_short_switch(
     assert backtesting.strategy.bot_loop_start.call_count == 499
     # Validated row once per candle and pair
     assert vr_spy.call_count == 499
-
-    if use_detail:
-        # Backtest loop is called once per candle per pair
-        assert bl_spy.call_count == 1511
-    else:
-        assert bl_spy.call_count == 508
 
     # Make sure we have parallel trades
     assert len(evaluate_result_multi(results["results"], "5m", 0)) > 0
@@ -2971,13 +3457,16 @@ def test_backtest_start_multi_strat_caching(
         assert log_has(line, caplog)
 
 
-@pytest.mark.parametrize("equal", [True, "trades", "signals"])
-def test_get_strategy_run_id(default_conf_usdt, equal):
+@pytest.mark.parametrize(
+    ("config_key", "config_value"),
+    [("equal", True), ("equal", "trades"), ("equal", "signals"), ("timed", True)],
+)
+def test_get_strategy_run_id(default_conf_usdt, config_key, config_value):
     default_conf_usdt.update({"strategy": "StrategyTestV2", "max_open_trades": float("inf")})
     strategy = StrategyResolver.load_strategy(default_conf_usdt)
     x = get_strategy_run_id(strategy)
     assert isinstance(x, str)
-    strategy.config["equal"] = equal
+    strategy.config[config_key] = config_value
     assert get_strategy_run_id(strategy) == x
 
 

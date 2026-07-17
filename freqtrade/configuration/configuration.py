@@ -335,6 +335,7 @@ class Configuration:
             ("backtest_breakdown", "Parameter --breakdown detected ..."),
             ("backtest_cache", "Parameter --cache={} detected ..."),
             ("equal", "Parameter --equal={} detected. Comparing strategy outputs ..."),
+            ("timed", "Parameter --timed detected. Timing backtesting pipeline ..."),
             ("benchmark_runs", "Parameter --runs={} detected. Setting benchmark runs ..."),
             ("disableparamexport", "Parameter --disableparamexport detected: {} ..."),
             ("freqai_backtest_live_models", "Parameter --freqai-backtest-live-models detected ..."),

@@ -669,7 +669,25 @@ This will save the results to `user_data/backtest_results/backtest-result-<datet
 There will be an additional table comparing win/losses of the different strategies (identical to the "Total" row in the first table).
 Detailed output for all strategies one after the other will be available, so make sure to scroll up to see the details per strategy.
 
-For repeated, single-strategy indicator and signal timing measurements, use the dedicated [strategy benchmark](benchmark.md) command.
+### Timing the backtesting pipeline
+
+To print the total wall-clock duration of the backtesting pipeline, add `--timed`:
+
+``` bash
+freqtrade backtesting --strategy AwesomeStrategy --timerange 20240101-20240201 --timed
+```
+
+The timer covers command configuration, backtesting initialization, data loading, indicators and
+signals, trade simulation, statistics, export, and result rendering. It prints one duration for the
+whole command, including all strategies supplied through `--strategy-list`; shared work is not
+assigned to individual strategies.
+
+Backtest cache reuse is part of the measured work. Add `--cache none` to ensure that indicators,
+signals, and trade simulation are executed instead of reusing a cached result. This is a one-shot
+end-to-end timing diagnostic, so results can vary with disk caches, cold or warm process state,
+system load, and terminal rendering. For repeated, warm,
+single-strategy indicator and signal timing measurements, use the dedicated
+[strategy benchmark](benchmark.md) command.
 
 To verify that strategies produce the same executed trades, add `--equal` (equivalent to `--equal trades`):
 

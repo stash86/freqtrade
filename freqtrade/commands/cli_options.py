@@ -239,6 +239,12 @@ AVAILABLE_CLI_OPTIONS = {
         choices=("trades", "signals"),
         default=False,
     ),
+    "timed": Arg(
+        "--timed",
+        help="Print the total wall-clock time for the backtesting pipeline.",
+        action="store_true",
+        default=False,
+    ),
     # Benchmark
     "benchmark_runs": Arg(
         "--runs",

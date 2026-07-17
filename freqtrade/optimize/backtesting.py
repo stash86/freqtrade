@@ -578,9 +578,6 @@ class Backtesting:
             self.check_abort()
             self._increment_progress()
 
-            if not pair_data.empty:
-                # Cleanup from prior runs
-                pair_data.drop(HEADERS[5:] + ["buy", "sell"], axis=1, errors="ignore")
             df_analyzed = self.strategy.ft_advise_signals(pair_data, {"pair": pair})
             # Update dataprovider cache
             self.dataprovider._set_cached_df(
@@ -594,7 +591,8 @@ class Backtesting:
 
             # Create a copy of the dataframe before shifting, that way the entry signal/tag
             # remains on the correct candle for callbacks.
-            df_analyzed = df_analyzed.copy()
+            backtest_columns = [column for column in HEADERS if column in df_analyzed.columns]
+            df_analyzed = df_analyzed.loc[:, backtest_columns].copy()
 
             # To avoid using data from future, we use entry/exit signals shifted
             # from the previous candle
@@ -1315,8 +1313,9 @@ class Backtesting:
             )
             order._trade_bt = trade
             trade.orders.append(order)
-            self._try_close_open_order(order, trade, current_time, row)
-            trade.recalc_trade_from_orders()
+            # Filled entry orders recalculate the trade in Order.close_bt_order().
+            if not self._try_close_open_order(order, trade, current_time, row):
+                trade.recalc_trade_from_orders()
 
         return trade
 
@@ -1838,6 +1837,10 @@ class Backtesting:
             is_last_row,
             trade_dir,
         ) in self.time_pair_generator(start_date, end_date, list(data.keys()), data):
+            if trade_dir is None and not LocalTrade.bt_trades_open_pp[pair]:
+                # No entry signal and no trade or order to manage for this pair.
+                continue
+
             if not self._can_short or trade_dir is None:
                 # No need to reverse position if shorting is disabled or there's no new signal
                 self.backtest_loop(row, pair, current_time, trade_dir, not is_last_row)
@@ -1883,8 +1886,16 @@ class Backtesting:
         preprocessed = self.strategy.advise_all_indicators(data)
 
         # Trim startup period from analyzed dataframe
-        # This only used to determine if trimming would result in an empty dataframe
-        preprocessed_tmp = trim_dataframes(preprocessed, timerange, self.required_startup)
+        # This is only used to determine the timerange unless signal candles are exported.
+        export_signals = (
+            self.config.get("export", "none") == "signals" and self._is_backtest_runmode
+        )
+        trim_source = (
+            preprocessed
+            if export_signals
+            else {pair: frame.loc[:, ["date"]] for pair, frame in preprocessed.items()}
+        )
+        preprocessed_tmp = trim_dataframes(trim_source, timerange, self.required_startup)
 
         if not preprocessed_tmp:
             raise OperationalException("No data left after adjusting for startup candles.")
@@ -1914,7 +1925,7 @@ class Backtesting:
         )
         self.all_bt_content[strategy_name] = results
 
-        if self.config.get("export", "none") == "signals" and self._is_backtest_runmode:
+        if export_signals:
             signals = generate_trade_signal_candles(preprocessed_tmp, results, "open_date")
             rejected = generate_rejected_signals(preprocessed_tmp, self.rejected_dict)
             exited = generate_trade_signal_candles(preprocessed_tmp, results, "close_date")

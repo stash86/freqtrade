@@ -45,6 +45,10 @@ Each warm-up and measured run then calculates:
 Trade simulation, result export, report generation, and initial candle-data loading are not included.
 Consequently, this command measures vectorized indicator and signal generation, not the duration of a complete backtest.
 Complete trade-simulation runtime is intentionally outside this command's measurement scope.
+For a one-shot measurement of the work performed by the backtesting pipeline, use
+[`backtesting --timed`](backtesting.md#timing-the-backtesting-pipeline). Use `--cache none` with it
+to ensure that the measured run includes indicators, signals, and trade simulation instead of
+cached-result reuse.
 
 Warm-up runs execute before the measured runs and are excluded from the results.
 Transient analyzed-data state is cleared between runs, while the preloaded historical data remains in memory.

@@ -1,4 +1,5 @@
 import logging
+from time import perf_counter
 from typing import Any
 
 from freqtrade import constants
@@ -48,6 +49,8 @@ def start_backtesting(args: dict[str, Any]) -> None:
     :param args: Cli args from Arguments()
     :return: None
     """
+    command_start = perf_counter()
+
     # Import here to avoid loading backtesting module when it's not used
     from freqtrade.optimize.backtesting import Backtesting
 
@@ -59,6 +62,9 @@ def start_backtesting(args: dict[str, Any]) -> None:
     # Initialize backtesting object
     backtesting = Backtesting(config)
     backtesting.start()
+
+    if config.get("timed", False):
+        print(f"Backtesting pipeline completed in {perf_counter() - command_start:.3f} seconds.")
 
 
 def start_benchmark(args: dict[str, Any]) -> None:

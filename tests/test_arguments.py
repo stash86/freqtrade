@@ -199,8 +199,11 @@ def test_parse_args_equal_is_backtesting_only() -> None:
             Arguments([command, "--equal"]).get_parsed_arg()
 
 
-def test_parse_args_timed_is_removed() -> None:
-    for command in ("backtesting", "benchmark", "hyperopt", "lookahead-analysis"):
+def test_parse_args_timed_is_backtesting_only() -> None:
+    assert Arguments(["backtesting"]).get_parsed_arg()["timed"] is False
+    assert Arguments(["backtesting", "--timed"]).get_parsed_arg()["timed"] is True
+
+    for command in ("benchmark", "hyperopt", "lookahead-analysis"):
         with pytest.raises(SystemExit, match=r"2"):
             Arguments([command, "--timed"]).get_parsed_arg()
 

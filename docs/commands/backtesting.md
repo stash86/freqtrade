@@ -14,7 +14,7 @@ usage: freqtrade backtesting [-h] [-v] [--no-color] [--logfile FILE] [-V]
                              [--dry-run-wallet DRY_RUN_WALLET]
                              [--timeframe-detail TIMEFRAME_DETAIL]
                              [--strategy-list STRATEGY_LIST [STRATEGY_LIST ...]]
-                             [--equal [{trades,signals}]]
+                             [--equal [{trades,signals}]] [--timed]
                              [--export {none,trades,signals}]
                              [--backtest-filename PATH]
                              [--backtest-directory PATH]
@@ -70,6 +70,8 @@ options:
                         Fail unless all strategies supplied with --strategy-
                         list produce identical trades or signals (default:
                         trades).
+  --timed               Print the total wall-clock time for the backtesting
+                        pipeline.
   --export {none,trades,signals}
                         Export backtest results (default: trades).
   --backtest-filename, --export-filename PATH
