@@ -1,5 +1,6 @@
 import logging
 import re
+import weakref
 from pathlib import Path
 
 import numpy as np
@@ -51,6 +52,88 @@ def test_save_results_saves_epochs(hyperopt, tmp_path, caplog) -> None:
     assert len(epoch) == 0
     with pytest.raises(StopIteration):
         next(result_gen)
+
+
+@pytest.mark.parametrize(
+    "index, config, expected_epoch, expected_filtered_epochs",
+    [
+        (1, {}, 1, 5),
+        (0, {}, 1, 5),
+        (-1, {}, 5, 5),
+        (-2, {}, 4, 5),
+        (2, {"hyperopt_list_best": True}, 3, 3),
+        (-1, {"hyperopt_list_profitable": True}, 4, 2),
+        (4, {"hyperopt_list_best": True}, None, 3),
+        (-4, {"hyperopt_list_best": True}, None, 3),
+    ],
+)
+def test_load_epoch(
+    mocker, tmp_path, index, config, expected_epoch, expected_filtered_epochs
+) -> None:
+    epochs = [
+        {
+            "loss": epoch,
+            "current_epoch": epoch,
+            "is_best": epoch in (1, 3, 5),
+            "results_metrics": {"profit_total": 1 if epoch in (2, 4) else -1},
+        }
+        for epoch in range(1, 6)
+    ]
+    results_file = tmp_path / "results.fthypt"
+    results_file.write_text("\n".join(rapidjson.dumps(epoch) for epoch in epochs))
+    read_results = mocker.spy(HyperoptTools, "_read_results")
+
+    selected, total_epochs, filtered_epochs = HyperoptTools.load_epoch(results_file, config, index)
+
+    assert selected == (epochs[expected_epoch - 1] if expected_epoch is not None else None)
+    assert total_epochs == 5
+    assert filtered_epochs == expected_filtered_epochs
+    read_results.assert_called_once_with(results_file, 1)
+
+
+def test_load_epoch_incompatible_results(tmp_path) -> None:
+    results_file = tmp_path / "results.fthypt"
+    results_file.write_text(rapidjson.dumps({"loss": 1}))
+
+    with pytest.raises(
+        OperationalException,
+        match="The file with HyperoptTools results is incompatible with this version",
+    ):
+        HyperoptTools.load_epoch(results_file, {}, -1)
+
+
+def test_load_epoch_retains_only_requested_tail(mocker, tmp_path) -> None:
+    class WeakRefableEpoch(dict):
+        pass
+
+    epoch_refs = []
+    live_counts = []
+
+    def epoch_iterator(*args, **kwargs):
+        for current_epoch in range(1, 201):
+            live_counts.append(sum(epoch_ref() is not None for epoch_ref in epoch_refs))
+            epoch = WeakRefableEpoch(
+                {
+                    "current_epoch": current_epoch,
+                    "is_best": True,
+                    "results_metrics": {},
+                }
+            )
+            epoch_refs.append(weakref.ref(epoch))
+            yield [epoch]
+        yield []
+
+    results_file = tmp_path / "results.fthypt"
+    results_file.write_text("{}")
+    mocker.patch.object(HyperoptTools, "_read_results", side_effect=epoch_iterator)
+
+    selected, total_epochs, filtered_epochs = HyperoptTools.load_epoch(results_file, {}, -3)
+
+    assert selected is not None
+    assert selected["current_epoch"] == 198
+    assert total_epochs == 200
+    assert filtered_epochs == 200
+    assert max(live_counts) <= 3
 
 
 def test_load_previous_results2(mocker, testdatadir, caplog) -> None:

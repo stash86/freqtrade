@@ -76,9 +76,7 @@ def start_hyperopt_show(args: dict[str, Any]) -> None:
     n = config.get("hyperopt_show_index", -1)
 
     # Previous evaluations
-    epochs, total_epochs = HyperoptTools.load_filtered_results(results_file, config)
-
-    filtered_epochs = len(epochs)
+    val, total_epochs, filtered_epochs = HyperoptTools.load_epoch(results_file, config, n)
 
     if n > filtered_epochs:
         raise OperationalException(
@@ -89,13 +87,7 @@ def start_hyperopt_show(args: dict[str, Any]) -> None:
             f"The index of the epoch to show should be greater than {-filtered_epochs - 1}."
         )
 
-    # Translate epoch index from human-readable format to pythonic
-    if n > 0:
-        n -= 1
-
-    if epochs:
-        val = epochs[n]
-
+    if val is not None:
         metrics = val["results_metrics"]
         if "strategy_name" in metrics:
             strategy_name = metrics["strategy_name"]

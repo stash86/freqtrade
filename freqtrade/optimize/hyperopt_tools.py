@@ -1,4 +1,5 @@
 import logging
+from collections import deque
 from collections.abc import Iterator
 from copy import deepcopy
 from datetime import UTC, datetime
@@ -144,8 +145,8 @@ class HyperoptTools:
             return False
 
     @staticmethod
-    def load_filtered_results(results_file: Path, config: Config) -> tuple[list, int]:
-        filteroptions = {
+    def _get_filter_options(config: Config) -> dict[str, Any]:
+        return {
             "only_best": config.get("hyperopt_list_best", False),
             "only_profitable": config.get("hyperopt_list_profitable", False),
             "filter_min_trades": config.get("hyperopt_list_min_trades", 0),
@@ -159,6 +160,69 @@ class HyperoptTools:
             "filter_min_objective": config.get("hyperopt_list_min_objective"),
             "filter_max_objective": config.get("hyperopt_list_max_objective"),
         }
+
+    @staticmethod
+    def _log_filtered_results(filtered_epochs: int, filteroptions: dict[str, Any]) -> None:
+        logger.info(
+            f"{filtered_epochs} "
+            + ("best " if filteroptions["only_best"] else "")
+            + ("profitable " if filteroptions["only_profitable"] else "")
+            + "epochs found."
+        )
+
+    @staticmethod
+    def load_epoch(
+        results_file: Path, config: Config, index: int
+    ) -> tuple[dict[str, Any] | None, int, int]:
+        """
+        Load one filtered epoch without retaining all epochs in memory.
+
+        ``index`` uses the human-readable indexing accepted by hyperopt-show:
+        positive indexes are 1-based and negative indexes are relative to the
+        end of the filtered results.
+
+        Returns the selected epoch, the total number of epochs, and the number
+        of epochs matching the configured filters.
+        """
+        filteroptions = HyperoptTools._get_filter_options(config)
+        if not HyperoptTools._test_hyperopt_results_exist(results_file):
+            logger.warning(f"Hyperopt file {results_file} not found.")
+            return None, 0, 0
+
+        selected_epoch = None
+        tail = deque(maxlen=-index) if index < 0 else None
+        total_epochs = 0
+        filtered_epochs = 0
+
+        for epochs_tmp in HyperoptTools._read_results(results_file, 1):
+            for epoch in epochs_tmp:
+                if total_epochs == 0 and epoch.get("is_best") is None:
+                    raise OperationalException(
+                        "The file with HyperoptTools results is incompatible with this version "
+                        "of Freqtrade and cannot be loaded."
+                    )
+
+                total_epochs += 1
+                if hyperopt_filter_epochs([epoch], filteroptions, log=False):
+                    filtered_epochs += 1
+                    if index > 0 and filtered_epochs == index:
+                        selected_epoch = epoch
+                    elif index == 0 and filtered_epochs == 1:
+                        selected_epoch = epoch
+                    elif tail is not None:
+                        tail.append(epoch)
+
+        if tail is not None and len(tail) == -index:
+            selected_epoch = tail[0]
+
+        logger.info(f"Loaded {total_epochs} previous evaluations from disk.")
+        HyperoptTools._log_filtered_results(filtered_epochs, filteroptions)
+
+        return selected_epoch, total_epochs, filtered_epochs
+
+    @staticmethod
+    def load_filtered_results(results_file: Path, config: Config) -> tuple[list, int]:
+        filteroptions = HyperoptTools._get_filter_options(config)
         if not HyperoptTools._test_hyperopt_results_exist(results_file):
             # No file found.
             logger.warning(f"Hyperopt file {results_file} not found.")
