@@ -15,6 +15,7 @@ from freqtrade.enums import HyperoptState
 from freqtrade.exceptions import OperationalException
 from freqtrade.misc import deep_merge_dicts, round_dict, safe_value_fallback2
 from freqtrade.optimize.hyperopt_epoch_filters import hyperopt_filter_epochs
+from freqtrade.optimize.hyperopt_index import HyperoptIndex, HyperoptIndexError
 
 
 logger = logging.getLogger(__name__)
@@ -171,6 +172,58 @@ class HyperoptTools:
         )
 
     @staticmethod
+    def _can_use_epoch_index(filteroptions: dict[str, Any]) -> bool:
+        """Return whether all active filters are represented by the compact index."""
+        try:
+            trade_filter_active = (
+                filteroptions["filter_min_trades"] > 0 or filteroptions["filter_max_trades"] > 0
+            )
+        except TypeError:
+            # Let the established streaming filter path report invalid values.
+            return False
+
+        return not trade_filter_active and all(
+            filteroptions[key] is None
+            for key in (
+                "filter_min_avg_time",
+                "filter_max_avg_time",
+                "filter_min_avg_profit",
+                "filter_max_avg_profit",
+                "filter_min_total_profit",
+                "filter_max_total_profit",
+                "filter_min_objective",
+                "filter_max_objective",
+            )
+        )
+
+    @staticmethod
+    def _load_epoch_from_index(
+        results_file: Path, filteroptions: dict[str, Any], index: int
+    ) -> tuple[dict[str, Any] | None, int, int] | None:
+        """Use the disposable sidecar when it represents every active filter."""
+        if not HyperoptTools._can_use_epoch_index(filteroptions):
+            return None
+
+        try:
+            return HyperoptIndex.select(
+                results_file,
+                index,
+                only_best=filteroptions["only_best"],
+                only_profitable=filteroptions["only_profitable"],
+            )
+        except OperationalException:
+            # Source-file compatibility and JSON errors are canonical, not cache failures.
+            raise
+        except (HyperoptIndexError, OSError) as exc:
+            # The sidecar is disposable. Read the canonical file if it cannot be used.
+            logger.warning(
+                "Unable to use hyperopt index for '%s'; falling back to streaming: %s",
+                results_file,
+                exc,
+            )
+            return None
+
+    @staticmethod
     def load_epoch(
         results_file: Path, config: Config, index: int
     ) -> tuple[dict[str, Any] | None, int, int]:
@@ -189,8 +242,15 @@ class HyperoptTools:
             logger.warning(f"Hyperopt file {results_file} not found.")
             return None, 0, 0
 
+        indexed_result = HyperoptTools._load_epoch_from_index(results_file, filteroptions, index)
+        if indexed_result is not None:
+            selected_epoch, total_epochs, filtered_epochs = indexed_result
+            logger.info(f"Loaded {total_epochs} previous evaluations from disk.")
+            HyperoptTools._log_filtered_results(filtered_epochs, filteroptions)
+            return selected_epoch, total_epochs, filtered_epochs
+
         selected_epoch = None
-        tail = deque(maxlen=-index) if index < 0 else None
+        tail: deque[dict[str, Any]] | None = deque(maxlen=-index) if index < 0 else None
         total_epochs = 0
         filtered_epochs = 0
 

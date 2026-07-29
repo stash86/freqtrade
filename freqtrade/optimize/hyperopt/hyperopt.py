@@ -21,6 +21,7 @@ from freqtrade.enums import HyperoptState
 from freqtrade.misc import file_dump_json, plural
 from freqtrade.optimize.hyperopt.hyperopt_optimizer import INITIAL_POINTS, HyperOptimizer
 from freqtrade.optimize.hyperopt.hyperopt_output import HyperoptOutput
+from freqtrade.optimize.hyperopt_index import HyperoptIndex
 from freqtrade.optimize.hyperopt_tools import (
     HyperoptStateContainer,
     HyperoptTools,
@@ -85,9 +86,13 @@ class Hyperopt:
 
     def clean_hyperopt(self) -> None:
         """
-        Remove hyperopt pickle files to restart hyperopt.
+        Remove hyperopt temporary, result, and index files before a new run.
         """
-        for f in [self.data_pickle_file, self.results_file]:
+        for f in [
+            self.data_pickle_file,
+            self.results_file,
+            HyperoptIndex.path_for(self.results_file),
+        ]:
             p = Path(f)
             if p.is_file():
                 logger.info(f"Removing `{p}`.")
@@ -101,7 +106,8 @@ class Hyperopt:
         :param epoch: result dictionary for this epoch.
         """
         epoch[FTHYPT_FILEVERSION] = 2
-        with self.results_file.open("a") as f:
+        offset = self.results_file.stat().st_size if self.results_file.is_file() else 0
+        with self.results_file.open("a", encoding="utf-8") as f:
             rapidjson.dump(
                 epoch,
                 f,
@@ -109,6 +115,22 @@ class Hyperopt:
                 number_mode=rapidjson.NM_NATIVE | rapidjson.NM_NAN,
             )
             f.write("\n")
+
+        try:
+            # The canonical result is closed before its disposable index is updated.
+            length = self.results_file.stat().st_size - offset
+            HyperoptIndex.append(
+                self.results_file,
+                offset=offset,
+                length=length,
+                epoch=epoch,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Unable to update hyperopt index for '%s'; the result remains saved: %s",
+                self.results_file,
+                exc,
+            )
 
         self.num_epochs_saved += 1
         logger.debug(

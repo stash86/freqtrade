@@ -1700,6 +1700,10 @@ def test_hyperopt_show(mocker, capsys):
     mocker.patch(
         "freqtrade.optimize.hyperopt_tools.HyperoptTools._read_results", side_effect=fake_iterator
     )
+    mocker.patch(
+        "freqtrade.optimize.hyperopt_tools.HyperoptIndex.select",
+        side_effect=OSError("index unavailable"),
+    )
     mocker.patch("freqtrade.optimize.optimize_reports.show_backtest_result")
 
     args = [

@@ -14,6 +14,7 @@ from freqtrade.enums import ExitType, RunMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.optimize.hyperopt import Hyperopt
 from freqtrade.optimize.hyperopt.hyperopt_auto import HyperOptAuto
+from freqtrade.optimize.hyperopt_index import HyperoptIndex
 from freqtrade.optimize.hyperopt_tools import HyperoptTools
 from freqtrade.optimize.optimize_reports import generate_strategy_stats
 from freqtrade.optimize.space import SKDecimal, ft_IntDistribution
@@ -648,8 +649,9 @@ def test_clean_hyperopt(mocker, hyperopt_conf, caplog):
     unlinkmock = mocker.patch("freqtrade.optimize.hyperopt.hyperopt.Path.unlink", MagicMock())
     h = Hyperopt(hyperopt_conf)
 
-    assert unlinkmock.call_count == 2
+    assert unlinkmock.call_count == 3
     assert log_has(f"Removing `{h.data_pickle_file}`.", caplog)
+    assert log_has(f"Removing `{HyperoptIndex.path_for(h.results_file)}`.", caplog)
 
 
 def test_print_json_spaces_all(mocker, hyperopt_conf, capsys) -> None:

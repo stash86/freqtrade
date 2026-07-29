@@ -9,6 +9,7 @@ import rapidjson
 
 from freqtrade.constants import FTHYPT_FILEVERSION
 from freqtrade.exceptions import OperationalException
+from freqtrade.optimize.hyperopt_index import HyperoptIndex
 from freqtrade.optimize.hyperopt_tools import HyperoptTools, hyperopt_serializer
 from tests.conftest import CURRENT_TEST_STRATEGY, log_has, log_has_re
 
@@ -41,6 +42,7 @@ def test_save_results_saves_epochs(hyperopt, tmp_path, caplog) -> None:
     assert len(hyperopt_epochs) == 2
     assert hyperopt_epochs[1] == 2
     assert len(hyperopt_epochs[0]) == 2
+    assert HyperoptIndex.path_for(hyperopt.results_file).is_file()
 
     result_gen = HyperoptTools._read_results(hyperopt.results_file, 1)
     epoch = next(result_gen)
@@ -52,6 +54,51 @@ def test_save_results_saves_epochs(hyperopt, tmp_path, caplog) -> None:
     assert len(epoch) == 0
     with pytest.raises(StopIteration):
         next(result_gen)
+
+
+def test_save_result_keeps_canonical_epoch_when_index_write_fails(
+    hyperopt, mocker, tmp_path, caplog
+) -> None:
+    hyperopt.results_file = tmp_path / "ut_results.fthypt"
+    mocker.patch.object(HyperoptIndex, "append", side_effect=OSError("index is read-only"))
+    epoch = create_results()[0]
+
+    hyperopt._save_result(epoch)
+
+    assert HyperoptTools.load_filtered_results(hyperopt.results_file, {}) == ([epoch], 1)
+    assert log_has(
+        f"Unable to update hyperopt index for '{hyperopt.results_file}'; "
+        "the result remains saved: index is read-only",
+        caplog,
+    )
+
+
+def test_save_result_keeps_canonical_epoch_when_index_stat_fails(
+    hyperopt, mocker, tmp_path, caplog
+) -> None:
+    hyperopt.results_file = tmp_path / "ut_results.fthypt"
+    original_stat = Path.stat
+    result_stat_calls = 0
+
+    def fail_post_write_stat(path, *args, **kwargs):
+        nonlocal result_stat_calls
+        if path == hyperopt.results_file:
+            result_stat_calls += 1
+            if result_stat_calls == 2:
+                raise OSError("result stat failed")
+        return original_stat(path, *args, **kwargs)
+
+    mocker.patch.object(Path, "stat", fail_post_write_stat)
+    epoch = create_results()[0]
+
+    hyperopt._save_result(epoch)
+
+    assert HyperoptTools.load_filtered_results(hyperopt.results_file, {}) == ([epoch], 1)
+    assert log_has(
+        f"Unable to update hyperopt index for '{hyperopt.results_file}'; "
+        "the result remains saved: result stat failed",
+        caplog,
+    )
 
 
 @pytest.mark.parametrize(
@@ -88,7 +135,8 @@ def test_load_epoch(
     assert selected == (epochs[expected_epoch - 1] if expected_epoch is not None else None)
     assert total_epochs == 5
     assert filtered_epochs == expected_filtered_epochs
-    read_results.assert_called_once_with(results_file, 1)
+    read_results.assert_not_called()
+    assert HyperoptIndex.path_for(results_file).is_file()
 
 
 def test_load_epoch_incompatible_results(tmp_path) -> None:
@@ -100,6 +148,31 @@ def test_load_epoch_incompatible_results(tmp_path) -> None:
         match="The file with HyperoptTools results is incompatible with this version",
     ):
         HyperoptTools.load_epoch(results_file, {}, -1)
+
+
+def test_load_epoch_uses_streaming_for_filters_not_stored_in_index(mocker, tmp_path) -> None:
+    epochs = [
+        {
+            "loss": epoch,
+            "current_epoch": epoch,
+            "is_best": True,
+            "results_metrics": {"total_trades": epoch},
+        }
+        for epoch in range(1, 4)
+    ]
+    results_file = tmp_path / "results.fthypt"
+    results_file.write_text("\n".join(rapidjson.dumps(epoch) for epoch in epochs))
+    HyperoptIndex.ensure(results_file)
+    read_results = mocker.spy(HyperoptTools, "_read_results")
+
+    selected, total_epochs, filtered_epochs = HyperoptTools.load_epoch(
+        results_file, {"hyperopt_list_min_trades": 1}, 1
+    )
+
+    assert selected == epochs[1]
+    assert total_epochs == 3
+    assert filtered_epochs == 2
+    read_results.assert_called_once_with(results_file, 1)
 
 
 def test_load_epoch_retains_only_requested_tail(mocker, tmp_path) -> None:
@@ -125,6 +198,7 @@ def test_load_epoch_retains_only_requested_tail(mocker, tmp_path) -> None:
 
     results_file = tmp_path / "results.fthypt"
     results_file.write_text("{}")
+    mocker.patch.object(HyperoptIndex, "select", side_effect=OSError("read-only index"))
     mocker.patch.object(HyperoptTools, "_read_results", side_effect=epoch_iterator)
 
     selected, total_epochs, filtered_epochs = HyperoptTools.load_epoch(results_file, {}, -3)
