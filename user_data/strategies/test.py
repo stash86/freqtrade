@@ -20,12 +20,16 @@ class Rsiqui(IStrategy):
     stoploss = -0.25
 
     timeframe = "30m"
+    startup_candle_count = 498
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe["rsi"] = ta.RSI(dataframe, timeperiod=14)
+        dataframe["ema_250"] = ta.EMA(dataframe, timeperiod=250)
+        dataframe["ema_165"] = ta.EMA(dataframe, timeperiod=165)
+        dataframe["ema_150"] = ta.EMA(dataframe, timeperiod=150)
+        # dataframe["rsi"] = ta.RSI(dataframe, timeperiod=14)
 
-        # Calculates slope of the RSI
-        dataframe["rsi_gra"] = np.gradient(dataframe["rsi"], 60)
+        # # Calculates slope of the RSI
+        # dataframe["rsi_gra"] = np.gradient(dataframe["rsi"], 60)
 
         return dataframe
 

@@ -1,10 +1,7 @@
 ---
 services:
   freqtrade:
-    image: stash86/freqtrade:linux-arm64-v8
-    # build:
-    #   context: .
-    #   dockerfile: "./docker/Dockerfile.custom"
+    image: stash86/freqtrade:latest
     restart: unless-stopped
     container_name: freqtrade
     volumes:
@@ -12,22 +9,21 @@ services:
       - "./freqtrade_strategies:/freqtrade/freqtrade_strategies"
     ports:
       - "${DB_HOST:-127.0.0.1}:8081:8081"
-    # Default command used when running `docker compose up`
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade1.log
       --config /freqtrade/user_data/config1.json
       --config /freqtrade/user_data/config-exchange1.json
       --config /freqtrade/user_data/config-exchange-general.json
-    #  --config /freqtrade/user_data/config-exchange-general-binance-proxy-docker.json
-    #  --config /freqtrade/user_data/config-exchange-general-binance-proxy-futures.json
-    #  --config /freqtrade/user_data/config-exchange-general-docker-kucoin.json
-    #  --freqaimodel LightGBMRegressor
       --config /freqtrade/user_data/config-exchange-blacklist.json
       --config /freqtrade/user_data/config-telegram1.json
       --config /freqtrade/user_data/config-telegram-general.json
-    #  --config /freqtrade/user_data/config-discord1.json
       --db-url postgresql+psycopg2://${DB_USER:-admin}:${DB_PASS:-12345}@${DB_HOST:-127.0.0.1}:${DB_PORT:-5432}/<db_name>
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
   freqtrade2:
     image: stash86/freqtrade:linux-arm64-v8
     # build:
