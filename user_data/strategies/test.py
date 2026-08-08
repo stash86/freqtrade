@@ -1,5 +1,4 @@
 # --- Do not remove these libs ---
-import numpy as np
 import talib.abstract as ta
 from pandas import DataFrame
 

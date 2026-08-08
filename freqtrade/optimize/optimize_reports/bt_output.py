@@ -208,60 +208,68 @@ def text_table_add_metrics(strat_results: dict) -> None:
                 __EMPTY_LINE,  # Empty line to improve readability
                 (
                     "Long / Short trades",
-                    f"{strat_results.get('trade_count_long', 'total_trades')} / "
-                    f"{strat_results.get('trade_count_short', 0)}",
+                    (
+                        f"{strat_results.get('trade_count_long', 'total_trades')} / "
+                        f"{strat_results.get('trade_count_short', 0)}"
+                    ),
                 ),
                 (
                     "Long / Short profit %",
-                    f"{strat_results['profit_total_long']:.2%} / "
-                    f"{strat_results['profit_total_short']:.2%}",
+                    (
+                        f"{strat_results['profit_total_long']:.2%} / "
+                        f"{strat_results['profit_total_short']:.2%}"
+                    ),
                 ),
                 (
                     f"Long / Short profit {stake}",
-                    f"{strat_results['profit_total_long_abs']:.{decimals_per_coin(stake)}f} / "
-                    f"{strat_results['profit_total_short_abs']:.{decimals_per_coin(stake)}f}",
+                    (
+                        f"{strat_results['profit_total_long_abs']:.{decimals_per_coin(stake)}f} / "
+                        f"{strat_results['profit_total_short_abs']:.{decimals_per_coin(stake)}f}"
+                    ),
                 ),
             ]
             if strat_results.get("trade_count_short", 0) > 0
             else []
         )
 
-        # drawdown_metrics: list[tuple[str | Text, str | Text]] = []
-        # if "max_relative_drawdown" in strat_results:
-        #     # Compatibility to show old hyperopt results
-        #     drawdown_metrics.append(
-        #         ("Max % of account underwater", f"{strat_results['max_relative_drawdown']:.2%}")
-        #     )
-        # drawdown_account = (
-        #     strat_results["max_drawdown_account"]
-        #     if "max_drawdown_account" in strat_results
-        #     else strat_results["max_drawdown"]
-        # )
-        # drawdown_metrics.extend(
-        #     [
-        #         (
-        #             "Absolute drawdown",
-        #             f"{fmt_coin(strat_results['max_drawdown_abs'], stake)} "
-        #             f"({drawdown_account:.2%})",
-        #         ),
-        #         (
-        #             "Drawdown duration",
-        #             strat_results["drawdown_duration"]
-        #             if "drawdown_duration" in strat_results
-        #             else "N/A",
-        #         ),
-        #         (
-        #             "Profit at drawdown start",
-        #             fmt_coin(strat_results["max_drawdown_high"], stake),
-        #         ),
-        #         (
-        #             "Profit at drawdown end",
-        #             fmt_coin(strat_results["max_drawdown_low"], stake),
-        #         ),
-        #         ("Drawdown start", strat_results["drawdown_start"]),
-        #         ("Drawdown end", strat_results["drawdown_end"]),
-        #     ]
-        # )
+        drawdown_metrics: list[tuple[str, str]] = []
+        if "max_relative_drawdown" in strat_results:
+            # Compatibility to show old hyperopt results
+            drawdown_metrics.append(
+                ("Max % of account underwater", f"{strat_results['max_relative_drawdown']:.2%}")
+            )
+        drawdown_account = (
+            strat_results["max_drawdown_account"]
+            if "max_drawdown_account" in strat_results
+            else strat_results["max_drawdown"]
+        )
+        drawdown_metrics.extend(
+            [
+                (
+                    "Absolute drawdown",
+                    (
+                        f"{fmt_coin(strat_results['max_drawdown_abs'], stake)} "
+                        f"({drawdown_account:.2%})"
+                    ),
+                ),
+                (
+                    "Drawdown duration",
+                    strat_results["drawdown_duration"]
+                    if "drawdown_duration" in strat_results
+                    else "N/A",
+                ),
+                (
+                    "Profit at drawdown start",
+                    fmt_coin(strat_results["max_drawdown_high"], stake),
+                ),
+                (
+                    "Profit at drawdown end",
+                    fmt_coin(strat_results["max_drawdown_low"], stake),
+                ),
+                ("Drawdown start", strat_results["drawdown_start"]),
+                ("Drawdown end", strat_results["drawdown_end"]),
+            ]
+        )
 
         entry_adjustment_metrics = (
             [
@@ -291,79 +299,85 @@ def text_table_add_metrics(strat_results: dict) -> None:
             if "trading_mode" in strat_results
             else []
         )
-        # wallet_metrics: list[tuple[str, str]] = [
-        #     (
-        #         "Min/Max balance (closed trades)",
-        #         f"{fmt_coin(strat_results['csum_min'], stake)} / "
-        #         f"{fmt_coin(strat_results['csum_max'], stake)}",
-        #     ),
-        # ]
-        # wallet_stats = strat_results.get("wallet_stats", {})
-        # if wallet_stats:
-        #     drawdown_metrics.extend(
-        #         [
-        #             __EMPTY_LINE,  # Empty line to improve readability
-        #             (Text("Wallet based Metrics", style="bold"), ""),
-        #             (
-        #                 "Min/Max balance (wallet balance)",
-        #                 f"{fmt_coin(wallet_stats['low_balance'], stake)} / "
-        #                 f"{fmt_coin(wallet_stats['high_balance'], stake)}",
-        #             ),
-        #             (
-        #                 "Min/Max balance dates (wallet balance)",
-        #                 f"{wallet_stats['low_date']} / {wallet_stats['high_date']}",
-        #             ),
-        #         ]
-        #     )
-        #     if "max_drawdown_abs" in wallet_stats:
-        #         # Assume that if sharpe is there, all others are there as well.
-        #         drawdown_metrics.extend(
-        #             [
-        #                 (
-        #                     "Max % of account underwater (balance)",
-        #                     f"{wallet_stats['max_relative_drawdown']:.2%}",
-        #                 ),
-        #                 (
-        #                     "Absolute drawdown (wallet balance)",
-        #                     f"{fmt_coin(wallet_stats['max_drawdown_abs'], stake)} "
-        #                     f"({wallet_stats['max_drawdown_account']:.2%})",
-        #                 ),
-        #                 (
-        #                     "Drawdown duration",
-        #                     wallet_stats["drawdown_duration"]
-        #                     if "drawdown_duration" in wallet_stats
-        #                     else "N/A",
-        #                 ),
-        #                 (
-        #                     "Profit at drawdown start",
-        #                     fmt_coin(wallet_stats["max_drawdown_high"], stake),
-        #                 ),
-        #                 (
-        #                     "Profit at drawdown end",
-        #                     fmt_coin(wallet_stats["max_drawdown_low"], stake),
-        #                 ),
-        #                 ("Drawdown start", wallet_stats["drawdown_start"]),
-        #                 ("Drawdown end", wallet_stats["drawdown_end"]),
-        #                 (
-        #                     "Sharpe (daily wallet balance)",
-        #                     f"{wallet_stats['sharpe']:.2f}"
-        #                     if wallet_stats and "sharpe" in wallet_stats
-        #                     else "N/A",
-        #                 ),
-        #                 (
-        #                     "Sortino (daily wallet balance)",
-        #                     f"{wallet_stats['sortino']:.2f}"
-        #                     if wallet_stats and "sortino" in wallet_stats
-        #                     else "N/A",
-        #                 ),
-        #                 (
-        #                     "Calmar (daily wallet balance)",
-        #                     f"{wallet_stats['calmar']:.2f}"
-        #                     if wallet_stats and "calmar" in wallet_stats
-        #                     else "N/A",
-        #                 ),
-        #             ]
-        #         )
+        wallet_metrics: list[tuple[str, str]] = [
+            (
+                "Min/Max balance (closed trades)",
+                (
+                    f"{fmt_coin(strat_results['csum_min'], stake)} / "
+                    f"{fmt_coin(strat_results['csum_max'], stake)}"
+                ),
+            ),
+        ]
+        wallet_stats = strat_results.get("wallet_stats", {})
+        if wallet_stats:
+            drawdown_metrics.extend(
+                [
+                    __EMPTY_LINE,  # Empty line to improve readability
+                    (str("Wallet based Metrics", style="bold"), ""),
+                    (
+                        "Min/Max balance (wallet balance)",
+                        (
+                            f"{fmt_coin(wallet_stats['low_balance'], stake)} / "
+                            f"{fmt_coin(wallet_stats['high_balance'], stake)}"
+                        ),
+                    ),
+                    (
+                        "Min/Max balance dates (wallet balance)",
+                        f"{wallet_stats['low_date']} / {wallet_stats['high_date']}",
+                    ),
+                ]
+            )
+            if "max_drawdown_abs" in wallet_stats:
+                # Assume that if sharpe is there, all others are there as well.
+                drawdown_metrics.extend(
+                    [
+                        (
+                            "Max % of account underwater (balance)",
+                            f"{wallet_stats['max_relative_drawdown']:.2%}",
+                        ),
+                        (
+                            "Absolute drawdown (wallet balance)",
+                            (
+                                f"{fmt_coin(wallet_stats['max_drawdown_abs'], stake)} "
+                                f"({wallet_stats['max_drawdown_account']:.2%})"
+                            ),
+                        ),
+                        (
+                            "Drawdown duration",
+                            wallet_stats["drawdown_duration"]
+                            if "drawdown_duration" in wallet_stats
+                            else "N/A",
+                        ),
+                        (
+                            "Profit at drawdown start",
+                            fmt_coin(wallet_stats["max_drawdown_high"], stake),
+                        ),
+                        (
+                            "Profit at drawdown end",
+                            fmt_coin(wallet_stats["max_drawdown_low"], stake),
+                        ),
+                        ("Drawdown start", wallet_stats["drawdown_start"]),
+                        ("Drawdown end", wallet_stats["drawdown_end"]),
+                        (
+                            "Sharpe (daily wallet balance)",
+                            f"{wallet_stats['sharpe']:.2f}"
+                            if wallet_stats and "sharpe" in wallet_stats
+                            else "N/A",
+                        ),
+                        (
+                            "Sortino (daily wallet balance)",
+                            f"{wallet_stats['sortino']:.2f}"
+                            if wallet_stats and "sortino" in wallet_stats
+                            else "N/A",
+                        ),
+                        (
+                            "Calmar (daily wallet balance)",
+                            f"{wallet_stats['calmar']:.2f}"
+                            if wallet_stats and "calmar" in wallet_stats
+                            else "N/A",
+                        ),
+                    ]
+                )
 
         # Newly added fields should be ignored if they are missing in strat_results. hyperopt-show
         # command stores these results and newer version of freqtrade must be able to handle old
@@ -446,13 +460,17 @@ def text_table_add_metrics(strat_results: dict) -> None:
             __EMPTY_LINE,  # Empty line to improve readability
             (
                 "Best Pair",
-                f"{strat_results['best_pair']['key']} "
-                f"{strat_results['best_pair']['profit_total']:.2%}",
+                (
+                    f"{strat_results['best_pair']['key']} "
+                    f"{strat_results['best_pair']['profit_total']:.2%}"
+                ),
             ),
             (
                 "Worst Pair",
-                f"{strat_results['worst_pair']['key']} "
-                f"{strat_results['worst_pair']['profit_total']:.2%}",
+                (
+                    f"{strat_results['worst_pair']['key']} "
+                    f"{strat_results['worst_pair']['profit_total']:.2%}"
+                ),
             ),
             ("Best trade", f"{best_trade['pair']} {best_trade['profit_ratio']:.2%}"),
             ("Worst trade", f"{worst_trade['pair']} {worst_trade['profit_ratio']:.2%}"),
@@ -466,38 +484,46 @@ def text_table_add_metrics(strat_results: dict) -> None:
             # ),
             (
                 "Days win/draw/lose",
-                f"{strat_results['winning_days']} / "
-                f"{strat_results['draw_days']} / {strat_results['losing_days']}",
+                (
+                    f"{strat_results['winning_days']} / "
+                    f"{strat_results['draw_days']} / {strat_results['losing_days']}"
+                ),
             ),
             (
                 "Min/Max/Avg. Duration Winners",
-                f"{strat_results.get('winner_holding_min', 'N/A')} / "
-                f"{strat_results.get('winner_holding_max', 'N/A')} / "
-                f"{strat_results.get('winner_holding_avg', 'N/A')}",
+                (
+                    f"{strat_results.get('winner_holding_min', 'N/A')} / "
+                    f"{strat_results.get('winner_holding_max', 'N/A')} / "
+                    f"{strat_results.get('winner_holding_avg', 'N/A')}"
+                ),
             ),
             (
                 "Min/Max/Avg. Duration Losers",
-                f"{strat_results.get('loser_holding_min', 'N/A')} / "
-                f"{strat_results.get('loser_holding_max', 'N/A')} / "
-                f"{strat_results.get('loser_holding_avg', 'N/A')}",
+                (
+                    f"{strat_results.get('loser_holding_min', 'N/A')} / "
+                    f"{strat_results.get('loser_holding_max', 'N/A')} / "
+                    f"{strat_results.get('loser_holding_avg', 'N/A')}"
+                ),
             ),
-            # (
-            #     "Max Consecutive Wins / Loss",
-            #     (
-            #         (
-            #             f"{strat_results['max_consecutive_wins']} / "
-            #             f"{strat_results['max_consecutive_losses']}"
-            #         )
-            #         if "max_consecutive_losses" in strat_results
-            #         else "N/A"
-            #     ),
-            # ),
-            # ("Rejected Entry signals", strat_results.get("rejected_signals", "N/A")),
-            # (
-            #     "Entry/Exit Timeouts",
-            #     f"{strat_results.get('timedout_entry_orders', 'N/A')} / "
-            #     f"{strat_results.get('timedout_exit_orders', 'N/A')}",
-            # ),
+            (
+                "Max Consecutive Wins / Loss",
+                (
+                    (
+                        f"{strat_results['max_consecutive_wins']} / "
+                        f"{strat_results['max_consecutive_losses']}"
+                    )
+                    if "max_consecutive_losses" in strat_results
+                    else "N/A"
+                ),
+            ),
+            ("Rejected Entry signals", strat_results.get("rejected_signals", "N/A")),
+            (
+                "Entry/Exit Timeouts",
+                (
+                    f"{strat_results.get('timedout_entry_orders', 'N/A')} / "
+                    f"{strat_results.get('timedout_exit_orders', 'N/A')}"
+                ),
+            ),
             *entry_adjustment_metrics,
             # __EMPTY_LINE,  # Empty line to improve readability
             # *wallet_metrics,

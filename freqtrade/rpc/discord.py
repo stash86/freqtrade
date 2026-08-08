@@ -28,7 +28,6 @@ class Discord(Webhook):
         Cleanup pending module resources.
         This will do nothing for webhooks, they will simply not be called anymore
         """
-        pass
 
     def send_msg(self, msg) -> None:
         send_message = False

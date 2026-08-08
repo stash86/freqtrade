@@ -121,7 +121,7 @@ def _trend(signals, buy_value, sell_value):
     n = len(signals["low"])
     buy = np.zeros(n)
     sell = np.zeros(n)
-    for i in range(0, len(signals["date"])):
+    for i in range(len(signals["date"])):
         if random.random() > 0.5:  # Both buy and sell signals at same timeframe
             buy[i] = buy_value
             sell[i] = sell_value
@@ -138,7 +138,7 @@ def _trend_alternate(dataframe=None, metadata=None):
     n = len(low)
     buy = np.zeros(n)
     sell = np.zeros(n)
-    for i in range(0, len(buy)):
+    for i in range(len(buy)):
         if i % 2 == 0:
             buy[i] = 1
         else:
@@ -2171,13 +2171,9 @@ def test_backtest_pricecontours_protections(default_conf, fee, mocker, testdatad
         (None, "sine", 35),
         (None, "raise", 19),
         (None, "lower", 0),
-        (None, "sine", 35),
-        (None, "raise", 19),
         ([{"method": "CooldownPeriod", "stop_duration": 3}], "sine", 10),
         ([{"method": "CooldownPeriod", "stop_duration": 3}], "raise", 11),
         ([{"method": "CooldownPeriod", "stop_duration": 3}], "lower", 0),
-        ([{"method": "CooldownPeriod", "stop_duration": 3}], "sine", 10),
-        ([{"method": "CooldownPeriod", "stop_duration": 3}], "raise", 11),
     ],
 )
 def test_backtest_pricecontours(
@@ -2341,7 +2337,7 @@ def test_backtest_multi_pair(default_conf, fee, mocker, tres, pair, testdatadir)
 
     all_orients = [x for _, x in calls_per_candle.items()]
 
-    distinct_calls = [list(x) for x in set(tuple(x) for x in all_orients)]
+    distinct_calls = [list(x) for x in {tuple(x) for x in all_orients}]
 
     # All calls must be made for the full pairlist
     assert all(len(x) == 5 for x in distinct_calls)
