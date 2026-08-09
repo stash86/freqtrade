@@ -13,11 +13,10 @@ services:
       trade
       --logfile /freqtrade/user_data/logs/freqtrade1.log
       --config /freqtrade/user_data/config1.json
-      --config /freqtrade/user_data/config-exchange1.json
-      --config /freqtrade/user_data/config-exchange-general.json
-      --config /freqtrade/user_data/config-exchange-blacklist.json
-      --config /freqtrade/user_data/config-telegram1.json
-      --config /freqtrade/user_data/config-telegram-general.json
+      --config /freqtrade/freqtrade_strategies/configs/config-pairlist-remote-short-2.json
+      --config /freqtrade/freqtrade_strategies/configs/config-exchange-user0010.json
+      --config /freqtrade/freqtrade_strategies/configs/config-discord-dryrun.json
+      --config /freqtrade/freqtrade_strategies/configs/config-api.json
       --db-url postgresql+psycopg2://${DB_USER:-admin}:${DB_PASS:-12345}@${DB_HOST:-127.0.0.1}:${DB_PORT:-5432}/<db_name>
     logging:
       driver: "json-file"
