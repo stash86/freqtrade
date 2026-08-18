@@ -312,6 +312,24 @@ class Exchange:
         """
         self.close()
 
+    def _close_async_ccxt(self, ccxt_object: ccxt_pro.Exchange | None, name: str) -> None:
+        """
+        Release the aiohttp sessions of an async ccxt object.
+        Errors are logged, but don't propagate as it's only called in shutdown phase.
+        :param name: Name of the object - used for logging only.
+        """
+        if (
+            ccxt_object is not None
+            and inspect.iscoroutinefunction(ccxt_object.close)
+            # ccxt warns about either of these being left behind in its destructor.
+            and (ccxt_object.session or getattr(ccxt_object, "socks_proxy_sessions", None))
+        ):
+            logger.debug(f"Closing {name} ccxt session.")
+            try:
+                self.loop.run_until_complete(ccxt_object.close())
+            except Exception as e:
+                logger.warning(f"Error closing {name} ccxt session: {e.__class__.__name__} {e}")
+
     def close(self):
         if self._exchange_ws:
             self._exchange_ws.cleanup()
@@ -320,29 +338,17 @@ class Exchange:
             generic_loop = asyncio.get_running_loop()
         except RuntimeError:
             generic_loop = None
-        loop_running = (getattr(self, "loop", None) and self.loop.is_running()) or (
+        loop = getattr(self, "loop", None)
+        loop_running = (loop and loop.is_running()) or (
             generic_loop is not None and generic_loop.is_running()
         )
 
-        if (
-            getattr(self, "_api_async", None)
-            and inspect.iscoroutinefunction(self._api_async.close)
-            and self._api_async.session
-            and not loop_running
-        ):
-            logger.debug("Closing async ccxt session.")
-            self.loop.run_until_complete(self._api_async.close())
-        if (
-            self._ws_async
-            and inspect.iscoroutinefunction(self._ws_async.close)
-            and self._ws_async.session
-            and not loop_running
-        ):
-            logger.debug("Closing ws ccxt session.")
-            self.loop.run_until_complete(self._ws_async.close())
+        if loop and not loop.is_closed() and not loop_running:
+            self._close_async_ccxt(getattr(self, "_api_async", None), "async")
+            self._close_async_ccxt(self._ws_async, "ws")
 
-        if self.loop and not self.loop.is_closed():
-            self.loop.close()
+        if loop and not loop.is_closed():
+            loop.close()
 
     def _init_async_loop(self) -> asyncio.AbstractEventLoop:
         loop = asyncio.new_event_loop()
@@ -399,8 +405,8 @@ class Exchange:
             ),
             "secret": exchange_config.get("secret"),
             "password": exchange_config.get("password"),
-            "uid": exchange_config.get("uid", ""),
-            "accountId": exchange_config.get("account_id", exchange_config.get("accountId", "")),
+            "uid": exchange_config.get("uid"),
+            "accountId": exchange_config.get("account_id", exchange_config.get("accountId")),
             # DEX attributes:
             "walletAddress": exchange_config.get(
                 "wallet_address", exchange_config.get("walletAddress")
@@ -2927,37 +2933,43 @@ class Exchange:
         return results_df
 
     def refresh_ohlcv_with_cache(
-        self, pairs: list[PairWithTimeframe], since_ms: int
+        self, pairs: list[PairWithTimeframe], *, lookback_period: int
     ) -> dict[PairWithTimeframe, DataFrame]:
         """
         Refresh ohlcv data for all pairs in needed_pairs if necessary.
-        Caches data with expiring per timeframe.
-        Should only be used for pairlists which need "on time" expirarion, and no longer cache.
+        Caches data per (timeframe, lookback_period), expiring with each new candle.
+        Should only be used for pairlists which need "on time" expiration, and no longer cache.
+        :param pairs: List of pairs, timeframes to refresh
+        :param lookback_period: Amount of candles to fetch.
+            Downloads lookback_period + 1 candles, as measuring a change over N candles
+            requires N + 1 candles of data.
         """
 
         timeframes = {p[1] for p in pairs}
         for timeframe in timeframes:
-            if (timeframe, since_ms) not in self._expiring_candle_cache:
+            if (timeframe, lookback_period) not in self._expiring_candle_cache:
                 timeframe_in_sec = timeframe_to_seconds(timeframe)
                 # Initialise cache
-                self._expiring_candle_cache[(timeframe, since_ms)] = PeriodicCache(
+                self._expiring_candle_cache[(timeframe, lookback_period)] = PeriodicCache(
                     ttl=timeframe_in_sec, maxsize=1000
                 )
 
         # Get candles from cache
         candles = {
-            c: self._expiring_candle_cache[(c[1], since_ms)].get(c, None)
+            c: self._expiring_candle_cache[(c[1], lookback_period)].get(c, None)
             for c in pairs
-            if c in self._expiring_candle_cache[(c[1], since_ms)]
+            if c in self._expiring_candle_cache[(c[1], lookback_period)]
         }
         pairs_to_download = [p for p in pairs if p not in candles]
-        if pairs_to_download:
-            candles_new = self.refresh_latest_ohlcv(
-                pairs_to_download, since_ms=since_ms, cache=False
-            )
+        for timeframe in timeframes:
+            tf_pairs = [p for p in pairs_to_download if p[1] == timeframe]
+            if not tf_pairs:
+                continue
+            since_ms = dt_ts(date_minus_candles(timeframe, lookback_period + 1))
+            candles_new = self.refresh_latest_ohlcv(tf_pairs, since_ms=since_ms, cache=False)
             for c, val in candles_new.items():
                 candles[c] = val
-                self._expiring_candle_cache[(c[1], since_ms)][c] = val
+                self._expiring_candle_cache[(c[1], lookback_period)][c] = val
         return candles
 
     def _now_is_time_to_refresh(self, pair: str, timeframe: str, candle_type: CandleType) -> bool:

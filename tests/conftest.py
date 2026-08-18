@@ -20,6 +20,7 @@ from freqtrade.enums import CandleType, MarginMode, SignalDirection, TradingMode
 from freqtrade.exchange import Exchange, timeframe_to_minutes, timeframe_to_seconds
 from freqtrade.freqtradebot import FreqtradeBot
 from freqtrade.persistence import LocalTrade, Order, Trade, init_db
+from freqtrade.persistence.custom_data import _CustomData
 from freqtrade.resolvers import ExchangeResolver
 from freqtrade.system import set_mp_start_method
 from freqtrade.util import dt_now, dt_ts
@@ -581,6 +582,21 @@ def patch_coingecko(mocker) -> None:
     )
 
 
+@pytest.fixture(autouse=True)
+def dispose_db_engine():
+    """
+    Dispose the database engine after each test to release its pooled connection.
+    Without this, leaked connections accumulate and are finalized at random points
+    by the GC, emitting ResourceWarnings in unrelated tests.
+    """
+    yield
+    if (session := getattr(Trade, "session", None)) is not None:
+        bind = session.get_bind()
+        session.remove()
+        _CustomData.session.remove()
+        bind.dispose()
+
+
 @pytest.fixture(scope="function")
 def init_persistence(default_conf):
     init_db(default_conf["db_url"])
@@ -623,7 +639,7 @@ def get_default_conf(testdatadir):
         },
         "exchange": {
             "name": "binance",
-            "key": "key",
+            "api_key": "key",
             "enable_ws": False,
             "secret": "secret",
             "pair_whitelist": ["ETH/BTC", "LTC/BTC", "XRP/BTC", "NEO/BTC"],
@@ -669,7 +685,7 @@ def get_default_conf_usdt(testdatadir):
             "exchange": {
                 "name": "binance",
                 "enabled": True,
-                "key": "key",
+                "api_key": "key",
                 "enable_ws": False,
                 "secret": "secret",
                 "pair_whitelist": [

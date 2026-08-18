@@ -31,6 +31,7 @@ from freqtrade.exchange import (
     Kraken,
     date_minus_candles,
     market_is_active,
+    timeframe_to_msecs,
     timeframe_to_prev_date,
 )
 from freqtrade.exchange.common import (
@@ -231,6 +232,41 @@ def test_destroy(default_conf, mocker, caplog):
 
     assert closed
     assert log_has("Closing async ccxt session.", caplog)
+
+
+def test_destroy_socks_session(default_conf, mocker):
+    exchange = get_patched_exchange(mocker, default_conf)
+
+    closed = False
+
+    async def _close():
+        nonlocal closed
+        closed = True
+
+    # ccxt also warns about leftover socks proxy sessions - so these must be closed, too.
+    exchange._api_async.close = _close
+    exchange._api_async.session = None
+    exchange._api_async.socks_proxy_sessions = {"socks5://127.0.0.1:9050": MagicMock()}
+
+    exchange.close()
+
+    assert closed
+
+
+def test_destroy_close_error(default_conf, mocker, caplog):
+    exchange = get_patched_exchange(mocker, default_conf)
+
+    async def _close():
+        raise ValueError("Test error")
+
+    exchange._api_async.close = _close
+    exchange._api_async.session = MagicMock()
+
+    # A failing session close must not prevent the loop from being closed.
+    exchange.close()
+
+    assert log_has("Error closing async ccxt session: ValueError Test error", caplog)
+    assert exchange.loop.is_closed()
 
 
 def test_init_exception(default_conf, mocker):
@@ -3019,23 +3055,31 @@ def test_refresh_ohlcv_with_cache(mocker, default_conf, time_machine) -> None:
 
     assert len(exchange._expiring_candle_cache) == 0
 
-    res = exchange.refresh_ohlcv_with_cache(pairs, start.timestamp())
-    assert ohlcv_mock.call_count == 1
-    assert ohlcv_mock.call_args_list[0][0][0] == pairs
-    assert len(ohlcv_mock.call_args_list[0][0][0]) == 5
+    res = exchange.refresh_ohlcv_with_cache(pairs, lookback_period=5)
+    # One download call per timeframe
+    assert ohlcv_mock.call_count == 3
+    requested = [p for call in ohlcv_mock.call_args_list for p in call[0][0]]
+    assert set(requested) == set(pairs)
+    assert len(requested) == 5
+    for call in ohlcv_mock.call_args_list:
+        timeframe = call[0][0][0][1]
+        expected_since = dt_ts(timeframe_to_prev_date(timeframe, start)) - 6 * timeframe_to_msecs(
+            timeframe
+        )
+        assert call[1]["since_ms"] == expected_since
 
     assert len(res) == 5
     # length of 3 - as we have 3 different timeframes
     assert len(exchange._expiring_candle_cache) == 3
 
     ohlcv_mock.reset_mock()
-    res = exchange.refresh_ohlcv_with_cache(pairs, start.timestamp())
+    res = exchange.refresh_ohlcv_with_cache(pairs, lookback_period=5)
     assert ohlcv_mock.call_count == 0
     assert len(res) == 5
 
     # # re-run with one additional pair
     res = exchange.refresh_ohlcv_with_cache(
-        pairs + [("NEW/PAIR", "1d", CandleType.SPOT)], start.timestamp()
+        pairs + [("NEW/PAIR", "1d", CandleType.SPOT)], lookback_period=5
     )
     assert ohlcv_mock.call_count == 1
     assert len(res) == 6
@@ -3044,7 +3088,7 @@ def test_refresh_ohlcv_with_cache(mocker, default_conf, time_machine) -> None:
     time_machine.move_to(start + timedelta(minutes=6), tick=False)
 
     ohlcv_mock.reset_mock()
-    res = exchange.refresh_ohlcv_with_cache(pairs, start.timestamp())
+    res = exchange.refresh_ohlcv_with_cache(pairs, lookback_period=5)
     assert ohlcv_mock.call_count == 1
     assert len(ohlcv_mock.call_args_list[0][0][0]) == 1
     assert len(res) == 5
@@ -3053,20 +3097,31 @@ def test_refresh_ohlcv_with_cache(mocker, default_conf, time_machine) -> None:
     time_machine.move_to(start + timedelta(hours=2), tick=False)
 
     ohlcv_mock.reset_mock()
-    res = exchange.refresh_ohlcv_with_cache(pairs, start.timestamp())
-    assert ohlcv_mock.call_count == 1
-    assert len(ohlcv_mock.call_args_list[0][0][0]) == 2
+    res = exchange.refresh_ohlcv_with_cache(pairs, lookback_period=5)
+    assert ohlcv_mock.call_count == 2
+    requested = [p for call in ohlcv_mock.call_args_list for p in call[0][0]]
+    assert len(requested) == 2
     assert len(res) == 5
 
     # Expire all caches
     time_machine.move_to(start + timedelta(days=1, hours=2), tick=False)
 
     ohlcv_mock.reset_mock()
-    res = exchange.refresh_ohlcv_with_cache(pairs, start.timestamp())
-    assert ohlcv_mock.call_count == 1
-    assert len(ohlcv_mock.call_args_list[0][0][0]) == 5
-    assert ohlcv_mock.call_args_list[0][0][0] == pairs
+    res = exchange.refresh_ohlcv_with_cache(pairs, lookback_period=5)
+    assert ohlcv_mock.call_count == 3
+    requested = [p for call in ohlcv_mock.call_args_list for p in call[0][0]]
+    assert set(requested) == set(pairs)
     assert len(res) == 5
+
+    # Cache keys must remain stable over time
+    assert len(exchange._expiring_candle_cache) == 3
+    # Expired entries are evicted when the cache is written to again -
+    # NEW/PAIR was never re-requested, so only the 3 base pairs remain.
+    assert exchange._expiring_candle_cache[("1d", 5)].currsize == 3
+
+    # A different lookback period uses separate caches
+    res = exchange.refresh_ohlcv_with_cache(pairs, lookback_period=6)
+    assert len(exchange._expiring_candle_cache) == 6
 
 
 def test_refresh_latest_ohlcv_funding_rate(mocker, default_conf_usdt, caplog) -> None:
@@ -5226,7 +5281,7 @@ def test_calculate_fee_rate(mocker, default_conf, order, expected, unknown_fee_r
 
 
 @pytest.mark.parametrize(
-    "retrycount,max_retries,expected",
+    "remaining_retries,max_retries,expected",
     [
         (0, 3, 10),
         (1, 3, 5),
@@ -5247,8 +5302,8 @@ def test_calculate_fee_rate(mocker, default_conf, order, expected, unknown_fee_r
         (5, 5, 1),
     ],
 )
-def test_calculate_backoff(retrycount, max_retries, expected):
-    assert calculate_backoff(retrycount, max_retries) == expected
+def test_calculate_backoff(remaining_retries, max_retries, expected):
+    assert calculate_backoff(remaining_retries, max_retries) == expected
 
 
 @pytest.mark.parametrize("exchange_name", EXCHANGES)
