@@ -5,6 +5,7 @@ from pathlib import Path
 
 from pandas import DataFrame, concat
 
+from freqtrade.candle_columns import get_candle_columns
 from freqtrade.configuration import TimeRange
 from freqtrade.constants import (
     DATETIME_PRINT_FORMAT,
@@ -15,6 +16,7 @@ from freqtrade.constants import (
     PairWithTimeframe,
 )
 from freqtrade.data.converter import (
+    add_candle_aliases,
     clean_ohlcv_dataframe,
     convert_trades_to_ohlcv,
     trades_df_remove_duplicates,
@@ -66,7 +68,7 @@ def load_pair_history(
     :param startup_candles: Additional candles to load at the start of the period
     :param data_handler: Initialized data-handler to use.
                          Will be initialized from data_format if not set
-    :param candle_type: Any of the enum CandleType (must match trading mode!)
+    :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
     :return: DataFrame with ohlcv data, or empty DataFrame
     """
     data_handler = get_datahandler(datadir, data_format, data_handler)
@@ -106,7 +108,7 @@ def load_data(
     :param startup_candles: Additional candles to load at the start of the period
     :param fail_without_data: Raise OperationalException if no data is found.
     :param data_format: Data format which should be used. Defaults to json
-    :param candle_type: Any of the enum CandleType (must match trading mode!)
+    :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
     :return: dict(<pair>:<Dataframe>)
     """
     result: dict[str, DataFrame] = {}
@@ -132,7 +134,9 @@ def load_data(
             if candle_type is CandleType.FUNDING_RATE and user_futures_funding_rate is not None:
                 logger.warning(f"{pair} using user specified [{user_futures_funding_rate}]")
             elif candle_type not in (CandleType.SPOT, CandleType.FUTURES):
-                result[pair] = DataFrame(columns=["date", "open", "close", "high", "low", "volume"])
+                result[pair] = add_candle_aliases(
+                    DataFrame(columns=get_candle_columns(candle_type)), candle_type
+                )
 
     if fail_without_data and not result:
         raise OperationalException("No data found. Terminating.")
@@ -158,7 +162,7 @@ def refresh_data(
     :param exchange: Exchange object
     :param data_format: dataformat to use
     :param timerange: Limit data to be loaded to this timerange
-    :param candle_type: Any of the enum CandleType (must match trading mode!)
+    :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
     """
     data_handler = get_datahandler(datadir, data_format)
     for pair in pairs:
@@ -251,7 +255,7 @@ def _download_pair_history(
     :param pair: pair to download
     :param timeframe: Timeframe (e.g "5m")
     :param timerange: range of time to download
-    :param candle_type: Any of the enum CandleType (must match trading mode!)
+    :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
     :param erase: Erase existing data
     :param pair_candles: Optional with "1 call" pair candles.
     :return: bool with success state
@@ -336,6 +340,7 @@ def _download_pair_history(
                 pair,
                 fill_missing=False,
                 drop_incomplete=False,
+                candle_type=candle_type,
             )
 
         logger.debug(

@@ -518,7 +518,7 @@ class Exchange:
         Uses ohlcv_candle_limit_per_timeframe if the exchange has different limits
         per timeframe (e.g. bittrex), otherwise falls back to ohlcv_candle_limit
         :param timeframe: Timeframe to check
-        :param candle_type: Candle-type
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
         :param since_ms: Starting timestamp
         :return: Candle limit as integer
         """
@@ -2609,7 +2609,7 @@ class Exchange:
         :param pair: Pair to download
         :param timeframe: Timeframe to get data for
         :param since_ms: Timestamp in milliseconds to get history from
-        :param candle_type: '', mark, index, premiumIndex, or funding_rate
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
         :param is_new_pair: used by binance subclass to allow "fast" new pair downloading
         :param until_ms: Timestamp in milliseconds to get history up to
         :return: Dataframe with candle (OHLCV) data
@@ -2631,7 +2631,12 @@ class Exchange:
             self._ohlcv_partial_candle if candle_type != CandleType.FUNDING_RATE else False
         )
         return ohlcv_to_dataframe(
-            data, timeframe, pair, fill_missing=False, drop_incomplete=drop_incomplete
+            data,
+            timeframe,
+            pair,
+            fill_missing=False,
+            drop_incomplete=drop_incomplete,
+            candle_type=candle_type,
         )
 
     async def _async_get_historic_ohlcv(
@@ -2645,7 +2650,7 @@ class Exchange:
     ) -> OHLCVResponse:
         """
         Download historic ohlcv
-        :param candle_type: Any of the enum CandleType (must match trading mode!)
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
         """
 
         one_call = timeframe_to_msecs(timeframe) * self.ohlcv_candle_limit(
@@ -2853,8 +2858,9 @@ class Exchange:
             ticks,
             timeframe,
             pair=pair,
-            fill_missing=not has_cache and c_type != CandleType.FUNDING_RATE,
+            fill_missing=not has_cache,
             drop_incomplete=drop_incomplete,
+            candle_type=c_type,
         )
         # keeping parsed dataframe in cache
         if cache:
@@ -2865,8 +2871,9 @@ class Exchange:
                     concat([old, ohlcv_df], axis=0),
                     timeframe,
                     pair,
-                    fill_missing=c_type != CandleType.FUNDING_RATE,
+                    fill_missing=True,
                     drop_incomplete=False,
+                    candle_type=c_type,
                 )
                 candle_limit = self.ohlcv_candle_limit(timeframe, self._config["candle_type_def"])
                 # Age out old candles
@@ -2990,7 +2997,7 @@ class Exchange:
     ) -> OHLCVResponse:
         """
         Asynchronously get candle history data using fetch_ohlcv
-        :param candle_type: '', mark, index, premiumIndex, or funding_rate
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
         returns tuple: (pair, timeframe, ohlcv_list)
         """
         try:
@@ -3073,8 +3080,8 @@ class Exchange:
         """
         # Funding rate
         data = await self._api_async.fetch_funding_rate_history(pair, since=since_ms, limit=limit)
-        # Convert funding rate to candle pattern
-        data = [[x["timestamp"], x["fundingRate"], 0, 0, 0, 0] for x in data]
+        # Reduce to the columns stored for funding rates (date, funding_rate)
+        data = [[x["timestamp"], x["fundingRate"]] for x in data]
         return data
 
     def check_candle_type_support(self, candle_type: CandleType) -> bool:
@@ -3940,29 +3947,25 @@ class Exchange:
         :param futures_funding_rate: Fake funding rate to use if funding_rates are not available
         """
         relevant_cols = ["date", "open_mark", "open_fund"]
+        # Reduce both sides to the columns we need, under explicit names. Funding rates are
+        # stored as "funding_rate" but older in-memory frames may still use the "open" alias.
+        fund_col = "funding_rate" if "funding_rate" in funding_rates.columns else "open"
+        funding_rates = funding_rates.loc[:, ["date", fund_col]].rename(
+            columns={fund_col: "open_fund"}
+        )
+        mark_rates = mark_rates.rename(columns={"open": "open_mark"})
+
         if futures_funding_rate is None:
-            return mark_rates.merge(
-                funding_rates, on="date", how="inner", suffixes=["_mark", "_fund"]
-            )[relevant_cols]
+            return mark_rates.merge(funding_rates, on="date", how="inner")[relevant_cols]
         else:
             if len(funding_rates) == 0:
                 # No funding rate candles - full fillup with fallback variable
                 mark_rates["open_fund"] = futures_funding_rate
-                return mark_rates.rename(
-                    columns={
-                        "open": "open_mark",
-                        "close": "close_mark",
-                        "high": "high_mark",
-                        "low": "low_mark",
-                        "volume": "volume_mark",
-                    }
-                )[relevant_cols]
+                return mark_rates[relevant_cols]
 
             else:
                 # Fill up missing funding_rate candles with fallback value
-                combined = mark_rates.merge(
-                    funding_rates, on="date", how="left", suffixes=["_mark", "_fund"]
-                )
+                combined = mark_rates.merge(funding_rates, on="date", how="left")
                 # Fill only leading missing funding rates so gaps stay untouched
                 first_valid_idx = combined["open_fund"].first_valid_index()
                 if first_valid_idx is None:

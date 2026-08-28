@@ -96,7 +96,8 @@ class DataProvider:
         :param pair: pair to get the data for
         :param timeframe: Timeframe to get data for
         :param dataframe: analyzed dataframe
-        :param candle_type: Any of the enum CandleType (must match trading mode!)
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
+                            Must match the trading mode.
         """
         pair_key = (pair, timeframe, candle_type)
         self.__cached_pairs[pair_key] = (dataframe, datetime.now(UTC))
@@ -158,7 +159,8 @@ class DataProvider:
 
         :param pair: pair to get the data for
         :param timeframe: Timeframe to get data for
-        :param candle_type: Any of the enum CandleType (must match trading mode!)
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
+                            Must match the trading mode.
         """
         pair_key = (pair, timeframe, candle_type)
 
@@ -185,7 +187,8 @@ class DataProvider:
 
         :param pair: pair to get the data for
         :param timeframe: Timeframe to get data for
-        :param candle_type: Any of the enum CandleType (must match trading mode!)
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
+                            Must match the trading mode.
         :returns: False if the candle could not be appended, or the int number of missing candles.
         """
         pair_key = (pair, timeframe, candle_type)
@@ -265,7 +268,7 @@ class DataProvider:
 
         :param pair: pair to get the data for
         :param timeframe: Timeframe to get data for
-        :param candle_type: Any of the enum CandleType (must match trading mode!)
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
         :returns: Tuple of the DataFrame and last analyzed timestamp
         """
         _timeframe = self._default_timeframe if not timeframe else timeframe
@@ -298,7 +301,8 @@ class DataProvider:
         Get stored historical candle (OHLCV) data
         :param pair: pair to get the data for
         :param timeframe: timeframe to get data for
-        :param candle_type: '', mark, index, premiumIndex, or funding_rate
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
+                            '' (the default) resolves to the trading mode's candle type.
         """
         _candle_type = (
             CandleType.from_string(candle_type)
@@ -375,8 +379,9 @@ class DataProvider:
         will be available.
         :param pair: pair to get the data for
         :param timeframe: timeframe to get data for
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
+                            '' (the default) resolves to the trading mode's candle type.
         :return: Dataframe for this pair
-        :param candle_type: '', mark, index, premiumIndex, or funding_rate
         """
         timeframe = self.__fix_funding_rate_timeframe(pair, timeframe, candle_type)
         if self.runmode in (RunMode.DRY_RUN, RunMode.LIVE):
@@ -504,7 +509,8 @@ class DataProvider:
         Please use the `available_pairs` method to verify which pairs are currently cached.
         :param pair: pair to get the data for
         :param timeframe: Timeframe to get data for
-        :param candle_type: '', mark, index, premiumIndex, or funding_rate
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
+                            '' (the default) resolves to the trading mode's candle type.
         :param copy: copy dataframe before returning if True.
                      Use False only for read-only operations (where the dataframe is not modified)
         """
@@ -536,7 +542,8 @@ class DataProvider:
         This is not meant to be used in callbacks because of lookahead bias.
         :param pair: pair to get the data for
         :param timeframe: Timeframe to get data for
-        :param candle_type: '', mark, index, premiumIndex, or funding_rate
+        :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
+                            '' (the default) resolves to the trading mode's candle type.
         :param copy: copy dataframe before returning if True.
                      Use False only for read-only operations (where the dataframe is not modified)
         """
