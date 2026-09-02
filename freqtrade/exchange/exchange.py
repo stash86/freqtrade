@@ -531,6 +531,8 @@ class Exchange:
         fallback_val = self._ft_has.get("ohlcv_candle_limit", ccxt_val)
         if candle_type == CandleType.FUNDING_RATE:
             fallback_val = self._ft_has.get("funding_fee_candle_limit", fallback_val)
+        elif candle_type == CandleType.OPEN_INTEREST:
+            fallback_val = self._ft_has.get("open_interest_candle_limit", fallback_val)
         return int(
             self._ft_has.get("ohlcv_candle_limit_per_timeframe", {}).get(
                 timeframe, str(fallback_val)
@@ -3016,20 +3018,26 @@ class Exchange:
                 timeframe, candle_type=candle_type, since_ms=since_ms
             )
 
-            if candle_type != CandleType.FUNDING_RATE:
-                if candle_type and candle_type not in (CandleType.SPOT, CandleType.FUTURES):
-                    self.verify_candle_type_support(candle_type)
-                    params.update({"price": str(candle_type)})
-                data = await self._api_async.fetch_ohlcv(
-                    pair, timeframe=timeframe, since=since_ms, limit=candle_limit, params=params
-                )
-            else:
-                # Funding rate
+            if candle_type == CandleType.FUNDING_RATE:
                 data = await self._fetch_funding_rate_history(
                     pair=pair,
                     timeframe=timeframe,
                     limit=candle_limit,
                     since_ms=since_ms,
+                )
+            elif candle_type == CandleType.OPEN_INTEREST:
+                data = await self._fetch_open_interest_history(
+                    pair=pair,
+                    timeframe=timeframe,
+                    limit=candle_limit,
+                    since_ms=since_ms,
+                )
+            else:
+                if candle_type and candle_type not in (CandleType.SPOT, CandleType.FUTURES):
+                    self.verify_candle_type_support(candle_type)
+                    params.update({"price": str(candle_type)})
+                data = await self._api_async.fetch_ohlcv(
+                    pair, timeframe=timeframe, since=since_ms, limit=candle_limit, params=params
                 )
             # Some exchanges sort OHLCV in ASC order and others in DESC.
             # Only sort if necessary to save computing time
@@ -3084,26 +3092,38 @@ class Exchange:
         data = [[x["timestamp"], x["fundingRate"]] for x in data]
         return data
 
+    async def _fetch_open_interest_history(
+        self,
+        pair: str,
+        timeframe: str,
+        limit: int,
+        since_ms: int | None = None,
+    ) -> list[list]:
+        """
+        Fetch open interest history - used to selectively override this by subclasses.
+        """
+        data = await self._api_async.fetch_open_interest_history(
+            pair, timeframe, since=since_ms, limit=limit
+        )
+        data_res = [[x["timestamp"], x["openInterestAmount"], x["openInterestValue"]] for x in data]
+        return data_res
+
     def check_candle_type_support(self, candle_type: CandleType) -> bool:
         """
         Check that the exchange supports the given candle type.
         :param candle_type: CandleType to verify
         :return: True if supported, False otherwise
         """
-        if candle_type == CandleType.FUNDING_RATE:
-            if not self.exchange_has("fetchFundingRateHistory"):
-                return False
-        elif candle_type not in (CandleType.SPOT, CandleType.FUTURES):
-            mapping = {
-                CandleType.MARK: "fetchMarkOHLCV",
-                CandleType.INDEX: "fetchIndexOHLCV",
-                CandleType.PREMIUMINDEX: "fetchPremiumIndexOHLCV",
-                CandleType.FUNDING_RATE: "fetchFundingRateHistory",
-            }
-            _method = mapping.get(candle_type, "fetchOHLCV")
-            if not self.exchange_has(_method):
-                return False
-        return True
+        if candle_type in (CandleType.SPOT, CandleType.FUTURES):
+            return True
+        mapping = {
+            CandleType.MARK: "fetchMarkOHLCV",
+            CandleType.INDEX: "fetchIndexOHLCV",
+            CandleType.PREMIUMINDEX: "fetchPremiumIndexOHLCV",
+            CandleType.FUNDING_RATE: "fetchFundingRateHistory",
+            CandleType.OPEN_INTEREST: "fetchOpenInterestHistory",
+        }
+        return self.exchange_has(mapping.get(candle_type, "fetchOHLCV"))
 
     def verify_candle_type_support(self, candle_type: CandleType) -> None:
         """
@@ -3956,12 +3976,14 @@ class Exchange:
         mark_rates = mark_rates.rename(columns={"open": "open_mark"})
 
         if futures_funding_rate is None:
-            return mark_rates.merge(funding_rates, on="date", how="inner")[relevant_cols]
+            return Exchange._add_funding_columns(
+                mark_rates.merge(funding_rates, on="date", how="inner")[relevant_cols]
+            )
         else:
             if len(funding_rates) == 0:
                 # No funding rate candles - full fillup with fallback variable
                 mark_rates["open_fund"] = futures_funding_rate
-                return mark_rates[relevant_cols]
+                return Exchange._add_funding_columns(mark_rates[relevant_cols])
 
             else:
                 # Fill up missing funding_rate candles with fallback value
@@ -3975,7 +3997,25 @@ class Exchange:
                         "open_fund"
                     ].isna()
                     combined.loc[is_leading_na, "open_fund"] = futures_funding_rate
-                return combined[relevant_cols].dropna()
+                return Exchange._add_funding_columns(combined[relevant_cols].dropna())
+
+    @staticmethod
+    def _add_funding_columns(df: DataFrame) -> DataFrame:
+        """
+        Add the two columns calculate_funding_fees needs, so the per-call work is a
+        slice and a sum rather than re-deriving them from the frame every time.
+        Backtesting builds one frame per pair and reuses it for every
+        call; dry-run builds one per call - both go through here.
+        """
+        dates = df["date"]
+        if df.empty:
+            # short-circuits on empty frames.
+            return df
+        # Epoch nanoseconds, so open/close dates compare directly against Timestamp.value
+        # without having to be rounded to the column's resolution first.
+        df["_ff_date_ns"] = dates.dt.as_unit("ns").astype("int64")
+        df["_ff_fee_per_unit"] = df["open_fund"] * df["open_mark"]
+        return df
 
     def calculate_funding_fees(
         self,
@@ -3997,15 +4037,19 @@ class Exchange:
         fees: float = 0
 
         if not df.empty:
-            dates = df["date"]
-            unit = dates.dtype.unit
-            # Timestamps must be converted to column unit for dry/live mode
-            # where open/close dates can have microsecond precision - but the column may not have
-            # that precision.
-            lo = Timestamp(open_date).ceil(unit).as_unit(unit)
-            hi = Timestamp(close_date).floor(unit).as_unit(unit)
-            df1 = df.iloc[dates.searchsorted(lo, "left") : dates.searchsorted(hi, "right")]
-            fees = sum(df1["open_fund"] * df1["open_mark"] * amount)
+            if "_ff_fee_per_unit" not in df.columns:
+                # Frame not built by combine_funding_and_mark - derive them now.
+                # Safety check - should never happen in practice.
+                df = self._add_funding_columns(df)
+            dates = df["_ff_date_ns"].to_numpy()
+            fee_per_unit = df["_ff_fee_per_unit"].to_numpy()
+            # Comparing in nanoseconds handles dry/live mode, where open/close dates can carry
+            # more precision than the funding candles themselves.
+            first = dates.searchsorted(Timestamp(open_date).value, "left")
+            last = dates.searchsorted(Timestamp(close_date).value, "right")
+            # .tolist() is load-bearing: CPython's sum() applies compensated summation to
+            # exact floats, but not to the numpy scalars a bare ndarray would yield.
+            fees = sum((fee_per_unit[first:last] * amount).tolist())
         if isnan(fees):
             fees = 0.0
         # Negate fees for longs as funding_fees expects it this way based on live endpoints.

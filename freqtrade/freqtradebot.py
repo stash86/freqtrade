@@ -32,6 +32,7 @@ from freqtrade.exceptions import (
     ExchangeError,
     InsufficientFundsError,
     InvalidOrderException,
+    OperationalException,
     PricingError,
 )
 from freqtrade.exchange import (
@@ -181,6 +182,9 @@ class FreqtradeBot(LoggingMixin):
             self.__msg_cache = PeriodicCache(
                 maxsize=1000, ttl=timeframe_to_seconds(self.config["timeframe"])
             )
+            # AFTER bot_start and the initial pairlist refresh - informative_pairs() is a user
+            # callback that may rely on either.
+            self.validate_informative_candle_types()
 
             def log_took_too_long(duration: float, time_limit: float):
                 logger.warning(
@@ -267,6 +271,28 @@ class FreqtradeBot(LoggingMixin):
         self.startup_update_open_orders()
         self.update_all_liquidation_prices()
         self.update_funding_fees()
+
+    def validate_informative_candle_types(self) -> None:
+        """
+        Verify the exchange can deliver every candle type the strategy asks for.
+
+        Leaves a gap on dynamic informative_pairs calls - where the candle type is not
+        part of the initial request.
+        :raises OperationalException: if the exchange doesn't support a requested candle type
+        """
+        unsupported = sorted(
+            {
+                candle_type
+                for _, _, candle_type in self.strategy.gather_informative_pairs()
+                if not self.exchange.check_candle_type_support(candle_type)
+            }
+        )
+        if unsupported:
+            raise OperationalException(
+                f"Strategy {self.strategy.get_strategy_name()} requests informative data of type "
+                f"{', '.join(unsupported)}, which {self.exchange.name} does not provide. "
+                f"Please remove the affected informative pairs from your strategy."
+            )
 
     def process(self) -> None:
         """
