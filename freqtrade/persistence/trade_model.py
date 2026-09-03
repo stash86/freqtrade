@@ -599,10 +599,10 @@ class LocalTrade:
         """
         True if there are open orders for this trade excluding stoploss orders
         """
-        open_orders_wo_sl = [
-            o for o in self.orders if o.ft_order_side not in ["stoploss"] and o.ft_is_open
-        ]
-        return len(open_orders_wo_sl) > 0
+        for order in reversed(self.orders):
+            if order.ft_is_open and order.ft_order_side != "stoploss":
+                return True
+        return False
 
     @property
     def has_open_position(self) -> bool:
@@ -623,10 +623,10 @@ class LocalTrade:
         """
         True if there are open stoploss orders for this trade
         """
-        open_sl_orders = [
-            o for o in self.orders if o.ft_order_side in ["stoploss"] and o.ft_is_open
-        ]
-        return len(open_sl_orders) > 0
+        for order in reversed(self.orders):
+            if order.ft_is_open and order.ft_order_side in ["stoploss"]:
+                return True
+        return False
 
     @property
     def sl_orders(self) -> list[Order]:
