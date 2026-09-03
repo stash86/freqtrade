@@ -329,13 +329,14 @@ class Order(ModelBase):
             logger.warning(f"{order} is not a valid response object.")
             return
 
-        filtered_orders = [o for o in orders if o.order_id == order.get("id")]
-        if filtered_orders:
-            oobj = filtered_orders[0]
-            oobj.update_from_ccxt_object(order)
-            Trade.commit()
-        else:
-            logger.warning(f"Did not find order for {order}.")
+        order_id = order.get("id")
+        for order_obj in reversed(orders):
+            if order_obj.order_id == order_id:
+                order_obj.update_from_ccxt_object(order)
+                Trade.commit()
+                return
+
+        logger.warning(f"Did not find order for {order}.")
 
     @classmethod
     def parse_from_ccxt_object(
