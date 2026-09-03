@@ -1357,13 +1357,9 @@ class LocalTrade:
             self.close_profit_abs = close_profit_abs
 
     def select_order_by_order_id(self, order_id: str) -> Order | None:
-        """
-        Finds order object by Order id.
-        :param order_id: Exchange order id
-        """
-        for o in self.orders:
-            if o.order_id == order_id:
-                return o
+        for order in reversed(self.orders):
+            if order.order_id == order_id:
+                return order
         return None
 
     def select_order(
