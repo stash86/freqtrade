@@ -1598,11 +1598,14 @@ class LocalTrade:
         LocalTrade.bt_open_open_trade_count -= 1
 
     @staticmethod
-    def get_open_trades() -> list[Any]:
+    def get_open_trades(*, include_orders: bool = True) -> list[Any]:
         """
         Retrieve open trades
         """
-        return Trade.get_trades_proxy(is_open=True)
+        return Trade.get_trades_proxy(
+            is_open=True,
+            include_orders=include_orders,
+        )
 
     @staticmethod
     def get_open_trade_count() -> int:

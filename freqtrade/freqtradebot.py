@@ -677,7 +677,7 @@ class FreqtradeBot(LoggingMixin):
             self.log_once("Active pair whitelist is empty.", logger.info)
             return trades_created
         # Remove pairs for currently opened trades from the whitelist
-        for trade in Trade.get_open_trades():
+        for trade in Trade.get_open_trades(include_orders=False):
             if trade.pair in whitelist:
                 whitelist.remove(trade.pair)
                 logger.debug("Ignoring %s in pair whitelist", trade.pair)
@@ -801,7 +801,7 @@ class FreqtradeBot(LoggingMixin):
         Tries to execute additional buy or sell orders for open trades (positions)
         """
         # Walk through each pair and check if it needs changes
-        for trade in Trade.get_open_trades():
+        for trade in Trade.get_open_trades(include_orders=False):
             # If there is any open orders, wait for them to finish.
             # TODO Remove to allow mul open orders
             if trade.has_open_position or trade.has_open_orders:
