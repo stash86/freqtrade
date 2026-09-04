@@ -36,7 +36,9 @@ class CooldownPeriod(IProtection):
         #     Trade.pair == pair,
         # ]
         # trade = Trade.get_trades(filters).first()
-        trades = Trade.get_trades_proxy(pair=pair, is_open=False, close_date=look_back_until)
+        trades = Trade.get_trades_proxy(
+            pair=pair, is_open=False, close_date=look_back_until, include_orders=False
+        )
         if trades:
             # Get latest trade
             # Ignore type error as we know we only get closed trades.

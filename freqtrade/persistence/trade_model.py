@@ -125,7 +125,8 @@ class Order(ModelBase):
     @property
     def order_filled_utc(self) -> datetime | None:
         """last order-date with UTC timezoneinfo"""
-        return self.order_filled_date.replace(tzinfo=UTC) if self.order_filled_date else None
+        order_filled_date = self.order_filled_date
+        return order_filled_date.replace(tzinfo=UTC) if order_filled_date else None
 
     @property
     def safe_amount(self) -> float:
@@ -142,7 +143,8 @@ class Order(ModelBase):
 
     @property
     def safe_filled(self) -> float:
-        return self.filled if self.filled is not None else 0.0
+        filled = self.filled
+        return filled if filled is not None else 0.0
 
     @property
     def safe_cost(self) -> float:
@@ -512,7 +514,7 @@ class LocalTrade:
         """Date of the last filled order"""
         orders = self.select_filled_orders()
         if orders:
-            return max(o.order_filled_utc for o in orders if o.order_filled_utc)
+            return max(filled_date for order in orders if (filled_date := order.order_filled_utc))
         return None
 
     @property
@@ -539,9 +541,13 @@ class LocalTrade:
 
     @property
     def stoploss_last_update_utc(self):
-        if self.has_open_sl_orders:
-            return max(o.order_date_utc for o in self.open_sl_orders)
-        return None
+        latest = None
+        for order in self.orders:
+            if order.ft_is_open and order.ft_order_side == "stoploss":
+                order_date = order.order_date_utc
+                if latest is None or order_date > latest:
+                    latest = order_date
+        return latest
 
     @property
     def close_date_utc(self):
@@ -1866,6 +1872,7 @@ class Trade(ModelBase, LocalTrade):
         is_open: bool | None = None,
         open_date: datetime | None = None,
         close_date: datetime | None = None,
+        include_orders: bool = True,
     ) -> list["LocalTrade"]:
         """
         Helper function to query Trades.
@@ -1877,6 +1884,7 @@ class Trade(ModelBase, LocalTrade):
         :param open_date: Filter by open_date (filters via trade.open_date > input)
         :param close_date: Filter by close_date (filters via trade.close_date > input)
                            and will implicitly only return closed trades.
+        :param include_orders: Whether to include orders in the result. Defaults to True.
         :return: unsorted List[Trade]
         """
         if Trade.use_db:
@@ -1889,7 +1897,10 @@ class Trade(ModelBase, LocalTrade):
                 trade_filter.append(Trade.close_date > close_date)
             if is_open is not None:
                 trade_filter.append(Trade.is_open.is_(is_open))
-            return cast(list[LocalTrade], Trade.get_trades(trade_filter).all())
+            return cast(
+                list[LocalTrade],
+                Trade.get_trades(trade_filter, include_orders=include_orders).all(),
+            )
         else:
             return LocalTrade.get_trades_proxy(
                 pair=pair, is_open=is_open, open_date=open_date, close_date=close_date
@@ -2196,7 +2207,7 @@ class Trade(ModelBase, LocalTrade):
         trade_filter.append(Trade.is_open.is_(False))
 
         pair_rates_query = Trade._generic_performance_query([Trade.pair], trade_filter)
-        best_pair = Trade.session.execute(pair_rates_query).first()
+        best_pair = Trade.session.execute(pair_rates_query.limit(1)).first()
         # returns pair, profit_ratio, abs_profit, count
         return best_pair
 

@@ -53,7 +53,9 @@ class LowProfitPairs(IProtection):
         # if pair:
         #     filters.append(Trade.pair == pair)
 
-        trades = Trade.get_trades_proxy(pair=pair, is_open=False, close_date=look_back_until)
+        trades = Trade.get_trades_proxy(
+            pair=pair, is_open=False, close_date=look_back_until, include_orders=False
+        )
         # trades = Trade.get_trades(filters).all()
         if len(trades) < self._trade_limit:
             # Not enough trades in the relevant period

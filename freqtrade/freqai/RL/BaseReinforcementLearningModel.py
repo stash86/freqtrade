@@ -225,7 +225,7 @@ class BaseReinforcementLearningModel(IFreqaiModel):
         :trade_duration: int = the number of candles that the trade has
             been open for
         """
-        open_trades = Trade.get_trades_proxy(is_open=True)
+        open_trades = Trade.get_trades_proxy(is_open=True, include_orders=False)
         market_side = 0.5
         current_profit: float = 0
         trade_duration = 0

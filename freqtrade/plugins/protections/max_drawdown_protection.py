@@ -49,7 +49,9 @@ class MaxDrawdown(IProtection):
         """
         look_back_until = date_now - timedelta(minutes=self._lookback_period)
 
-        trades_in_window = Trade.get_trades_proxy(is_open=False, close_date=look_back_until)
+        trades_in_window = Trade.get_trades_proxy(
+            is_open=False, close_date=look_back_until, include_orders=False
+        )
 
         if len(trades_in_window) < self._trade_limit:
             return None
@@ -58,7 +60,7 @@ class MaxDrawdown(IProtection):
             if self._calculation_mode == "equity":
                 # Standard equity-based drawdown
                 # Get all trades to calculate cumulative profit before the window
-                all_closed_trades = Trade.get_trades_proxy(is_open=False)
+                all_closed_trades = Trade.get_trades_proxy(is_open=False, include_orders=False)
                 profit_before_window = sum(
                     trade.close_profit_abs or 0.0
                     for trade in all_closed_trades
