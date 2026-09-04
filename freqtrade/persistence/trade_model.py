@@ -811,8 +811,13 @@ class LocalTrade:
         """
         Adjust the max_rate and min_rate.
         """
-        self.max_rate = max(current_price, self.max_rate or self.open_rate)
-        self.min_rate = min(current_price_low, self.min_rate or self.open_rate)
+        max_rate = max(current_price, self.max_rate or self.open_rate)
+        min_rate = min(current_price_low, self.min_rate or self.open_rate)
+
+        if max_rate != self.max_rate:
+            self.max_rate = max_rate
+        if min_rate != self.min_rate:
+            self.min_rate = min_rate
 
     def set_liquidation_price(self, liquidation_price: float | None):
         """

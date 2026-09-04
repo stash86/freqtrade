@@ -5,7 +5,7 @@ Freqtrade is the main module of this bot. It contains the FreqtradeBot class.
 import logging
 import traceback
 from copy import deepcopy
-from datetime import UTC, datetime, time, timedelta, timezone
+from datetime import UTC, datetime, time, timedelta
 from math import isclose
 from threading import Lock
 from time import sleep
@@ -715,14 +715,7 @@ class FreqtradeBot(LoggingMixin):
                         trades_created += 1
             except DependencyException as exception:
                 msg = f"Unable to create trade for {pair}: {exception}"
-                if "No new positions during delisting" in str(exception):
-                    # Lock the pair to avoid further attempts to trade it
-                    delist_time = self.dataprovider.check_delisting(pair)
-                    if not delist_time:
-                        delist_time = datetime.now(timezone.utc) + timedelta(days=7)
-                    if delist_time:
-                        PairLocks.lock_pair(pair, until=delist_time, reason="Delisting")
-                        msg += " Pair will be locked."
+                msg = self.lock_delisted_pair(pair, msg)
                 self.send_dp_message(msg)
 
                 logger.warning(msg)
@@ -731,6 +724,22 @@ class FreqtradeBot(LoggingMixin):
             logger.debug("Found no enter signals for whitelisted currencies. Trying again...")
 
         return trades_created
+
+    def lock_delisted_pair(self, pair: str, msg: str) -> str:
+        """
+        Check if the pair is locked by exchange due to delisting.
+        If yes, lock it so the bot don't try to open trade.
+        """
+        if "No new positions during delisting" in msg:
+            # Lock the pair to avoid further attempts to trade it
+            delist_time = self.dataprovider.check_delisting(pair)
+            if not delist_time:
+                delist_time = datetime.now(UTC) + timedelta(days=7)
+            if delist_time:
+                PairLocks.lock_pair(pair, until=delist_time, reason="Delisting")
+                msg += " Pair will be locked."
+
+        return msg
 
     def create_trade(self, pair: str) -> bool:
         """
