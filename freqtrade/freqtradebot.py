@@ -801,7 +801,7 @@ class FreqtradeBot(LoggingMixin):
         Tries to execute additional buy or sell orders for open trades (positions)
         """
         # Walk through each pair and check if it needs changes
-        for trade in Trade.get_open_trades(include_orders=False):
+        for trade in Trade.get_open_trades():
             # If there is any open orders, wait for them to finish.
             # TODO Remove to allow mul open orders
             if trade.has_open_position or trade.has_open_orders:

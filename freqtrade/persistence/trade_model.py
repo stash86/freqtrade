@@ -1531,6 +1531,13 @@ class LocalTrade:
         return self.close_rate or self.close_rate_requested or 0.0
 
     @staticmethod
+    def get_trade_count() -> int:
+        if Trade.use_db:
+            return Trade.session.execute(select(func.count()).select_from(Trade)).scalar_one()
+
+        return len(LocalTrade.bt_trades) + len(LocalTrade.bt_trades_open)
+
+    @staticmethod
     def get_trades_proxy(
         *,
         pair: str | None = None,
