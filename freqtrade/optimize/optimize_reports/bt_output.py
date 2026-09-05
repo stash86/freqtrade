@@ -232,7 +232,7 @@ def text_table_add_metrics(strat_results: dict) -> None:
             else []
         )
 
-        # drawdown_metrics: list[tuple[str, str]] = []
+        # drawdown_metrics: list[tuple[str | Text, str | Text]] = []
         # if "max_relative_drawdown" in strat_results:
         #     # Compatibility to show old hyperopt results
         #     drawdown_metrics.append(
@@ -254,9 +254,7 @@ def text_table_add_metrics(strat_results: dict) -> None:
         #         ),
         #         (
         #             "Drawdown duration",
-        #             strat_results["drawdown_duration"]
-        #             if "drawdown_duration" in strat_results
-        #             else "N/A",
+        #             strat_results.get("drawdown_duration", "N/A"),
         #         ),
         #         (
         #             "Profit at drawdown start",
@@ -313,7 +311,7 @@ def text_table_add_metrics(strat_results: dict) -> None:
         #     drawdown_metrics.extend(
         #         [
         #             __EMPTY_LINE,  # Empty line to improve readability
-        #             (str("Wallet based Metrics", style="bold"), ""),
+        #             (Text("Wallet based Metrics", style="bold"), ""),
         #             (
         #                 "Min/Max balance (wallet balance)",
         #                 (
@@ -344,9 +342,7 @@ def text_table_add_metrics(strat_results: dict) -> None:
         #                 ),
         #                 (
         #                     "Drawdown duration",
-        #                     wallet_stats["drawdown_duration"]
-        #                     if "drawdown_duration" in wallet_stats
-        #                     else "N/A",
+        #                     wallet_stats.get("drawdown_duration", "N/A"),
         #                 ),
         #                 (
         #                     "Profit at drawdown start",

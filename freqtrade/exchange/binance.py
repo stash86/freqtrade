@@ -527,15 +527,14 @@ class Binance(Exchange):
         :return: int: delisting time None if not delisting
         """
 
-        if not pair or not self._config["runmode"] == RunMode.LIVE:
+        if not pair or self._config["runmode"] != RunMode.LIVE:
             # Endpoint only works in live mode as it requires API keys
             return None
 
         cache = self._spot_delist_schedule_cache
 
-        if not refresh:
-            if delist_time := cache.get(pair, None):
-                return delist_time
+        if not refresh and (delist_time := cache.get(pair, None)):
+            return delist_time
 
         delist_schedule = self._get_spot_delist_schedule()
 

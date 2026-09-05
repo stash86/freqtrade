@@ -301,6 +301,8 @@ class Exchange:
             # Initial markets load
             self.reload_markets(True, load_leverage_tiers=False)
             self.validate_config(self._config)
+            if self._config["runmode"] in TRADE_MODES:
+                self.check_time_offset()
 
         if self.trading_mode != TradingMode.SPOT and load_leverage_tiers:
             self.fill_leverage_tiers()
@@ -503,6 +505,36 @@ class Exchange:
         .api will be available at this point.
         Must be overridden in child methods if required.
         """
+
+    def check_time_offset(self) -> None:
+        """
+        Compare the exchange time to the local system time.
+        An out-of-sync clock causes authentication failures on most exchanges, and can cause odd
+        sync issues with freqtrade.
+        """
+        if not self.exchange_has("fetchTime"):
+            logger.debug(f"{self.name} does not support fetchTime, skipping time offset check.")
+            return
+        try:
+            before = dt_ts()
+            exchange_time = self._api.fetch_time()
+            # Use the middle of the request to compensate for the request duration.
+            offset = (before + dt_ts()) // 2 - exchange_time
+        except ccxt.BaseError as e:
+            logger.debug(
+                f"Could not fetch exchange time due to {e.__class__.__name__}. Message: {e}"
+            )
+            return
+
+        # Maximum tolerated deviation between exchange and local time before warning the user.
+        if abs(offset) > 1500:
+            logger.warning(
+                f"Your system time deviates by {offset / 1000:.1f}s from the time of "
+                f"{self.name}. This can cause failing requests - please synchronize your "
+                "system clock (e.g. via NTP)."
+            )
+        else:
+            logger.info(f"Time offset to {self.name} is {offset}ms.")
 
     def _log_exchange_response(self, endpoint: str, response, *, add_info=None) -> None:
         """Log exchange responses"""
@@ -821,9 +853,10 @@ class Exchange:
         """
         Checks if order-types configured in strategy/config are supported
         """
-        if any(v == "market" for k, v in order_types.items()):
-            if not self.exchange_has("createMarketOrder"):
-                raise ConfigurationError(f"Exchange {self.name} does not support market orders.")
+        if any(v == "market" for k, v in order_types.items()) and not self.exchange_has(
+            "createMarketOrder"
+        ):
+            raise ConfigurationError(f"Exchange {self.name} does not support market orders.")
         self.validate_stop_ordertypes(order_types)
 
     def validate_stop_ordertypes(self, order_types: dict) -> None:
@@ -950,14 +983,15 @@ class Exchange:
         """
         if trading_mode == TradingMode.SPOT:
             return
-        if allow_none_margin_mode and margin_mode is None:
-            # Verify trading mode independent of margin mode
-            if not any(
+        # Verify trading mode independent of margin mode
+        if (
+            allow_none_margin_mode
+            and margin_mode is None
+            and not any(
                 trading_mode == pair[0] for pair in self._supported_trading_mode_margin_pairs
-            ):
-                raise ConfigurationError(
-                    f"Freqtrade does not support '{trading_mode}' on {self.name}."
-                )
+            )
+        ):
+            raise ConfigurationError(f"Freqtrade does not support '{trading_mode}' on {self.name}.")
 
         if not allow_none_margin_mode and (
             (trading_mode, margin_mode) not in self._supported_trading_mode_margin_pairs
@@ -1545,7 +1579,7 @@ class Exchange:
     def _get_stop_order_type(self, user_order_type) -> tuple[str, str]:
         available_order_Types: dict[str, str] = self._ft_has["stoploss_order_types"]
 
-        if user_order_type in available_order_Types.keys():
+        if user_order_type in available_order_Types:
             ordertype = available_order_Types[user_order_type]
         else:
             # Otherwise pick only one available
@@ -1755,17 +1789,20 @@ class Exchange:
             params["stop"] = True
         order = self.fetch_order(order_id, pair, params)
         val = self.get_option("stoploss_algo_order_info_id")
-        if val and order.get("status", "open") == "closed":
-            if new_orderid := order.get("info", {}).get(val):
-                # Fetch real order, which was placed by the algo order.
-                actual_order = self.fetch_order(order_id=new_orderid, pair=pair, params=None)
-                actual_order["id_stop"] = actual_order["id"]
-                actual_order["id"] = order_id
-                actual_order["type"] = "stoploss"
-                actual_order["stopPrice"] = order.get("stopPrice")
-                actual_order["status_stop"] = "triggered"
+        if (
+            val
+            and order.get("status", "open") == "closed"
+            and (new_orderid := order.get("info", {}).get(val))
+        ):
+            # Fetch real order, which was placed by the algo order.
+            actual_order = self.fetch_order(order_id=new_orderid, pair=pair, params=None)
+            actual_order["id_stop"] = actual_order["id"]
+            actual_order["id"] = order_id
+            actual_order["type"] = "stoploss"
+            actual_order["stopPrice"] = order.get("stopPrice")
+            actual_order["status_stop"] = "triggered"
 
-                return actual_order
+            return actual_order
 
         return order
 
@@ -2737,9 +2774,7 @@ class Exchange:
         Check if we can use websocket for this pair.
         Acts as typeguard for exchangeWs
         """
-        if exchange_ws and candle_type in (CandleType.SPOT, CandleType.FUTURES):
-            return True
-        return False
+        return bool(exchange_ws and candle_type in (CandleType.SPOT, CandleType.FUTURES))
 
     def _build_coroutine(
         self,
@@ -2750,10 +2785,9 @@ class Exchange:
         cache: bool,
     ) -> Coroutine[Any, Any, OHLCVResponse]:
         not_all_data = cache and self.required_candle_call_count > 1
-        if cache:
-            if self._can_use_websocket(self._exchange_ws, pair, timeframe, candle_type):
-                # Subscribe to websocket
-                self._exchange_ws.schedule_ohlcv(pair, timeframe, candle_type)
+        if cache and self._can_use_websocket(self._exchange_ws, pair, timeframe, candle_type):
+            # Subscribe to websocket
+            self._exchange_ws.schedule_ohlcv(pair, timeframe, candle_type)
 
         if cache and (pair, timeframe, candle_type) in self._klines:
             candle_limit = self.ohlcv_candle_limit(timeframe, candle_type)

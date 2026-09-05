@@ -115,11 +115,11 @@ def authorized_only(command_handler: Callable[..., Coroutine[Any, Any, None]]):
         if cchat_id != chat_id:
             logger.info(f"Rejected unauthorized message from: {cchat_id}")
             return None
-        if (topic_id := self._config["telegram"].get("topic_id")) is not None:
-            if str(ctopic_id) != topic_id:
-                # This can be quite common in multi-topic environments.
-                logger.debug(f"Rejected message from wrong channel: {cchat_id}, {ctopic_id}")
-                return None
+        topic_id = self._config["telegram"].get("topic_id")
+        if topic_id is not None and str(ctopic_id) != topic_id:
+            # This can be quite common in multi-topic environments.
+            logger.debug(f"Rejected message from wrong channel: {cchat_id}, {ctopic_id}")
+            return None
 
         authorized = self._config["telegram"].get("authorized_users", None)
         if authorized is not None and from_user_id not in authorized:
@@ -398,17 +398,16 @@ class Telegram(RPCHandler):
         candle_val = (
             self._config["telegram"].get("notification_settings", {}).get("show_candle", "off")
         )
-        if candle_val != "off":
-            if candle_val == "ohlc":
-                analyzed_df, _ = self._rpc._freqtrade.dataprovider.get_analyzed_dataframe(
-                    pair, self._config["timeframe"]
+        if candle_val != "off" and candle_val == "ohlc":
+            analyzed_df, _ = self._rpc._freqtrade.dataprovider.get_analyzed_dataframe(
+                pair, self._config["timeframe"]
+            )
+            candle = analyzed_df.iloc[-1].squeeze() if len(analyzed_df) > 0 else None
+            if candle is not None:
+                return (
+                    f"*Candle OHLC*: `{candle['open']}, {candle['high']}, "
+                    f"{candle['low']}, {candle['close']}`\n"
                 )
-                candle = analyzed_df.iloc[-1].squeeze() if len(analyzed_df) > 0 else None
-                if candle is not None:
-                    return (
-                        f"*Candle OHLC*: `{candle['open']}, {candle['high']}, "
-                        f"{candle['low']}, {candle['close']}`\n"
-                    )
 
         return ""
 
