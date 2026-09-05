@@ -16,7 +16,7 @@ from schedule import Scheduler
 from freqtrade import constants
 from freqtrade.configuration import remove_exchange_credentials, validate_config_consistency
 from freqtrade.constants import BuySell, Config, EntryExecuteMode, ExchangeConfig, LongShort
-from freqtrade.data.converter import order_book_to_dataframe
+from freqtrade.data.converter import count_total_order_book
 from freqtrade.data.dataprovider import DataProvider
 from freqtrade.enums import (
     ExitCheckTuple,
@@ -937,9 +937,9 @@ class FreqtradeBot(LoggingMixin):
         conf_bids_to_ask_delta = conf.get("bids_to_ask_delta", 0)
         logger.info(f"Checking depth of market for {pair} ...")
         order_book = self.exchange.fetch_l2_order_book(pair, 1000)
-        order_book_data_frame = order_book_to_dataframe(order_book["bids"], order_book["asks"])
-        order_book_bids = order_book_data_frame["b_size"].sum()
-        order_book_asks = order_book_data_frame["a_size"].sum()
+        order_book_bids, order_book_asks = count_total_order_book(
+            order_book["bids"], order_book["asks"]
+        )
 
         entry_side = order_book_bids if side == SignalDirection.LONG else order_book_asks
         exit_side = order_book_asks if side == SignalDirection.LONG else order_book_bids
@@ -1253,7 +1253,7 @@ class FreqtradeBot(LoggingMixin):
         min_stake_amount = self.exchange.get_min_pair_stake_amount(
             pair,
             enter_limit_requested,
-            self.strategy.stoploss if not mode == "pos_adjust" else 0.0,
+            self.strategy.stoploss if mode != "pos_adjust" else 0.0,
             leverage,
         )
         max_stake_amount = self.exchange.get_max_pair_stake_amount(
@@ -1488,14 +1488,13 @@ class FreqtradeBot(LoggingMixin):
         for should_exit in exits:
             if should_exit.exit_flag:
                 exit_tag1 = exit_tag if should_exit.exit_type == ExitType.EXIT_SIGNAL else None
-                if trade.has_open_orders:
-                    if prev_eval := self._exit_reason_cache.get(
+                if trade.has_open_orders and (
+                    prev_eval := self._exit_reason_cache.get(
                         f"{trade.pair}_{trade.id}_{exit_tag1 or should_exit.exit_reason}", None
-                    ):
-                        logger.debug(
-                            f"Exit reason already seen this candle, first seen at {prev_eval}"
-                        )
-                        continue
+                    )
+                ):
+                    logger.debug(f"Exit reason already seen this candle, first seen at {prev_eval}")
+                    continue
 
                 exit_msg = f"Exit for {trade.pair} detected. Reason: {should_exit.exit_type}"
                 exit_msg += f"{f' Tag: {exit_tag1}' if exit_tag1 is not None else ''}"
@@ -1952,13 +1951,12 @@ class FreqtradeBot(LoggingMixin):
         """
         if trade.has_open_orders:
             oo = trade.select_order(side, True)
-            if oo is not None:
-                if price == oo.price and side == oo.side and amount == oo.amount:
-                    # logger.info(
-                    #     f"A similar open order was found for {trade.pair}. "
-                    #     f"Keeping existing {trade.exit_side} order. {price=},  {amount=}"
-                    # )
-                    return True
+            if oo is not None and price == oo.price and side == oo.side and amount == oo.amount:
+                # logger.info(
+                #     f"A similar open order was found for {trade.pair}. "
+                #     f"Keeping existing {trade.exit_side} order. {price=},  {amount=}"
+                # )
+                return True
             # cancel open orders of this trade if order is different
             self.cancel_open_orders_of_trade(
                 trade,
@@ -2270,9 +2268,10 @@ class FreqtradeBot(LoggingMixin):
             )
             return False
 
-        if trade.has_open_orders:
-            if self.handle_similar_open_order(trade, limit, amount, trade.exit_side):
-                return False
+        if trade.has_open_orders and self.handle_similar_open_order(
+            trade, limit, amount, trade.exit_side
+        ):
+            return False
 
         try:
             # Execute exit and update trade record
@@ -2688,9 +2687,7 @@ class FreqtradeBot(LoggingMixin):
         if not trades:
             return False
         # We expect amount and cost to be present in all trade objects.
-        if any(trade.get("amount") is None or trade.get("cost") is None for trade in trades):
-            return False
-        return True
+        return not any(trade.get("amount") is None or trade.get("cost") is None for trade in trades)
 
     def fee_detection_from_trades(
         self, trade: Trade, order: CcxtOrder, order_obj: Order, order_amount: float, trades: list
