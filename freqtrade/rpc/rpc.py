@@ -705,9 +705,6 @@ class RPC:
         first_date = trades[0].open_date_utc if trades else None
         last_date = trades[-1].open_date_utc if trades else None
         num = float(len(durations) or 1)
-        sortino = calculate_sortino(trades_df, first_date, last_date, starting_balance)
-        sharpe = calculate_sharpe(trades_df, first_date, last_date, starting_balance)
-        calmar = calculate_calmar(trades_df, first_date, last_date, starting_balance)
         bot_start = KeyValueStore.get_datetime_value("bot_start_time")
 
         sharpe = calculate_sharpe(
