@@ -43,7 +43,7 @@ from freqtrade.exchange import Exchange, timeframe_to_minutes, timeframe_to_msec
 from freqtrade.exchange.exchange_utils import price_to_precision
 from freqtrade.ft_types import AnnotationType
 from freqtrade.loggers import bufferHandler
-from freqtrade.persistence import CustomDataWrapper, KeyValueStore, Order, PairLocks, Trade
+from freqtrade.persistence import KeyValueStore, Order, PairLocks, Trade
 from freqtrade.persistence.models import PairLock, custom_data_rpc_wrapper
 from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
 from freqtrade.rpc.fiat_convert import CryptoToFiatConverter
@@ -395,7 +395,6 @@ class RPC:
         """
         start_date = datetime.now(UTC).date()
         if timeunit == "weeks":
-            # weekly
             start_date = start_date - timedelta(days=start_date.weekday())  # Monday
         if timeunit == "months":
             start_date = start_date.replace(day=1)
@@ -408,33 +407,43 @@ class RPC:
         if not (isinstance(timescale, int) and timescale > 0):
             raise RPCException("timescale must be an integer greater than 0")
 
-        profit_units: dict[date, dict] = {}
+        profit_units: dict[date, dict] = {
+            start_date - time_offset(day): {} for day in range(timescale)
+        }
         daily_stake = self._freqtrade.wallets.get_total_stake_amount()
 
-        for day in range(timescale):
-            profitday = start_date - time_offset(day)
-            # Only query for necessary columns for performance reasons.
-            trades = Trade.session.execute(
-                select(Trade.close_profit_abs)
-                .filter(
-                    Trade.is_open.is_(False),
-                    Trade.close_date >= profitday,
-                    Trade.close_date < (profitday + time_offset(1)),
-                )
-                .order_by(Trade.close_date)
-            ).all()
-
-            curdayprofit = sum(
-                trade.close_profit_abs for trade in trades if trade.close_profit_abs is not None
+        # Fetch the complete range once, keeping profits in close-date order.
+        statement = (
+            select(Trade.close_date, Trade.close_profit_abs)
+            .filter(
+                Trade.is_open.is_(False),
+                Trade.close_date >= start_date - time_offset(timescale - 1),
+                Trade.close_date < start_date + time_offset(1),
             )
-            # Calculate this periods starting balance
-            daily_stake = daily_stake - curdayprofit
-            profit_units[profitday] = {
-                "amount": curdayprofit,
-                "daily_stake": daily_stake,
-                "rel_profit": round(curdayprofit / daily_stake, 8) if daily_stake > 0 else 0,
-                "trades": len(trades),
-            }
+            .order_by(Trade.close_date)
+        )
+        with Trade.session.execute(statement).yield_per(1000) as result:
+            rows = iter(result)
+            row = next(rows, None)
+
+            for profitday in reversed(profit_units):
+                period_end = profitday + time_offset(1)
+                profits = []
+
+                while row is not None and row[0].date() < period_end:
+                    profits.append(row[1])
+                    row = next(rows, None)
+
+                profit_units[profitday] = {
+                    "amount": sum(profit for profit in profits if profit is not None),
+                    "trades": len(profits),
+                }
+
+        # Calculate starting balances from newest to oldest, as before.
+        for unit in profit_units.values():
+            daily_stake = daily_stake - unit["amount"]
+            unit["daily_stake"] = daily_stake
+            unit["rel_profit"] = round(unit["amount"] / daily_stake, 8) if daily_stake > 0 else 0
 
         data = [
             {
@@ -507,11 +516,12 @@ class RPC:
         for trade in trades:
             if trade.exit_reason not in exit_reasons:
                 exit_reasons[trade.exit_reason] = {"wins": 0, "losses": 0, "draws": 0}
-            exit_reasons[trade.exit_reason][trade_win_loss(trade)] += 1
+            trade_result = trade_win_loss(trade)
+            exit_reasons[trade.exit_reason][trade_result] += 1
 
             if trade.close_date is not None and trade.open_date is not None:
                 trade_dur = (trade.close_date - trade.open_date).total_seconds()
-                dur[trade_win_loss(trade)].append(trade_dur)
+                dur[trade_result].append(trade_dur)
 
         wins_dur = sum(dur["wins"]) / len(dur["wins"]) if len(dur["wins"]) > 0 else None
         draws_dur = sum(dur["draws"]) / len(dur["draws"]) if len(dur["draws"]) > 0 else None
@@ -626,7 +636,7 @@ class RPC:
         winning_profit = stats["winning_profit"]
         losing_profit = stats["losing_profit"]
 
-        closed_trade_count = len([t for t in trades if not t.is_open])
+        closed_trade_count = len(profit_closed_coin)
 
         best_pair_filters = [Trade.close_date > start_date]
         trading_volume_filters = [Order.order_filled_date >= start_date]
@@ -672,7 +682,6 @@ class RPC:
                     "close_date": format_date(trade.close_date),
                     "close_date_dt": trade.close_date,
                     "profit_abs": trade.close_profit_abs,
-                    "profit_ratio": trade.close_profit,
                 }
                 for trade in trades
                 if not trade.is_open and trade.close_date
@@ -845,7 +854,7 @@ class RPC:
         total = 0.0
         total_bot = 0.0
 
-        open_trades: list[Trade] = Trade.get_open_trades()
+        open_trades: list[Trade] = Trade.get_open_trades(include_orders=False)
         open_assets: dict[str, Trade] = {t.safe_base_currency: t for t in open_trades}
         self._freqtrade.wallets.update(require_update=False)
         starting_capital = self._freqtrade.wallets.get_starting_balance()
@@ -1316,13 +1325,15 @@ class RPC:
         if trade_id is None:
             # Get all open trades
             trades = Trade.session.scalars(
-                Trade.get_trades_query([Trade.is_open.is_(True)])
+                Trade.get_trades_query([Trade.is_open.is_(True)], include_orders=False)
                 .order_by(Trade.id)
                 .limit(limit)
                 .offset(offset)
             ).all()
         else:
-            trades = Trade.get_trades(trade_filter=[Trade.id == trade_id]).all()
+            trades = Trade.get_trades(
+                trade_filter=[Trade.id == trade_id], include_orders=False
+            ).all()
 
         if not trades:
             raise RPCException(
@@ -1345,7 +1356,7 @@ class RPC:
                     {
                         "key": data_entry.cd_key,
                         "type": data_entry.cd_type,
-                        "value": CustomDataWrapper._convert_custom_data(data_entry).value,
+                        "value": data_entry.value,
                         "created_at": data_entry.created_at,
                         "updated_at": data_entry.updated_at,
                     }
@@ -1402,7 +1413,7 @@ class RPC:
         if self._freqtrade.state == State.STOPPED:
             raise RPCException("trader is not running")
 
-        trades = Trade.get_open_trades()
+        trades = Trade.get_open_trades(include_orders=False)
         return {
             "current": len(trades),
             "max": (
@@ -1472,10 +1483,13 @@ class RPC:
         """Returns the currently active blacklist"""
         errors = {}
         if add:
+            available_pairs: list[str] | None = None
             for pair in add:
                 if pair not in self._freqtrade.pairlists.blacklist:
                     try:
-                        expand_pairlist([pair], list(self._freqtrade.exchange.get_markets().keys()))
+                        if available_pairs is None:
+                            available_pairs = list(self._freqtrade.exchange.get_markets().keys())
+                        expand_pairlist([pair], available_pairs)
                         self._freqtrade.pairlists.blacklist.append(pair)
 
                     except ValueError:
@@ -1588,10 +1602,10 @@ class RPC:
         if has_content:
             res.update(
                 {
-                    "data_start": str(dataframe.iloc[0]["date"]),
-                    "data_start_ts": int(dataframe.iloc[0]["__date_ts"]),
-                    "data_stop": str(dataframe.iloc[-1]["date"]),
-                    "data_stop_ts": int(dataframe.iloc[-1]["__date_ts"]),
+                    "data_start": str(dataframe["date"].iat[0]),
+                    "data_start_ts": int(dataframe["__date_ts"].iat[0]),
+                    "data_stop": str(dataframe["date"].iat[-1]),
+                    "data_stop_ts": int(dataframe["__date_ts"].iat[-1]),
                 }
             )
         return res
@@ -1625,12 +1639,11 @@ class RPC:
         :param limit: The amount of candles in the dataframe
         """
         _data, last_analyzed = self._freqtrade.dataprovider.get_analyzed_dataframe(pair, timeframe)
-        _data = _data.copy()
 
         if limit:
             _data = _data.iloc[-limit:]
 
-        return _data, last_analyzed
+        return _data.copy(), last_analyzed
 
     def _ws_all_analysed_dataframes(
         self, pairlist: list[str], limit: int | None
