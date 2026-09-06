@@ -307,7 +307,7 @@ class FreqtradeBot(LoggingMixin):
         self.update_trades_without_assigned_fees()
 
         # Query trades from persistence layer
-        trades: list[Trade] = Trade.get_open_trades()
+        trades: list[Trade] = Trade.get_open_trades(include_orders=False)
 
         self.active_pair_whitelist = self._refresh_active_whitelist(trades)
 
@@ -362,12 +362,12 @@ class FreqtradeBot(LoggingMixin):
         Notify the user when the bot is stopped (not reloaded)
         and there are still open trades active.
         """
-        open_trades = Trade.get_open_trades()
+        open_trade_count = Trade.get_open_trade_count()
 
-        if len(open_trades) != 0 and self.state != State.RELOAD_CONFIG:
+        if open_trade_count != 0 and self.state != State.RELOAD_CONFIG:
             msg = {
                 "type": RPCMessageType.WARNING,
-                "status": f"{len(open_trades)} open trades active.\n\n"
+                "status": f"{open_trade_count} open trades active.\n\n"
                 f"Handle these trades manually on {self.exchange.name}, "
                 f"or '/start' the bot again and use '/stopentry' "
                 f"to handle open trades gracefully. \n"
@@ -518,9 +518,10 @@ class FreqtradeBot(LoggingMixin):
         for trade in trades:
             with self._exit_lock:
                 if trade.is_open and not trade.fee_updated(trade.entry_side):
-                    order = trade.select_order(trade.entry_side, False, only_filled=True)
                     open_order = trade.select_order(trade.entry_side, True)
-                    if order and open_order is None:
+                    if open_order is None and (
+                        order := trade.select_order(trade.entry_side, False, only_filled=True)
+                    ):
                         logger.info(
                             f"Updating {trade.entry_side}-fee on trade {trade} "
                             f"for order {order.order_id}."
@@ -1082,9 +1083,6 @@ class FreqtradeBot(LoggingMixin):
                 order, "average", "price", enter_limit_requested
             )
 
-        # Fee is applied twice because we make a LIMIT_BUY and LIMIT_SELL
-        fee = self.exchange.get_fee(symbol=pair, taker_or_maker="maker")
-        base_currency = self.exchange.get_pair_base_currency(pair)
         funding_fees = (
             self.exchange.get_funding_fees(
                 pair=pair,
@@ -1098,6 +1096,9 @@ class FreqtradeBot(LoggingMixin):
 
         # This is a new trade
         if trade is None:
+            # Fee is applied twice because we make a LIMIT_BUY and LIMIT_SELL
+            fee = self.exchange.get_fee(symbol=pair, taker_or_maker="maker")
+            base_currency = self.exchange.get_pair_base_currency(pair)
             trade = Trade(
                 pair=pair,
                 base_currency=base_currency,
@@ -1306,7 +1307,7 @@ class FreqtradeBot(LoggingMixin):
             trade.pair, side="entry", is_short=trade.is_short, refresh=False
         )
         stake_amount = trade.stake_amount
-        if not fill and trade.nr_of_successful_entries > 0:
+        if not fill and trade.select_order(trade.entry_side, False, only_filled=True) is not None:
             # If we have open orders, we need to add the stake amount of the open orders
             # as it's not yet included in the trade.stake_amount
             stake_amount += sum(
@@ -1393,9 +1394,8 @@ class FreqtradeBot(LoggingMixin):
         trades_closed = 0
         for trade in trades:
             if (
-                not trade.has_open_orders
-                and not trade.has_open_sl_orders
-                and trade.fee_open_currency is not None
+                not any(order.ft_is_open for order in reversed(trade.orders))
+                and (trade.fee_open_currency is not None)
                 and not self.wallets.check_exit_amount(trade)
             ):
                 logger.warning(
@@ -1741,9 +1741,12 @@ class FreqtradeBot(LoggingMixin):
         else:
             canceled = self.handle_cancel_exit(trade, order, order_obj, reason)
             if not replacing:
-                canceled_count = trade.get_canceled_exit_order_count()
                 max_timeouts = self.config.get("unfilledtimeout", {}).get("exit_timeout_count", 0)
-                if canceled and max_timeouts > 0 and canceled_count >= max_timeouts:
+                if (
+                    canceled
+                    and (max_timeouts > 0)
+                    and (trade.get_canceled_exit_order_count() >= max_timeouts)
+                ):
                     msg = (
                         f"Emergency exiting trade {trade}, as the exit order "
                         f"timed out {max_timeouts} times. force selling {order['amount']}."
@@ -2037,10 +2040,11 @@ class FreqtradeBot(LoggingMixin):
         if isclose(filled_amount, 0.0, abs_tol=constants.MATH_CLOSE_PREC):
             was_trade_fully_canceled = True
             # if trade is not partially completed and it's the only order, just delete the trade
-            open_order_count = len(
-                [order for order in trade.orders if order.ft_is_open and order.order_id != order_id]
-            )
-            if open_order_count < 1 and trade.nr_of_successful_entries == 0 and not replacing:
+            if (
+                not replacing
+                and len([o for o in trade.orders if o.ft_is_open and o.order_id != order_id]) < 1
+                and trade.nr_of_successful_entries == 0
+            ):
                 logger.info(f"{side} order fully cancelled. Removing {trade} from database.")
                 trade.delete()
                 order_obj.ft_cancel_reason += f", {constants.CANCEL_REASON['FULLY_CANCELLED']}"
@@ -2553,13 +2557,13 @@ class FreqtradeBot(LoggingMixin):
 
         if order.ft_order_side == trade.exit_side:
             # Exit notification
-            if send_msg and not stoploss_order and order.order_id not in trade.open_orders_ids:
+            if send_msg and (not stoploss_order) and (not order.ft_is_open):
                 self._notify_exit(
                     trade, order.order_type, fill=True, sub_trade=trade.is_open, order=order
                 )
             if not trade.is_open:
                 self.handle_protections(trade.pair, trade.trade_direction)
-        elif send_msg and order.order_id not in trade.open_orders_ids and not stoploss_order:
+        elif send_msg and (not order.ft_is_open) and (not stoploss_order):
             sub_trade = not isclose(
                 order.safe_amount_after_fee, trade.amount, abs_tol=constants.MATH_CLOSE_PREC
             )
@@ -2611,7 +2615,7 @@ class FreqtradeBot(LoggingMixin):
             # check against remaining amount!
             amount_ = trade.amount - amount
 
-        if trade.nr_of_successful_entries >= 1 and order_obj.ft_order_side == trade.entry_side:
+        if order_obj.ft_order_side == trade.entry_side and trade.nr_of_successful_entries >= 1:
             # In case of re-entry's, trade.amount doesn't contain the amount of the last entry.
             amount_ = trade.amount + amount
 
