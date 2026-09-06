@@ -508,7 +508,15 @@ class RPC:
             else:
                 return "draws"
 
-        trades = Trade.get_trades([Trade.is_open.is_(False)], include_orders=False)
+        query = Trade.get_trades_query(
+            [Trade.is_open.is_(False)], include_orders=False
+        ).with_only_columns(
+            Trade.close_profit,
+            Trade.exit_reason,
+            Trade.open_date,
+            Trade.close_date,
+        )
+        trades = Trade.session.execute(query)
         # Duration
         dur: dict[str, list[float]] = {"wins": [], "draws": [], "losses": []}
         # Exit reason
@@ -566,7 +574,7 @@ class RPC:
                     losing_profit += profit_abs
             else:
                 # Get current rate for open trades
-                if len(trade.select_filled_orders(trade.entry_side)) == 0:
+                if trade.amount <= 0:
                     # Skip trades with no filled orders
                     continue
                 try:
