@@ -7,12 +7,13 @@ from unittest.mock import MagicMock
 
 import pytest
 from pandas import DataFrame, concat
+from pandas.testing import assert_frame_equal
 
 from freqtrade.configuration import TimeRange
 from freqtrade.constants import CUSTOM_TAG_MAX_LENGTH
 from freqtrade.data.dataprovider import DataProvider
 from freqtrade.data.history import load_data
-from freqtrade.enums import ExitCheckTuple, ExitType, SignalDirection
+from freqtrade.enums import ExitCheckTuple, ExitType, RunMode, SignalDirection
 from freqtrade.exceptions import DependencyException, OperationalException, StrategyError
 from freqtrade.persistence import PairLocks, Trade
 from freqtrade.resolvers import StrategyResolver
@@ -967,42 +968,40 @@ def test_analyze_ticker_default(ohlcv_history, mocker, caplog) -> None:
 
 def test__analyze_ticker_internal_skip_analyze(ohlcv_history, mocker, caplog) -> None:
     caplog.set_level(logging.DEBUG)
-    ind_mock = MagicMock(side_effect=lambda x, meta: x)
-    entry_mock = MagicMock(side_effect=lambda x, meta: x)
-    exit_mock = MagicMock(side_effect=lambda x, meta: x)
-    mocker.patch.multiple(
-        "freqtrade.strategy.interface.IStrategy",
-        advise_indicators=ind_mock,
-        advise_entry=entry_mock,
-        advise_exit=exit_mock,
-    )
-    strategy = StrategyTestV3({})
-    strategy.dp = DataProvider({}, None, None)
+    config = {"runmode": RunMode.DRY_RUN}
+    strategy = StrategyTestV3(config)
+    strategy.dp = DataProvider(config, None, None)
     strategy.process_only_new_candles = True
+    original = ohlcv_history.copy(deep=True)
 
-    ret = strategy._analyze_ticker_internal(ohlcv_history, {"pair": "ETH/BTC"})
-    assert "high" in ret.columns
-    assert "low" in ret.columns
-    assert "close" in ret.columns
-    assert isinstance(ret, DataFrame)
-    assert ind_mock.call_count == 1
-    assert entry_mock.call_count == 1
-    assert entry_mock.call_count == 1
-    assert log_has("TA Analysis Launched", caplog)
-    assert not log_has("Skipping TA Analysis for already analyzed candle", caplog)
+    def analyze(dataframe, metadata):
+        dataframe.loc[dataframe.index[0], "open"] += 1.0
+        dataframe["enter_long"] = 1
+        dataframe["exit_long"] = 1
+        return dataframe
+
+    analyze_mock = mocker.patch.object(strategy, "analyze_ticker", side_effect=analyze)
+
+    # Active analysis receives a copy, protecting the input's values and columns.
+    analyzed = strategy._analyze_ticker_internal(ohlcv_history, {"pair": "ETH/BTC"})
+    assert analyze_mock.call_args.args[0] is not ohlcv_history
+    assert_frame_equal(ohlcv_history, original)
+    analyzed_before_skip = analyzed.copy(deep=True)
+    cached, timestamp = strategy.dp.get_analyzed_dataframe("ETH/BTC", strategy.timeframe)
+    assert cached is analyzed
     caplog.clear()
 
-    ret = strategy._analyze_ticker_internal(ohlcv_history, {"pair": "ETH/BTC"})
-    # No analysis happens as process_only_new_candles is true
-    assert ind_mock.call_count == 1
-    assert entry_mock.call_count == 1
-    assert entry_mock.call_count == 1
-    # only skipped analyze adds buy and sell columns, otherwise it's all mocked
-    assert "enter_long" in ret.columns
-    assert "exit_long" in ret.columns
-    assert ret["enter_long"].sum() == 0
-    assert ret["exit_long"].sum() == 0
-    assert not log_has("TA Analysis Launched", caplog)
+    # Skipping returns the input unchanged, without copying or rerunning analysis.
+    skipped = strategy._analyze_ticker_internal(ohlcv_history, {"pair": "ETH/BTC"})
+    analyze_mock.assert_called_once()
+    assert skipped is ohlcv_history
+    assert_frame_equal(skipped, original)
+
+    # Existing analyzed signals and the cache timestamp remain intact.
+    cached, timestamp_after_skip = strategy.dp.get_analyzed_dataframe("ETH/BTC", strategy.timeframe)
+    assert cached is analyzed
+    assert timestamp_after_skip == timestamp
+    assert_frame_equal(cached, analyzed_before_skip)
     assert log_has("Skipping TA Analysis for already analyzed candle", caplog)
 
 

@@ -30,7 +30,6 @@ from freqtrade.enums import (
 from freqtrade.exceptions import OperationalException, StrategyError
 from freqtrade.exchange import timeframe_to_minutes, timeframe_to_next_date, timeframe_to_seconds
 from freqtrade.ft_types import AnnotationType
-from freqtrade.misc import remove_entry_exit_signals
 from freqtrade.persistence import Order, PairLocks, Trade
 from freqtrade.strategy.hyper import HyperStrategyMixin
 from freqtrade.strategy.informative_decorator import (
@@ -1220,6 +1219,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         # Test if seen this pair and last candle before.
         # always run if process_only_new_candles is set to false
         if not self.process_only_new_candles or new_candle:
+            dataframe = dataframe.copy()
             validator = StrategyResultValidator(dataframe, warn_only=self.disable_dataframe_checks)
             # Defs that only make change on new candle data.
             dataframe = strategy_safe_wrapper(self.analyze_ticker, message="")(dataframe, metadata)
@@ -1233,7 +1233,6 @@ class IStrategy(ABC, HyperStrategyMixin):
 
         else:
             logger.debug("Skipping TA Analysis for already analyzed candle")
-            dataframe = remove_entry_exit_signals(dataframe)
 
         logger.debug("Loop Analysis Launched")
 
@@ -1247,7 +1246,10 @@ class IStrategy(ABC, HyperStrategyMixin):
         :param pair: Pair to analyze.
         """
         dataframe = self.dp.ohlcv(
-            pair, self.timeframe, candle_type=self.config.get("candle_type_def", CandleType.SPOT)
+            pair,
+            self.timeframe,
+            copy=False,
+            candle_type=self.config.get("candle_type_def", CandleType.SPOT),
         )
         if not isinstance(dataframe, DataFrame) or dataframe.empty:
             msg = f"Empty candle (OHLCV) data for pair {pair}"
