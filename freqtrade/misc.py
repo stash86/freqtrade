@@ -263,7 +263,7 @@ def append_candles_to_dataframe(left: pd.DataFrame, right: pd.DataFrame) -> pd.D
     :param right: The new dataframe containing the data you want appended
     :returns: The dataframe with the right data in it
     """
-    if left.iloc[-1]["date"] != right.iloc[-1]["date"]:
+    if left["date"].iat[-1] != right["date"].iat[-1]:
         left = pd.concat([left, right])
 
     # Only keep the last 1500 candles in memory

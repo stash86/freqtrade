@@ -767,7 +767,7 @@ class FreqtradeBot(LoggingMixin):
         )
 
         if signal:
-            nowtime = analyzed_df.iloc[-1]["date"] if len(analyzed_df) > 0 else None
+            nowtime = analyzed_df["date"].iat[-1] if len(analyzed_df) > 0 else None
             if self.strategy.is_pair_locked(pair, candle_date=nowtime, side=signal):
                 lock = PairLocks.get_pair_longest_lock(pair, nowtime, signal)
                 if lock:
@@ -1799,7 +1799,7 @@ class FreqtradeBot(LoggingMixin):
         analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(
             trade.pair, self.strategy.timeframe
         )
-        latest_candle_open_date = analyzed_df.iloc[-1]["date"] if len(analyzed_df) > 0 else None
+        latest_candle_open_date = analyzed_df["date"].iat[-1] if len(analyzed_df) > 0 else None
         latest_candle_close_date = timeframe_to_next_date(
             self.strategy.timeframe, latest_candle_open_date
         )

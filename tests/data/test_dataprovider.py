@@ -179,7 +179,7 @@ def test_get_pair_dataframe(mocker, default_conf, ohlcv_history, candle_type):
     assert isinstance(df, DataFrame)
     assert len(df) == 3  # ohlcv_history mock has just 3 rows
 
-    dp._set_dataframe_max_date(ohlcv_history.iloc[-1]["date"])
+    dp._set_dataframe_max_date(ohlcv_history["date"].iat[-1])
     df = dp.get_pair_dataframe("UNITTEST/BTC", timeframe, candle_type=candle_type)
     assert isinstance(df, DataFrame)
     assert len(df) == 2  # ohlcv_history is limited to 2 rows now
@@ -558,8 +558,8 @@ def test_dp__add_external_df(default_conf_usdt):
     df, _ = dp.get_producer_df("ETH/USDT", timeframe, CandleType.SPOT)
     # New length = 48 + 12 (since we have a 12 hour offset).
     assert len(df) == 60
-    assert df.iloc[-1]["date"] == df3.iloc[-1]["date"]
-    assert df.iloc[-1]["date"] == Timestamp("2022-01-03 11:00:00+00:00")
+    assert df["date"].iat[-1] == df3["date"].iat[-1]
+    assert df["date"].iat[-1] == Timestamp("2022-01-03 11:00:00+00:00")
 
     # Generate 1 new candle
     df4 = generate_test_data(timeframe, 1, "2022-01-03 12:00:00+00:00")
@@ -570,7 +570,7 @@ def test_dp__add_external_df(default_conf_usdt):
     # New length = 61 + 1
     assert len(df) == 61
     assert df.iloc[-2]["date"] == Timestamp("2022-01-03 11:00:00+00:00")
-    assert df.iloc[-1]["date"] == Timestamp("2022-01-03 12:00:00+00:00")
+    assert df["date"].iat[-1] == Timestamp("2022-01-03 12:00:00+00:00")
 
     # Gap in the data ...
     df4 = generate_test_data(timeframe, 1, "2022-01-05 00:00:00+00:00")

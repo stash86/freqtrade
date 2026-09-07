@@ -94,9 +94,10 @@ def _do_group_table_output(
             )
             new = pd.concat([new, wins, loss], axis=1).fillna(0)
 
+            win_count = new.iloc[:, 1]
             new["profit_tot"] = new["profit_abs_wins"] - abs(new["profit_abs_loss"])
-            new["wl_ratio_pct"] = (new.iloc[:, 1] / new.iloc[:, 0] * 100).fillna(0)
-            new["avg_win"] = (new["profit_abs_wins"] / new.iloc[:, 1]).fillna(0)
+            new["wl_ratio_pct"] = (win_count / new.iloc[:, 0] * 100).fillna(0)
+            new["avg_win"] = (new["profit_abs_wins"] / win_count).fillna(0)
             new["avg_loss"] = (new["profit_abs_loss"] / new.iloc[:, 2]).fillna(0)
 
             new["exp_ratio"] = (

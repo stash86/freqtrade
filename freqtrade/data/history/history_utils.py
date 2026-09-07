@@ -213,19 +213,19 @@ def _load_cached_data_for_updating(
     )
     if not data.empty:
         if prepend:
-            end = data.iloc[0]["date"]
+            end = data["date"].iat[0]
         else:
-            if start and start < data.iloc[0]["date"]:
+            if start and start < data["date"].iat[0]:
                 # Earlier data than existing data requested, Update start date
                 logger.info(
                     f"{pair}, {timeframe}, {candle_type}: "
                     f"Requested start date {start:{DATETIME_PRINT_FORMAT}} earlier than local "
-                    f"data start date {data.iloc[0]['date']:{DATETIME_PRINT_FORMAT}}. "
+                    f"data start date {data['date'].iat[0]:{DATETIME_PRINT_FORMAT}}. "
                     f"Use `--prepend` to download data prior "
-                    f"to {data.iloc[0]['date']:{DATETIME_PRINT_FORMAT}}, or "
+                    f"to {data['date'].iat[0]:{DATETIME_PRINT_FORMAT}}, or "
                     "`--erase` to redownload all data."
                 )
-            start = data.iloc[-1]["date"]
+            start = data["date"].iat[-1]
 
     start_ms = int(start.timestamp() * 1000) if start else None
     end_ms = int(end.timestamp() * 1000) if end else None
@@ -284,16 +284,16 @@ def _download_pair_history(
 
         logger.debug(
             "Current Start: %s",
-            f"{data.iloc[0]['date']:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
+            f"{data['date'].iat[0]:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
         )
         logger.debug(
             "Current End: %s",
-            f"{data.iloc[-1]['date']:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
+            f"{data['date'].iat[-1]:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
         )
         # used to check if the passed in pair_candles (parallel downloaded) covers since_ms.
         # If we need more data, we have to fall back to the standard method.
         pair_candles_since_ms = (
-            dt_ts(pair_candles.iloc[0]["date"])
+            dt_ts(pair_candles["date"].iat[0])
             if pair_candles is not None and len(pair_candles.index) > 0
             else 0
         )
@@ -344,11 +344,11 @@ def _download_pair_history(
 
         logger.debug(
             "New Start: %s",
-            f"{data.iloc[0]['date']:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
+            f"{data['date'].iat[0]:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
         )
         logger.debug(
             "New End: %s",
-            f"{data.iloc[-1]['date']:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
+            f"{data['date'].iat[-1]:{DATETIME_PRINT_FORMAT}}" if not data.empty else "None",
         )
 
         data_handler.ohlcv_store(pair, timeframe, data=data, candle_type=candle_type)
@@ -548,19 +548,19 @@ def _download_trades_history(
     # DEFAULT_TRADES_COLUMNS: 0 -> timestamp
     # DEFAULT_TRADES_COLUMNS: 1 -> id
 
-    if not trades.empty and since > 0 and (since + 1000) < trades.iloc[0]["timestamp"]:
+    if not trades.empty and since > 0 and (since + 1000) < trades["timestamp"].iat[0]:
         # since is before the first trade
         raise ValueError(
             f"Start {format_ms_time_det(since)} earlier than "
-            f"available data ({format_ms_time_det(trades.iloc[0]['timestamp'])}). "
+            f"available data ({format_ms_time_det(trades['timestamp'].iat[0])}). "
             f"Please use `--erase` if you'd like to redownload {pair}."
         )
 
-    from_id = trades.iloc[-1]["id"] if not trades.empty else None
-    if not trades.empty and since < trades.iloc[-1]["timestamp"]:
+    from_id = trades["id"].iat[-1] if not trades.empty else None
+    if not trades.empty and (since < (last_ts := trades["timestamp"].iat[-1])):
         # Reset since to the last available point
         # - 5 seconds (to ensure we're getting all trades)
-        since = int(trades.iloc[-1]["timestamp"] - (5 * 1000))
+        since = int(last_ts - (5 * 1000))
         logger.info(
             f"Using last trade date -5s - Downloading trades for {pair} "
             f"since: {format_ms_time(since)}."
@@ -571,11 +571,11 @@ def _download_trades_history(
 
     logger.debug(
         "Current Start: %s",
-        "None" if trades.empty else f"{trades.iloc[0]['date']:{DATETIME_PRINT_FORMAT}}",
+        "None" if trades.empty else f"{trades['date'].iat[0]:{DATETIME_PRINT_FORMAT}}",
     )
     logger.debug(
         "Current End: %s",
-        "None" if trades.empty else f"{trades.iloc[-1]['date']:{DATETIME_PRINT_FORMAT}}",
+        "None" if trades.empty else f"{trades['date'].iat[-1]:{DATETIME_PRINT_FORMAT}}",
     )
     logger.info(f"Current Amount of trades: {len(trades)}")
 
@@ -593,11 +593,11 @@ def _download_trades_history(
 
     logger.debug(
         "New Start: %s",
-        "None" if trades.empty else f"{trades.iloc[0]['date']:{DATETIME_PRINT_FORMAT}}",
+        "None" if trades.empty else f"{trades['date'].iat[0]:{DATETIME_PRINT_FORMAT}}",
     )
     logger.debug(
         "New End: %s",
-        "None" if trades.empty else f"{trades.iloc[-1]['date']:{DATETIME_PRINT_FORMAT}}",
+        "None" if trades.empty else f"{trades['date'].iat[-1]:{DATETIME_PRINT_FORMAT}}",
     )
     logger.info(f"New Amount of trades: {len(trades)}")
     return True

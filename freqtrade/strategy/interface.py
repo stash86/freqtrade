@@ -1213,7 +1213,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         :return: DataFrame of candle (OHLCV) data with indicator data and signals added
         """
         pair = str(metadata.get("pair"))
-        last_date = dataframe.iloc[-1]["date"]
+        last_date = dataframe["date"].iat[-1]
 
         new_candle = self.__last_candle_seen_per_pair.get(pair, None) != last_date
         # Test if seen this pair and last candle before.
@@ -1648,17 +1648,16 @@ class IStrategy(ABC, HyperStrategyMixin):
             bound_profit=bound_profit,
         )
 
-        sl_higher_long = trade.stop_loss >= (low or current_rate) and not trade.is_short
-        sl_lower_short = trade.stop_loss <= (high or current_rate) and trade.is_short
+        lowest = low or current_rate
+        highest = high or current_rate
+
+        sl_higher_long = trade.stop_loss >= lowest and not trade.is_short
+        sl_lower_short = trade.stop_loss <= highest and trade.is_short
         liq_higher_long = (
-            trade.liquidation_price
-            and trade.liquidation_price >= (low or current_rate)
-            and not trade.is_short
+            trade.liquidation_price and trade.liquidation_price >= lowest and not trade.is_short
         )
         liq_lower_short = (
-            trade.liquidation_price
-            and trade.liquidation_price <= (high or current_rate)
-            and trade.is_short
+            trade.liquidation_price and trade.liquidation_price <= highest and trade.is_short
         )
 
         # evaluate if the stoploss was hit if stoploss is not on exchange
@@ -1809,8 +1808,8 @@ class IStrategy(ABC, HyperStrategyMixin):
             pair = metadata["pair"]
             # Build timerange from dataframe date column
             if not dataframe.empty:
-                start_ts = dt_ts(dataframe["date"].iloc[0])
-                end_ts = dt_ts(dataframe["date"].iloc[-1])
+                start_ts = dt_ts(dataframe["date"].iat[0])
+                end_ts = dt_ts(dataframe["date"].iat[-1])
                 timerange = TimeRange("date", "date", startts=start_ts, stopts=end_ts)
             else:
                 timerange = None
@@ -1899,8 +1898,8 @@ class IStrategy(ABC, HyperStrategyMixin):
             annotations = strategy_safe_wrapper(self.plot_annotations)(
                 pair=pair,
                 dataframe=dataframe,
-                start_date=dataframe.iloc[0]["date"].to_pydatetime(),
-                end_date=dataframe.iloc[-1]["date"].to_pydatetime(),
+                start_date=dataframe["date"].iat[0].to_pydatetime(),
+                end_date=dataframe["date"].iat[-1].to_pydatetime(),
             )
 
             from freqtrade.ft_types.plot_annotation_type import AnnotationTypeTA

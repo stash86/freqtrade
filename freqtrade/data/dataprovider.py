@@ -224,9 +224,9 @@ class DataProvider:
         # CHECK FOR MISSING CANDLES
         # Convert the timeframe to a timedelta for pandas
         timeframe_delta: Timedelta = to_timedelta(timeframe)
-        local_last: Timestamp = existing_df.iloc[-1]["date"]  # We want the last date from our copy
+        local_last: Timestamp = existing_df["date"].iat[-1]  # We want the last date from our copy
         # We want the first date from the incoming
-        incoming_first: Timestamp = dataframe.iloc[0]["date"]
+        incoming_first: Timestamp = dataframe["date"].iat[0]
 
         # Remove existing candles that are newer than the incoming first candle
         existing_df1 = existing_df[existing_df["date"] < incoming_first]

@@ -3245,7 +3245,7 @@ class Exchange:
                 until = None
                 from_id = None
                 if is_in_cache:
-                    from_id = self._trades[(pair, timeframe, candle_type)].iloc[-1]["id"]
+                    from_id = self._trades[(pair, timeframe, candle_type)]["id"].iat[-1]
                     until = dt_ts()  # now
 
                 else:
@@ -3256,12 +3256,12 @@ class Exchange:
 
                     if not all_stored_ticks_df.empty:
                         if (
-                            all_stored_ticks_df.iloc[-1]["timestamp"] > first_candle_ms
-                            and all_stored_ticks_df.iloc[0]["timestamp"] <= first_candle_ms
+                            all_stored_ticks_df["timestamp"].iat[-1] > first_candle_ms
+                            and all_stored_ticks_df["timestamp"].iat[0] <= first_candle_ms
                         ):
                             # Use cache and populate further
-                            last_cached_ms = all_stored_ticks_df.iloc[-1]["timestamp"]
-                            from_id = all_stored_ticks_df.iloc[-1]["id"]
+                            last_cached_ms = all_stored_ticks_df["timestamp"].iat[-1]
+                            from_id = all_stored_ticks_df["id"].iat[-1]
                             # only use cached if it's closer than first_candle_ms
                             since_ms = max(first_candle_ms, last_cached_ms)
                         else:
@@ -3347,7 +3347,7 @@ class Exchange:
         self, pair: str, timeframe: str, candle_type: CandleType
     ) -> bool:  # Timeframe in seconds
         trades = self.trades((pair, timeframe, candle_type), False)
-        pair_last_refreshed = int(trades.iloc[-1]["timestamp"])
+        pair_last_refreshed = int(trades["timestamp"].iat[-1])
         full_candle = (
             int(timeframe_to_next_date(timeframe, dt_from_ts(pair_last_refreshed)).timestamp())
             * 1000

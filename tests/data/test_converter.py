@@ -290,16 +290,16 @@ def test_ohlcv_to_dataframe_1M():
         ticks, "1M", pair="UNITTEST/USDT", fill_missing=False, drop_incomplete=False
     )
     assert len(data) == len(ticks)
-    assert data.iloc[0]["date"].strftime("%Y-%m-%d") == "2019-09-01"
-    assert data.iloc[-1]["date"].strftime("%Y-%m-%d") == "2023-07-01"
+    assert data["date"].iat[0].strftime("%Y-%m-%d") == "2019-09-01"
+    assert data["date"].iat[-1].strftime("%Y-%m-%d") == "2023-07-01"
 
     # Test with filling missing data
     data = ohlcv_to_dataframe(
         ticks, "1M", pair="UNITTEST/USDT", fill_missing=True, drop_incomplete=False
     )
     assert len(data) == len(ticks)
-    assert data.iloc[0]["date"].strftime("%Y-%m-%d") == "2019-09-01"
-    assert data.iloc[-1]["date"].strftime("%Y-%m-%d") == "2023-07-01"
+    assert data["date"].iat[0].strftime("%Y-%m-%d") == "2019-09-01"
+    assert data["date"].iat[-1].strftime("%Y-%m-%d") == "2023-07-01"
 
 
 def test_ohlcv_drop_incomplete(caplog):
@@ -356,8 +356,8 @@ def test_ohlcv_drop_incomplete(caplog):
 
 def test_trim_dataframe(testdatadir) -> None:
     data = load_data(datadir=testdatadir, timeframe="1m", pairs=["UNITTEST/BTC"])["UNITTEST/BTC"]
-    min_date = int(data.iloc[0]["date"].timestamp())
-    max_date = int(data.iloc[-1]["date"].timestamp())
+    min_date = int(data["date"].iat[0].timestamp())
+    max_date = int(data["date"].iat[-1].timestamp())
     data_modify = data.copy()
 
     # Remove first 30 minutes (1800 s)

@@ -270,7 +270,7 @@ class TestCCXTExchange:
         )
         # Check if last-timeframe is within the last 2 intervals
         now = datetime.now(UTC) - timedelta(minutes=(timeframe_to_minutes(timeframe) * 2))
-        assert exch.klines(pair_tf).iloc[-1]["date"] >= timeframe_to_prev_date(timeframe, now)
+        assert exch.klines(pair_tf)["date"].iat[-1] >= timeframe_to_prev_date(timeframe, now)
 
     def test_ccxt_fetch_ohlcv_startdate(self, exchange: EXCHANGE_FIXTURE_TYPE):
         """
@@ -288,7 +288,7 @@ class TestCCXTExchange:
         assert len(ohlcv[pair_tf]) == len(exch.klines(pair_tf))
         # Check if last-timeframe is within the last 2 intervals
         now = datetime.now(UTC) - timedelta(minutes=(timeframe_to_minutes(timeframe) * 2))
-        assert exch.klines(pair_tf).iloc[-1]["date"] >= timeframe_to_prev_date(timeframe, now)
+        assert exch.klines(pair_tf)["date"].iat[-1] >= timeframe_to_prev_date(timeframe, now)
         assert exch.klines(pair_tf)["date"].dt.as_unit("ms").astype("int64").iloc[0] == since_ms
 
     def _ccxt__async_get_candle_history(
@@ -411,14 +411,14 @@ class TestCCXTExchange:
         assert (oi["date"] == oi["date"].dt.floor(timeframe_to_resample_freq(timeframe))).all()
 
         # History must start at the requested date - exchanges may skip the very first candle.
-        assert oi.iloc[0]["date"] <= since_date + tf_delta, (
-            f"{exchange_name} open interest history starts at {oi.iloc[0]['date']}, "
+        assert oi["date"].iat[0] <= since_date + tf_delta, (
+            f"{exchange_name} open interest history starts at {oi['date'].iat[0]}, "
             f"expected {since_date}"
         )
         # ... and must reach up to now. Open interest usually lags OHLCV by one candle.
         last_date = timeframe_to_prev_date(timeframe, dt_now())
-        assert oi.iloc[-1]["date"] >= last_date - 3 * tf_delta, (
-            f"{exchange_name} open interest history is stale - last candle {oi.iloc[-1]['date']}"
+        assert oi["date"].iat[-1] >= last_date - 3 * tf_delta, (
+            f"{exchange_name} open interest history is stale - last candle {oi['date'].iat[-1]}"
         )
         # The full range must be covered, not just the last call. Assume 90% uptime,
         # in line with the other candle history tests.

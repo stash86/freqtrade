@@ -178,8 +178,8 @@ def test_get_pair_data_for_features_without_preloaded_data(mocker, freqai_conf):
 
     assert df is not base_df["5m"]
     assert not df.empty
-    assert df.iloc[0]["date"].strftime("%Y-%m-%d %H:%M:%S") == "2018-01-11 23:00:00"
-    assert df.iloc[-1]["date"].strftime("%Y-%m-%d %H:%M:%S") == "2018-01-30 00:00:00"
+    assert df["date"].iat[0].strftime("%Y-%m-%d %H:%M:%S") == "2018-01-11 23:00:00"
+    assert df["date"].iat[-1].strftime("%Y-%m-%d %H:%M:%S") == "2018-01-30 00:00:00"
 
 
 def test_populate_features(mocker, freqai_conf):
@@ -203,4 +203,4 @@ def test_populate_features(mocker, freqai_conf):
         base_df["5m"], strategy.feature_engineering_expand_all.call_args[0][0]
     )
 
-    assert df.iloc[0]["date"].strftime("%Y-%m-%d %H:%M:%S") == "2018-01-15 00:00:00"
+    assert df["date"].iat[0].strftime("%Y-%m-%d %H:%M:%S") == "2018-01-15 00:00:00"

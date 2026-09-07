@@ -183,7 +183,7 @@ class ClientProtocol:
 
             self.logger.info(key)
             self.logger.info(f"Last analyzed datetime: {la}")
-            self.logger.info(f"Latest candle datetime: {df.iloc[-1]['date']}")
+            self.logger.info(f"Latest candle datetime: {df['date'].iat[-1]}")
             self.logger.info(f"DataFrame length: {len(df)}")
             self.logger.info(f"DataFrame columns: {columns}")
         else:

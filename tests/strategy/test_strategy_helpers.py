@@ -47,10 +47,10 @@ def test_merge_informative_pair():
     assert result.iloc[1]["date_1h"] is pd.NaT
     assert result.iloc[2]["date_1h"] is pd.NaT
     # Next 4 rows contain the starting date (0:00)
-    assert result.iloc[3]["date_1h"] == result.iloc[0]["date"]
-    assert result.iloc[4]["date_1h"] == result.iloc[0]["date"]
-    assert result.iloc[5]["date_1h"] == result.iloc[0]["date"]
-    assert result.iloc[6]["date_1h"] == result.iloc[0]["date"]
+    assert result.iloc[3]["date_1h"] == result["date"].iat[0]
+    assert result.iloc[4]["date_1h"] == result["date"].iat[0]
+    assert result.iloc[5]["date_1h"] == result["date"].iat[0]
+    assert result.iloc[6]["date_1h"] == result["date"].iat[0]
     # Next 4 rows contain the next Hourly date original date row 4
     assert result.iloc[7]["date_1h"] == result.iloc[4]["date"]
     assert result.iloc[8]["date_1h"] == result.iloc[4]["date"]
@@ -62,7 +62,7 @@ def test_merge_informative_pair():
     assert result.iloc[1]["date_1h"] is pd.NaT
     assert result.iloc[2]["date_1h"] is pd.NaT
     # Next 4 rows contain the starting date (0:00)
-    assert result.iloc[3]["date_1h"] == result.iloc[0]["date"]
+    assert result.iloc[3]["date_1h"] == result["date"].iat[0]
     assert result.iloc[4]["date_1h"] is pd.NaT
     assert result.iloc[5]["date_1h"] is pd.NaT
     assert result.iloc[6]["date_1h"] is pd.NaT
@@ -81,21 +81,21 @@ def test_merge_informative_pair_weekly():
     assert isinstance(result, pd.DataFrame)
     # 2022-12-24 is a Saturday
     candle1 = result.loc[(result["date"] == "2022-12-24T22:00:00.000Z")]
-    assert candle1.iloc[0]["date"] == pd.Timestamp("2022-12-24T22:00:00.000Z")
+    assert candle1["date"].iat[0] == pd.Timestamp("2022-12-24T22:00:00.000Z")
     assert candle1.iloc[0]["date_1w"] == pd.Timestamp("2022-12-12T00:00:00.000Z")
 
     candle2 = result.loc[(result["date"] == "2022-12-24T23:00:00.000Z")]
-    assert candle2.iloc[0]["date"] == pd.Timestamp("2022-12-24T23:00:00.000Z")
+    assert candle2["date"].iat[0] == pd.Timestamp("2022-12-24T23:00:00.000Z")
     assert candle2.iloc[0]["date_1w"] == pd.Timestamp("2022-12-12T00:00:00.000Z")
 
     # 2022-12-25 is a Sunday
     candle3 = result.loc[(result["date"] == "2022-12-25T22:00:00.000Z")]
-    assert candle3.iloc[0]["date"] == pd.Timestamp("2022-12-25T22:00:00.000Z")
+    assert candle3["date"].iat[0] == pd.Timestamp("2022-12-25T22:00:00.000Z")
     # Still old candle
     assert candle3.iloc[0]["date_1w"] == pd.Timestamp("2022-12-12T00:00:00.000Z")
 
     candle4 = result.loc[(result["date"] == "2022-12-25T23:00:00.000Z")]
-    assert candle4.iloc[0]["date"] == pd.Timestamp("2022-12-25T23:00:00.000Z")
+    assert candle4["date"].iat[0] == pd.Timestamp("2022-12-25T23:00:00.000Z")
     assert candle4.iloc[0]["date_1w"] == pd.Timestamp("2022-12-19T00:00:00.000Z")
 
 
@@ -107,22 +107,22 @@ def test_merge_informative_pair_monthly():
     result = merge_informative_pair(data, informative, "1h", "1M", ffill=True)
     assert isinstance(result, pd.DataFrame)
     candle1 = result.loc[(result["date"] == "2022-12-31T22:00:00.000Z")]
-    assert candle1.iloc[0]["date"] == pd.Timestamp("2022-12-31T22:00:00.000Z")
+    assert candle1["date"].iat[0] == pd.Timestamp("2022-12-31T22:00:00.000Z")
     assert candle1.iloc[0]["date_1M"] == pd.Timestamp("2022-11-01T00:00:00.000Z")
 
     candle2 = result.loc[(result["date"] == "2022-12-31T23:00:00.000Z")]
-    assert candle2.iloc[0]["date"] == pd.Timestamp("2022-12-31T23:00:00.000Z")
+    assert candle2["date"].iat[0] == pd.Timestamp("2022-12-31T23:00:00.000Z")
     assert candle2.iloc[0]["date_1M"] == pd.Timestamp("2022-12-01T00:00:00.000Z")
 
     # Candle is empty, as the start-date did fail.
     candle3 = result.loc[(result["date"] == "2022-11-30T22:00:00.000Z")]
-    assert candle3.iloc[0]["date"] == pd.Timestamp("2022-11-30T22:00:00.000Z")
+    assert candle3["date"].iat[0] == pd.Timestamp("2022-11-30T22:00:00.000Z")
     # Merged on prior month
     assert candle3.iloc[0]["date_1M"] == pd.Timestamp("2022-10-01T00:00:00.000Z")
 
     # First candle with 1M data merged.
     candle4 = result.loc[(result["date"] == "2022-11-30T23:00:00.000Z")]
-    assert candle4.iloc[0]["date"] == pd.Timestamp("2022-11-30T23:00:00.000Z")
+    assert candle4["date"].iat[0] == pd.Timestamp("2022-11-30T23:00:00.000Z")
     assert candle4.iloc[0]["date_1M"] == pd.Timestamp("2022-11-01T00:00:00.000Z")
 
     # Very first candle in the result dataframe

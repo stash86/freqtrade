@@ -752,13 +752,13 @@ class FreqaiDataDrawer:
                     df_dp = strategy.dp.get_pair_dataframe(pair, tf)
                     if len(df_dp.index) == 0:
                         continue
-                    if str(hist_df.iloc[-1]["date"]) == str(df_dp.iloc[-1:]["date"].iloc[-1]):
+                    if str(hist_df["date"].iat[-1]) == str(df_dp.iloc[-1:]["date"].iloc[-1]):
                         continue
 
                     try:
-                        index = df_dp.loc[df_dp["date"] == hist_df.iloc[-1]["date"]].index[0] + 1
+                        index = df_dp.loc[df_dp["date"] == hist_df["date"].iat[-1]].index[0] + 1
                     except IndexError:
-                        if hist_df.iloc[-1]["date"] < df_dp["date"].iloc[0]:
+                        if hist_df["date"].iat[-1] < df_dp["date"].iloc[0]:
                             raise OperationalException(
                                 "In memory historical data is older than "
                                 f"oldest DataProvider candle for {pair} on "
@@ -771,7 +771,7 @@ class FreqaiDataDrawer:
                                 f"Appending latest dataprovider candle to historical data "
                                 "but please be aware that there is likely a gap in the historical "
                                 "data. \n"
-                                f"Historical data ends at {hist_df.iloc[-1]['date']} "
+                                f"Historical data ends at {hist_df['date'].iat[-1]} "
                                 f"while dataprovider starts at {df_dp['date'].iloc[0]} and"
                                 f"ends at {df_dp['date'].iloc[0]}."
                             )
@@ -785,7 +785,7 @@ class FreqaiDataDrawer:
                         axis=0,
                     )
 
-            self.current_candle = history_data[dk.pair][self.config["timeframe"]].iloc[-1]["date"]
+            self.current_candle = history_data[dk.pair][self.config["timeframe"]]["date"].iat[-1]
 
     def load_all_pair_histories(self, timerange: TimeRange, dk: FreqaiDataKitchen) -> None:
         """

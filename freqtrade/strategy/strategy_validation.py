@@ -13,8 +13,8 @@ class StrategyResultValidator:
     def __init__(self, dataframe: DataFrame, warn_only: bool = False):
         self._warn_only = warn_only
         self._length: int = len(dataframe)
-        self._close: float = dataframe["close"].iloc[-1]
-        self._date: datetime = dataframe["date"].iloc[-1]
+        self._close: float = dataframe["close"].iat[-1]
+        self._date: datetime = dataframe["date"].iat[-1]
 
     def assert_df(self, dataframe: DataFrame):
         """
@@ -31,9 +31,9 @@ class StrategyResultValidator:
             message = "No dataframe returned (return statement missing?)."
         elif self._length != len(dataframe):
             message = message_template.format("length")
-        elif self._close != dataframe["close"].iloc[-1]:
+        elif self._close != dataframe["close"].iat[-1]:
             message = message_template.format("last close price")
-        elif self._date != dataframe["date"].iloc[-1]:
+        elif self._date != dataframe["date"].iat[-1]:
             message = message_template.format("last date")
         if message:
             if self._warn_only:

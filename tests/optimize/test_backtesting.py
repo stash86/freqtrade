@@ -2268,7 +2268,7 @@ def test_backtest_alternate_buy_sell(default_conf, fee, mocker, testdatadir):
     # Expect last candle to be 1 below end date (as the last candle is assumed as "incomplete"
     # during backtesting)
     expected_last_candle_date = backtest_conf["end_date"] - timedelta(minutes=1)
-    assert analyzed_df.iloc[-1]["date"].to_pydatetime() == expected_last_candle_date
+    assert analyzed_df["date"].iat[-1].to_pydatetime() == expected_last_candle_date
 
     # One trade was force-closed at the end
     assert len(results.loc[results["is_open"]]) == 0

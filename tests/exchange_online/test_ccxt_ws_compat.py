@@ -48,8 +48,8 @@ class TestCCXTExchangeWs:
         assert pair_tf in exch._exchange_ws._klines_scheduled
         assert res[pair_tf] is not None
         df1 = res[pair_tf]
-        assert df1.iloc[-1]["date"] == curr_candle, (
-            f"Expected {curr_candle}, got {df1.iloc[-1]['date']} for {pair_tf}, now: {dt_now()}"
+        assert df1["date"].iat[-1] == curr_candle, (
+            f"Expected {curr_candle}, got {df1['date'].iat[-1]} for {pair_tf}, now: {dt_now()}"
         )
 
         # Wait until the next candle (might be up to 1 minute).
@@ -58,9 +58,9 @@ class TestCCXTExchangeWs:
             res = exch.refresh_latest_ohlcv([pair_tf])
             df2 = res[pair_tf]
             assert df2 is not None
-            if df2.iloc[-1]["date"] == next_candle:
+            if df2["date"].iat[-1] == next_candle:
                 break
-            assert df2.iloc[-1]["date"] == curr_candle
+            assert df2["date"].iat[-1] == curr_candle
             sleep(1)
 
         assert m_hist.call_count == 0

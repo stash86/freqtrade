@@ -34,8 +34,9 @@ def calculate_market_change(
         if df1.empty:
             logger.warning(f"Pair {pair} has no data after {min_date}.")
             continue
-        start = df1[column].dropna().iloc[0]
-        end = df1[column].dropna().iloc[-1]
+        values = df1[column].dropna()
+        start = values.iat[0]
+        end = values.iat[-1]
         tmp_means.append((end - start) / start)
 
     if not tmp_means:
@@ -233,26 +234,26 @@ def calculate_max_drawdown(
     )
     # max_drawdown_df has an extra zero row at the start
 
+    high_values = max_drawdown_df["high_value"]
+    cumulative = max_drawdown_df["cumulative"]
+    relative_drawdown = max_drawdown_df["drawdown_relative"]
+
     # Calculate maximum drawdown
-    idxmin = (
-        max_drawdown_df["drawdown_relative"].idxmax()
-        if relative
-        else max_drawdown_df["drawdown"].idxmin()
-    )
-    high_idx = max_drawdown_df.iloc[: idxmin + 1]["high_value"].idxmax()
+    idxmin = relative_drawdown.idxmax() if relative else max_drawdown_df["drawdown"].idxmin()
+    high_idx = high_values.iloc[: idxmin + 1].idxmax()
     high_date = profit_results.at[max(high_idx - 1, 0), date_col]
     low_date = profit_results.at[max(idxmin - 1, 0), date_col]
-    high_val = max_drawdown_df.at[high_idx, "cumulative"]
-    low_val = max_drawdown_df.at[idxmin, "cumulative"]
-    max_drawdown_rel = max_drawdown_df.at[idxmin, "drawdown_relative"]
+    high_val = cumulative.iat[high_idx]
+    low_val = cumulative.iat[idxmin]
+    max_drawdown_rel = relative_drawdown.iat[idxmin]
 
     # Calculate current drawdown
-    current_high_idx = max_drawdown_df["high_value"].iloc[:-1].idxmax()
+    current_high_idx = high_values.iloc[:-1].idxmax()
     current_high_date = profit_results.at[max(current_high_idx - 1, 0), date_col]
-    current_high_value = max_drawdown_df.iloc[-1]["high_value"]
-    current_cumulative = max_drawdown_df.iloc[-1]["cumulative"]
+    current_high_value = high_values.iat[-1]
+    current_cumulative = cumulative.iat[-1]
     current_drawdown_abs = current_high_value - current_cumulative
-    current_drawdown_relative = max_drawdown_df.iloc[-1]["drawdown_relative"]
+    current_drawdown_relative = relative_drawdown.iat[-1]
 
     return DrawDownResult(
         # Max drawdown
@@ -523,7 +524,7 @@ def calculate_max_drawdown_from_balance(
     if len(wallet) < 2:
         raise ValueError("Balance-history dataframe empty.")
 
-    starting_balance = float(wallet[balance_col].iloc[0])
+    starting_balance = float(wallet[balance_col].iat[0])
     wallet.loc[:, "total_balance"] = wallet[balance_col].diff().fillna(0.0)
 
     return calculate_max_drawdown(
@@ -590,9 +591,9 @@ def calculate_calmar_from_balance(
     if len(wallet) < 2:
         return 0.0
 
-    starting_balance = float(wallet[balance_col].iloc[0])
-    final_balance = float(wallet[balance_col].iloc[-1])
-    days_period = max(1, (wallet[date_col].iloc[-1] - wallet[date_col].iloc[0]).days)
+    starting_balance = float(wallet[balance_col].iat[0])
+    final_balance = float(wallet[balance_col].iat[-1])
+    days_period = max(1, (wallet[date_col].iat[-1] - wallet[date_col].iat[0]).days)
 
     total_profit = (final_balance - starting_balance) / starting_balance
     expected_returns_mean = total_profit / days_period * 100

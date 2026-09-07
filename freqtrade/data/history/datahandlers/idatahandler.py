@@ -104,7 +104,7 @@ class IDataHandler(ABC):
                 datetime.fromtimestamp(0, tz=UTC),
                 0,
             )
-        return df.iloc[0]["date"].to_pydatetime(), df.iloc[-1]["date"].to_pydatetime(), len(df)
+        return df["date"].iat[0].to_pydatetime(), df["date"].iat[-1].to_pydatetime(), len(df)
 
     @abstractmethod
     def _ohlcv_load(
@@ -246,8 +246,8 @@ class IDataHandler(ABC):
                 0,
             )
         return (
-            to_datetime(df.iloc[0]["timestamp"], unit="ms", utc=True).to_pydatetime(),
-            to_datetime(df.iloc[-1]["timestamp"], unit="ms", utc=True).to_pydatetime(),
+            to_datetime(df["timestamp"].iat[0], unit="ms", utc=True).to_pydatetime(),
+            to_datetime(df["timestamp"].iat[-1], unit="ms", utc=True).to_pydatetime(),
             len(df),
         )
 
@@ -443,7 +443,7 @@ class IDataHandler(ABC):
         if self._check_empty_df(pairdf, pair, timeframe, candle_type, warn_no_data):
             return pairdf
         else:
-            enddate = pairdf.iloc[-1]["date"]
+            enddate = pairdf["date"].iat[-1]
 
             if timerange_startup:
                 self._validate_pairdata(pair, pairdf, timeframe, candle_type, timerange_startup)
@@ -457,7 +457,7 @@ class IDataHandler(ABC):
                 timeframe,
                 pair=pair,
                 fill_missing=fill_missing,
-                drop_incomplete=(drop_incomplete and enddate == pairdf.iloc[-1]["date"]),
+                drop_incomplete=(drop_incomplete and enddate == pairdf["date"].iat[-1]),
                 candle_type=candle_type,
             )
             self._check_empty_df(pairdf, pair, timeframe, candle_type, warn_no_data)
@@ -517,15 +517,15 @@ class IDataHandler(ABC):
         :param timerange: Timerange specified for start and end dates
         """
 
-        if timerange.starttype == "date" and pairdata.iloc[0]["date"] > timerange.startdt:
+        if timerange.starttype == "date" and pairdata["date"].iat[0] > timerange.startdt:
             logger.warning(
                 f"{pair}, {candle_type}, {timeframe}, "
-                f"data starts at {pairdata.iloc[0]['date']:%Y-%m-%d %H:%M:%S}"
+                f"data starts at {pairdata['date'].iat[0]:%Y-%m-%d %H:%M:%S}"
             )
-        if timerange.stoptype == "date" and pairdata.iloc[-1]["date"] < timerange.stopdt:
+        if timerange.stoptype == "date" and pairdata["date"].iat[-1] < timerange.stopdt:
             logger.warning(
                 f"{pair}, {candle_type}, {timeframe}, "
-                f"data ends at {pairdata.iloc[-1]['date']:%Y-%m-%d %H:%M:%S}"
+                f"data ends at {pairdata['date'].iat[-1]:%Y-%m-%d %H:%M:%S}"
             )
 
     def rename_futures_data(

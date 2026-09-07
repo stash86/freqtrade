@@ -222,7 +222,7 @@ class VolumePairList(IPairList):
                         .rolling(self._lookback_period)
                         .sum()
                         .fillna(0)
-                        .iloc[-1]
+                        .iat[-1]
                     )
 
                     # replace quoteVolume with range quoteVolume sum calculated above

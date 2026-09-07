@@ -250,7 +250,7 @@ class Binance(Exchange):
         if df.empty:
             rest_since_ms = since_ms
         else:
-            rest_since_ms = dt_ts(df.iloc[-1].date) + timeframe_to_msecs(timeframe)
+            rest_since_ms = dt_ts(df["date"].iat[-1]) + timeframe_to_msecs(timeframe)
 
         # make sure since <= until
         if until_ms and rest_since_ms > until_ms:

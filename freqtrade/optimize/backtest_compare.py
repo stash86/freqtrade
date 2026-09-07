@@ -263,7 +263,7 @@ def _format_signal_date(value: Any) -> str:
 
 def _find_duplicate_signal_date(dataframe: DataFrame) -> Any | None:
     duplicate_dates = dataframe.loc[dataframe["date"].duplicated(keep=False), "date"]
-    return None if duplicate_dates.empty else duplicate_dates.iloc[0]
+    return None if duplicate_dates.empty else duplicate_dates.iat[0]
 
 
 def _format_signal_date_difference(expected: DataFrame, actual: DataFrame) -> str:
@@ -334,12 +334,12 @@ def compare_signal_results(
             row_positions, column_positions = mismatch.to_numpy().nonzero()
             row_position = int(row_positions[0])
             column = signal_columns[int(column_positions[0])]
-            expected_value = expected.iloc[row_position][column]
-            actual_value = actual.iloc[row_position][column]
+            expected_value = expected[column].iat[row_position]
+            actual_value = actual[column].iat[row_position]
             if column in _SIGNAL_FLAG_COLUMNS:
                 expected_value = bool(expected_value)
                 actual_value = bool(actual_value)
-            candle_date = actual.iloc[row_position]["date"]
+            candle_date = actual["date"].iat[row_position]
 
             return (
                 f"{actual_name} differs from {expected_name} on {pair} at "

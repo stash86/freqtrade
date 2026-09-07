@@ -596,8 +596,8 @@ def test_datahandler_trades_load(testdatadir, datahandler):
     dh = get_datahandler(testdatadir, datahandler)
     trades = dh.trades_load("XRP/ETH", TradingMode.SPOT)
     assert isinstance(trades, DataFrame)
-    assert trades.iloc[0]["timestamp"] == 1570752011620
-    assert trades.iloc[0]["date"] == Timestamp("2019-10-11 00:00:11.620000+0000")
+    assert trades["timestamp"].iat[0] == 1570752011620
+    assert trades["date"].iat[0] == Timestamp("2019-10-11 00:00:11.620000+0000")
     assert trades.iloc[-1]["cost"] == 0.1986231
 
     trades1 = dh.trades_load("UNITTEST/NONEXIST", TradingMode.SPOT)
@@ -768,7 +768,7 @@ def test_feather_trades_timerange_open_start(feather_dh, trades_full):
     assert 0 < len(filtered) < len(trades_full)
     assert filtered["timestamp"].max() <= stop_ts
     # First row should match full's first row
-    assert filtered.iloc[0]["timestamp"] == trades_full.iloc[0]["timestamp"]
+    assert filtered["timestamp"].iat[0] == trades_full["timestamp"].iat[0]
 
 
 def test_feather_trades_timerange_open_end(feather_dh, trades_full):
@@ -780,7 +780,7 @@ def test_feather_trades_timerange_open_end(feather_dh, trades_full):
     assert 0 < len(filtered) < len(trades_full)
     assert filtered["timestamp"].min() >= start_ts
     # Last row should match full's last row
-    assert filtered.iloc[-1]["timestamp"] == trades_full.iloc[-1]["timestamp"]
+    assert filtered["timestamp"].iat[-1] == trades_full["timestamp"].iat[-1]
 
 
 def test_feather_trades_timerange_fully_open(feather_dh, trades_full):
@@ -916,8 +916,8 @@ def test_ohlcv_load_pushdown_limits_read(testdatadir, tmp_path, datahandler):
 
     assert len(limited) < len(full)
     # Bounds are widened by exactly one candle - ohlcv_load trims the rest.
-    assert limited.iloc[0]["date"] == timerange.startdt - timedelta(minutes=5)
-    assert limited.iloc[-1]["date"] == timerange.stopdt + timedelta(minutes=5)
+    assert limited["date"].iat[0] == timerange.startdt - timedelta(minutes=5)
+    assert limited["date"].iat[-1] == timerange.stopdt + timedelta(minutes=5)
 
 
 @pytest.mark.parametrize(

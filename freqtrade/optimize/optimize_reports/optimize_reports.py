@@ -58,8 +58,8 @@ def generate_wallet_stats(wallet_df: DataFrame, stake_currency: str) -> dict[str
     total_quote = wallet["total_quote"]
     low_idx = total_quote.idxmin()
     high_idx = total_quote.idxmax()
-    start_balance = wallet.iloc[0]["total_quote"]
-    end_balance = wallet.iloc[-1]["total_quote"]
+    start_balance = wallet["total_quote"].iat[0]
+    end_balance = wallet["total_quote"].iat[-1]
     high_balance = total_quote.loc[high_idx]
     low_balance = total_quote.loc[low_idx]
     low_date = wallet.loc[low_idx, "date"]

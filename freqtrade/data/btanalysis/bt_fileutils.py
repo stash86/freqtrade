@@ -596,8 +596,8 @@ def extract_trades_of_period(
         trades_start = dataframe.index[0]
         trades_stop = dataframe.index[-1]
     else:
-        trades_start = dataframe.iloc[0]["date"]
-        trades_stop = dataframe.iloc[-1]["date"]
+        trades_start = dataframe["date"].iat[0]
+        trades_stop = dataframe["date"].iat[-1]
     trades = trades.loc[
         (trades["open_date"] >= trades_start) & (trades["close_date"] <= trades_stop)
     ]
