@@ -9,9 +9,9 @@ from datetime import UTC, datetime, time, timedelta
 from math import isclose
 from threading import Lock
 from time import sleep
-from typing import Any
+from typing import Any, NamedTuple
 
-from schedule import Scheduler
+from cachetools import TTLCache
 
 from freqtrade import constants
 from freqtrade.configuration import remove_exchange_credentials, validate_config_consistency
@@ -59,16 +59,30 @@ from freqtrade.rpc.rpc_types import (
     RPCEntryMsg,
     RPCExitCancelMsg,
     RPCExitMsg,
+    RPCLiquidationWarningMsg,
     RPCProtectionMsg,
 )
 from freqtrade.strategy.interface import IStrategy
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
-from freqtrade.util import FtPrecise, MeasureTime, PeriodicCache, dt_from_ts, dt_now
+from freqtrade.util import FtPrecise, FtScheduler, MeasureTime, PeriodicCache, dt_from_ts, dt_now
 from freqtrade.util.migrations import migrate_live_content
 from freqtrade.wallets import Wallets
 
 
 logger = logging.getLogger(__name__)
+
+
+class LiquidationDistance(NamedTuple):
+    """
+    An open position, and how much room is left to its liquidation stop: the distance to the
+    stop as a fraction of the price move that would use up the position's margin (a 10% move at
+    10x leverage). About 1.0 for a freshly opened position, 0.0 at the liquidation stop.
+    """
+
+    remaining: float
+    trade: Trade
+    rate: float
+    liquidation_price: float
 
 
 class FreqtradeBot(LoggingMixin):
@@ -153,9 +167,13 @@ class FreqtradeBot(LoggingMixin):
             self._exit_lock = Lock()
             timeframe_secs = timeframe_to_seconds(self.strategy.timeframe)
             self._exit_reason_cache = PeriodicCache(100, ttl=timeframe_secs)
+            # Tracks which positions we already warned about approaching liquidation.
+            # Deliberately in-memory - on a restart the state is recalculated from the
+            # current rate, and warned again if necessary.
+            self._liq_warn_cache: TTLCache = TTLCache(maxsize=200, ttl=86400)
             LoggingMixin.__init__(self, logger, timeframe_secs)
 
-            self._schedule = Scheduler()
+            self._schedule = FtScheduler()
 
             if self.trading_mode == TradingMode.FUTURES:
 
@@ -172,6 +190,8 @@ class FreqtradeBot(LoggingMixin):
                         t = str(time(time_slot, minutes, 2))
                         self._schedule.every().day.at(t).do(update)
 
+            # schedule is in local time by default (!)
+            # Explicit timezones must be configured explicitly.
             self._schedule.every().day.at("00:02").do(self.exchange.ws_connection_reset)
             self._schedule.every().day.at("00:07").do(self.wallets.record_wallet_state)
 
@@ -337,6 +357,8 @@ class FreqtradeBot(LoggingMixin):
             self.exit_positions(trades)
             Trade.commit()
 
+        self.check_liquidation_warnings()
+
         # Check if we need to adjust our current positions before attempting to enter new trades.
         if self.strategy.position_adjustment_enable:
             with self._exit_lock:
@@ -413,6 +435,123 @@ class FreqtradeBot(LoggingMixin):
                 stake_currency=self.config["stake_currency"],
                 dry_run=self.config["dry_run"],
             )
+
+    def check_liquidation_warnings(self) -> None:
+        """
+        Warn about open positions approaching the liquidation stop freqtrade applies
+        (the exchange's liquidation price, moved by `liquidation_buffer`).
+        In cross margin one account wide message is sent, as all positions share the same
+        collateral - in isolated margin each position is warned about separately.
+        """
+        warn_ratio = self.config.get("liquidation_warn_ratio", 0.2)
+        if not warn_ratio or self.trading_mode != TradingMode.FUTURES:
+            return
+
+        open_trades: list[Trade] = Trade.get_open_trades()
+        distances: list[LiquidationDistance] = []
+        for trade in open_trades:
+            liq_price = trade.liquidation_price
+            if not trade.has_open_position or not liq_price:
+                continue
+            if any(o.ft_order_side == trade.exit_side for o in trade.open_orders):
+                # Already being exited - nothing left to warn about, and in cross margin
+                # a position stuck at its stop must not hide the next closest one.
+                continue
+            try:
+                rate = self.exchange.get_rate(
+                    trade.pair, side="exit", is_short=trade.is_short, refresh=False
+                )
+            except DependencyException:
+                logger.debug(f"Could not get rate for {trade.pair} - skipping liquidation check.")
+                continue
+            # Distance to the stop in the direction that liquidates - positive while the position
+            # is alive, no matter which side of the open rate the stop sits on.
+            distance = liq_price - rate if trade.is_short else rate - liq_price
+            # Measured against the price move that would use up the position's margin (10% at 10x),
+            # so the same setting means the same thing at any leverage.
+            # The reference is whichever of open rate and current rate sits further from the stop.
+            ref = min(trade.open_rate, rate) if trade.is_short else max(trade.open_rate, rate)
+            remaining = max(0.0, distance * trade.leverage / ref)
+            distances.append(LiquidationDistance(remaining, trade, rate, liq_price))
+
+        if not distances:
+            return
+        # Closest to the liquidation stop first
+        distances.sort(key=lambda x: x.remaining)
+
+        if self.margin_mode == MarginMode.CROSS:
+            # One message for the account, describing the position closest to liquidation.
+            closest = distances[0]
+            if self._should_warn_liquidation(closest.trade.id, closest.remaining, warn_ratio):
+                at_risk = [d for d in distances if d.remaining <= warn_ratio]
+                self._send_liquidation_warning(closest, len(at_risk), len(open_trades), warn_ratio)
+        else:
+            for entry in distances:
+                if self._should_warn_liquidation(entry.trade.id, entry.remaining, warn_ratio):
+                    self._send_liquidation_warning(entry, 1, len(open_trades), warn_ratio)
+
+    def _should_warn_liquidation(self, trade_id: int, remaining: float, warn_ratio: float) -> bool:
+        """
+        Decide whether a liquidation warning is due for the given trade.
+        Warns when entering the warning zone, and again once what's left halved since.
+        Keyed by trade id - so once it's exited (or overtaken), the next closest
+        position is warned about right away.
+        :param trade_id: ID of the trade that's currently evaluated for liquidation warning.
+        :param remaining: Room left to the liquidation stop, see LiquidationDistance
+        :param warn_ratio: Configured share below which to warn
+        """
+        # Position must move back to this multiple of liquidation_warn_ratio before it's considered
+        # recovered. Avoids repeated messages while a position hovers around the threshold.
+        if remaining > warn_ratio * 1.2:
+            # Recovered - reset, so the next approach warns immediately.
+            if self.margin_mode == MarginMode.CROSS:
+                # Only the closest position is checked in cross margin - if that one recovered,
+                # so did every position warned about before it.
+                self._liq_warn_cache.clear()
+            else:
+                self._liq_warn_cache.pop(trade_id, None)
+            return False
+        if remaining > warn_ratio:
+            # keep the current state, but don't warn again.
+            return False
+
+        last_remaining = self._liq_warn_cache.get(trade_id)
+        # Re-warn early once what's left halved compared to the last warning.
+        if last_remaining is None or remaining < last_remaining * 0.5:
+            self._liq_warn_cache[trade_id] = remaining
+            return True
+        return False
+
+    def _send_liquidation_warning(
+        self,
+        entry: LiquidationDistance,
+        positions_at_risk: int,
+        open_positions: int,
+        warn_ratio: float,
+    ) -> None:
+        remaining, trade, rate, liq_price = entry
+        msg: RPCLiquidationWarningMsg = {
+            "type": RPCMessageType.LIQUIDATION_WARNING,
+            "exchange": trade.exchange.capitalize(),
+            "margin_mode": self.margin_mode.value,
+            "trade_id": trade.id,
+            "pair": trade.pair,
+            "base_currency": self.exchange.get_pair_base_currency(trade.pair),
+            "quote_currency": self.exchange.get_pair_quote_currency(trade.pair),
+            "direction": "Short" if trade.is_short else "Long",
+            "leverage": trade.leverage,
+            "current_rate": rate,
+            "liquidation_price": liq_price,
+            "remaining_ratio": remaining,
+            "warn_ratio": warn_ratio,
+            "positions_at_risk": positions_at_risk,
+            "open_positions": open_positions,
+        }
+        logger.warning(
+            f"{trade.pair} has {remaining:.2%} left to its liquidation stop "
+            f"({liq_price}, current rate {rate})."
+        )
+        self.rpc.send_msg(msg)
 
     def update_funding_fees(self) -> None:
         if self.trading_mode == TradingMode.FUTURES:
@@ -1991,12 +2130,12 @@ class FreqtradeBot(LoggingMixin):
             filled_val: float = order.get("filled", 0.0) or 0.0
 
             if filled_val > 0:
-                filled_stake = filled_val * trade.open_rate
+                remaining_stake = (trade.amount + filled_val) * trade.open_rate
                 minstake = self.exchange.get_min_pair_stake_amount(
                     trade.pair, trade.open_rate, self.strategy.stoploss
                 )
-                if minstake and filled_stake < minstake:
-                    msg = (
+                if minstake and remaining_stake < minstake:
+                    logger.warning(
                         f"Order {order_id} for {trade.pair} not cancelled, "
                         f"as the filled amount of {filled_val} would result in an unexitable trade."
                     )
