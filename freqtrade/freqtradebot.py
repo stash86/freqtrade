@@ -2135,7 +2135,7 @@ class FreqtradeBot(LoggingMixin):
                     trade.pair, trade.open_rate, self.strategy.stoploss
                 )
                 if minstake and remaining_stake < minstake:
-                    logger.warning(
+                    msg = (
                         f"Order {order_id} for {trade.pair} not cancelled, "
                         f"as the filled amount of {filled_val} would result in an unexitable trade."
                     )
