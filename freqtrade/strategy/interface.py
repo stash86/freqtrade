@@ -1579,6 +1579,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         # so this recompute likewise yields current_profit there.
         if bound_profit is None:
             bound_profit = current_profit if not bound else trade.calc_profit_ratio(bound)
+        bound = bound or current_rate
         if self.use_custom_stoploss and dir_correct:
             stop_loss_value_custom = strategy_safe_wrapper(
                 self.custom_stoploss, default_retval=None, supress_error=True
@@ -1586,7 +1587,7 @@ class IStrategy(ABC, HyperStrategyMixin):
                 pair=trade.pair,
                 trade=trade,
                 current_time=current_time,
-                current_rate=(bound or current_rate),
+                current_rate=bound,
                 current_profit=bound_profit,
                 after_fill=after_fill,
             )
@@ -1595,9 +1596,7 @@ class IStrategy(ABC, HyperStrategyMixin):
                 isnan(stop_loss_value_custom) or isinf(stop_loss_value_custom)
             ):
                 stop_loss_value = stop_loss_value_custom
-                trade.adjust_stop_loss(
-                    bound or current_rate, stop_loss_value, allow_refresh=after_fill
-                )
+                trade.adjust_stop_loss(bound, stop_loss_value, allow_refresh=after_fill)
             else:
                 logger.debug("CustomStoploss function did not return valid stoploss")
 
@@ -1616,7 +1615,7 @@ class IStrategy(ABC, HyperStrategyMixin):
                         f"offset: {sl_offset:.4g} profit: {bound_profit:.2%}"
                     )
 
-                trade.adjust_stop_loss(bound or current_rate, stop_loss_value)
+                trade.adjust_stop_loss(bound, stop_loss_value)
 
     def ft_stoploss_reached(
         self,
