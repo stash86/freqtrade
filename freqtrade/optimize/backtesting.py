@@ -1457,6 +1457,9 @@ class Backtesting:
         instruct caller to delete the trade.
         Returns True if the trade should be deleted.
         """
+        if not self.strategy.order_price_adjustment_enable:
+            return False
+
         # only check on new candles for open entry orders
         if current_time > order.order_date_utc:
             is_entry = order.side == trade.entry_side

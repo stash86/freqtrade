@@ -105,6 +105,9 @@ class IStrategy(ABC, HyperStrategyMixin):
         "exit": "GTC",
     }
 
+    # Enable callbacks that adjust the price of existing open orders.
+    order_price_adjustment_enable: bool = True
+
     # run "populate_indicators" only for new candle
     process_only_new_candles: bool = True
 
@@ -710,6 +713,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         Entry price re-adjustment logic, returning the user desired limit price.
         This only executes when a order was already placed, still open (unfilled fully or partially)
         and not timed out on subsequent candles after entry trigger.
+        Only called when `order_price_adjustment_enable` is set to True.
 
         For full documentation please go to https://www.freqtrade.io/en/stable/strategy-callbacks/
 
@@ -747,6 +751,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         Exit price re-adjustment logic, returning the user desired limit price.
         This only executes when a order was already placed, still open (unfilled fully or partially)
         and not timed out on subsequent candles after entry trigger.
+        Only called when `order_price_adjustment_enable` is set to True.
 
         For full documentation please go to https://www.freqtrade.io/en/stable/strategy-callbacks/
 
@@ -785,6 +790,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         Exit and entry order price re-adjustment logic, returning the user desired limit price.
         This only executes when a order was already placed, still open (unfilled fully or partially)
         and not timed out on subsequent candles after entry trigger.
+        Only called when `order_price_adjustment_enable` is set to True.
 
         For full documentation please go to https://www.freqtrade.io/en/stable/strategy-callbacks/
 

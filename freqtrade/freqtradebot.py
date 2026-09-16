@@ -1443,7 +1443,10 @@ class FreqtradeBot(LoggingMixin):
             open_rate = trade.open_rate
 
         current_rate = self.exchange.get_rate(
-            trade.pair, side="entry", is_short=trade.is_short, refresh=False
+            trade.pair,
+            side="entry",
+            is_short=trade.is_short,
+            refresh=not self.strategy.order_price_adjustment_enable,
         )
         stake_amount = trade.stake_amount
         if not fill and trade.select_order(trade.entry_side, False, only_filled=True) is not None:
@@ -1491,7 +1494,10 @@ class FreqtradeBot(LoggingMixin):
         Sends rpc notification when a entry order cancel occurred.
         """
         current_rate = self.exchange.get_rate(
-            trade.pair, side="entry", is_short=trade.is_short, refresh=False
+            trade.pair,
+            side="entry",
+            is_short=trade.is_short,
+            refresh=not self.strategy.order_price_adjustment_enable,
         )
 
         msg: RPCCancelMsg = {
@@ -1935,6 +1941,9 @@ class FreqtradeBot(LoggingMixin):
         :param trade: Trade object.
         :return: None
         """
+        if not self.strategy.order_price_adjustment_enable:
+            return
+
         analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(
             trade.pair, self.strategy.timeframe
         )
@@ -2457,9 +2466,14 @@ class FreqtradeBot(LoggingMixin):
         """
         Sends rpc notification when a sell occurred.
         """
-        # Use cached rates here - it was updated seconds ago.
+        # Without repricing, notifications refresh their rate on demand.
         current_rate = (
-            self.exchange.get_rate(trade.pair, side="exit", is_short=trade.is_short, refresh=False)
+            self.exchange.get_rate(
+                trade.pair,
+                side="exit",
+                is_short=trade.is_short,
+                refresh=not self.strategy.order_price_adjustment_enable,
+            )
             if not fill
             else None
         )
@@ -2539,7 +2553,10 @@ class FreqtradeBot(LoggingMixin):
         profit_rate: float = trade.safe_close_rate
         profit = trade.calculate_profit(rate=profit_rate)
         current_rate = self.exchange.get_rate(
-            trade.pair, side="exit", is_short=trade.is_short, refresh=False
+            trade.pair,
+            side="exit",
+            is_short=trade.is_short,
+            refresh=not self.strategy.order_price_adjustment_enable,
         )
         gain: ProfitLossStr = "profit" if profit.profit_ratio > 0 else "loss"
 

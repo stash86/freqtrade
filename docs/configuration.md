@@ -214,6 +214,7 @@ Mandatory parameters are marked as **Required**, which means that they are requi
 | `ignore_buying_expired_candle_after` | Specifies the number of seconds until a buy signal is no longer used. <br> **Datatype:** Integer
 | `order_types` | Configure order-types depending on the action (`"entry"`, `"exit"`, `"stoploss"`, `"stoploss_on_exchange"`). [More information below](#understand-order_types). [Strategy Override](#parameters-in-the-strategy).<br> **Datatype:** Dict
 | `order_time_in_force` | Configure time in force for entry and exit orders. [More information below](#understand-order_time_in_force). [Strategy Override](#parameters-in-the-strategy). <br> **Datatype:** Dict
+| `order_price_adjustment_enable` | Enables the callbacks that adjust existing open order prices. Setting this to `false` skips these callbacks and their proposed-price lookup in live/dry-run trading and backtesting. Order status updates and timeout handling remain active. [More information here](strategy-callbacks.md#adjust-order-price). [Strategy Override](#parameters-in-the-strategy). <br>*Defaults to `true`.*<br> **Datatype:** Boolean
 | `position_adjustment_enable` | Enables the strategy to use position adjustments (additional buys or sells). [More information here](strategy-callbacks.md#adjust-trade-position). <br> [Strategy Override](#parameters-in-the-strategy). <br>*Defaults to `false`.*<br> **Datatype:** Boolean
 | `max_entry_position_adjustment` | Maximum additional order(s) for each open trade on top of the first entry Order. Set it to `-1` for unlimited additional orders. [More information here](strategy-callbacks.md#adjust-trade-position). <br> [Strategy Override](#parameters-in-the-strategy). <br>*Defaults to `-1`.*<br> **Datatype:** Positive Integer or -1
 | | **Exchange**
@@ -301,6 +302,7 @@ Values set in the configuration file always overwrite values set in the strategy
 * `process_only_new_candles`
 * `order_types`
 * `order_time_in_force`
+* `order_price_adjustment_enable`
 * `unfilledtimeout`
 * `disable_dataframe_checks`
 * `use_exit_signal`

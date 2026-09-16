@@ -67,6 +67,7 @@ class StrategyResolver(IResolver):
             ("process_only_new_candles", None),
             ("order_types", None),
             ("order_time_in_force", None),
+            ("order_price_adjustment_enable", True),
             ("stake_currency", None),
             ("stake_amount", None),
             ("startup_candle_count", None),

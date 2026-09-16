@@ -1078,6 +1078,16 @@ class DigDeeperStrategy(IStrategy):
 
 ## Adjust order Price
 
+The `order_price_adjustment_enable` strategy property controls `adjust_order_price()`, `adjust_entry_price()`, and `adjust_exit_price()` and defaults to `True`.
+Set it to `False` in the strategy, or set `"order_price_adjustment_enable": false` in configuration, to skip these callbacks and the proposed-price lookup used for repricing existing orders. Configuration overrides the strategy value.
+This applies to live trading, dry-run, and backtesting. Order status updates, fill handling, and timeout checks continue to run. Entry pricing, exit pricing, and position adjustments continue to obtain prices as usual.
+When disabled, notifications that include a current market rate fetch it on demand. Exit-fill notifications continue to use `current_rate=None` without an extra price request.
+
+```python
+class AwesomeStrategy(IStrategy):
+    order_price_adjustment_enable = False
+```
+
 The `adjust_order_price()` callback may be used by strategy developer to refresh/replace limit orders upon arrival of new candles.  
 This callback is called once every iteration unless the order has been (re)placed within the current candle - limiting the maximum (re)placement of each order to once per candle.
 This also means that the first call will be at the start of the next candle after the initial order was placed.

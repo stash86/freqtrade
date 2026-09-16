@@ -997,6 +997,10 @@ CONF_SCHEMA = {
             "enum": AVAILABLE_DATAHANDLERS,
             "default": "feather",
         },
+        "order_price_adjustment_enable": {
+            "description": f"Enable price adjustment for existing open orders. {__IN_STRATEGY}",
+            "type": "boolean",
+        },
         "position_adjustment_enable": {
             "description": f"Enable position adjustment. {__IN_STRATEGY}",
             "type": "boolean",
