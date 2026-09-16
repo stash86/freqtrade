@@ -220,7 +220,7 @@ class RemotePairList(IPairList):
         else:
             pairlist = []
 
-        time_elapsed = 0.0
+        # time_elapsed = 0.0
 
         if pairlist:
             # Item found - no refresh necessary
@@ -243,7 +243,7 @@ class RemotePairList(IPairList):
 
             else:
                 # Fetch Pairlist from Remote URL
-                pairlist, time_elapsed = self.fetch_pairlist()
+                pairlist, _ = self.fetch_pairlist()
 
         self.log_once(f"Fetched pairs: {pairlist}", logger.debug)
 
