@@ -68,6 +68,8 @@ class StrategyResolver(IResolver):
             ("order_types", None),
             ("order_time_in_force", None),
             ("order_price_adjustment_enable", True),
+            ("preload_futures_settings", False),
+            ("preload_leverage", None),
             ("stake_currency", None),
             ("stake_amount", None),
             ("startup_candle_count", None),

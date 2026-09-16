@@ -1,9 +1,16 @@
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal, NamedTuple, TypedDict
 
 # Re-export for easier use
 from ccxt.base.types import FundingRate  # noqa: F401
 
 from freqtrade.enums import CandleType
+
+
+class FuturesSettingResult(NamedTuple):
+    """A completed setting request, before exchange-specific response validation."""
+
+    response: Any = None
+    already_set: bool = False
 
 
 class FtHas(TypedDict, total=False):
@@ -57,6 +64,7 @@ class FtHas(TypedDict, total=False):
     funding_fee_candle_limit: int
     open_interest_candle_limit: int
     floor_leverage: bool
+    futures_settings_preload: bool
     uses_leverage_tiers: bool
     needs_trading_fees: bool
     # True if the balance "total" reported for the stake currency is account equity

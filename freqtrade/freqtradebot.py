@@ -6,7 +6,7 @@ import logging
 import traceback
 from copy import deepcopy
 from datetime import UTC, datetime, time, timedelta
-from math import isclose
+from math import isclose, isfinite
 from threading import Lock
 from time import sleep
 from typing import Any, NamedTuple
@@ -23,11 +23,13 @@ from freqtrade.enums import (
     ExitType,
     MarginMode,
     RPCMessageType,
+    RunMode,
     SignalDirection,
     State,
     TradingMode,
 )
 from freqtrade.exceptions import (
+    ConfigurationError,
     DependencyException,
     ExchangeError,
     InsufficientFundsError,
@@ -291,6 +293,81 @@ class FreqtradeBot(LoggingMixin):
         self.startup_update_open_orders()
         self.update_all_liquidation_prices()
         self.update_funding_fees()
+        self.preload_futures_settings()
+
+    def preload_futures_settings(self) -> None:
+        """Prepare futures account settings before the trading loop begins."""
+        if (
+            not self.strategy.preload_futures_settings
+            or self.config["dry_run"]
+            or self.config.get("runmode") != RunMode.LIVE
+            or self.trading_mode != TradingMode.FUTURES
+        ):
+            return
+        if not self.exchange.get_option("futures_settings_preload", False):
+            raise ConfigurationError(
+                "preload_futures_settings is only supported for live Binance futures."
+            )
+        leverage = self.strategy.preload_leverage
+        if (
+            isinstance(leverage, bool)
+            or not isinstance(leverage, int | float)
+            or not isfinite(leverage)
+            or not 1 <= leverage <= 125
+        ):
+            raise ConfigurationError(
+                "preload_futures_settings requires a finite preload_leverage between 1 and 125."
+            )
+
+        try:
+            with self._exit_lock:
+                pairs, protected = self.exchange.load_futures_settings(
+                    self.config["stake_currency"]
+                )
+        except (ExchangeError, OperationalException) as error:
+            self.exchange.reset_futures_settings()
+            logger.warning(
+                "Could not preload futures settings: %s. Using normal order-time setup.", error
+            )
+            return
+
+        prepared = skipped = unconfirmed = 0
+        for pair in pairs:
+            try:
+                # RPC orders may have opened a position since the account snapshot. Recheck
+                # under the order lock, releasing it between symbols so exits can proceed.
+                with self._exit_lock:
+                    if self.state not in (State.RUNNING, State.PAUSED):
+                        break
+                    if (
+                        pair in protected
+                        or Trade.get_trades_proxy(is_open=True, pair=pair, include_orders=False)
+                        or any(order.ft_pair == pair for order in Order.get_open_orders())
+                    ):
+                        skipped += 1
+                        continue
+                    target = min(leverage, self.exchange.get_max_leverage(pair, 0))
+                    if self.exchange.prepare_futures_pair(pair, target):
+                        prepared += 1
+                    else:
+                        unconfirmed += 1
+                        logger.warning(
+                            "Futures settings for %s remain unconfirmed; "
+                            "normal order-time setup will be used.",
+                            pair,
+                        )
+            except (ExchangeError, OperationalException) as error:
+                logger.warning("Stopping futures settings preload at %s: %s", pair, error)
+                break
+
+        logger.info(
+            "Futures settings preload: %s prepared, %s occupied pairs skipped, "
+            "%s unconfirmed, %s remaining.",
+            prepared,
+            skipped,
+            unconfirmed,
+            len(pairs) - prepared - skipped - unconfirmed,
+        )
 
     def validate_informative_candle_types(self) -> None:
         """

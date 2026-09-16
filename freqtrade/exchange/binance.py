@@ -2,12 +2,16 @@
 
 import logging
 from datetime import UTC, datetime
+from math import floor, isfinite
 from pathlib import Path
+from threading import RLock
+from typing import Any
 
 import ccxt
 from pandas import DataFrame
 
 from freqtrade.candle_columns import get_candle_columns
+from freqtrade.constants import BuySell
 from freqtrade.enums import TRADE_MODES, CandleType, MarginMode, PriceType, RunMode, TradingMode
 from freqtrade.exceptions import DDosProtection, OperationalException, TemporaryError
 from freqtrade.exchange import Exchange
@@ -17,7 +21,8 @@ from freqtrade.exchange.binance_public_data import (
     download_archive_trades,
 )
 from freqtrade.exchange.common import retrier
-from freqtrade.exchange.exchange_types import FtHas, Tickers
+from freqtrade.exchange.exchange_types import FtHas, FuturesSettingResult, Tickers
+from freqtrade.exchange.exchange_utils import market_is_active
 from freqtrade.exchange.exchange_utils_timeframe import timeframe_to_msecs
 from freqtrade.misc import deep_merge_dicts, json_load
 from freqtrade.util import FtTTLCache
@@ -61,6 +66,7 @@ class Binance(Exchange):
         "stoploss_algo_order_info_id": "actualOrderId",
         "tickers_have_price": False,
         "floor_leverage": True,
+        "futures_settings_preload": True,
         "fetch_orders_limit_minutes": 7 * 1440,  # "fetch_orders" is limited to 7 days
         "stop_price_type_field": "workingType",
         "order_props_in_contracts": ["amount", "cost", "filled", "remaining"],
@@ -86,8 +92,234 @@ class Binance(Exchange):
     ]
 
     def __init__(self, *args, **kwargs) -> None:
+        # Market loading runs during Exchange.__init__.
+        self._futures_settings_lock = RLock()
+        self._futures_settings_active = False
+        self._confirmed_margin_mode: dict[str, MarginMode] = {}
+        self._confirmed_leverage: dict[str, int] = {}
+        self._futures_settings_markets: dict[str, tuple] = {}
         super().__init__(*args, **kwargs)
         self._spot_delist_schedule_cache: FtTTLCache = FtTTLCache(maxsize=100, ttl=300)
+
+    def reset_futures_settings(self) -> None:
+        with self._futures_settings_lock:
+            self._futures_settings_active = False
+            self._confirmed_margin_mode.clear()
+            self._confirmed_leverage.clear()
+            self._futures_settings_markets.clear()
+
+    def _futures_market_identity(self, pair: str) -> tuple | None:
+        market = self.markets.get(pair)
+        if not market or not market_is_active(market) or not self.market_is_future(market):
+            return None
+        return tuple(
+            market.get(field)
+            for field in ("id", "base", "quote", "settle", "type", "contractSize", "expiry")
+        )
+
+    def _invalidate_changed_futures_market(self, pair: str) -> None:
+        identity = self._futures_market_identity(pair)
+        if identity is None or self._futures_settings_markets.get(pair) != identity:
+            self._confirmed_margin_mode.pop(pair, None)
+            self._confirmed_leverage.pop(pair, None)
+            self._futures_settings_markets.pop(pair, None)
+
+    def reload_markets(self, force: bool = False, *, load_leverage_tiers: bool = True) -> None:
+        with self._futures_settings_lock:
+            super().reload_markets(force, load_leverage_tiers=load_leverage_tiers)
+            for pair in list(self._futures_settings_markets):
+                self._invalidate_changed_futures_market(pair)
+
+    @staticmethod
+    def _futures_leverage_value(value: Any) -> int | None:
+        if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+            return None
+        try:
+            number = float(value)
+        except (ValueError, OverflowError):
+            return None
+        return int(number) if isfinite(number) and number >= 1 and number.is_integer() else None
+
+    @staticmethod
+    def _futures_settings_rows(response: Any, endpoint: str) -> list[dict]:
+        if not isinstance(response, list) or any(
+            not isinstance(row, dict) or not isinstance(row.get("symbol"), str) or not row["symbol"]
+            for row in response
+        ):
+            raise OperationalException(f"Invalid Binance {endpoint} response; settings not loaded.")
+        return response
+
+    def _futures_protected_pairs(self, by_symbol: dict[str, str]) -> set[str]:
+        protected: set[str] = set()
+        # Follow the order lifecycle: an algo can trigger into a regular order, then fill.
+        # Reading positions last also protects orders that fill during the snapshot.
+        for endpoint, response in (
+            ("open algo orders", self._api.fapiPrivateGetOpenAlgoOrders()),
+            ("open orders", self._api.fapiPrivateGetOpenOrders()),
+        ):
+            for order in self._futures_settings_rows(response, endpoint):
+                if pair := by_symbol.get(order["symbol"]):
+                    protected.add(pair)
+        positions = self._futures_settings_rows(self.fetch_positions(), "positions")
+        for position in positions:
+            try:
+                contracts = float(position["contracts"])
+            except (KeyError, TypeError, ValueError, OverflowError) as e:
+                raise OperationalException("Invalid Binance position size.") from e
+            if not isfinite(contracts) or isinstance(position["contracts"], bool):
+                raise OperationalException("Invalid Binance position size.")
+            if contracts:
+                protected.add(by_symbol.get(position["symbol"], position["symbol"]))
+        return protected
+
+    def _validate_futures_settings_account(self) -> None:
+        options = self._api.options
+        scopes = [self._params]
+        if isinstance(options, dict):
+            scopes.extend(
+                [options, *(value for value in options.values() if isinstance(value, dict))]
+            )
+        if any(scope.get("papi") or scope.get("portfolioMargin") for scope in scopes):
+            raise OperationalException(
+                "Futures settings preload does not support portfolio margin."
+            )
+
+    def load_futures_settings(self, stake_currency: str) -> tuple[list[str], set[str]]:
+        """Read a complete settings/protection snapshot, without changing account settings."""
+        with self._futures_settings_lock:
+            self.reset_futures_settings()
+            if self._config["dry_run"] or self.trading_mode != TradingMode.FUTURES:
+                return [], set()
+            self._validate_futures_settings_account()
+            markets = {
+                pair: market
+                for pair, market in self.get_markets(
+                    quote_currencies=[stake_currency],
+                    futures_only=True,
+                    tradable_only=True,
+                    active_only=True,
+                ).items()
+                if market.get("settle") == stake_currency
+            }
+            by_symbol = {market["id"]: pair for pair, market in markets.items()}
+            try:
+                settings = self._futures_settings_rows(
+                    self._api.fapiPrivateGetSymbolConfig(), "symbol configuration"
+                )
+                if not settings:
+                    raise OperationalException("Empty Binance symbol configuration response.")
+                margins: dict[str, MarginMode] = {}
+                leverages: dict[str, int] = {}
+                seen: set[str] = set()
+                for row in settings:
+                    symbol = row["symbol"]
+                    leverage = self._futures_leverage_value(row.get("leverage"))
+                    mode = None
+                    if isinstance(row.get("marginType"), str):
+                        mode = {"CROSSED": MarginMode.CROSS, "ISOLATED": MarginMode.ISOLATED}.get(
+                            row["marginType"]
+                        )
+                    if symbol in seen or leverage is None or mode is None:
+                        raise OperationalException("Invalid Binance symbol configuration row.")
+                    seen.add(symbol)
+                    if pair := by_symbol.get(symbol):
+                        margins[pair] = mode
+                        leverages[pair] = leverage
+
+                protected = self._futures_protected_pairs(by_symbol)
+            except ccxt.DDoSProtection as e:
+                raise DDosProtection(e) from e
+            except (ccxt.OperationFailed, ccxt.ExchangeError) as e:
+                raise TemporaryError(
+                    f"Could not load Binance futures settings: {e.__class__.__name__}: {e}"
+                ) from e
+            except ccxt.BaseError as e:
+                raise OperationalException(e) from e
+
+            # Publish only after every protection response has been validated.
+            self._confirmed_margin_mode = margins
+            self._confirmed_leverage = leverages
+            self._futures_settings_markets = {
+                pair: identity
+                for pair in margins
+                if (identity := self._futures_market_identity(pair)) is not None
+            }
+            self._futures_settings_active = True
+            return list(markets), protected
+
+    def prepare_futures_pair(self, pair: str, leverage: float) -> bool:
+        # Startup skips individual setting rejections but propagates connectivity failures.
+        return self._prepare_futures_settings(pair, leverage, accept_fail=True)
+
+    def _prepare_futures_settings(self, pair: str, leverage: float, accept_fail: bool) -> bool:
+        with self._futures_settings_lock:
+            if not self._futures_settings_active:
+                return False
+            self._invalidate_changed_futures_market(pair)
+            target_leverage = floor(leverage)
+            if self._confirmed_margin_mode.get(pair) != self.margin_mode:
+                self.set_margin_mode(pair, self.margin_mode, accept_fail)
+            if self._confirmed_leverage.get(pair) != target_leverage:
+                self._set_leverage(leverage, pair, accept_fail)
+            return (
+                self._confirmed_margin_mode.get(pair) == self.margin_mode
+                and self._confirmed_leverage.get(pair) == target_leverage
+            )
+
+    def _lev_prep(self, pair: str, leverage: float, side: BuySell, accept_fail: bool = False):
+        with self._futures_settings_lock:
+            if self._futures_settings_active:
+                self._prepare_futures_settings(pair, leverage, accept_fail)
+            else:
+                super()._lev_prep(pair, leverage, side, accept_fail)
+
+    def set_margin_mode(
+        self,
+        pair: str,
+        margin_mode: MarginMode,
+        accept_fail: bool = False,
+        params: dict | None = None,
+    ) -> FuturesSettingResult | None:
+        with self._futures_settings_lock:
+            if not self._futures_settings_active:
+                return super().set_margin_mode(pair, margin_mode, accept_fail, params)
+            self._invalidate_changed_futures_market(pair)
+            self._confirmed_margin_mode.pop(pair, None)
+            result = super().set_margin_mode(pair, margin_mode, accept_fail, params)
+            if (
+                isinstance(result, FuturesSettingResult)
+                and (
+                    result.already_set
+                    or (
+                        isinstance(result.response, dict)
+                        and result.response.get("code") in (200, -4046)
+                    )
+                )
+                and (identity := self._futures_market_identity(pair)) is not None
+            ):
+                self._confirmed_margin_mode[pair] = margin_mode
+                self._futures_settings_markets[pair] = identity
+            return result
+
+    def _set_leverage(
+        self, leverage: float, pair: str | None = None, accept_fail: bool = False
+    ) -> FuturesSettingResult | None:
+        with self._futures_settings_lock:
+            if not self._futures_settings_active or pair is None:
+                return super()._set_leverage(leverage, pair, accept_fail)
+            self._invalidate_changed_futures_market(pair)
+            self._confirmed_leverage.pop(pair, None)
+            result = super()._set_leverage(leverage, pair, accept_fail)
+            if (
+                isinstance(result, FuturesSettingResult)
+                and isinstance(result.response, dict)
+                and result.response.get("symbol") == self.markets.get(pair, {}).get("id")
+                and self._futures_leverage_value(result.response.get("leverage")) == floor(leverage)
+                and (identity := self._futures_market_identity(pair)) is not None
+            ):
+                self._confirmed_leverage[pair] = floor(leverage)
+                self._futures_settings_markets[pair] = identity
+            return result
 
     def get_proxy_coin(self) -> str:
         """

@@ -187,6 +187,8 @@ Mandatory parameters are marked as **Required**, which means that they are requi
 | `futures_funding_rate` | User-specified funding rate to be used when historical funding rates are not available from the exchange. This does not overwrite real historical rates. It is recommended that this be set to 0 unless you are testing a specific coin and you understand how the funding rate will affect freqtrade's profit calculations. [More information here](leverage.md#unavailable-funding-rates) <br>*Defaults to `None`.*<br> **Datatype:** Float
 | `trading_mode` | Specifies if you want to trade regularly, trade with leverage, or trade contracts whose prices are derived from matching cryptocurrency prices. [leverage documentation](leverage.md). <br>*Defaults to `"spot"`.*  <br> **Datatype:** String
 | `margin_mode` | When trading with leverage, this determines if the collateral owned by the trader will be shared or isolated to each trading pair [leverage documentation](leverage.md). <br> **Datatype:** String
+| `preload_futures_settings` | Prepare margin mode and leverage for all eligible Binance futures markets at live startup and reuse confirmed settings when placing orders. Requires `preload_leverage`. [More information here](strategy-callbacks.md#prepare-binance-futures-settings-at-startup). [Strategy Override](#parameters-in-the-strategy). <br>*Defaults to `false`.*<br> **Datatype:** Boolean
+| `preload_leverage` | Target leverage for startup preparation, from `1` to `125`. Actual order leverage still comes from the leverage callback and existing limits. [More information here](strategy-callbacks.md#prepare-binance-futures-settings-at-startup). [Strategy Override](#parameters-in-the-strategy). <br>*Defaults to `None`.*<br> **Datatype:** Float or null
 | `liquidation_buffer` | A ratio specifying how large of a safety net to place between the liquidation price and the stoploss to prevent a position from reaching the liquidation price [leverage documentation](leverage.md). <br>*Defaults to `0.05`.*  <br> **Datatype:** Float
 | `liquidation_warn_ratio` | Notify when the distance to a position's liquidation stop falls below this fraction of the price move that would use up its margin - with the default of `0.2`, once the stop is less than 2% away at 10x leverage. Set to `0` to disable [leverage documentation](leverage.md#liquidation-warnings). <br>*Defaults to `0.2`.*  <br> **Datatype:** Float
 | | **Unfilled timeout**
@@ -303,6 +305,8 @@ Values set in the configuration file always overwrite values set in the strategy
 * `order_types`
 * `order_time_in_force`
 * `order_price_adjustment_enable`
+* `preload_futures_settings`
+* `preload_leverage`
 * `unfilledtimeout`
 * `disable_dataframe_checks`
 * `use_exit_signal`

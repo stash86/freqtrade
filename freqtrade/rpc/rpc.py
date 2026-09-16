@@ -1000,7 +1000,15 @@ class RPC:
         if self._freqtrade.state == State.RUNNING:
             return {"status": "already running"}
 
-        self._freqtrade.state = State.RUNNING
+        if (
+            self._freqtrade.state == State.STOPPED
+            and self._freqtrade.strategy.preload_futures_settings
+        ):
+            with self._freqtrade._exit_lock:
+                self._freqtrade.exchange.reset_futures_settings()
+                self._freqtrade.state = State.RUNNING
+        else:
+            self._freqtrade.state = State.RUNNING
         return {"status": "starting trader ..."}
 
     def _rpc_stop(self) -> dict[str, str]:
@@ -1024,7 +1032,12 @@ class RPC:
             self._freqtrade.state = State.PAUSED
 
         if self._freqtrade.state == State.STOPPED:
-            self._freqtrade.state = State.PAUSED
+            if self._freqtrade.strategy.preload_futures_settings:
+                with self._freqtrade._exit_lock:
+                    self._freqtrade.exchange.reset_futures_settings()
+                    self._freqtrade.state = State.PAUSED
+            else:
+                self._freqtrade.state = State.PAUSED
             return {
                 "status": (
                     "starting bot with trader in paused state, no entries will occur. "

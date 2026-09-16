@@ -1001,6 +1001,22 @@ CONF_SCHEMA = {
             "description": f"Enable price adjustment for existing open orders. {__IN_STRATEGY}",
             "type": "boolean",
         },
+        "preload_futures_settings": {
+            "description": (
+                f"Prepare Binance futures margin mode and leverage at live startup. {__IN_STRATEGY}"
+            ),
+            "type": "boolean",
+        },
+        "preload_leverage": {
+            "description": (
+                "Target leverage for Binance futures startup preparation. "
+                "Does not replace the leverage callback or entry leverage limits. "
+                f"{__IN_STRATEGY}"
+            ),
+            "type": ["number", "null"],
+            "minimum": 1,
+            "maximum": 125,
+        },
         "position_adjustment_enable": {
             "description": f"Enable position adjustment. {__IN_STRATEGY}",
             "type": "boolean",

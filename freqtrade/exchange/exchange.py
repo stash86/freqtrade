@@ -74,6 +74,7 @@ from freqtrade.exchange.exchange_types import (
     CcxtPosition,
     FtHas,
     FundingRate,
+    FuturesSettingResult,
     LeverageTier,
     OHLCVResponse,
     OrderBook,
@@ -1460,6 +1461,17 @@ class Exchange:
             ) from e
 
     # Order handling
+
+    def reset_futures_settings(self) -> None:
+        """Discard optional account settings cached for order preparation."""
+
+    def load_futures_settings(self, stake_currency: str) -> tuple[list[str], set[str]]:
+        """Load confirmed settings and return eligible and occupied startup pairs."""
+        raise OperationalException(f"{self.name} does not support futures settings preload.")
+
+    def prepare_futures_pair(self, pair: str, leverage: float) -> bool:
+        """Prepare an unoccupied pair during startup, reporting confirmed success."""
+        raise OperationalException(f"{self.name} does not support futures settings preload.")
 
     def _lev_prep(self, pair: str, leverage: float, side: BuySell, accept_fail: bool = False):
         if self.trading_mode != TradingMode.SPOT:
@@ -3866,7 +3878,7 @@ class Exchange:
         leverage: float,
         pair: str | None = None,
         accept_fail: bool = False,
-    ):
+    ) -> FuturesSettingResult | None:
         """
         Set's the leverage before making a trade, in order to not
         have the same leverage on every trade
@@ -3880,6 +3892,7 @@ class Exchange:
         try:
             res = self._api.set_leverage(symbol=pair, leverage=leverage)
             self._log_exchange_response("set_leverage", res)
+            return FuturesSettingResult(response=res)
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
         except (ccxt.BadRequest, ccxt.OperationRejected, ccxt.InsufficientFunds) as e:
@@ -3917,7 +3930,7 @@ class Exchange:
         margin_mode: MarginMode,
         accept_fail: bool = False,
         params: dict | None = None,
-    ):
+    ) -> FuturesSettingResult | None:
         """
         Set's the margin mode on the exchange to cross or isolated for a specific pair
         :param pair: base/quote currency pair (e.g. "ADA/USDT")
@@ -3931,10 +3944,12 @@ class Exchange:
         try:
             res = self._api.set_margin_mode(margin_mode.value, pair, params)
             self._log_exchange_response("set_margin_mode", res)
+            return FuturesSettingResult(response=res)
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
         except ccxt.MarginModeAlreadySet as e:
             logger.debug(f"Margin mode already set for {pair}. Message: {e}")
+            return FuturesSettingResult(already_set=True)
         except (ccxt.BadRequest, ccxt.OperationRejected) as e:
             if not accept_fail:
                 raise TemporaryError(

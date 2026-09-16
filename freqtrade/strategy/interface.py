@@ -108,6 +108,10 @@ class IStrategy(ABC, HyperStrategyMixin):
     # Enable callbacks that adjust the price of existing open orders.
     order_price_adjustment_enable: bool = True
 
+    # Prepare Binance futures margin mode and leverage before live trading starts.
+    preload_futures_settings: bool = False
+    preload_leverage: float | None = None
+
     # run "populate_indicators" only for new candle
     process_only_new_candles: bool = True
 

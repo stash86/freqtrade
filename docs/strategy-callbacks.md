@@ -1224,6 +1224,40 @@ class AwesomeStrategy(IStrategy):
 All profit calculations include leverage. Stoploss / ROI also include leverage in their calculation.
 Defining a stoploss of 10% at 10x leverage would trigger the stoploss with a 1% move to the downside.
 
+### Prepare Binance futures settings at startup
+
+For live Binance futures trading, `preload_futures_settings = True` moves margin-mode and leverage setup to startup where possible.
+Set `preload_leverage` to the desired startup leverage (from `1` to `125`); the existing `margin_mode` configuration supplies the margin mode.
+Both properties can be set in the strategy or configuration, with configuration taking precedence.
+The feature defaults to disabled and makes no preparation requests in dry-run or backtesting.
+
+```python
+class AwesomeStrategy(IStrategy):
+    preload_futures_settings = True
+    preload_leverage = 5.0
+```
+
+Preparation covers all active, tradable futures markets whose quote and settlement currencies match `stake_currency`, including markets outside the current pairlist.
+This allows RemotePairList rotations among prepared markets to reuse their settings.
+The bot reads current settings in bulk and changes only mismatches for markets without existing bot trades, exchange positions, or regular or conditional open orders.
+If the account protection reads fail, startup does not change any settings.
+Failed or unprepared settings use ordinary setup when an order needs them; a network or rate-limit failure stops the remaining preparation pass.
+
+`preload_leverage` is a startup target only.
+Normal initial entries still use `leverage()` and their existing leverage limits; explicit force-entry leverage and position adjustments retain their existing behavior.
+Before submission, the bot compares the final order leverage and margin mode against settings confirmed by Binance, skipping only matching setup requests.
+New markets, unknown settings, or different required leverage use the normal setup path.
+Entry, exit, and position-adjustment price freshness is unchanged.
+
+If the leverage target is inherited and subclasses override it, assign `self.preload_leverage = self.lev` in the strategy's existing initializer after the parent initializer.
+For example, a parent with `lev = 5` and a subclass with `lev = 1` then prepare their respective leverage targets, rather than both inheriting a fixed `preload_leverage = 5` assignment.
+
+Confirmed settings are held in memory for the exchange instance.
+Restarting the process or stopping and starting trading refreshes the snapshot.
+Resuming paused trading does not run startup and therefore does not refresh it.
+This feature assumes no manual action or other bot changes margin mode or leverage for these symbols while the cache is in use.
+After an external setting change, stop and start trading to refresh the snapshot before relying on it.
+
 ## Order filled Callback
 
 The `order_filled()` callback may be used to perform specific actions based on the current trade state after an order is filled.
