@@ -290,6 +290,7 @@ The RemotePairList is defined in the pairlists section of the configuration sett
         "method": "RemotePairList",
         "mode": "whitelist",
         "processing_mode": "filter",
+        "use_regex": true,
         "pairlist_url": "https://example.com/pairlist",
         "number_assets": 10,
         "refresh_period": 1800,
@@ -306,6 +307,8 @@ The optional `mode` option specifies if the pairlist should be used as a `blackl
 The optional `processing_mode` option in the RemotePairList configuration determines how the retrieved pairlist is processed. It can have two values: "filter" or "append". The default value is "filter".
 
 The optional `number_assets` option in the RemotePairList configuration determines how many pairs will be returned if used in whitelist `mode`. By default, all pairs will be returned. In blacklist `mode`, this option will be ignored.
+
+The optional `use_regex` option defaults to `true`, allowing the received pair names to contain regular expressions such as `.*/USDT`. Set `"use_regex": false` when the source returns concrete market symbols such as `BTC/USDT` or `BTC/USDT:USDT`. This enables faster literal matching for ASCII market symbols while keeping case-insensitive matching, the source's pair order, and exchange market validation. Regex characters are treated literally, so `.*/USDT` will not expand in this mode. This setting applies to RemotePairList's received pairs; the exchange's `pair_blacklist` uses its own normal matching rules.
 
 In "filter" mode, the retrieved pairlist is used as a filter. Only the pairs present in both the original pairlist and the retrieved pairlist are included in the final pairlist. Other pairs are filtered out.
 

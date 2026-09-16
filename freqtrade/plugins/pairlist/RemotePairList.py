@@ -39,6 +39,7 @@ class RemotePairList(IPairList):
 
         self._mode = self._pairlistconfig.get("mode", "whitelist")
         self._processing_mode = self._pairlistconfig.get("processing_mode", "filter")
+        self._use_regex: bool = self._pairlistconfig.get("use_regex", True)
         self._number_pairs: int | None = self._pairlistconfig.get("number_assets", None)
         self._refresh_period: int = self._pairlistconfig.get("refresh_period", 1800)
         self._keep_pairlist_on_failure = self._pairlistconfig.get("keep_pairlist_on_failure", True)
@@ -90,6 +91,12 @@ class RemotePairList(IPairList):
                 "default": None,
                 "description": "Number of assets",
                 "help": "Number of assets to use from the pairlist.",
+            },
+            "use_regex": {
+                "type": "boolean",
+                "default": True,
+                "description": "Match pairs using regular expressions",
+                "help": "Disable to match literal market symbols case-insensitively.",
             },
             "mode": {
                 "type": "option",
@@ -240,7 +247,9 @@ class RemotePairList(IPairList):
 
         self.log_once(f"Fetched pairs: {pairlist}", logger.debug)
 
-        pairlist = expand_pairlist(pairlist, list(self._exchange.get_markets().keys()))
+        pairlist = expand_pairlist(
+            pairlist, list(self._exchange.get_markets().keys()), use_regex=self._use_regex
+        )
         pairlist = self._whitelist_for_active_markets(pairlist)
         if self._number_pairs and (self._mode == "whitelist"):
             pairlist = pairlist[: self._number_pairs]
