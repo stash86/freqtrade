@@ -894,9 +894,6 @@ class FreqtradeBot(LoggingMixin):
 
         # get_free_open_trades is checked before create_trade is called
         # but it is still used here to prevent opening too many trades within one iteration
-        if not self.get_free_open_trades():
-            logger.debug(f"Can't open a new trade for {pair}: max number of trades is reached.")
-            return False
 
         analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(pair, self.strategy.timeframe)
 
@@ -906,6 +903,9 @@ class FreqtradeBot(LoggingMixin):
         )
 
         if signal:
+            if not self.get_free_open_trades():
+                logger.debug(f"Can't open a new trade for {pair}: max number of trades is reached.")
+                return False
             nowtime = analyzed_df["date"].iat[-1] if len(analyzed_df) > 0 else None
             if self.strategy.is_pair_locked(pair, candle_date=nowtime, side=signal):
                 lock = PairLocks.get_pair_longest_lock(pair, nowtime, signal)
