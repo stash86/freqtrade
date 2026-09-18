@@ -404,7 +404,7 @@ class FreqtradeBot(LoggingMixin):
         self.update_trades_without_assigned_fees()
 
         # Query trades from persistence layer
-        trades: list[Trade] = Trade.get_open_trades(include_orders=False)
+        trades: list[Trade] = Trade.get_open_trades()
 
         self.active_pair_whitelist = self._refresh_active_whitelist(trades)
 
