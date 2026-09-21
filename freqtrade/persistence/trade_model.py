@@ -1470,6 +1470,13 @@ class LocalTrade:
         """
         return CustomDataWrapper.get_custom_data(trade_id=self.id)
 
+    def delete_custom_data(self, key: str | None = None) -> None:
+        """
+        Delete custom data for this trade
+        :param key: key of the custom data. Deletes all custom data of this trade if None.
+        """
+        CustomDataWrapper.delete_custom_data(trade_id=self.id, key=key)
+
     @property
     def min_profit_rate(self) -> float:
         return self.max_rate if self.is_short else self.min_rate
