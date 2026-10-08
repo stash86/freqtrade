@@ -115,9 +115,9 @@ class Webhook(RPCHandler):
     def _send_msg(self, payload: dict) -> None:
         """do the actual call to the webhook"""
 
-        success = False
+        pending_urls = self._url.copy() if isinstance(self._url, list) else [self._url]
         attempts = 0
-        while not success and attempts <= self._retries:
+        while pending_urls and attempts <= self._retries:
             if attempts:
                 if self._retry_delay:
                     time.sleep(self._retry_delay)
@@ -125,20 +125,15 @@ class Webhook(RPCHandler):
 
             attempts += 1
 
-            try:
-                if isinstance(self._url, list):
-                    for url in self._url:
-                        response = self._post_msg(url, payload, self._timeout)
-                else:
-                    response = self._post_msg(self._url, payload, self._timeout)
-                    # raise NotImplementedError(f'Unknown format: {self._format}')
-
-                # Throw a RequestException if the post was not successful
-                response.raise_for_status()
-                success = True
-
-            except RequestException as exc:
-                logger.warning("Could not call webhook url. Exception: %s", exc)
+            failed_urls = []
+            for url in pending_urls:
+                try:
+                    response = self._post_msg(url, payload, self._timeout)
+                    response.raise_for_status()
+                except RequestException as exc:
+                    failed_urls.append(url)
+                    logger.warning("Could not call webhook url. Exception: %s", exc)
+            pending_urls = failed_urls
 
     def _post_msg(self, url, payload, timeout):
         if self._format == "form":
