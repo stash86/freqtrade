@@ -6,12 +6,15 @@ Hyperoptimization.
 """
 
 from datetime import datetime
+
 import numpy as np
 from pandas import DataFrame
 
 from freqtrade.constants import Config
 from freqtrade.data.metrics import calculate_expectancy, calculate_max_drawdown
-from freqtrade.optimize.hyperopt import IHyperOptLoss
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
+from freqtrade.util import get_dry_run_wallet
+
 
 # Set maximum expectancy used in the calculation
 max_expectancy = 2
@@ -42,9 +45,10 @@ class AvgProfitExpectancyDrawDownLossStrict(IHyperOptLoss):
         Uses profit ratio weighted max_drawdown when drawdown is available.
         Otherwise directly optimizes profit ratio.
         """
-        # total_profit = results['profit_abs'].sum()
+        if results.empty:
+            return 0
 
-        starting_balance = config["dry_run_wallet"]
+        starting_balance = get_dry_run_wallet(config)
         stake_amount = config["stake_amount"]
         max_profit_abs = 0.15 * stake_amount
 
@@ -56,19 +60,18 @@ class AvgProfitExpectancyDrawDownLossStrict(IHyperOptLoss):
 
         total_profit = strict_profit_abs.sum()
 
-        expectancy, expectancy_ratio = calculate_expectancy(results)
+        _expectancy, expectancy_ratio = calculate_expectancy(results)
 
-        try:
-            max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
-        except ValueError:
-            # No losing trade, therefore no drawdown.
+        max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
+        if max_drawdown.drawdown_abs == 0:
+            # Preserve this loss's fallback for a run without drawdown.
             return -total_profit * 100
 
         loss_value = (
             total_profit
             * min(average_profit, max_avg_profit)
             * min(expectancy_ratio, max_expectancy)
-            / max_drawdown[0]
+            / max_drawdown.drawdown_abs
         )
 
         if (total_profit < 0) and (loss_value > 0):

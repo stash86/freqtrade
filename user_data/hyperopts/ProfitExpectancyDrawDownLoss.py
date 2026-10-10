@@ -9,8 +9,9 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from freqtrade.data.metrics import calculate_max_drawdown, calculate_expectancy
-from freqtrade.optimize.hyperopt import IHyperOptLoss
+from freqtrade.data.metrics import calculate_expectancy, calculate_max_drawdown
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
+
 
 AVERAGE_PROFIT_THRESHOLD = 20
 
@@ -38,17 +39,15 @@ class ProfitExpectancyDrawDownLoss(IHyperOptLoss):
         Uses profit ratio weighted max_drawdown when drawdown is available.
         Otherwise directly optimizes profit ratio.
         """
-        total_profit = results["profit_abs"].sum()
-        average_profit = results["profit_ratio"].mean() * 100
-        try:
-            max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
-        except ValueError:
-            # No losing trade, therefore no drawdown.
-            # Return 0 because this is bad scenario
+        if results.empty:
             return 0
 
-        expectancy, expectancy_ratio = calculate_expectancy(results)
-        drawdown_loss = -total_profit / max(max_drawdown[0], 1)
+        total_profit = results["profit_abs"].sum()
+        average_profit = results["profit_ratio"].mean() * 100
+        max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
+
+        expectancy, _expectancy_ratio = calculate_expectancy(results)
+        drawdown_loss = -total_profit / max(max_drawdown.drawdown_abs, 1)
 
         if (drawdown_loss > 0) and (expectancy < 0):
             expectancy = expectancy * -1

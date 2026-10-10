@@ -1,9 +1,11 @@
-from freqtrade.optimize.hyperopt import IHyperOptLoss
 import math
 from datetime import datetime
+
 from pandas import DataFrame, date_range
-import pandas as pd
+
 from freqtrade.data.metrics import calculate_max_drawdown
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
+
 
 # Sortino settings
 TARGET_TRADES = 500
@@ -55,7 +57,7 @@ def sortino_daily(
 
     sum_daily = (
         results.resample(resample_freq, on="close_date")
-        .agg({"profit_ratio_after_slippage": sum})
+        .agg({"profit_ratio_after_slippage": "sum"})
         .reindex(t_index)
         .fillna(0)
     )
@@ -63,7 +65,7 @@ def sortino_daily(
     total_profit = sum_daily["profit_ratio_after_slippage"] - minimum_acceptable_return
     expected_returns_mean = total_profit.mean()
 
-    sum_daily["downside_returns"] = 0
+    sum_daily["downside_returns"] = 0.0
     sum_daily.loc[total_profit < 0, "downside_returns"] = total_profit
     total_downside = sum_daily["downside_returns"]
     # Here total_downside contains min(0, P - MAR) values,
@@ -88,7 +90,8 @@ class GeniusLoss(IHyperOptLoss):
     Adjust those weights to get more suitable results for your strategy
     WIN_LOSS_WEIGHT
     AVERAGE_PROFIT_WEIGHT
-    AVERAGE_PROFIT_THRESHOLD - upper threshold of average profit to rely on (cut off crazy av.profits like 10%+)
+    AVERAGE_PROFIT_THRESHOLD - upper threshold of average profit to rely on
+    (cut off crazy av.profits like 10%+)
     SORTINO_WEIGHT
     TOTAL_PROFIT_WEIGHT
 
@@ -109,10 +112,13 @@ class GeniusLoss(IHyperOptLoss):
         """
         Objective function, returns smaller number for better results.
         """
-        profit_threshold = 0
+        if results.empty:
+            return 1000
+
+        _profit_threshold = 0
 
         if IGNORE_SMALL_PROFITS:
-            profit_threshold = SMALL_PROFITS_THRESHOLD
+            _profit_threshold = SMALL_PROFITS_THRESHOLD
 
         # total_profit = results['profit_ratio'].sum()
         total_profit = results["profit_abs"].sum()
@@ -129,11 +135,7 @@ class GeniusLoss(IHyperOptLoss):
         backtest_days = (max_date - min_date).days or 1
         average_trades_per_day = round(total_trades / backtest_days, 5)
 
-        max_drawdown = 0
-        try:
-            max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")[0]
-        except:
-            pass
+        max_drawdown = calculate_max_drawdown(results, value_col="profit_abs").drawdown_abs
 
         # if total_lose == 0:
         #     total_lose = 1
@@ -141,8 +143,12 @@ class GeniusLoss(IHyperOptLoss):
         # profit_loss = (1 - total_profit / EXPECTED_MAX_PROFIT) * TOTAL_PROFIT_WEIGHT
         profit_loss = total_profit * TOTAL_PROFIT_WEIGHT
         # win_lose_loss = (1 - (total_win / total_lose)) * WIN_LOSS_WEIGHT
-        # average_profit_loss = 1 - (min(average_profit, AVERAGE_PROFIT_THRESHOLD) * AVERAGE_PROFIT_WEIGHT)
-        # average_profit_loss = 1 - (min(average_profit, AVERAGE_PROFIT_THRESHOLD) * AVERAGE_PROFIT_WEIGHT * total_trades)
+        # average_profit_loss = 1 - (
+        #     min(average_profit, AVERAGE_PROFIT_THRESHOLD) * AVERAGE_PROFIT_WEIGHT
+        # )
+        # average_profit_loss = 1 - (
+        #     min(average_profit, AVERAGE_PROFIT_THRESHOLD) * AVERAGE_PROFIT_WEIGHT * total_trades
+        # )
         average_profit_loss = (
             (MIN_ACCEPTED_AVERAGE_PROFIT - min(average_profit, AVERAGE_PROFIT_THRESHOLD))
             * total_trades
@@ -158,7 +164,10 @@ class GeniusLoss(IHyperOptLoss):
             * AVERAGE_TRADE_DAILY_WEIGHT
         )
 
-        # result = profit_loss + win_lose_loss + average_profit_loss + sortino_ratio_loss + drawdown_loss + duration_loss
+        # result = (
+        #     profit_loss + win_lose_loss + average_profit_loss + sortino_ratio_loss
+        #     + drawdown_loss + duration_loss
+        # )
 
         result = (
             -profit_loss

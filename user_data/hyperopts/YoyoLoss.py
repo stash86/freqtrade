@@ -5,14 +5,17 @@ This module defines the alternative HyperOptLoss class which can be used for
 Hyperoptimization.
 """
 
+import math
 from datetime import datetime
+
 import numpy as np
 from pandas import DataFrame
 
 from freqtrade.constants import Config
 from freqtrade.data.metrics import calculate_expectancy, calculate_max_drawdown
-from freqtrade.optimize.hyperopt import IHyperOptLoss
-import math
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
+from freqtrade.util import get_dry_run_wallet
+
 
 # Set maximum expectancy used in the calculation
 max_expectancy = 40
@@ -23,7 +26,8 @@ class YoyoLoss(IHyperOptLoss):
     """
     Defines the loss function for hyperopt.
 
-    This implementation optimizes for max drawdown, average profit, profit factor, expectancy, and high trade count
+    This implementation optimizes for max drawdown, average profit, profit factor,
+    expectancy, and high trade count.
     Less max drawdown more profit -> Lower return value
     """
 
@@ -43,9 +47,12 @@ class YoyoLoss(IHyperOptLoss):
         Uses profit ratio weighted max_drawdown when drawdown is available.
         Otherwise directly optimizes profit ratio.
         """
+        if results.empty:
+            return 0
+
         # total_profit = results['profit_abs'].sum()
 
-        starting_balance = config["dry_run_wallet"]
+        starting_balance = get_dry_run_wallet(config)
         stake_amount = config["stake_amount"]
         max_profit_abs = (max_avg_profit / 100) * stake_amount
 
@@ -62,13 +69,12 @@ class YoyoLoss(IHyperOptLoss):
 
         total_profit = strict_profit_abs.sum()
 
-        expectancy, expectancy_ratio = calculate_expectancy(results)
+        _expectancy, expectancy_ratio = calculate_expectancy(results)
 
         total_trades = len(results)
 
-        try:
-            max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
-        except ValueError:
+        max_drawdown = calculate_max_drawdown(results, value_col="profit_abs").drawdown_abs
+        if max_drawdown == 0:
             # No losing trade, therefore no drawdown.
             # Return 0 because this is unwanted scenario
             return 0
@@ -82,7 +88,7 @@ class YoyoLoss(IHyperOptLoss):
             * profit_factor
             * min(expectancy_ratio, max_expectancy)
             * total_trades
-            / (math.sqrt(max_drawdown[0]) * 1000)
+            / (math.sqrt(max_drawdown) * 1000)
         )
 
         if (total_profit < 0) and (loss_value > 0):

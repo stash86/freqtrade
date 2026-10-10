@@ -10,7 +10,7 @@ from datetime import datetime
 from pandas import DataFrame
 
 from freqtrade.data.metrics import calculate_max_drawdown
-from freqtrade.optimize.hyperopt import IHyperOptLoss
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
 
 
 class DrawDownDurationLoss(IHyperOptLoss):
@@ -36,19 +36,17 @@ class DrawDownDurationLoss(IHyperOptLoss):
         Uses profit ratio weighted max_drawdown when drawdown is available.
         Otherwise directly optimizes profit ratio.
         """
+        if results.empty:
+            return 0
+
         total_profit = results["profit_abs"].sum()
         trade_duration = results["trade_duration"].mean()
 
         if trade_duration == 0:
             trade_duration = 1
 
-        try:
-            max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
-        except ValueError:
-            # No losing trade, therefore no drawdown.
-            # Return 0 because this is bad scenario
-            return -total_profit * 10 / trade_duration
+        max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
 
-        drawdown_loss = -total_profit / max(max_drawdown[0], 1)
+        drawdown_loss = -total_profit / max(max_drawdown.drawdown_abs, 1)
 
         return drawdown_loss / trade_duration

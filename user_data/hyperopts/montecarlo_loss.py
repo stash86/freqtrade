@@ -4,7 +4,8 @@ from scipy.stats import norm
 
 from freqtrade.constants import Config
 from freqtrade.data.metrics import calculate_max_drawdown
-from freqtrade.optimize.hyperopt import IHyperOptLoss
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
+from freqtrade.util import get_dry_run_wallet
 
 
 # Predefined constants to control the behavior of the loss function.
@@ -40,6 +41,9 @@ class montecarlo_loss(IHyperOptLoss):
         Returns:
         - float: Calculated loss. Lower (more negative) values indicate better performance.
         """
+        if results.empty:
+            return MAX_LOSS
+
         # Calculate metrics used to evaluate strategy performance.
         mc_profit_ratio = montecarlo_loss._calculate_mc_profit_ratio(results, config)
         sqn = montecarlo_loss._calculate_sqn(results)
@@ -64,22 +68,14 @@ class montecarlo_loss(IHyperOptLoss):
         Returns:
         - float: The maximum drawdown ratio.
         """
-        starting_balance = config["dry_run_wallet"]
-        try:
-            max_drawdown_relative = abs(
-                calculate_max_drawdown(
-                    results,
-                    value_col="profit_abs",
-                    starting_balance=starting_balance,
-                    relative=True,
-                )[5]  # Index 5 corresponds to the maximum drawdown value.
-            )
-        except Exception as e:
-            import logging
-
-            logging.error(e)  # Log error if drawdown calculation fails.
-            max_drawdown_relative = 0.0
-        return max_drawdown_relative
+        starting_balance = get_dry_run_wallet(config)
+        drawdown = calculate_max_drawdown(
+            results,
+            value_col="profit_abs",
+            starting_balance=starting_balance,
+            relative=True,
+        )
+        return abs(drawdown.relative_account_drawdown)
 
     @staticmethod
     def _calculate_mc_profit_ratio(results: pd.DataFrame, config: Config) -> float:
@@ -93,7 +89,7 @@ class montecarlo_loss(IHyperOptLoss):
         Returns:
         - float: Estimated profit ratio from the Monte Carlo simulation.
         """
-        starting_balance = config["dry_run_wallet"]
+        starting_balance = get_dry_run_wallet(config)
         t_intervals = len(results["profit_abs"])
 
         # Calculate cumulative profit and log returns for Monte Carlo simulation.

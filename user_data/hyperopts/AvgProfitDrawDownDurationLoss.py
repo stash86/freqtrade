@@ -10,8 +10,9 @@ from datetime import datetime
 from pandas import DataFrame
 
 from freqtrade.constants import Config
-from freqtrade.data.metrics import calculate_expectancy
-from freqtrade.optimize.hyperopt import IHyperOptLoss
+from freqtrade.data.metrics import calculate_max_drawdown
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
+from freqtrade.util import get_dry_run_wallet
 
 
 class AvgProfitDrawDownDurationLoss(IHyperOptLoss):
@@ -28,6 +29,7 @@ class AvgProfitDrawDownDurationLoss(IHyperOptLoss):
         trade_count: int,
         min_date: datetime,
         max_date: datetime,
+        config: Config,
         *args,
         **kwargs,
     ) -> float:
@@ -37,9 +39,10 @@ class AvgProfitDrawDownDurationLoss(IHyperOptLoss):
         Uses profit ratio weighted max_drawdown when drawdown is available.
         Otherwise directly optimizes profit ratio.
         """
-        # total_profit = results['profit_abs'].sum()
+        if results.empty:
+            return 0
 
-        starting_balance = config["dry_run_wallet"]
+        starting_balance = get_dry_run_wallet(config)
 
         total_profit = results["profit_abs"] / starting_balance
 
@@ -52,15 +55,14 @@ class AvgProfitDrawDownDurationLoss(IHyperOptLoss):
         if trade_duration == 0:
             trade_duration = 1
 
-        try:
-            max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
-        except ValueError:
-            # No losing trade, therefore no drawdown.
-            # Return 0 because this is bad scenario
+        max_drawdown = calculate_max_drawdown(results, value_col="profit_abs")
+        if max_drawdown.drawdown_abs == 0:
+            # Preserve this loss's fallback for a run without drawdown.
             return 0
-            # return -total_profit * 1 / trade_duration
 
         if (total_profit < 0) and (average_profit < 0):
             average_profit = average_profit * -1
 
-        return -total_profit * min(average_profit, 15) / (max_drawdown[0] * trade_duration)
+        return (
+            -total_profit * min(average_profit, 15) / (max_drawdown.drawdown_abs * trade_duration)
+        )
