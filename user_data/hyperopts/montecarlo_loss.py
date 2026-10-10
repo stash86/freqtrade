@@ -16,8 +16,6 @@ MAX_DRAWDOWN = 0.3  # Maximum allowed drawdown ratio.
 MIN_SQN = 2.0  # Minimum acceptable System Quality Number (SQN).
 MAX_LOSS = 100000  # Maximum loss value to use as a penalty.
 
-np.random.seed(1337)  # Seed for reproducibility of Monte Carlo simulations.
-
 
 class montecarlo_loss(IHyperOptLoss):
     """
@@ -99,7 +97,10 @@ class montecarlo_loss(IHyperOptLoss):
         # Estimate future returns using Monte Carlo simulation.
         drift = log_returns.mean() - (0.5 * log_returns.var())
         stdev = log_returns.std()
-        random_factors = norm.ppf(np.random.rand(t_intervals, ITERATIONS))
+        # Retain the legacy seeded sample sequence, with fresh local state on every evaluation.
+        # A local RandomState also keeps global randomness and job order from changing the score.
+        rng = np.random.RandomState(1337)
+        random_factors = norm.ppf(rng.rand(t_intervals, ITERATIONS))
         mc_returns = np.exp(drift + stdev * random_factors)
 
         # Calculate Monte Carlo profit outcomes and the specified quantile.

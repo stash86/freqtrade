@@ -7,7 +7,9 @@ import logging
 import sys
 import warnings
 from datetime import datetime
+from math import isfinite
 from multiprocessing import Manager
+from numbers import Real
 from pathlib import Path
 from typing import Any
 
@@ -378,6 +380,17 @@ class HyperOptimizer:
                 backtest_stats=strat_stats,
                 starting_balance=get_dry_run_wallet(self.config),
             )
+            try:
+                if isinstance(loss, bool) or not isinstance(loss, Real):
+                    raise ValueError("Loss is not a real scalar.")
+                loss = float(loss)
+                if not isfinite(loss):
+                    raise ValueError("Loss is not finite.")
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise OperationalException(
+                    f"Hyperopt loss '{type(self.custom_hyperoptloss).__name__}' must return "
+                    f"a finite real number; got {type(loss).__name__}."
+                ) from exc
         return {
             "loss": loss,
             "params_dict": params_dict,

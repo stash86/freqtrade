@@ -6,17 +6,19 @@ This module is a custom HyperoptLoss class based on performance relative to the 
 To deploy this, copy the file to the <freqtrade>/user_data/hyperopts directory
 """
 
-from math import exp
+import logging
+from datetime import datetime
+from typing import Any
 
 from pandas import DataFrame
 
-from freqtrade.optimize.hyperopt import IHyperOptLoss
-from datetime import datetime
-import numpy as np
-from typing import Any, Dict
+from freqtrade.constants import Config
+from freqtrade.optimize.hyperopt_loss.hyperopt_loss_interface import IHyperOptLoss
 
 
-# Contstants to allow evaluation in cases where thre is insufficient (or nonexistent) info in the configuration
+logger = logging.getLogger(__name__)
+
+# Constants for the minimum trade-count requirement.
 EXPECTED_TRADES_PER_DAY = 2  # used to set target goals
 MIN_TRADES_PER_DAY = (
     EXPECTED_TRADES_PER_DAY / 8
@@ -35,51 +37,39 @@ class MarketHyperOptLoss(IHyperOptLoss):
         trade_count: int,
         min_date: datetime,
         max_date: datetime,
-        config: Dict,
-        processed: Dict[str, DataFrame],
-        backtest_stats: Dict[str, Any],
+        config: Config,
+        processed: dict[str, DataFrame],
+        backtest_stats: dict[str, Any],
         *args,
         **kwargs,
     ) -> float:
-        debug_level = 1  # displays (more) messages if higher
-
-        days_period = (max_date - min_date).days
-        # target_trades = days_period*EXPECTED_TRADES_PER_DAY
-        if config["max_open_trades"]:
-            target_trades = days_period * config["max_open_trades"]
-        else:
-            target_trades = days_period * EXPECTED_TRADES_PER_DAY
-
-        # Calculate trade loss metric first, because this is used elsewhere
-        # Several other metrics are misleading if there are not enough trades
-
-        # trade loss
-        if trade_count > MIN_TRADES_PER_DAY * days_period:
-            num_trades_loss = (target_trades - trade_count) / target_trades
-        else:
-            # just return a large number if insufficient trades. Makes other calculations easier/safer
-            if debug_level > 1:
-                print(" \tTrade count too low:{:.0f}".format(trade_count))
+        # Match the backtest report's minimum one-day period for sub-day ranges.
+        days_period = (max_date - min_date).days or 1
+        if results.empty or trade_count <= MIN_TRADES_PER_DAY * days_period:
             return UNDESIRED_SOLUTION
 
-        # Compare to the overall market performance
-
-        total_profit = results["profit_abs"]
-        if "market_change" in results:
-            market_profit = results["market_change"]
-        elif "market_change" in backtest_stats:
+        # Both report values are fractional returns. profit_total already aggregates
+        # absolute trade profits and divides them by the starting account balance.
+        total_profit = backtest_stats["profit_total"]
+        if "market_change" in backtest_stats:
             market_profit = backtest_stats["market_change"]
+        elif "market_change" in results:
+            market_profit = results["market_change"].mean()
         else:
-            print("Market performance not available")
-            market_profit = results["profit_abs"]
+            logger.warning("Market performance not available")
+            # Preserve the neutral market term when no comparison is available.
+            market_profit = total_profit
 
         market_loss = 10.0 * (market_profit - total_profit)
 
         # use drawdown as a tie-breaker
         drawdown_loss = 0.0
-        if backtest_stats["max_drawdown"]:
-            drawdown_loss = backtest_stats["max_drawdown"] - 1.0
+        drawdown = backtest_stats.get(
+            "max_drawdown_account", backtest_stats.get("max_drawdown", 0.0)
+        )
+        if drawdown:
+            drawdown_loss = drawdown - 1.0
 
         result = market_loss + drawdown_loss
 
-        return result
+        return float(result)
