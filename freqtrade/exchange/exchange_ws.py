@@ -42,7 +42,6 @@ class ExchangeWS:
 
         self._ob_watching: set[str] = set()
         self._ob_scheduled: set[str] = set()
-        self._ob_tasks: dict[str, asyncio.Task] = {}
         self._ob_last_request: dict[str, float] = {}
         # Timestamp (ms) of the last orderbook update received from the websocket, per pair.
         # Used by orderbook_is_fresh() to detect a stuck feed.
@@ -190,9 +189,6 @@ class ExchangeWS:
                 if last_refresh > 0 and (dt_ts() - last_refresh) > ((self.ob_timeout + 20) * 1000):
                     logger.info(f"Removing {pair} from orderbook watchlist")
                     self._ob_watching.discard(pair)
-                    # cancel the corresponding task.
-                    if (task := self._ob_tasks.get(pair)) and not self._loop.is_closed():
-                        self._loop.call_soon_threadsafe(task.cancel)
 
     async def _schedule_while_true(self) -> None:
         # For the ones we should be watching
@@ -232,14 +228,11 @@ class ExchangeWS:
             ob_task = asyncio.create_task(self._continuously_async_watch_orderbook(ob_pair))
             with self._state_lock:
                 self._background_tasks.add(ob_task)
-                self._ob_tasks[ob_pair] = ob_task
             ob_task.add_done_callback(partial(self._orderbook_stopped, pair=ob_pair))
 
     def _orderbook_stopped(self, task: asyncio.Task, pair: str) -> None:
         with self._state_lock:
             self._background_tasks.discard(task)
-            if self._ob_tasks.get(pair) is task:
-                del self._ob_tasks[pair]
         result = "done"
         try:
             if task.cancelled():
@@ -275,13 +268,16 @@ class ExchangeWS:
             logger.debug("Shutting down - skipping OHLCV unwatch for %s, %s", pair, timeframe)
             return
         try:
-            if self.exchange_has("unWatchOHLCVForSymbols"):
-                await self._ccxt_object.un_watch_ohlcv_for_symbols([[pair, timeframe]])
-            elif self.exchange_has("unWatchOHLCV"):
-                await self._ccxt_object.un_watch_ohlcv(pair, timeframe)
-            else:
-                logger.debug("un_watch_ohlcv not supported for %s, %s", pair, timeframe)
+            async with asyncio.timeout(3):
+                if self.exchange_has("unWatchOHLCVForSymbols"):
+                    await self._ccxt_object.un_watch_ohlcv_for_symbols([[pair, timeframe]])
+                elif self.exchange_has("unWatchOHLCV"):
+                    await self._ccxt_object.un_watch_ohlcv(pair, timeframe)
+                else:
+                    logger.debug("un_watch_ohlcv not supported for %s, %s", pair, timeframe)
 
+        except TimeoutError:
+            logger.warning(f"Timed out while unwatching OHLCV for {pair}, {timeframe}.")
         except ccxt.NotSupported as e:
             logger.debug("un_watch_ohlcv_for_symbols not supported: %s", e)
         except ccxt.NetworkError as e:
@@ -297,13 +293,16 @@ class ExchangeWS:
             logger.debug("Shutting down - skipping orderbook unwatch for %s", pair)
             return
         try:
-            if self.exchange_has("unWatchOrderBookForSymbols"):
-                await self._ccxt_object.un_watch_order_book_for_symbols([pair])
-            elif self.exchange_has("unWatchOrderBook"):
-                await self._ccxt_object.un_watch_order_book(pair)
-            else:
-                logger.debug("un_watch_order_book not supported for %s", pair)
+            async with asyncio.timeout(3):
+                if self.exchange_has("unWatchOrderBookForSymbols"):
+                    await self._ccxt_object.un_watch_order_book_for_symbols([pair])
+                elif self.exchange_has("unWatchOrderBook"):
+                    await self._ccxt_object.un_watch_order_book(pair)
+                else:
+                    logger.debug("un_watch_order_book not supported for %s", pair)
 
+        except TimeoutError:
+            logger.warning(f"Timed out while unwatching orderbook for {pair}.")
         except ccxt.NotSupported as e:
             logger.debug("un_watch_order_book not supported: %s", e)
         except ccxt.NetworkError as e:

@@ -152,6 +152,7 @@ class Exchange(LoggingMixin):
         "always_require_api_keys": False,  # purge API keys for Dry-run. Must default to false.
         # Check https://github.com/ccxt/ccxt/issues/10767 for removal of ohlcv_volume_currency
         "ohlcv_volume_currency": "base",  # "base" or "quote"
+        "ohlcv_volume_in_contracts": False,  # candle volume in contracts instead of base
         "tickers_have_quoteVolume": True,
         "tickers_have_percentage": True,
         "tickers_have_bid_ask": True,  # bid / ask empty for fetch_tickers
@@ -2347,7 +2348,7 @@ class Exchange(LoggingMixin):
                     self.log_once(
                         f"Websocket orderbook for {pair} is stale (no update within "
                         f"{ob_max_age}s) - falling back to REST.",
-                        logger.warning,
+                        logger.info,
                     )
                 elif len(ob["bids"]) < limit_eff or len(ob["asks"]) < limit_eff:
                     # The websocket book isn't as deep as the REST response would be.
@@ -3846,15 +3847,13 @@ class Exchange(LoggingMixin):
             elif self.exchange_has("fetchMarketLeverageTiers"):
                 # Must fetch the leverage tiers for each market separately
                 # * This is slow(~45s) on Okx, makes ~90 api calls to load all linear swap markets
-                markets = self.markets
-
                 symbols = [
                     symbol
-                    for symbol, market in markets.items()
-                    if (
-                        self.market_is_future(market)
-                        and market["quote"] == self._config["stake_currency"]
-                    )
+                    for symbol, _ in self.get_markets(
+                        quote_currencies=[self._config["stake_currency"]],
+                        futures_only=True,
+                        active_only=True,
+                    ).items()
                 ]
 
                 tiers: dict[str, list[dict]] = {}
