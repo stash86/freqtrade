@@ -127,4 +127,5 @@ target/
 !config_examples/config_freqai.example.json
 
 docker-compose-*.yml
-WORKSPACE_IMPROVEMENTS*
+WORKSPACE_IMPROVEMENTS.txt
+backtest-report.txt
