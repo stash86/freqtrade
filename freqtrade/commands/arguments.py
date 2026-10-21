@@ -111,6 +111,8 @@ ARGS_BACKTEST_SHOW = [
     "exportfilename",
     "exportdirectory",
     "backtest_show_pair_list",
+    "backtest_show_params",
+    "backtest_export_params",
     "backtest_breakdown",
 ]
 
