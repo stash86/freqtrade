@@ -557,45 +557,75 @@ class FreqAIModelListResponse(BaseModel):
     freqaimodels: list[str]
 
 
-class __StrategyParameter(BaseModel):
-    param_type: str
+class __StrategyParameterInput(BaseModel):
     name: str
     space: str
+
+
+class IntParameterInput(__StrategyParameterInput):
+    param_type: Literal["IntParameter"]
+    value: int
+
+
+class RealParameterInput(__StrategyParameterInput):
+    param_type: Literal["RealParameter"]
+    value: float
+
+
+class DecimalParameterInput(__StrategyParameterInput):
+    param_type: Literal["DecimalParameter"]
+    value: float
+
+
+class BooleanParameterInput(__StrategyParameterInput):
+    param_type: Literal["BooleanParameter"]
+    value: bool
+
+
+class CategoricalParameterInput(__StrategyParameterInput):
+    param_type: Literal["CategoricalParameter"]
+    value: Any
+
+
+StrategyParameterInput = Annotated[
+    BooleanParameterInput
+    | CategoricalParameterInput
+    | DecimalParameterInput
+    | IntParameterInput
+    | RealParameterInput,
+    Field(discriminator="param_type"),
+]
+
+
+class __StrategyParameter(BaseModel):
     load: bool
     optimize: bool
 
 
-class IntParameter(__StrategyParameter):
-    param_type: Literal["IntParameter"]
-    value: int
+class IntParameter(IntParameterInput, __StrategyParameter):
     low: int
     high: int
 
 
-class RealParameter(__StrategyParameter):
-    param_type: Literal["RealParameter"]
-    value: float
+class RealParameter(RealParameterInput, __StrategyParameter):
     low: float
     high: float
 
 
-class DecimalParameter(__StrategyParameter):
-    param_type: Literal["DecimalParameter"]
-    value: float
+class DecimalParameter(DecimalParameterInput, __StrategyParameter):
     low: float
     high: float
     decimals: int
 
 
-class BooleanParameter(__StrategyParameter):
+class BooleanParameter(__StrategyParameterInput, __StrategyParameter):
     param_type: Literal["BooleanParameter"]
+    # Parameters without a default have no value
     value: bool | None
     opt_range: list[bool]
 
 
-class CategoricalParameter(__StrategyParameter):
-    param_type: Literal["CategoricalParameter"]
-    value: Any
+class CategoricalParameter(CategoricalParameterInput, __StrategyParameter):
     opt_range: list[Any]
 
 
@@ -630,6 +660,7 @@ class PairHistoryRequest(PairCandlesRequest, ExchangeModePayloadMixin):
     strategy: StrategyName | None = None
     freqaimodel: str | None = None
     live_mode: bool = False
+    strategy_params: list[StrategyParameterInput] | None = None
 
 
 class PairHistory(BaseModel):
@@ -672,6 +703,7 @@ class BacktestRequest(BaseModel):
     backtest_cache: str | None = None
     freqaimodel: str | None = None
     freqai: BacktestFreqAIInputs | None = None
+    strategy_params: list[StrategyParameterInput] | None = None
 
 
 class BacktestResponse(BaseModel):
@@ -707,6 +739,13 @@ class BacktestMarketChange(BaseModel):
     columns: list[str]
     length: int
     data: list[list[Any]]
+
+
+class BacktestPairHistoryRequest(BaseModel):
+    pair: str
+    columns: list[str] | None = None
+    # Defaults to the timerange the backtest ran on
+    timerange: str | None = None
 
 
 class LookaheadAnalysisRequest(BaseModel):
