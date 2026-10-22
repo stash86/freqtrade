@@ -112,6 +112,9 @@
             "S/USDT:USDT",
             "AAVE/USDT:USDT",
             "MATIC/USDT:USDT",
+            "DEXE/USDT:USDT",
+            "QNT/USDT:USDT",
+            "GRAM/USDT:USDT",
         ],
         "pair_blacklist": []
     },
