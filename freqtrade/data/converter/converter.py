@@ -93,7 +93,7 @@ def clean_ohlcv_dataframe(
     candle_type: CandleType = CandleType.SPOT,
 ) -> DataFrame:
     """
-    Cleanse a OHLCV dataframe by
+    Cleanse an OHLCV dataframe by
       * Grouping it by date (removes duplicate tics)
       * dropping last candles if requested
       * Filling up missing data (if requested)
@@ -250,14 +250,14 @@ def trim_dataframes(
     processed: dict[str, DataFrame] = {}
 
     for pair, df in preprocessed.items():
-        trimed_df = trim_dataframe(df, timerange, startup_candles=startup_candles)
-        if not trimed_df.empty:
+        trimmed_df = trim_dataframe(df, timerange, startup_candles=startup_candles)
+        if not trimmed_df.empty:
             # start_mem = trimed_df.memory_usage().sum() / 1024**2
             # logger.info(f"Memory usage of df for {pair} before reduced is {start_mem:.2f} MB")
-            trimed_df = reduce_mem_usage(pair, trimed_df)
+            trimmed_df = reduce_mem_usage(pair, trimmed_df)
             # end_mem = trimed_df.memory_usage().sum() / 1024**2
             # logger.info(f"Memory usage of df for {pair} after reduced is {end_mem:.2f} MB")
-            processed[pair] = trimed_df
+            processed[pair] = trimmed_df
         else:
             logger.warning(
                 f"{pair} has no data left after adjusting for startup candles, skipping."

@@ -376,7 +376,7 @@ class IStrategy(ABC, HyperStrategyMixin):
         **kwargs,
     ) -> bool:
         """
-        Called right before placing a entry order.
+        Called right before placing an entry order.
         Timing for this function is critical, so avoid doing heavy computations or
         network requests in this method.
 
@@ -715,7 +715,7 @@ class IStrategy(ABC, HyperStrategyMixin):
     ) -> float | None:
         """
         Entry price re-adjustment logic, returning the user desired limit price.
-        This only executes when a order was already placed, still open (unfilled fully or partially)
+        This only executes when an order is already placed, still open (unfilled fully or partially)
         and not timed out on subsequent candles after entry trigger.
         Only called when `order_price_adjustment_enable` is set to True.
 
@@ -753,7 +753,7 @@ class IStrategy(ABC, HyperStrategyMixin):
     ) -> float | None:
         """
         Exit price re-adjustment logic, returning the user desired limit price.
-        This only executes when a order was already placed, still open (unfilled fully or partially)
+        This only executes when an order is already placed, still open (unfilled fully or partially)
         and not timed out on subsequent candles after entry trigger.
         Only called when `order_price_adjustment_enable` is set to True.
 
@@ -792,7 +792,7 @@ class IStrategy(ABC, HyperStrategyMixin):
     ) -> float | None:
         """
         Exit and entry order price re-adjustment logic, returning the user desired limit price.
-        This only executes when a order was already placed, still open (unfilled fully or partially)
+        This only executes when an order is already placed, still open (unfilled fully or partially)
         and not timed out on subsequent candles after entry trigger.
         Only called when `order_price_adjustment_enable` is set to True.
 
