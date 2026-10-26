@@ -21,7 +21,7 @@ from ccxt import TICK_SIZE
 from dateutil import parser
 from pandas import DataFrame, Timestamp, concat
 
-from freqtrade.configuration import remove_exchange_credentials
+from freqtrade.configuration import remove_exchange_credentials, sanitize_config
 from freqtrade.constants import (
     DEFAULT_AMOUNT_RESERVE_PERCENT,
     DEFAULT_TRADES_COLUMNS,
@@ -169,6 +169,7 @@ class Exchange(LoggingMixin):
         "mark_ohlcv_price": "mark",
         "mark_ohlcv_timeframe": "1h",
         "funding_fee_timeframe": "1h",
+        "funding_history_limit": None,  # Page size for fetch_funding_history
         "ccxt_futures_name": "swap",
         "needs_trading_fees": False,  # use fetch_trading_fees to cache fees
         "balance_includes_unrealized_pnl": False,  # ccxt "total" is plain wallet balance
@@ -445,7 +446,8 @@ class Exchange(LoggingMixin):
             "privateKey": exchange_config.get("private_key", exchange_config.get("privateKey")),
         }
         if ccxt_kwargs:
-            logger.info("Applying additional ccxt config: %s", ccxt_kwargs)
+            sanitized = sanitize_config({"exchange": {"ccxt_config": ccxt_kwargs}})
+            logger.info("Applying additional ccxt config: %s", sanitized["exchange"]["ccxt_config"])
         if self._ccxt_params:
             # Inject static options after the above output to not confuse users.
             ccxt_kwargs = deep_merge_dicts(self._ccxt_params, deepcopy(ccxt_kwargs))
@@ -577,7 +579,7 @@ class Exchange(LoggingMixin):
         """
         Exchange ohlcv candle limit
         Uses ohlcv_candle_limit_per_timeframe if the exchange has different limits
-        per timeframe (e.g. bittrex), otherwise falls back to ohlcv_candle_limit
+        per timeframe (e.g. htx), otherwise falls back to ohlcv_candle_limit
         :param timeframe: Timeframe to check
         :param candle_type: Candle type to use (spot, futures, funding_rate, ...)
         :param since_ms: Starting timestamp
@@ -3794,12 +3796,29 @@ class Exchange(LoggingMixin):
         if type(since) is datetime:
             since = dt_ts(since)
 
+        limit = self._ft_has["funding_history_limit"]
         try:
-            funding_history = self._api.fetch_funding_history(symbol=pair, since=since)
-            self._log_exchange_response(
-                "funding_history", funding_history, add_info=f"pair: {pair}, since: {since}"
-            )
-            return sum(fee["amount"] for fee in funding_history)
+            # One funding payment per timestamp - not all exchanges provide an id.
+            funding_history: dict[int, float] = {}
+            while True:
+                page = self._api.fetch_funding_history(symbol=pair, since=since, limit=limit)
+                self._log_exchange_response(
+                    "funding_history", page, add_info=f"pair: {pair}, since: {since}"
+                )
+                new_entries = {
+                    fee["timestamp"]: fee["amount"]
+                    for fee in page
+                    if fee["timestamp"] not in funding_history
+                }
+                if not new_entries:
+                    # Empty page, or the exchange ignored since and repeated known entries
+                    break
+                funding_history.update(new_entries)
+                if limit and len(page) < limit:
+                    break
+                # Responses are capped in size - continue after the newest entry received.
+                since = max(new_entries) + 1
+            return sum(funding_history.values())
         except ccxt.DDoSProtection as e:
             raise DDosProtection(e) from e
         except (ccxt.OperationFailed, ccxt.ExchangeError) as e:

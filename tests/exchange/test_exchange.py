@@ -257,6 +257,25 @@ def test_init_ccxt_kwargs(default_conf, mocker, caplog):
     assert ex._ccxt_config == {}
     Exchange._headers = {}
 
+    # Credentials in ccxt_config are applied, but not logged
+    caplog.clear()
+    conf = copy.deepcopy(default_conf)
+    conf["dry_run"] = False
+    conf["exchange"]["ccxt_config"] = {"apiKey": "ccxt-key", "TestKWARG": 11}
+    ex = Exchange(conf)
+    assert ex._api.apiKey == "ccxt-key"
+    assert log_has(
+        "Applying additional ccxt config: {'apiKey': 'REDACTED', 'TestKWARG': 11}", caplog
+    )
+    assert not log_has_re(r".*ccxt-key.*", caplog)
+
+    # Dry-run removes the credential - so it's logged as None, not as REDACTED
+    caplog.clear()
+    conf["dry_run"] = True
+    ex = Exchange(conf)
+    assert ex._api.apiKey is None
+    assert log_has("Applying additional ccxt config: {'apiKey': None, 'TestKWARG': 11}", caplog)
+
 
 def test_destroy(default_conf, mocker, caplog):
     caplog.set_level(logging.DEBUG)
@@ -6064,48 +6083,49 @@ def test_get_funding_fees(default_conf_usdt, mocker, exchange_name, caplog):
 @pytest.mark.parametrize("exchange_name", ["binance"])
 def test__get_funding_fees_from_exchange(default_conf, mocker, exchange_name):
     api_mock = MagicMock()
-    api_mock.fetch_funding_history = MagicMock(
-        return_value=[
-            {
-                "amount": 0.14542,
-                "code": "USDT",
-                "datetime": "2021-09-01T08:00:01.000Z",
-                "id": "485478",
-                "info": {
-                    "asset": "USDT",
-                    "income": "0.14542",
-                    "incomeType": "FUNDING_FEE",
-                    "info": "FUNDING_FEE",
-                    "symbol": "XRPUSDT",
-                    "time": "1630382001000",
-                    "tradeId": "",
-                    "tranId": "993203",
-                },
-                "symbol": "XRP/USDT",
-                "timestamp": 1630382001000,
+    funding_history = [
+        {
+            "amount": 0.14542,
+            "code": "USDT",
+            "datetime": "2021-09-01T08:00:01.000Z",
+            "id": "485478",
+            "info": {
+                "asset": "USDT",
+                "income": "0.14542",
+                "incomeType": "FUNDING_FEE",
+                "info": "FUNDING_FEE",
+                "symbol": "XRPUSDT",
+                "time": "1630382001000",
+                "tradeId": "",
+                "tranId": "993203",
             },
-            {
-                "amount": -0.14642,
-                "code": "USDT",
-                "datetime": "2021-09-01T16:00:01.000Z",
-                "id": "485479",
-                "info": {
-                    "asset": "USDT",
-                    "income": "-0.14642",
-                    "incomeType": "FUNDING_FEE",
-                    "info": "FUNDING_FEE",
-                    "symbol": "XRPUSDT",
-                    "time": "1630314001000",
-                    "tradeId": "",
-                    "tranId": "993204",
-                },
-                "symbol": "XRP/USDT",
-                "timestamp": 1630314001000,
+            "symbol": "XRP/USDT",
+            "timestamp": 1630382001000,
+        },
+        {
+            "amount": -0.14642,
+            "code": "USDT",
+            "datetime": "2021-09-01T16:00:01.000Z",
+            "id": "485479",
+            "info": {
+                "asset": "USDT",
+                "income": "-0.14642",
+                "incomeType": "FUNDING_FEE",
+                "info": "FUNDING_FEE",
+                "symbol": "XRPUSDT",
+                "time": "1630314001000",
+                "tradeId": "",
+                "tranId": "993204",
             },
-        ]
-    )
+            "symbol": "XRP/USDT",
+            "timestamp": 1630314001000,
+        },
+    ]
+    api_mock.fetch_funding_history = MagicMock(return_value=funding_history)
     type(api_mock).has = PropertyMock(return_value={"fetchFundingHistory": True})
 
+    default_conf["trading_mode"] = "futures"
+    default_conf["margin_mode"] = "isolated"
     # mocker.patch(f'{EXMS}.get_funding_fees', lambda pair, since: y)
     exchange = get_patched_exchange(mocker, default_conf, api_mock, exchange=exchange_name)
     date_time = datetime.strptime("2021-09-01T00:00:01.000Z", "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -6116,6 +6136,31 @@ def test__get_funding_fees_from_exchange(default_conf, mocker, exchange_name):
 
     assert pytest.approx(expected_fees) == fees_from_datetime
     assert pytest.approx(expected_fees) == fees_from_unix_time
+    # Page shorter than the limit ends the loop
+    assert api_mock.fetch_funding_history.call_count == 2
+    assert api_mock.fetch_funding_history.call_args[1]["limit"] == 1000
+
+    # Without limit, repeated entries end the loop - without relying on id (gate has no id)
+    api_mock.fetch_funding_history = MagicMock(
+        return_value=[{**fee, "id": None} for fee in funding_history]
+    )
+    exchange._ft_has["funding_history_limit"] = None
+    fees = exchange._get_funding_fees_from_exchange(pair="XRP/USDT", since=unix_time)
+    assert pytest.approx(expected_fees) == fees
+    assert api_mock.fetch_funding_history.call_count == 2
+
+    # Paginated response
+    exchange._ft_has["funding_history_limit"] = 1
+    api_mock.fetch_funding_history = MagicMock(
+        side_effect=[[funding_history[1]], [funding_history[0]], []]
+    )
+    fees = exchange._get_funding_fees_from_exchange(pair="XRP/USDT", since=unix_time)
+    assert pytest.approx(expected_fees) == fees
+    assert api_mock.fetch_funding_history.call_count == 3
+    calls = api_mock.fetch_funding_history.call_args_list
+    assert calls[0][1]["since"] == unix_time
+    assert calls[1][1]["since"] == 1630314001001
+    assert calls[2][1]["since"] == 1630382001001
 
     ccxt_exceptionhandlers(
         mocker,
