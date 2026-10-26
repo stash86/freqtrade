@@ -869,7 +869,7 @@ class RPC:
         total = 0.0
         total_bot = 0.0
 
-        open_trades: list[Trade] = Trade.get_open_trades(include_orders=False)
+        open_trades: list[Trade] = Trade.get_open_trades()
         open_assets: dict[str, Trade] = {t.safe_base_currency: t for t in open_trades}
         self._freqtrade.wallets.update(require_update=False)
         starting_capital = self._freqtrade.wallets.get_starting_balance()
@@ -1354,15 +1354,13 @@ class RPC:
         if trade_id is None:
             # Get all open trades
             trades = Trade.session.scalars(
-                Trade.get_trades_query([Trade.is_open.is_(True)], include_orders=False)
+                Trade.get_trades_query([Trade.is_open.is_(True)])
                 .order_by(Trade.id)
                 .limit(limit)
                 .offset(offset)
             ).all()
         else:
-            trades = Trade.get_trades(
-                trade_filter=[Trade.id == trade_id], include_orders=False
-            ).all()
+            trades = Trade.get_trades(trade_filter=[Trade.id == trade_id]).all()
 
         if trade_id is not None and not trades:
             raise RPCException(f"No trade found for trade_id: {trade_id}")
@@ -1430,7 +1428,7 @@ class RPC:
         if self._freqtrade.state == State.STOPPED:
             raise RPCException("trader is not running")
 
-        trades = Trade.get_open_trades(include_orders=False)
+        trades = Trade.get_open_trades()
         return {
             "current": len(trades),
             "max": (

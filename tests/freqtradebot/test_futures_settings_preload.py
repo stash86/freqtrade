@@ -122,8 +122,8 @@ def test_per_pair_lock_rechecks_trades_and_orders_after_snapshot(mocker, preload
         assert state["locked"]
         return pairs, {pairs[1]}
 
-    def trades(*, is_open, pair, include_orders):
-        assert state["locked"] and is_open and not include_orders
+    def trades(*, is_open, pair):
+        assert state["locked"] and is_open
         return [object()] if pair in occupied else []
 
     def prepare(pair, leverage):

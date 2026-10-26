@@ -1617,14 +1617,11 @@ class LocalTrade:
         LocalTrade.bt_open_open_trade_count -= 1
 
     @staticmethod
-    def get_open_trades(*, include_orders: bool = True) -> list[Any]:
+    def get_open_trades() -> list[Any]:
         """
         Retrieve open trades
         """
-        return Trade.get_trades_proxy(
-            is_open=True,
-            include_orders=include_orders,
-        )
+        return Trade.get_trades_proxy(is_open=True)
 
     @staticmethod
     def get_open_trade_count() -> int:
@@ -1894,7 +1891,6 @@ class Trade(ModelBase, LocalTrade):
         is_open: bool | None = None,
         open_date: datetime | None = None,
         close_date: datetime | None = None,
-        include_orders: bool = True,
     ) -> list["LocalTrade"]:
         """
         Helper function to query Trades.
@@ -1906,7 +1902,6 @@ class Trade(ModelBase, LocalTrade):
         :param open_date: Filter by open_date (filters via trade.open_date > input)
         :param close_date: Filter by close_date (filters via trade.close_date > input)
                            and will implicitly only return closed trades.
-        :param include_orders: Whether to include orders in the result. Defaults to True.
         :return: unsorted List[Trade]
         """
         if Trade.use_db:
@@ -1919,10 +1914,7 @@ class Trade(ModelBase, LocalTrade):
                 trade_filter.append(Trade.close_date > close_date)
             if is_open is not None:
                 trade_filter.append(Trade.is_open.is_(is_open))
-            return cast(
-                list[LocalTrade],
-                Trade.get_trades(trade_filter, include_orders=include_orders).all(),
-            )
+            return cast(list[LocalTrade], Trade.get_trades(trade_filter).all())
         else:
             return LocalTrade.get_trades_proxy(
                 pair=pair, is_open=is_open, open_date=open_date, close_date=close_date

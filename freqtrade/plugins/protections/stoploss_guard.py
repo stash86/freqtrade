@@ -49,9 +49,7 @@ class StoplossGuard(IProtection):
         """
         look_back_until = date_now - timedelta(minutes=self._lookback_period)
 
-        trades1 = Trade.get_trades_proxy(
-            pair=pair, is_open=False, close_date=look_back_until, include_orders=False
-        )
+        trades1 = Trade.get_trades_proxy(pair=pair, is_open=False, close_date=look_back_until)
         trades = [
             trade
             for trade in trades1

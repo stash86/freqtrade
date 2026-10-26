@@ -5,7 +5,6 @@ from functools import wraps
 from typing import Any, cast
 
 from freqtrade.exceptions import StrategyError
-from freqtrade.persistence import Trade
 
 
 logger = logging.getLogger(__name__)

@@ -125,8 +125,7 @@ class Wallets:
         # Recreate _wallets to reset closed trade balances
         _wallets = {}
         _positions = {}
-        is_futures = self._config.get("trading_mode", "spot") == TradingMode.FUTURES
-        open_trades = Trade.get_trades_proxy(is_open=True, include_orders=(not is_futures))
+        open_trades = Trade.get_trades_proxy(is_open=True)
         if not self._is_backtest:
             # Live / Dry-run mode
             tot_profit = Trade.get_total_closed_profit()
@@ -137,7 +136,7 @@ class Wallets:
         tot_in_trades = sum(trade.stake_amount for trade in open_trades)
         used_stake = 0.0
 
-        if not is_futures:
+        if self._config.get("trading_mode", "spot") != TradingMode.FUTURES:
             for trade in open_trades:
                 curr = self._exchange.get_pair_base_currency(trade.pair)
                 used_stake += sum(

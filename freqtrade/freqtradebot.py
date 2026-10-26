@@ -344,7 +344,7 @@ class FreqtradeBot(LoggingMixin):
                         break
                     if (
                         pair in protected
-                        or Trade.get_trades_proxy(is_open=True, pair=pair, include_orders=False)
+                        or Trade.get_trades_proxy(is_open=True, pair=pair)
                         or any(order.ft_pair == pair for order in Order.get_open_orders())
                     ):
                         skipped += 1
@@ -649,7 +649,7 @@ class FreqtradeBot(LoggingMixin):
                 )
 
     def startup_backpopulate_precision(self) -> None:
-        trades = Trade.get_trades([Trade.contract_size.is_(None)], include_orders=False)
+        trades = Trade.get_trades([Trade.contract_size.is_(None)])
         for trade in trades:
             if trade.exchange != self.exchange.id:
                 continue
@@ -899,7 +899,7 @@ class FreqtradeBot(LoggingMixin):
             self.log_once("Active pair whitelist is empty.", logger.info)
             return trades_created
         # Remove pairs for currently opened trades from the whitelist
-        for trade in Trade.get_open_trades(include_orders=False):
+        for trade in Trade.get_open_trades():
             if trade.pair in whitelist:
                 whitelist.remove(trade.pair)
                 logger.debug("Ignoring %s in pair whitelist", trade.pair)
