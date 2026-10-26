@@ -45,8 +45,7 @@ BAD_EXCHANGES = {
 
 MAP_EXCHANGE_CHILDCLASS = {
     "gateio": "gate",
-    "huboi": "htx",
-    "kucoineu": "kucoin",
+    "huobi": "htx",
 }
 
 SUPPORTED_EXCHANGES = [

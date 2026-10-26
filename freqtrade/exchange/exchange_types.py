@@ -77,6 +77,7 @@ class FtHas(TypedDict, total=False):
     mark_ohlcv_timeframe: str
     funding_fee_timeframe: str
     funding_fee_candle_limit: int
+    funding_history_limit: int | None
     open_interest_candle_limit: int
     floor_leverage: bool
     futures_settings_preload: bool
