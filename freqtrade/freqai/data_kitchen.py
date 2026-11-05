@@ -277,7 +277,7 @@ class FreqaiDataKitchen:
             # so now we use do_predict to avoid any prediction based on a NaN
             drop_index = pd.isnull(filtered_df).any(axis=1)
             self.data["filter_drop_index_prediction"] = drop_index
-            filtered_df.fillna(0, inplace=True)
+            filtered_df = filtered_df.fillna(0)
             # replacing all NaNs with zeros to avoid issues in 'prediction', but any prediction
             # that was based on a single NaN is ultimately protected from buys with do_predict
             drop_index = ~drop_index
@@ -448,7 +448,7 @@ class FreqaiDataKitchen:
         cols = ["date"]
         cols.extend(user_cols)
 
-        dataframe_backtest.reset_index(drop=True, inplace=True)
+        dataframe_backtest = dataframe_backtest.reset_index(drop=True)
         merged_df = pd.concat([dataframe_backtest[cols], append_df], axis=1)
         return merged_df
 
@@ -471,9 +471,13 @@ class FreqaiDataKitchen:
             col for col in dataframe.columns if not col.startswith("&") and not col.startswith("%%")
         ]
         self.return_dataframe = pd.merge(dataframe[to_keep], self.full_df, how="left", on="date")
-        self.return_dataframe[self.full_df.columns] = self.return_dataframe[
-            self.full_df.columns
-        ].fillna(value=0)
+        # String columns (classifier labels) can't take a numeric fill value - leave them as NA.
+        fill_cols = [
+            col
+            for col in self.full_df.columns
+            if not pd.api.types.is_string_dtype(self.return_dataframe[col].dtype)
+        ]
+        self.return_dataframe[fill_cols] = self.return_dataframe[fill_cols].fillna(value=0)
         self.full_df = DataFrame()
 
     def create_fulltimerange(self, backtest_tr: str, backtest_period_days: int) -> str:
